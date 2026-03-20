@@ -1,0 +1,11 @@
+{
+  "extends": "./tsconfig.json",
+  "compilerOptions": {
+    "module": "commonjs",
+    "types": ["jest", "node"],
+    "paths": {
+      "@shared/*": ["core/src/*"]
+    }
+  },
+  "include": ["core/src", "server/src", "__tests__"]
+}

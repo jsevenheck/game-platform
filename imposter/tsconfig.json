@@ -1,0 +1,28 @@
+{
+  "compilerOptions": {
+    "target": "ES2020",
+    "module": "commonjs",
+    "moduleResolution": "node",
+    "lib": ["ES2020", "DOM"],
+    "strict": true,
+    "esModuleInterop": true,
+    "forceConsistentCasingInFileNames": true,
+    "skipLibCheck": true,
+    "noEmit": true,
+    "baseUrl": ".",
+    "paths": {
+      "@shared/*": ["core/src/*"]
+    }
+  },
+  "include": [
+    "core/src/**/*.ts",
+    "server/src/**/*.ts",
+    "standalone-server/src/**/*.ts",
+    "__tests__/**/*.ts",
+    "e2e/**/*.ts",
+    "playwright.config.ts",
+    "global.d.ts",
+    "jest.setup.ts"
+  ],
+  "exclude": ["node_modules", "dist", "build", "coverage"]
+}

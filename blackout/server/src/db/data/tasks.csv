@@ -1,0 +1,26 @@
+text_en,text_de,requires_letter
+Starts with letter {letter},Beginnt mit dem Buchstaben {letter},1
+Ends with letter {letter},Endet mit dem Buchstaben {letter},1
+Contains letter {letter},Enthält den Buchstaben {letter},1
+Has exactly two syllables,Hat genau zwei Silben,0
+Has at least three syllables,Hat mindestens drei Silben,0
+Has no repeated letters,Hat keinen wiederholten Buchstaben,0
+Has at most five letters,Hat höchstens fünf Buchstaben,0
+Has at least eight letters,Hat mindestens acht Buchstaben,0
+Contains exactly one vowel,Enthält genau einen Vokal,0
+Contains at least two vowels,Enthält mindestens zwei Vokale,0
+Starts and ends with the same letter,Beginnt und endet mit demselben Buchstaben,0
+Contains the letter {letter} at least twice,Enthält den Buchstaben {letter} mindestens zweimal,1
+Does not contain letter {letter},Enthält den Buchstaben {letter} nicht,1
+Has exactly five letters,Hat genau fünf Buchstaben,0
+Has exactly seven letters,Hat genau sieben Buchstaben,0
+Ends with a vowel,Endet auf einen Vokal,0
+Starts with a consonant,Beginnt mit einem Konsonanten,0
+Contains exactly two vowels,Enthält genau zwei Vokale,0
+Contains at least one double letter,Enthält mindestens einen Doppelbuchstaben,0
+Contains the letter {letter} as first or last letter,Hat den Buchstaben {letter} am Anfang oder am Ende,1
+Contains the letter {letter} but not at the beginning,Enthält den Buchstaben {letter} aber nicht am Anfang,1
+Has between six and eight letters,Hat zwischen sechs und acht Buchstaben,0
+Has at least ten letters,Hat mindestens zehn Buchstaben,0
+Has exactly four syllables,Hat genau vier Silben,0
+Contains three consecutive consonants,Enthält drei aufeinanderfolgende Konsonanten,0

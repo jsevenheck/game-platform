@@ -1,0 +1,14 @@
+# Build outputs
+dist/
+dist-lib/
+game-export/
+coverage/
+test-results/
+
+# Dependencies
+node_modules/
+pnpm-lock.yaml
+
+# Generated files
+*.log
+.env

@@ -1,0 +1,33 @@
+node_modules/
+npm-debug.log
+.env
+.DS_Store
+dist/
+dist-lib/
+test-results/
+coverage/
+settings.local.json
+game-export/
+*.mp3
+!**/audio/*.mp3
+**/audio/custom/*.mp3
+playwright-report/
+
+# Nested lockfiles (should only exist at monorepo root when moved to game-hub)
+ui-vue/pnpm-lock.yaml
+standalone-web/pnpm-lock.yaml
+standalone-server/pnpm-lock.yaml
+
+server/src/db/*.sqlite
+server/src/db/*.sqlite-shm
+server/src/db/*.sqlite-wal
+*.sqlite
+*.sqlite-shm
+*.sqlite-wal
+*.db
+*.db-shm
+*.db-wal
+.pnpm-store/
+
+# game-hub generation
+game-export/

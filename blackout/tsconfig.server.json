@@ -1,0 +1,12 @@
+{
+  "extends": "./tsconfig.json",
+  "compilerOptions": {
+    "module": "commonjs",
+    "outDir": "dist",
+    "rootDir": ".",
+    "declaration": true,
+    "sourceMap": true
+  },
+  "include": ["core/src", "server/src", "standalone-server/src"],
+  "exclude": ["node_modules", "dist", "dist-lib", "ui-vue", "__tests__", "e2e"]
+}

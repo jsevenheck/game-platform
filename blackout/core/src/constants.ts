@@ -1,0 +1,11 @@
+export const ROUND_TIMER_MS = 60_000;
+export const ROUND_END_DISPLAY_MS = 3_000;
+export const ROOM_IDLE_TIMEOUT_MS = 24 * 60 * 60 * 1000;
+export const ROOM_ENDED_CLEANUP_MS = 60 * 60 * 1000;
+export const CLEANUP_INTERVAL_MS = 60 * 60 * 1000;
+export const MIN_PLAYERS = 3;
+export const MIN_ROUNDS = 5;
+export const MAX_ROUNDS = 30;
+export const DEFAULT_ROUNDS = 10;
+export const DEFAULT_LANGUAGE = 'de';
+export const DEFAULT_EXCLUDED_LETTERS = ['Q', 'X', 'Y'];

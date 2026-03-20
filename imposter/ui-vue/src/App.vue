@@ -1,0 +1,422 @@
+<script setup lang="ts">
+import { onBeforeUnmount, onMounted, ref } from 'vue';
+import { useGameStore } from './stores/game';
+import { useSocket } from './composables/useSocket';
+import type { HubIntegrationProps } from './types/config';
+import Landing from './components/Landing.vue';
+import Lobby from './components/Lobby.vue';
+import DescriptionPhase from './components/DescriptionPhase.vue';
+import VotingPhase from './components/VotingPhase.vue';
+import RevealPhase from './components/RevealPhase.vue';
+import GameOver from './components/GameOver.vue';
+
+const props = withDefaults(defineProps<HubIntegrationProps>(), {
+  playerId: undefined,
+  playerName: undefined,
+  sessionId: undefined,
+  joinToken: undefined,
+  wsNamespace: undefined,
+  apiBaseUrl: undefined,
+});
+
+const store = useGameStore();
+const { socket } = useSocket({
+  apiBaseUrl: props.apiBaseUrl,
+  sessionId: props.sessionId,
+  joinToken: props.joinToken,
+  playerId: props.playerId,
+  wsNamespace: props.wsNamespace,
+});
+const isEmbedded = !!props.wsNamespace;
+const embeddedError = ref('');
+const landingError = ref('');
+const lobbyError = ref('');
+const autoJoinInFlight = ref(false);
+let autoJoinRetryTimer: number | undefined;
+let pendingLobbyConfig = Promise.resolve();
+
+socket.on('roomState', (state) => {
+  store.applyRoomState(state);
+  autoJoinInFlight.value = false;
+  embeddedError.value = '';
+  lobbyError.value = '';
+});
+
+socket.on('disconnect', () => {
+  autoJoinInFlight.value = false;
+});
+
+socket.on('kicked', (reason) => {
+  if (isEmbedded) {
+    embeddedError.value = reason;
+    store.reset();
+    return;
+  }
+
+  lobbyError.value = '';
+  embeddedError.value = '';
+  store.clearSession();
+  landingError.value = reason;
+
+  if (socket.connected) {
+    socket.disconnect();
+  }
+  socket.connect();
+});
+
+function emitAutoJoinRoom() {
+  if (!props.sessionId || !socket.connected || store.room || autoJoinInFlight.value) return;
+
+  embeddedError.value = '';
+  autoJoinInFlight.value = true;
+  socket.emit(
+    'autoJoinRoom',
+    {
+      sessionId: props.sessionId,
+      playerId: props.playerId || '',
+      name: props.playerName || props.playerId || 'Player',
+    },
+    (res) => {
+      autoJoinInFlight.value = false;
+      if (!res.ok) {
+        embeddedError.value = res.error;
+        return;
+      }
+
+      store.setSession({
+        playerId: res.playerId,
+        roomCode: res.roomCode,
+        resumeToken: res.resumeToken,
+        name: props.playerName || props.playerId || 'Player',
+      });
+    }
+  );
+}
+
+function handleCreate(name: string) {
+  landingError.value = '';
+  socket.emit('createRoom', { name }, (res) => {
+    if (!res.ok) {
+      landingError.value = res.error;
+      return;
+    }
+    store.setSession({
+      playerId: res.playerId,
+      roomCode: res.roomCode,
+      resumeToken: res.resumeToken,
+      name,
+    });
+    store.saveSession();
+  });
+}
+
+function handleJoin(name: string, code: string) {
+  landingError.value = '';
+  socket.emit('joinRoom', { name, code }, (res) => {
+    if (!res.ok) {
+      landingError.value = res.error;
+      return;
+    }
+    store.setSession({
+      playerId: res.playerId,
+      roomCode: code,
+      resumeToken: res.resumeToken,
+      name,
+    });
+    store.saveSession();
+  });
+}
+
+function finalizeLeave() {
+  landingError.value = '';
+  lobbyError.value = '';
+  embeddedError.value = '';
+  store.clearSession();
+
+  if (socket.connected) {
+    socket.disconnect();
+  }
+
+  if (!isEmbedded) {
+    socket.connect();
+  }
+}
+
+function handleLeave() {
+  if (!store.roomCode || !store.playerId || isEmbedded) {
+    return;
+  }
+
+  socket.emit('leaveRoom', { roomCode: store.roomCode, playerId: store.playerId }, (res) => {
+    if (!res.ok) {
+      landingError.value = res.error;
+      return;
+    }
+
+    finalizeLeave();
+  });
+}
+
+async function handleStartGame() {
+  if (!store.roomCode || !store.playerId) return;
+
+  await pendingLobbyConfig;
+  socket.emit('startGame', { roomCode: store.roomCode, playerId: store.playerId }, () => {});
+}
+
+function handleConfigureLobby(config: {
+  infiltratorCount: number;
+  discussionDurationMs: number;
+  targetScore: number;
+}) {
+  if (!store.roomCode || !store.playerId) return;
+
+  pendingLobbyConfig = pendingLobbyConfig.finally(
+    () =>
+      new Promise<void>((resolve) => {
+        socket.emit(
+          'configureLobby',
+          { roomCode: store.roomCode!, playerId: store.playerId!, ...config },
+          (res) => {
+            lobbyError.value = res.ok ? '' : res.error;
+            resolve();
+          }
+        );
+      })
+  );
+}
+
+function handleSubmitWord(word: string) {
+  if (!store.roomCode || !store.playerId) return;
+  socket.emit('submitWord', { roomCode: store.roomCode, playerId: store.playerId, word }, () => {});
+}
+
+function handleKickPlayer(targetId: string) {
+  if (!store.roomCode || !store.playerId) return;
+  socket.emit(
+    'kickPlayer',
+    { roomCode: store.roomCode, playerId: store.playerId, targetId },
+    (res) => {
+      lobbyError.value = res.ok ? '' : res.error;
+    }
+  );
+}
+
+function handleSubmitDescription(description: string) {
+  if (!store.roomCode || !store.playerId) return;
+  socket.emit(
+    'submitDescription',
+    { roomCode: store.roomCode, playerId: store.playerId, description },
+    () => {}
+  );
+}
+
+function handleSkipDescriptionTurn() {
+  if (!store.roomCode || !store.playerId) return;
+  socket.emit(
+    'skipDescriptionTurn',
+    { roomCode: store.roomCode, playerId: store.playerId },
+    () => {}
+  );
+}
+
+function handleSubmitVote(targetId: string) {
+  if (!store.roomCode || !store.playerId) return;
+  socket.emit(
+    'submitVote',
+    { roomCode: store.roomCode, playerId: store.playerId, targetId },
+    () => {}
+  );
+}
+
+function handleGuessWord(guess: string) {
+  if (!store.roomCode || !store.playerId) return;
+  socket.emit('guessWord', { roomCode: store.roomCode, playerId: store.playerId, guess }, () => {});
+}
+
+function handleSkipGuess() {
+  if (!store.roomCode || !store.playerId) return;
+  socket.emit('skipGuess', { roomCode: store.roomCode, playerId: store.playerId }, () => {});
+}
+
+function handleNextRound() {
+  if (!store.roomCode || !store.playerId) return;
+  socket.emit('nextRound', { roomCode: store.roomCode, playerId: store.playerId }, () => {});
+}
+
+function handleEndGame() {
+  if (!store.roomCode || !store.playerId) return;
+  socket.emit('endGame', { roomCode: store.roomCode, playerId: store.playerId }, () => {});
+}
+
+function handleRestart() {
+  if (!store.roomCode || !store.playerId) return;
+  socket.emit('restartGame', { roomCode: store.roomCode, playerId: store.playerId }, () => {});
+}
+
+onMounted(() => {
+  if (isEmbedded && props.sessionId) {
+    socket.on('connect', emitAutoJoinRoom);
+
+    if (socket.connected) {
+      emitAutoJoinRoom();
+    } else {
+      socket.connect();
+    }
+
+    autoJoinRetryTimer = window.setTimeout(() => {
+      if (!store.room) {
+        emitAutoJoinRoom();
+      }
+    }, 3000);
+    return;
+  }
+
+  const session = store.loadSession();
+  if (!session) return;
+
+  const doResume = () => {
+    socket.emit(
+      'resumePlayer',
+      { roomCode: session.roomCode, playerId: session.playerId, resumeToken: session.resumeToken },
+      (res) => {
+        if (res.ok) {
+          store.setSession({
+            playerId: session.playerId,
+            roomCode: session.roomCode,
+            resumeToken: session.resumeToken,
+            name: session.name,
+          });
+        } else {
+          store.clearSession();
+        }
+      }
+    );
+  };
+
+  if (socket.connected) {
+    doResume();
+  } else {
+    socket.once('connect', doResume);
+  }
+});
+
+onBeforeUnmount(() => {
+  if (autoJoinRetryTimer !== undefined) {
+    clearTimeout(autoJoinRetryTimer);
+  }
+  socket.off('connect', emitAutoJoinRoom);
+});
+</script>
+
+<template>
+  <div class="app">
+    <header v-if="store.room && !isEmbedded" class="app-header">
+      <span class="header-room">{{ store.roomCode }}</span>
+      <button class="leave-button" type="button" @click="handleLeave">Leave</button>
+    </header>
+    <p v-if="store.phase === null && isEmbedded" class="embedded-status">
+      {{ embeddedError || 'Connecting...' }}
+    </p>
+    <Landing
+      v-else-if="store.phase === null"
+      :server-error="landingError"
+      @create="handleCreate"
+      @join="handleJoin"
+    />
+    <Lobby
+      v-else-if="store.phase === 'lobby'"
+      :error-message="lobbyError"
+      @start-game="handleStartGame"
+      @configure-lobby="handleConfigureLobby"
+      @submit-word="handleSubmitWord"
+      @kick-player="handleKickPlayer"
+    />
+    <DescriptionPhase
+      v-else-if="store.phase === 'description'"
+      @submit-description="handleSubmitDescription"
+      @skip-description-turn="handleSkipDescriptionTurn"
+    />
+    <VotingPhase
+      v-else-if="store.phase === 'discussion' || store.phase === 'voting'"
+      @submit-vote="handleSubmitVote"
+    />
+    <RevealPhase
+      v-else-if="store.phase === 'reveal'"
+      @guess-word="handleGuessWord"
+      @skip-guess="handleSkipGuess"
+      @next-round="handleNextRound"
+      @end-game="handleEndGame"
+      @restart-game="handleRestart"
+    />
+    <GameOver v-else-if="store.phase === 'ended'" @restart="handleRestart" />
+  </div>
+</template>
+
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap');
+
+* {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+body {
+  font-family: 'Inter', system-ui, sans-serif;
+  background: #0f0f23;
+  color: #e2e8f0;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+.app {
+  min-height: 100dvh;
+}
+
+.app-header {
+  position: sticky;
+  top: 0;
+  z-index: 10;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0.85rem 1rem;
+  background: rgba(15, 15, 35, 0.92);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+  backdrop-filter: blur(14px);
+}
+
+.header-room {
+  color: #f97316;
+  font-size: 0.85rem;
+  font-weight: 800;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+}
+
+.leave-button {
+  border: 1px solid rgba(255, 255, 255, 0.18);
+  border-radius: 999px;
+  background: transparent;
+  color: #cbd5e1;
+  padding: 0.45rem 0.95rem;
+  font: inherit;
+  cursor: pointer;
+  transition:
+    border-color 0.2s ease,
+    color 0.2s ease,
+    background-color 0.2s ease;
+}
+
+.leave-button:hover {
+  border-color: rgba(239, 68, 68, 0.7);
+  color: #fecaca;
+  background: rgba(239, 68, 68, 0.12);
+}
+
+.embedded-status {
+  padding: 2rem 1rem;
+  text-align: center;
+}
+</style>
