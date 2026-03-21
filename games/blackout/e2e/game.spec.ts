@@ -80,16 +80,22 @@ test.describe('Blackout via Platform', () => {
     await page2.waitForURL(/\/game\/blackout/, { timeout: 15_000 });
     await page3.waitForURL(/\/game\/blackout/, { timeout: 15_000 });
 
+    // Reduce rounds to minimum (5) before starting
+    await page1.waitForSelector('.lobby', { timeout: 10_000 });
+    for (let i = 0; i < 5; i++) {
+      await page1.locator('.rounds-config button').first().click();
+    }
+    await expect(page1.locator('.rounds-value')).toContainText('5');
+
     await page1.getByRole('button', { name: 'Start Game' }).click();
     await page1.waitForSelector('.game-round', { timeout: 10_000 });
 
-    // Play through one round: host reveals and selects winner to score points
-    // then all rounds complete → GameOver phase → platform overlay appears
-    // We use configureRounds=1 via the Lobby before start; here we just
-    // skip rounds until the game ends naturally by exhausting maxRounds.
-    // Since we can't easily control round count post-launch, we verify
-    // the overlay appears after the game-over phase is reached on the host.
-    await page1.waitForSelector('.game-over', { timeout: 60_000 });
+    // Skip all 5 rounds — each skip triggers a 3s roundEnd delay before the next round
+    for (let round = 0; round < 5; round++) {
+      await page1.waitForSelector('.game-round', { timeout: 15_000 });
+      await page1.locator('.btn-skip').click();
+    }
+    await page1.waitForSelector('.game-over', { timeout: 15_000 });
 
     // Platform overlay shows on host page
     await expect(page1.locator('.platform-overlay')).toBeVisible({ timeout: 5_000 });

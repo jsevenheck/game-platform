@@ -153,6 +153,7 @@ function emitAutoJoinRoom() {
       playerId: props.playerId || '',
       name: embeddedPlayerName(),
       isHost: props.isHost,
+      resumeToken: store.resumeToken || undefined,
     },
     (res) => {
       if (res.ok) {
@@ -160,6 +161,7 @@ function emitAutoJoinRoom() {
         store.playerName = embeddedPlayerName();
         store.roomCode = res.roomCode;
         store.resumeToken = res.resumeToken;
+        store.saveSession();
       } else {
         embeddedError.value = res.error;
       }
@@ -214,6 +216,15 @@ onMounted(() => {
     if (!props.sessionId) {
       embeddedError.value = 'Missing session info.';
       return;
+    }
+
+    // Restore saved game session so the token is available for slot reclaim on reload.
+    const savedSession = store.loadSession();
+    if (savedSession) {
+      store.playerId = savedSession.playerId;
+      store.playerName = savedSession.name;
+      store.roomCode = savedSession.roomCode;
+      store.resumeToken = savedSession.resumeToken;
     }
 
     socket.on('connect', handleEmbeddedConnect);

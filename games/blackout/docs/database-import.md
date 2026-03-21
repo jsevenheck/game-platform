@@ -7,15 +7,15 @@ This project includes a CSV import script for extending database data.
 Run from repository root:
 
 ```bash
-pnpm db:import:csv -- --table <categories|tasks|default_excluded_letters> --file <path-to-csv>
+node games/blackout/scripts/import-db-csv.mjs --table <categories|tasks|default_excluded_letters> --file <path-to-csv>
 ```
 
 Examples:
 
 ```bash
-pnpm db:import:csv -- --table categories --file server/src/db/data/categories.csv
-pnpm db:import:csv -- --table tasks --file server/src/db/data/tasks.csv
-pnpm db:import:csv -- --table default_excluded_letters --file server/src/db/data/default_excluded_letters.csv
+node games/blackout/scripts/import-db-csv.mjs --table categories --file games/blackout/server/src/db/data/categories.csv
+node games/blackout/scripts/import-db-csv.mjs --table tasks --file games/blackout/server/src/db/data/tasks.csv
+node games/blackout/scripts/import-db-csv.mjs --table default_excluded_letters --file games/blackout/server/src/db/data/default_excluded_letters.csv
 ```
 
 ## Supported Tables and CSV Formats
@@ -75,12 +75,12 @@ Y
 - Inserts use `INSERT OR IGNORE`, so duplicates are skipped.
 - The script initializes the DB schema automatically if needed.
 - On normal server startup, empty tables are auto-filled from `server/src/db/data/*.csv`.
-- Default DB path is `server/src/db/blackout.sqlite`.
+- Default DB path is `games/blackout/server/src/db/blackout.sqlite`.
 - You can override DB path using `DB_PATH`.
 
 PowerShell example:
 
 ```powershell
-$env:DB_PATH = 'server/src/db/blackout.sqlite'
-pnpm db:import:csv -- --table categories --file .\server\src\db\data\categories.csv
+$env:DB_PATH = 'games/blackout/server/src/db/blackout.sqlite'
+node games/blackout/scripts/import-db-csv.mjs --table categories --file games/blackout/server/src/db/data/categories.csv
 ```

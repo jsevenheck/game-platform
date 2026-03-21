@@ -33,12 +33,14 @@ interface PersistedSession {
   inviteCode: string;
   playerId: string;
   playerName: string;
+  resumeToken: string;
 }
 
 export const usePartyStore = defineStore('platform-party', () => {
   const party = ref<PartyView | null>(null);
   const playerId = ref<string | null>(null);
   const playerName = ref<string | null>(null);
+  const resumeToken = ref<string | null>(null);
 
   const isHost = computed(() => {
     if (!party.value || !playerId.value) return false;
@@ -58,17 +60,24 @@ export const usePartyStore = defineStore('platform-party', () => {
     party.value = view;
   }
 
-  function setSession(data: { playerId: string; playerName: string; inviteCode: string }): void {
+  function setSession(data: {
+    playerId: string;
+    playerName: string;
+    inviteCode: string;
+    resumeToken?: string;
+  }): void {
     playerId.value = data.playerId;
     playerName.value = data.playerName;
+    if (data.resumeToken) resumeToken.value = data.resumeToken;
   }
 
   function saveSession(inviteCode: string): void {
-    if (!playerId.value || !playerName.value) return;
+    if (!playerId.value || !playerName.value || !resumeToken.value) return;
     const session: PersistedSession = {
       inviteCode,
       playerId: playerId.value,
       playerName: playerName.value,
+      resumeToken: resumeToken.value,
     };
     localStorage.setItem(SESSION_KEY, JSON.stringify(session));
   }
@@ -86,6 +95,7 @@ export const usePartyStore = defineStore('platform-party', () => {
     party.value = null;
     playerId.value = null;
     playerName.value = null;
+    resumeToken.value = null;
     localStorage.removeItem(SESSION_KEY);
   }
 
@@ -93,6 +103,7 @@ export const usePartyStore = defineStore('platform-party', () => {
     party,
     playerId,
     playerName,
+    resumeToken,
     isHost,
     self,
     connectedMembers,

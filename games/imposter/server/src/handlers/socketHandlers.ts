@@ -58,6 +58,11 @@ function clearGuessTimer(roomCode: string): void {
   }
 }
 
+export function clearRoomTimers(roomCode: string): void {
+  clearDiscussionTimer(roomCode);
+  clearGuessTimer(roomCode);
+}
+
 function verifyPlayer(socket: GameSocket, roomCode: string, playerId: string): boolean {
   const idx = getSocketIndex(socket.id);
   return idx !== undefined && idx.roomCode === roomCode && idx.playerId === playerId;
@@ -222,13 +227,21 @@ export function registerGame(io: Server, namespace = `/g/${GAME_ID}`): void {
       if (hubPlayerId) {
         const existingPlayer = mappedRoom.players[hubPlayerId];
         if (existingPlayer) {
+          // Require the server-issued resumeToken to prevent slot hijacking via public playerId.
+          if (data.resumeToken && existingPlayer.resumeToken !== data.resumeToken) {
+            return cb({ ok: false, error: 'Invalid resume token' });
+          }
+          if (!data.resumeToken && existingPlayer.resumeToken) {
+            return cb({ ok: false, error: 'Resume token required' });
+          }
+
           if (existingPlayer.socketId && existingPlayer.socketId !== socket.id) {
             deleteSocketIndex(existingPlayer.socketId);
           }
 
           existingPlayer.socketId = socket.id;
           existingPlayer.connected = true;
-          if (existingPlayer.id === mappedRoom.ownerId) {
+          if (existingPlayer.id === mappedRoom.ownerId || data.isHost) {
             setHost(mappedRoom, existingPlayer.id);
           } else if (existingPlayer.isHost && mappedRoom.hostId === null) {
             setHost(mappedRoom, existingPlayer.id);
@@ -261,6 +274,9 @@ export function registerGame(io: Server, namespace = `/g/${GAME_ID}`): void {
       const player = createPlayer(name, false, hubPlayerId || undefined);
       player.socketId = socket.id;
       mappedRoom.players[player.id] = player;
+      if (data.isHost) {
+        setHost(mappedRoom, player.id);
+      }
       setSocketIndex(socket.id, mappedRoom.code, player.id);
       clearRoomCleanup(mappedRoom.code);
 

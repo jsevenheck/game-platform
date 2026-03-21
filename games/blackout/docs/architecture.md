@@ -106,7 +106,7 @@ flowchart TD
   C -->|createRoom| D[Create room + host]
   C -->|joinRoom| E[Validate code + add player]
   C -->|autoJoinRoom| F[Lookup sessionId map]
-  F -->|mapped + player exists| G[Reconnect existing player by stable platform playerId]
+  F -->|mapped + player exists| G[Validate resumeToken then reconnect existing player]
   F -->|mapped + new player| H[Add player to mapped room]
   F -->|no mapping| I[Create mapped room with platform playerId as host id]
   D --> J[broadcastRoom]

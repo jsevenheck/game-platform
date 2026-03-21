@@ -49,7 +49,16 @@ Can be used while a game is already running (late join), as long as the room exi
 #### `autoJoinRoom`
 
 ```ts
-autoJoinRoom(data: { sessionId: string; playerId: string; name: string }, cb)
+autoJoinRoom(
+  data: {
+    sessionId: string;
+    playerId: string;
+    name: string;
+    isHost?: boolean;
+    resumeToken?: string;
+  },
+  cb
+)
 ```
 
 Response:
@@ -66,7 +75,9 @@ Response:
 Notes:
 
 - In embedded mode, a stable hub `playerId` is used directly as the in-game player id when provided.
-- Repeating `autoJoinRoom` with the same `sessionId` and `playerId` reconnects the same player instead of creating a duplicate entry.
+- When `isHost: true`, the server transfers the host role to this player.
+- **First join** (no existing slot for this `playerId`): `resumeToken` is not required and is ignored.
+- **Reconnect** (slot already exists for this `playerId`): `resumeToken` must be present and must match the server-issued token. Omitting it or providing the wrong token returns `{ ok: false, error: 'Resume token required' }` or `'Invalid resume token'`.
 - `sessionId -> roomCode` mappings are in-memory and are cleaned up when a room is deleted.
 
 #### `resumePlayer`

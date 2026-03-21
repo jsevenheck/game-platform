@@ -2,10 +2,10 @@
   "name": "game-platform",
   "version": "1.0.0",
   "private": true,
-  "packageManager": "pnpm@10.28.2",
+  "packageManager": "pnpm@10.32.1",
   "scripts": {
     "dev": "pnpm -C apps/platform dev",
-    "build": "pnpm -C apps/platform build",
+    "build": "pnpm -C apps/platform build && node games/blackout/scripts/copy-db-assets.mjs",
     "start": "pnpm -C apps/platform start",
     "typecheck": "pnpm -C apps/platform typecheck",
     "test": "jest",

@@ -212,9 +212,28 @@ test.describe('Secret Signals via Platform', () => {
   test('host returns to party lobby via platform overlay after match ends', async ({ browser }) => {
     const { ctxs, pages, inviteCode } = await setupFourPlayers(browser);
     const [host] = pages as [Page, Page, Page, Page];
+    const bob = pages[1]!;
 
-    // Wait for the platform overlay to appear when the match ends
-    await host.waitForSelector('.platform-overlay', { timeout: 120_000 });
+    // Red director (host) sends a signal to start the guessing phase
+    await expect(host.locator('.turn-indicator')).toContainText('Red Team', { timeout: 10_000 });
+    await host.getByPlaceholder('Clue word').fill('TRAP');
+    await host.getByRole('button', { name: 'Send Signal' }).click();
+
+    // Find the assassin card index from the director's view (only directors see card types)
+    const assassinCell = host.locator('.card-cell.assassin').first();
+    const assassinIndex = await assassinCell.getAttribute('data-card-index', { timeout: 5_000 });
+
+    // Bob (red agent) reveals the assassin card → game ends immediately in default mode
+    const assassinCard = bob.locator(`[data-card-index="${assassinIndex}"]`);
+    await expect(assassinCard).toBeEnabled({ timeout: 5_000 });
+    await assassinCard.click(); // focus/mark the card
+    await expect(assassinCard).toContainText('Bob', { timeout: 5_000 }); // wait for server to confirm focus
+    await assassinCard.click(); // trigger confirm dialog
+    await expect(bob.getByRole('button', { name: 'Reveal Card' })).toBeVisible({ timeout: 5_000 });
+    await bob.getByRole('button', { name: 'Reveal Card' }).click();
+
+    // Game ends immediately → platform overlay appears on host's page
+    await host.waitForSelector('.platform-overlay', { timeout: 15_000 });
     await expect(host.locator('.btn-lobby')).toBeVisible();
 
     await host.locator('.btn-lobby').click();

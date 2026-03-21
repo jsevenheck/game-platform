@@ -3,10 +3,10 @@
 These CSV files are the default content source for the SQLite database.
 When the server starts and tables are empty, data is loaded from this folder.
 
-These files can be imported with:
+These files can be imported from the workspace root with:
 
 ```bash
-pnpm db:import:csv -- --table categories --file server/src/db/data/categories.csv
-pnpm db:import:csv -- --table tasks --file server/src/db/data/tasks.csv
-pnpm db:import:csv -- --table default_excluded_letters --file server/src/db/data/default_excluded_letters.csv
+node games/blackout/scripts/import-db-csv.mjs --table categories --file games/blackout/server/src/db/data/categories.csv
+node games/blackout/scripts/import-db-csv.mjs --table tasks --file games/blackout/server/src/db/data/tasks.csv
+node games/blackout/scripts/import-db-csv.mjs --table default_excluded_letters --file games/blackout/server/src/db/data/default_excluded_letters.csv
 ```

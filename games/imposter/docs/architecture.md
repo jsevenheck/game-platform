@@ -88,14 +88,19 @@ Behavior:
 
 ## Reconnect / Leave Behavior
 
-Standalone mode stores:
+The client stores:
 
 - `playerId`
 - `roomCode`
 - `resumeToken`
 - `name`
 
-in local storage on the client.
+in local storage for reconnect support.
+
+The platform provides `sessionId`, `playerId`, `playerName`, and an optional `joinToken`.
+The client emits `autoJoinRoom`, and the server resolves the room through the in-memory
+`sessionId -> roomCode` map. When reclaiming an existing slot (reconnect), the client must supply
+the server-issued `resumeToken`; the server rejects missing or mismatched tokens.
 
 Reconnect paths:
 
@@ -108,19 +113,6 @@ Leave behavior:
 
 - in `lobby` or `ended`, the player is removed from the room
 - in an active round, the player becomes disconnected so they can reclaim the same slot later
-
-## Platform Embedding Behavior
-
-Embedded mode uses:
-
-- `wsNamespace`
-- `sessionId`
-- `playerId`
-- `playerName`
-- optional `joinToken`
-
-The client emits `autoJoinRoom`, and the server resolves the room through the in-memory
-`sessionId -> roomCode` map. Stable platform player IDs are preserved for reconnects.
 
 ## Phase State Machine
 
@@ -230,4 +222,3 @@ Host-only lobby controls currently include:
 - kick another player from the lobby
 
 Any player may submit a custom word to the library.
-

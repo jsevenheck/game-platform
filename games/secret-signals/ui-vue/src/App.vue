@@ -59,6 +59,7 @@ function emitAutoJoinRoom() {
       playerId: props.playerId || '',
       name: props.playerName || props.playerId || 'Player',
       isHost: props.isHost,
+      resumeToken: store.resumeToken || undefined,
     },
     (res) => {
       autoJoinInFlight.value = false;
@@ -72,6 +73,7 @@ function emitAutoJoinRoom() {
         resumeToken: res.resumeToken,
         name: props.playerName || props.playerId || 'Player',
       });
+      store.saveSession();
     }
   );
 }
@@ -233,7 +235,20 @@ function resumeStoredSession() {
 
 function handleSocketConnect() {
   if (isEmbedded) {
-    emitAutoJoinRoom();
+    if (store.room && store.roomCode && store.playerId && store.resumeToken) {
+      socket.emit(
+        'resumePlayer',
+        { roomCode: store.roomCode, playerId: store.playerId, resumeToken: store.resumeToken },
+        (res) => {
+          if (!res.ok) {
+            store.clearSession();
+            emitAutoJoinRoom();
+          }
+        }
+      );
+    } else {
+      emitAutoJoinRoom();
+    }
     return;
   }
   if (!store.loadSession()) return;
@@ -245,6 +260,13 @@ onMounted(() => {
   socket.on('connect', handleSocketConnect);
 
   if (isEmbedded && props.sessionId) {
+    const savedSession = store.loadSession();
+    store.reset(); // Clear stale room state from a previous match (e.g. after replay re-mount)
+    // Restore the saved token so emitAutoJoinRoom can reclaim the slot on reload.
+    if (savedSession) {
+      store.setSession(savedSession);
+    }
+
     if (socket.connected) {
       emitAutoJoinRoom();
     } else {

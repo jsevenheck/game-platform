@@ -60,10 +60,39 @@ async function loadGameComponent(): Promise<void> {
   }
 }
 
+// Lightweight re-bind used on every reconnect after the component is mounted.
+// Does not await or resolve a Promise — fire-and-forget re-registration.
+function resumePartyBinding() {
+  const session = store.loadSession();
+  if (!session) return;
+  socket.emit(
+    'resumeParty',
+    {
+      inviteCode: session.inviteCode,
+      playerId: session.playerId,
+      resumeToken: session.resumeToken,
+    },
+    (res) => {
+      if (!res.ok) {
+        store.clearSession();
+        router.push('/');
+        return;
+      }
+      store.setSession({
+        playerId: session.playerId,
+        playerName: session.playerName,
+        inviteCode: session.inviteCode,
+        resumeToken: session.resumeToken,
+      });
+      store.applyPartyUpdate(res.partyView);
+    }
+  );
+}
+
 onMounted(async () => {
   socket.on('partyUpdate', handlePartyUpdate);
 
-  // Resume party state if needed
+  // Resume party state if needed (initial load / hard reload)
   if (!store.party) {
     const session = store.loadSession();
     if (!session) {
@@ -75,7 +104,11 @@ onMounted(async () => {
       const doResume = () => {
         socket.emit(
           'resumeParty',
-          { inviteCode: session.inviteCode, playerId: session.playerId },
+          {
+            inviteCode: session.inviteCode,
+            playerId: session.playerId,
+            resumeToken: session.resumeToken,
+          },
           (res) => {
             if (!res.ok) {
               store.clearSession();
@@ -86,6 +119,7 @@ onMounted(async () => {
               playerId: session.playerId,
               playerName: session.playerName,
               inviteCode: session.inviteCode,
+              resumeToken: session.resumeToken,
             });
             store.applyPartyUpdate(res.partyView);
             resolve();
@@ -102,6 +136,10 @@ onMounted(async () => {
     });
   }
 
+  // Register reconnect handler after initial setup — avoids double-firing
+  // on the first connect event alongside the socket.once above.
+  socket.on('connect', resumePartyBinding);
+
   // If after resume there's no active match, go back to party lobby
   if (!store.party?.activeMatch) {
     router.push(`/party/${props.inviteCode}`);
@@ -113,6 +151,7 @@ onMounted(async () => {
 
 onBeforeUnmount(() => {
   socket.off('partyUpdate', handlePartyUpdate);
+  socket.off('connect', resumePartyBinding);
 });
 </script>
 

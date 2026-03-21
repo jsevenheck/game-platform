@@ -17,7 +17,7 @@ export default defineConfig({
   forbidOnly: !!process.env.CI,
   retries: process.env.CI ? 2 : 0,
   workers: 1,
-  reporter: 'html',
+  reporter: [['html', { open: 'never' }]],
   use: {
     baseURL: 'http://localhost:5173',
     headless: true,
@@ -34,6 +34,7 @@ export default defineConfig({
       command: `${pnpmCommand} -C apps/platform dev:server`,
       port: 3000,
       reuseExistingServer: !process.env.CI,
+      env: { E2E_TESTS: '1' },
     },
     {
       command: `${pnpmCommand} -C apps/platform dev:client`,

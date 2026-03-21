@@ -15,9 +15,8 @@
       "Bash(pnpm lint:*)",
       "Bash(pnpm add*)",
       "Bash(pnpm exec playwright*)",
+      "Bash(pnpm playwright-cli*)",
       "Bash(git status)",
-      "Bash(git add *)",
-      "Bash(git commit*)",
       "Bash(git diff*)",
       "EditFile(**/*.ts)",
       "EditFile(**/*.vue)",
@@ -37,6 +36,9 @@
       "Bash(pnpm test:e2e:*)"
     ],
     "deny": [
+      "Bash(git add *)",
+      "Bash(git commit*)",
+      "Bash(git merge*)",
       "EditFile(.env*)",
       "EditFile(pnpm-lock.yaml)",
       "DeleteFile(package.json)",

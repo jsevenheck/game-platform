@@ -40,6 +40,11 @@ const GAME_ID = 'secret-signals';
 
 type GameSocket = Socket<ClientToServerEvents, ServerToClientEvents>;
 
+function verifyPlayer(socket: GameSocket, roomCode: string, playerId: string): boolean {
+  const index = getSocketIndex(socket.id);
+  return index !== undefined && index.roomCode === roomCode && index.playerId === playerId;
+}
+
 export function registerGame(io: Server, namespace = `/g/${GAME_ID}`): void {
   const nsp = io.of(namespace);
 
@@ -141,12 +146,24 @@ export function registerGame(io: Server, namespace = `/g/${GAME_ID}`): void {
       if (hubPlayerId) {
         const existingPlayer = mappedRoom.players[hubPlayerId];
         if (existingPlayer) {
+          // Require the server-issued resumeToken to prevent slot hijacking via public playerId.
+          if (data.resumeToken && existingPlayer.resumeToken !== data.resumeToken) {
+            return cb({ ok: false, error: 'Invalid resume token' });
+          }
+          if (!data.resumeToken && existingPlayer.resumeToken) {
+            return cb({ ok: false, error: 'Resume token required' });
+          }
+
           if (existingPlayer.socketId && existingPlayer.socketId !== socket.id) {
             deleteSocketIndex(existingPlayer.socketId);
           }
           existingPlayer.socketId = socket.id;
           existingPlayer.connected = true;
-          if (existingPlayer.isHost) {
+          if (existingPlayer.isHost || data.isHost) {
+            for (const p of Object.values(mappedRoom.players)) {
+              p.isHost = false;
+            }
+            existingPlayer.isHost = true;
             mappedRoom.hostId = existingPlayer.id;
           }
           setSocketIndex(socket.id, mappedRoom.code, existingPlayer.id);
@@ -176,6 +193,13 @@ export function registerGame(io: Server, namespace = `/g/${GAME_ID}`): void {
       const player = createPlayer(name, false, hubPlayerId || undefined);
       player.socketId = socket.id;
       mappedRoom.players[player.id] = player;
+      if (data.isHost) {
+        for (const p of Object.values(mappedRoom.players)) {
+          p.isHost = false;
+        }
+        player.isHost = true;
+        mappedRoom.hostId = player.id;
+      }
       setSocketIndex(socket.id, mappedRoom.code, player.id);
       clearRoomCleanup(mappedRoom.code);
       socket.join(mappedRoom.code);
@@ -212,8 +236,10 @@ export function registerGame(io: Server, namespace = `/g/${GAME_ID}`): void {
 
     socket.on('requestState', (data) => {
       const room = getRoom(data.roomCode);
-      if (!room || !room.players[data.playerId]) return;
-      sendRoomToPlayer(nsp, room, data.playerId);
+      if (!room) return;
+      const socketIdx = getSocketIndex(socket.id);
+      if (!socketIdx || socketIdx.roomCode !== data.roomCode) return;
+      sendRoomToPlayer(nsp, room, socketIdx.playerId);
     });
 
     socket.on('leaveRoom', (data, cb) => {
@@ -260,7 +286,8 @@ export function registerGame(io: Server, namespace = `/g/${GAME_ID}`): void {
     socket.on('setTeamCount', (data, cb) => {
       const room = getRoom(data.roomCode);
       if (!room) return cb({ ok: false, error: 'Room not found' });
-      if (room.hostId !== data.playerId) return cb({ ok: false, error: 'Only host can change' });
+      if (!verifyPlayer(socket, data.roomCode, room.hostId ?? ''))
+        return cb({ ok: false, error: 'Only host can change' });
       if (room.phase !== 'lobby') return cb({ ok: false, error: 'Game already started' });
       if (data.teamCount < MIN_TEAMS || data.teamCount > MAX_TEAMS) {
         return cb({ ok: false, error: `Team count must be ${MIN_TEAMS}-${MAX_TEAMS}` });
@@ -294,7 +321,8 @@ export function registerGame(io: Server, namespace = `/g/${GAME_ID}`): void {
     socket.on('setAssassinPenaltyMode', (data, cb) => {
       const room = getRoom(data.roomCode);
       if (!room) return cb({ ok: false, error: 'Room not found' });
-      if (room.hostId !== data.playerId) return cb({ ok: false, error: 'Only host can change' });
+      if (!verifyPlayer(socket, data.roomCode, room.hostId ?? ''))
+        return cb({ ok: false, error: 'Only host can change' });
       if (room.phase !== 'lobby') return cb({ ok: false, error: 'Game already started' });
       if (!ASSASSIN_PENALTY_MODES.includes(data.mode)) {
         return cb({ ok: false, error: 'Invalid assassin mode' });
@@ -311,7 +339,8 @@ export function registerGame(io: Server, namespace = `/g/${GAME_ID}`): void {
       if (room.phase !== 'playing') return cb({ ok: false, error: 'Game not in progress' });
       if (room.turnPhase !== 'guessing') return cb({ ok: false, error: 'Not guessing phase' });
 
-      const player = room.players[data.playerId];
+      const socketIdx = getSocketIndex(socket.id);
+      const player = socketIdx ? room.players[socketIdx.playerId] : undefined;
       if (!player) return cb({ ok: false, error: 'Player not found' });
       if (player.team !== room.currentTurnTeam) return cb({ ok: false, error: 'Not your turn' });
       if (player.role !== 'agent') return cb({ ok: false, error: 'Only agents can mark cards' });
@@ -346,7 +375,8 @@ export function registerGame(io: Server, namespace = `/g/${GAME_ID}`): void {
       if (!room) return cb({ ok: false, error: 'Room not found' });
       if (room.phase !== 'lobby') return cb({ ok: false, error: 'Game already started' });
 
-      const player = room.players[data.playerId];
+      const socketIdx = getSocketIndex(socket.id);
+      const player = socketIdx ? room.players[socketIdx.playerId] : undefined;
       if (!player) return cb({ ok: false, error: 'Player not found' });
 
       const activeColors = getActiveTeamColors(room.teamCount);
@@ -368,7 +398,8 @@ export function registerGame(io: Server, namespace = `/g/${GAME_ID}`): void {
       if (!room) return cb({ ok: false, error: 'Room not found' });
       if (room.phase !== 'lobby') return cb({ ok: false, error: 'Game already started' });
 
-      const player = room.players[data.playerId];
+      const socketIdx = getSocketIndex(socket.id);
+      const player = socketIdx ? room.players[socketIdx.playerId] : undefined;
       if (!player) return cb({ ok: false, error: 'Player not found' });
       if (!player.team) return cb({ ok: false, error: 'Choose a team first' });
 
@@ -417,7 +448,8 @@ export function registerGame(io: Server, namespace = `/g/${GAME_ID}`): void {
     socket.on('startGame', (data, cb) => {
       const room = getRoom(data.roomCode);
       if (!room) return cb({ ok: false, error: 'Room not found' });
-      if (room.hostId !== data.playerId) return cb({ ok: false, error: 'Only host can start' });
+      if (!verifyPlayer(socket, data.roomCode, room.hostId ?? ''))
+        return cb({ ok: false, error: 'Only host can start' });
       if (room.phase !== 'lobby') return cb({ ok: false, error: 'Game already started' });
 
       const minimumPlayers = getMinimumPlayersForTeamCount(room.teamCount);
@@ -442,7 +474,8 @@ export function registerGame(io: Server, namespace = `/g/${GAME_ID}`): void {
       if (room.phase !== 'playing') return cb({ ok: false, error: 'Game not in progress' });
       if (room.turnPhase !== 'giving-signal') return cb({ ok: false, error: 'Not signal phase' });
 
-      const player = room.players[data.playerId];
+      const socketIdx = getSocketIndex(socket.id);
+      const player = socketIdx ? room.players[socketIdx.playerId] : undefined;
       if (!player) return cb({ ok: false, error: 'Player not found' });
       if (player.team !== room.currentTurnTeam) return cb({ ok: false, error: 'Not your turn' });
       if (player.role !== 'director') return cb({ ok: false, error: 'Only director can signal' });
@@ -475,7 +508,8 @@ export function registerGame(io: Server, namespace = `/g/${GAME_ID}`): void {
       if (room.phase !== 'playing') return cb({ ok: false, error: 'Game not in progress' });
       if (room.turnPhase !== 'guessing') return cb({ ok: false, error: 'Not guessing phase' });
 
-      const player = room.players[data.playerId];
+      const socketIdx = getSocketIndex(socket.id);
+      const player = socketIdx ? room.players[socketIdx.playerId] : undefined;
       if (!player) return cb({ ok: false, error: 'Player not found' });
       if (player.team !== room.currentTurnTeam) return cb({ ok: false, error: 'Not your turn' });
       if (player.role !== 'agent') return cb({ ok: false, error: 'Only agents can guess' });
@@ -513,7 +547,8 @@ export function registerGame(io: Server, namespace = `/g/${GAME_ID}`): void {
       if (room.phase !== 'playing') return cb({ ok: false, error: 'Game not in progress' });
       if (room.turnPhase !== 'guessing') return cb({ ok: false, error: 'Not guessing phase' });
 
-      const player = room.players[data.playerId];
+      const socketIdx = getSocketIndex(socket.id);
+      const player = socketIdx ? room.players[socketIdx.playerId] : undefined;
       if (!player) return cb({ ok: false, error: 'Player not found' });
       if (player.team !== room.currentTurnTeam) return cb({ ok: false, error: 'Not your turn' });
       if (player.role !== 'agent') return cb({ ok: false, error: 'Only agents can end turn' });
@@ -529,7 +564,8 @@ export function registerGame(io: Server, namespace = `/g/${GAME_ID}`): void {
       if (!room) return cb({ ok: false, error: 'Room not found' });
       if (room.phase !== 'playing') return cb({ ok: false, error: 'Game not in progress' });
       if (!room.turnPhase) return cb({ ok: false, error: 'No active turn to skip' });
-      if (room.hostId !== data.playerId) return cb({ ok: false, error: 'Only host can skip' });
+      if (!verifyPlayer(socket, data.roomCode, room.hostId ?? ''))
+        return cb({ ok: false, error: 'Only host can skip' });
 
       if (room.turnPhase === 'guessing') {
         addLogEntry(room, 'voluntary');
@@ -542,7 +578,8 @@ export function registerGame(io: Server, namespace = `/g/${GAME_ID}`): void {
     socket.on('restartGame', (data, cb) => {
       const room = getRoom(data.roomCode);
       if (!room) return cb({ ok: false, error: 'Room not found' });
-      if (room.hostId !== data.playerId) return cb({ ok: false, error: 'Only host can restart' });
+      if (!verifyPlayer(socket, data.roomCode, room.hostId ?? ''))
+        return cb({ ok: false, error: 'Only host can restart' });
 
       transitionToLobby(room);
       broadcastRoom(nsp, room);

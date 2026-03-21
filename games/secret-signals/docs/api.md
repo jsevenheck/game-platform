@@ -56,6 +56,40 @@ Behavior:
 - when a disconnected resumable slot with the same name already exists, the server reclaims that slot instead of creating a duplicate player
 - this reclaim path also works while a game is already in progress
 
+#### `autoJoinRoom`
+
+Platform embedding flow. Creates or rejoins a room keyed by `sessionId` (the platform matchKey).
+
+```ts
+autoJoinRoom(
+  data: {
+    sessionId: string;
+    playerId: string;
+    name: string;
+    isHost?: boolean;
+    resumeToken?: string;
+  },
+  cb
+)
+```
+
+Response:
+
+```ts
+{
+  ok: true;
+  roomCode: string;
+  playerId: string;
+  resumeToken: string;
+}
+```
+
+Notes:
+
+- When `isHost: true`, the server transfers the host role to this player.
+- **First join** (no existing slot for `playerId`): `resumeToken` is not required.
+- **Reconnect** (slot already exists): `resumeToken` must be present and valid. Missing or wrong token returns `{ ok: false, error: 'Resume token required' }` or `'Invalid resume token'`.
+
 #### `resumePlayer`
 
 ```ts
@@ -86,7 +120,7 @@ Sends a fresh `roomState` only to the requesting player.
 leaveRoom(data: { roomCode: string; playerId: string }, cb)
 ```
 
-Standalone only. Clears the local session on success.
+Clears the local session on success.
 
 Behavior:
 

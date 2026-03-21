@@ -69,6 +69,11 @@ function assignHost(room: Room, newHostId: string): void {
   nextHost.isHost = true;
 }
 
+function verifyPlayer(socket: BlackoutSocket, roomCode: string, playerId: string): boolean {
+  const index = getSocketIndex(socket.id);
+  return index !== undefined && index.roomCode === roomCode && index.playerId === playerId;
+}
+
 function normalizeStablePlayerId(value: unknown): string | null {
   if (typeof value !== 'string') return null;
   const trimmed = value.trim();
@@ -228,6 +233,13 @@ export function registerBlackout(io: Server, namespace: string | Namespace = '/g
 
         if (reconnectPlayerId && existingRoom.players[reconnectPlayerId]) {
           const player = existingRoom.players[reconnectPlayerId];
+          // Require the server-issued resumeToken to prevent slot hijacking via public playerId.
+          if (data.resumeToken && player.resumeToken !== data.resumeToken) {
+            return cb({ ok: false, error: 'Invalid resume token' });
+          }
+          if (!data.resumeToken && player.resumeToken) {
+            return cb({ ok: false, error: 'Resume token required' });
+          }
           bindPlayerToSocket(nsp, socket, existingRoom, reconnectPlayerId);
           if (wantsHost && existingRoom.hostId !== reconnectPlayerId) {
             assignHost(existingRoom, reconnectPlayerId);
@@ -303,19 +315,19 @@ export function registerBlackout(io: Server, namespace: string | Namespace = '/g
       const room = getRoom(data.roomCode);
       if (!room) return;
 
-      const player = room.players[data.playerId];
+      const socketIdx = getSocketIndex(socket.id);
+      const player = socketIdx ? room.players[socketIdx.playerId] : undefined;
       if (!player) return;
 
-      delete room.players[data.playerId];
-      if (player.socketId) {
-        deleteSocketIndex(player.socketId);
-      }
-      if (room.ownerId === data.playerId) {
+      delete room.players[player.id];
+      deleteSocketIndex(socket.id);
+
+      if (room.ownerId === player.id) {
         room.ownerId = null;
       }
 
       // If host left, assign new host
-      if (room.hostId === data.playerId) {
+      if (room.hostId === player.id) {
         const remaining = Object.values(room.players);
         const newHost = remaining[0];
         if (newHost) {
@@ -342,7 +354,7 @@ export function registerBlackout(io: Server, namespace: string | Namespace = '/g
     socket.on('updateMaxRounds', (data) => {
       const room = getRoom(data.roomCode);
       if (!room) return;
-      if (room.hostId !== data.playerId) return;
+      if (!verifyPlayer(socket, data.roomCode, room.hostId ?? '')) return;
       if (room.phase !== 'lobby') return;
 
       const rounds = Math.min(MAX_ROUNDS, Math.max(MIN_ROUNDS, data.maxRounds));
@@ -353,7 +365,7 @@ export function registerBlackout(io: Server, namespace: string | Namespace = '/g
     socket.on('updateRoomSettings', (data) => {
       const room = getRoom(data.roomCode);
       if (!room) return;
-      if (room.hostId !== data.playerId) return;
+      if (!verifyPlayer(socket, data.roomCode, room.hostId ?? '')) return;
       if (room.phase !== 'lobby') return;
       if (!isLanguage(data.language)) return;
 
@@ -365,7 +377,7 @@ export function registerBlackout(io: Server, namespace: string | Namespace = '/g
     socket.on('startGame', (data, cb) => {
       const room = getRoom(data.roomCode);
       if (!room) return cb({ ok: false, error: 'Room not found' });
-      if (room.hostId !== data.playerId) {
+      if (!verifyPlayer(socket, data.roomCode, room.hostId ?? '')) {
         return cb({ ok: false, error: 'Only host can start' });
       }
       if (room.phase !== 'lobby') {
@@ -387,7 +399,7 @@ export function registerBlackout(io: Server, namespace: string | Namespace = '/g
     socket.on('revealCategory', (data) => {
       const room = getRoom(data.roomCode);
       if (!room || !room.currentRound) return;
-      if (room.hostId !== data.playerId) return;
+      if (!verifyPlayer(socket, data.roomCode, room.hostId ?? '')) return;
       if (room.currentRound.revealed) return;
 
       revealCategory(room);
@@ -397,7 +409,7 @@ export function registerBlackout(io: Server, namespace: string | Namespace = '/g
     socket.on('rerollPrompt', (data) => {
       const room = getRoom(data.roomCode);
       if (!room || !room.currentRound) return;
-      if (room.hostId !== data.playerId) return;
+      if (!verifyPlayer(socket, data.roomCode, room.hostId ?? '')) return;
 
       rerollCurrentPrompt(room);
       broadcastRoom(nsp, room);
@@ -406,7 +418,7 @@ export function registerBlackout(io: Server, namespace: string | Namespace = '/g
     socket.on('selectWinner', (data) => {
       const room = getRoom(data.roomCode);
       if (!room || !room.currentRound) return;
-      if (room.hostId !== data.playerId) return;
+      if (!verifyPlayer(socket, data.roomCode, room.hostId ?? '')) return;
       if (!room.currentRound.revealed) return;
       if (!room.players[data.winnerId]?.connected) return;
       if (data.winnerId === room.currentRound.readerId) return;
@@ -420,7 +432,9 @@ export function registerBlackout(io: Server, namespace: string | Namespace = '/g
     socket.on('skipRound', (data) => {
       const room = getRoom(data.roomCode);
       if (!room || !room.currentRound) return;
-      const canSkip = room.hostId === data.playerId || room.ownerId === data.playerId;
+      const socketIdx = getSocketIndex(socket.id);
+      if (!socketIdx || socketIdx.roomCode !== data.roomCode) return;
+      const canSkip = socketIdx.playerId === room.hostId || socketIdx.playerId === room.ownerId;
       if (!canSkip) return;
       advanceRound(data.roomCode);
     });
@@ -428,7 +442,7 @@ export function registerBlackout(io: Server, namespace: string | Namespace = '/g
     socket.on('restartGame', (data) => {
       const room = getRoom(data.roomCode);
       if (!room) return;
-      if (room.hostId !== data.playerId) return;
+      if (!verifyPlayer(socket, data.roomCode, room.hostId ?? '')) return;
 
       resetScores(room);
       transitionToLobby(room);
@@ -438,9 +452,10 @@ export function registerBlackout(io: Server, namespace: string | Namespace = '/g
     socket.on('requestState', (data) => {
       const room = getRoom(data.roomCode);
       if (!room) return;
-      if (!room.players[data.playerId]) return;
+      const socketIdx = getSocketIndex(socket.id);
+      if (!socketIdx || socketIdx.roomCode !== data.roomCode) return;
 
-      sendRoomToPlayer(nsp, room, data.playerId);
+      sendRoomToPlayer(nsp, room, socketIdx.playerId);
     });
 
     socket.on('disconnect', () => {

@@ -1,5 +1,5 @@
 import type { Server } from 'socket.io';
-import { registerGame } from './handlers/socketHandlers';
+import { registerGame, clearRoomTimers } from './handlers/socketHandlers';
 import { getSessionRoom, deleteRoom } from './models/room';
 
 export const definition = {
@@ -20,6 +20,7 @@ export function register(io: Server, namespace = `/g/${definition.id}`) {
 export function cleanupMatch(matchKey: string): void {
   const roomCode = getSessionRoom(matchKey);
   if (roomCode) {
+    clearRoomTimers(roomCode);
     deleteRoom(roomCode);
   }
 }

@@ -123,7 +123,7 @@ describe('socketHandlers autoJoinRoom', () => {
 
     const reconnectCb = jest.fn();
     secondSocket.handlers.autoJoinRoom(
-      { sessionId: 'session-2', playerId: 'hub-player-2', name: 'Host' },
+      { sessionId: 'session-2', playerId: 'hub-player-2', name: 'Host', resumeToken },
       reconnectCb
     );
 

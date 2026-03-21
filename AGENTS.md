@@ -18,6 +18,16 @@ games/secret-signals/ ← internal source module
 - `matchKey` is the unique identifier per match, passed as `sessionId` to each game's `autoJoinRoom` handler.
 - `@shared/*` in game UI code resolves to `games/{game}/core/src/` via Vite's context-sensitive alias (see `apps/platform/vite.config.ts`) and per-game `ui-vue/tsconfig.json`.
 
+## Skills
+
+Custom skills live in `.skills/`.
+
+| Skill            | Trigger description                                                                                   |
+| ---------------- | ----------------------------------------------------------------------------------------------------- |
+| `playwright-cli` | Browser automation — navigate, click, fill, screenshot via `playwright-cli` CLI                       |
+| `pnpm`           | pnpm-specific commands, workspace config, catalogs, overrides, patches                                |
+| `ui-ux-pro-max`  | UI/UX design intelligence — styles, palettes, font pairings, accessibility, Vue/React/Tailwind stacks |
+
 ## Commands (always run from workspace root)
 
 ```bash

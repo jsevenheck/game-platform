@@ -31,7 +31,9 @@ console.log('[platform] Party handlers registered on /party');
 
 // ─── Static files ─────────────────────────────────────────────────────────────
 
-const clientDist = resolve(__dirname, '../dist/client');
+// In the compiled output __dirname is dist/server/apps/platform/server/ — four levels
+// up lands in dist/, then into client/ where Vite writes the SPA bundle.
+const clientDist = resolve(__dirname, '../../../../client');
 if (existsSync(clientDist)) {
   app.use(express.static(clientDist));
   app.get('*', (_req, res) => {

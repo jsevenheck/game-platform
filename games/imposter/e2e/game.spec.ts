@@ -138,10 +138,9 @@ test.describe('Imposter via Platform', () => {
     await joinPage.fill('#code', inviteCode);
     await joinPage.click('button[type="submit"]');
 
-    // The platform allows joining with same name (party doesn't enforce unique names),
-    // but the game-level duplicate check fires when both try to autoJoin the room.
-    // Verify the party join itself succeeds (unique-name enforcement is game-level).
-    await joinPage.waitForSelector('.code');
+    // The platform enforces unique names at the party level — the server returns an
+    // error and the UI renders it via the .error element.
+    await expect(joinPage.locator('.error')).toBeVisible();
 
     await hostCtx.close();
     await joinCtx.close();

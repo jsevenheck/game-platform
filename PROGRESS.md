@@ -132,16 +132,19 @@ Per PLAN_V3.md — games are now internal source modules, not independent produc
 All three `games/*/e2e/game.spec.ts` files rewritten for the platform flow.
 
 **Shared platform helpers in each spec:**
+
 - `createParty(page, name)` → fills name, submits → returns invite code from `.code`
 - `joinParty(page, name, inviteCode)` → switches to Join Party tab, fills fields, submits
 - `launchGame(hostPage, gameName)` → clicks game card, clicks Launch Game, waits for `/game/` URL
 
 **Coverage per game:**
+
 - **Blackout**: launch + game start, platform overlay → return to party
 - **Imposter**: all original gameplay tests (full round, end game, next round, paranoia mode, guess skip, session resume, replay via overlay)
 - **Secret Signals**: platform home, opening turn, assassin toggle, session resume, guess skip, disconnect rejoin, overlay → return to party
 
 **Key behaviour changes tested:**
+
 - `createRoom`/`joinRoom` replaced with `createParty`/`joinParty`/`launchGame`
 - After launch, all players navigate to `/party/:inviteCode/game/:gameId` automatically
 - Game loads in embedded mode (autoJoinRoom via matchKey)
@@ -152,13 +155,14 @@ All three `games/*/e2e/game.spec.ts` files rewritten for the platform flow.
 
 ## Bug Fixes Found During E2E Testing
 
-### Status: In Progress (2026-03-20 → paused 2026-03-21)
+### Status: Complete (2026-03-21)
 
-E2E tests revealed two bugs. First is fixed, second is partially done.
+E2E tests revealed two bugs. Both fixed.
 
 #### Bug 1: Vite `@shared` alias broken on Windows — FIXED
 
 The original `customResolver` in vite.config.ts alias entries was broken because:
+
 1. Rollup's alias plugin passes the already-replaced source (e.g. `/constants`) rather than the original `@shared/constants` to the custom resolver.
 2. On Windows, `resolve(base, '/constants')` produces `C:/constants`.
 3. Backslash paths in the `importer` argument didn't match forward-slash game directory checks.
@@ -169,40 +173,41 @@ The original `customResolver` in vite.config.ts alias entries was broken because
 - [x] `pnpm typecheck` still passes
 - [x] `pnpm lint` still passes (after format)
 
-#### Bug 2: Non-deterministic host assignment in games — IN PROGRESS
+#### Bug 2: Non-deterministic host assignment in games — FIXED
 
 When the platform launches a game, all players race to emit `autoJoinRoom`. The first player to connect creates the room and becomes host — but that player may not be the platform host. This causes E2E tests to fail because they expect the platform host to also be the game host.
 
 **Solution:** Thread an `isHost` flag from platform → PlatformAdapter → App.vue → `autoJoinRoom` socket event → server handler. The server transfers host when a player with `isHost: true` arrives.
 
 **Completed (all 3 games):**
+
 - [x] `games/*/core/src/events.ts` — added `isHost?: boolean` to autoJoinRoom data type
 - [x] `games/*/ui-vue/src/types/config.ts` — added `isHost?: boolean` to `HubIntegrationProps`
 - [x] `games/*/ui-vue/src/App.vue` — added `isHost` to `withDefaults` + autoJoinRoom emit data
 - [x] `games/*/ui-vue/src/PlatformAdapter.vue` — passes `:is-host="isHost"` to GameApp
 
 **Server-side host transfer — per game:**
+
 - [x] `games/blackout/server/src/socketHandlers.ts` — reads `data.isHost`, calls `assignHost(room, playerId)` for reconnecting and new-joining players when `wantsHost` is true
-- [ ] `games/imposter/server/src/handlers/socketHandlers.ts` — needs same pattern, using existing `setHost(room, playerId)` from `models/room.ts`
-- [ ] `games/secret-signals/server/src/handlers/socketHandlers.ts` — needs same pattern; no `setHost()` utility exists, requires inline host transfer logic (`room.hostId = player.id` + update `isHost` flags)
+- [x] `games/imposter/server/src/handlers/socketHandlers.ts` — reads `data.isHost`, calls `setHost(room, playerId)` when `wantsHost` is true
+- [x] `games/secret-signals/server/src/handlers/socketHandlers.ts` — reads `data.isHost`, inline host transfer (`room.hostId = player.id` + update `isHost` flags)
 
 **Also fixed during this session (2026-03-21):**
+
 - [x] `PlatformAdapter.vue` (all 3 games): replaced broken monitor-socket approach with `@phase-change` event. The monitor socket never received room events (Blackout broadcasts to socket.io room which requires membership; Imposter/SS broadcast to specific player sockets only).
 - [x] `games/*/ui-vue/src/App.vue`: added `defineEmits<{ 'phase-change': [phase: string] }>()`, emit on every room state update
 - [x] Secret Signals e2e test: fixed strict mode violation — `getByRole('button', { name: 'Create Party' })` changed to `page.locator('button.tab', { hasText: 'Create Party' })` (submit button also says "Create Party" in create mode)
 - [x] `pnpm lint` → exit 0, `pnpm typecheck` → exit 0, `pnpm test` → 92/92 pass
 
-**Still TODO:**
-- [ ] Complete Imposter + Secret Signals `autoJoinRoom` server handler fixes (Bug 2)
-- [ ] Run `pnpm lint` + `pnpm typecheck` after all server changes
-- [ ] Run full `pnpm test:e2e` to verify all 16 pass
-- [ ] Investigate Imposter "duplicate name" test (fails at `waitForSelector('.code')` timeout — might clear up after Bug 2 fix)
+**All bugs fixed (2026-03-21):**
 
-## Next Steps
-
-1. Fix Bug 2 server-side for Imposter: add `isHost`-based host transfer to `autoJoinRoom` handler in `games/imposter/server/src/handlers/socketHandlers.ts`
-2. Fix Bug 2 server-side for Secret Signals: same in `games/secret-signals/server/src/handlers/socketHandlers.ts`
-3. Run `pnpm lint && pnpm typecheck && pnpm test && pnpm test:e2e` — expect all 16 e2e to pass
+- [x] Imposter + Secret Signals `autoJoinRoom` server handler: `isHost`-based host transfer complete
+- [x] `playwright.config.ts`: added `env: { E2E_TESTS: '1' }` to server webServer entry
+- [x] Imposter duplicate-name test: fixed to assert `.error` visible (party enforces unique names)
+- [x] Blackout overlay test: reduces rounds to 5 in lobby, then skips 5 rounds to reach `game-over`
+- [x] Secret Signals overlay test: director sends signal, Red agent reveals assassin card → instant game-end
+- [x] Imposter replay test (`store.reset()` on embedded mount): stale `store.room` from ended game was blocking `emitAutoJoinRoom` on re-mount after replay
+- [x] `pnpm lint` → exit 0, `pnpm typecheck` → exit 0, `pnpm test` → 92/92, `pnpm test:e2e` → 16/16
 
 ---
 
@@ -214,15 +219,75 @@ When the platform launches a game, all players race to emit `autoJoinRoom`. The 
 - `matchKey` is passed as `sessionId` to each game's `autoJoinRoom` handler.
 - Blackout's `register()` takes a `Namespace` object — the server adapter calls `io.of(namespacePath)` before delegating.
 - Imposter and Secret Signals' `register()` accept a string path directly.
-- Vite `@shared` alias in platform uses a `customResolver` function that resolves to the correct game's `core/src/` based on which game's directory the importing file comes from.
+- Vite `@shared` alias in platform uses a `sharedAliasPlugin()` Vite plugin (added during Bug 1 fix) that resolves to the correct game's `core/src/` based on which game's directory the importing file comes from.
 - `PlatformAdapter.vue` detects game-end via a `@phase-change` event emitted by each game's `App.vue` on every room state update (earlier monitor-socket approach was replaced because the monitor socket never received room events).
 - Secret Signals needed: `autoJoinRoom` handler, `deleteRoom` sessionToRoom cleanup, `createPlayer` stable-id support, `useSocket` `wsNamespace` option, App.vue embedded mode.
 - Game-level config files consolidated at root (V3 consolidation complete). Only `ui-vue/tsconfig.json` remains per-game due to game-scoped `@shared` path aliasing.
 
 ---
 
+## Codex Security & Bug Audit (2026-03-21)
+
+### Status: Complete
+
+Five findings from Codex audit — tracked here, fixed in order.
+
+- [x] **1 (Kritisch)** Host-Spoofing: `selectGame`, `launchGame`, `replayGame`, `returnToLobby` check `data.playerId === party.hostPlayerId` but never verify the socket belongs to that player. Any party guest can spoof the host's playerId and trigger host-only actions.
+- [x] **2 (Hoch)** Prod static files not served: `resolve(__dirname, '../dist/client')` resolves correctly from source but after tsc compilation `__dirname` is `dist/server/apps/platform/server/` — the path shifts 4 levels deep and `existsSync` always returns false. SPA never mounts in production.
+- [x] **3 (Mittel)** Party reconnect loses binding: all views use `socket.once('connect', doResume)` — fires only on initial connect. After a real network drop, Socket.IO reconnects and re-emits `connect`, but the `once` listener is gone. Client loses party binding until manual reload.
+- [x] **4 (Mittel)** Imposter `cleanupMatch` incomplete: `deleteRoom()` only removes the room from Maps. `discussionTimers` and `guessTimers` in `socketHandlers.ts` are not cleared — ghost timers fire for up to 5 min after match ends.
+- [x] **5 (Niedrig)** Doc inconsistencies: `adding-a-new-game.md` scaffolds `ui-vue/src/index.ts` but the platform never imports it (loads `PlatformAdapter.vue` directly). PROGRESS.md marks Bug 2 as both "IN PROGRESS" and "All bugs fixed" simultaneously.
+
+---
+
+## Codex Security Audit — Round 2 (2026-03-21)
+
+### Status: Complete
+
+Three new findings from second Codex review.
+
+- [x] **1 (Kritisch)** `resumeParty` session hijacking: any client knowing a player's `playerId` (broadcast in every `partyUpdate`) can call `resumeParty` with that ID to steal the player's socket binding. Once bound, the attacker passes all socket-authoritative host checks added in audit round 1.
+- [x] **2 (Kritisch)** Game-namespace host/role spoofing: Blackout authorises host actions via `data.playerId` without socket verification (`updateMaxRounds`, `updateRoomSettings`, `startGame`, `revealCategory`, `rerollPrompt`, `selectWinner`, `skipRound`, `restartGame`). Secret Signals has the same issue for host actions (`setTeamCount`, `setAssassinPenaltyMode`, `startGame`, `skipGuessRound`, `restartGame`) and for role-based gameplay actions (`focusCard`, `assignTeam`, `assignRole`, `giveSignal`, `revealCard`, `endTurn`). Imposter already has a `verifyPlayer(socket, roomCode, playerId)` helper and is unaffected.
+- [x] **3 (Niedrig)** PROGRESS.md inconsistencies: Bug 2 checkboxes (lines 186–187) still unchecked despite being fixed; E2E rewrite blocker (line 237) still listed as open despite 16/16 passing.
+
+---
+
+## Codex Security Audit — Round 3 (2026-03-21)
+
+### Status: Complete
+
+Three further findings from third Codex review.
+
+- [x] **1 (Kritisch)** `resumeParty` still fully hijackable after disconnect: round-2 fix only blocked taking over an _active_ socket (`member.connected` guard). After network drop, `connected = false` / `socketId = null`, so the guard never fired. Fixed by issuing a `nanoid(24)` `resumeToken` per `PartyMember` on create/join, validating it in `resumeParty`, and stripping it from `partyToView` so it is never broadcast. Clients store and re-send the token on reconnect.
+- [x] **2 (Kritisch)** `autoJoinRoom` game-slot identity takeover: platform passes the party-level `playerId` to `autoJoinRoom` so the server can reclaim the correct slot. Because `playerId` is broadcast in every `partyUpdate`, any guest can supply any victim's `playerId` and steal their game slot. Fixed by issuing a game-level `resumeToken` (nanoid-24) per player on first join, requiring it for all subsequent slot reclaims in `autoJoinRoom`. Game clients store and re-send the token. On reconnect when room state is already loaded, game clients call `resumePlayer` (which also validates the token) instead of `autoJoinRoom`.
+- [x] **3 (Niedrig)** PROGRESS.md inconsistencies: round-2 findings section still marked "In Progress" and residual heading contradictions. Fixed in this round.
+
+---
+
+## Codex Security Audit — Round 4 (2026-03-21)
+
+### Status: Complete
+
+Three findings from fourth Codex review.
+
+- [x] **1 (Hoch)** Embedded `autoJoinRoom` token not persisted: on fresh mount (page reload, new browser context), `store.resumeToken` is null because `saveSession()` was never called in the embedded success path — only in standalone paths. Server now requires a token to reclaim an existing slot, so the reload scenario failed with "Resume token required". Fixed by calling `store.saveSession()` in the embedded `autoJoinRoom` success callback in all 3 game `App.vue` files, and restoring the saved session from localStorage at the start of the embedded mount path so the token is available before the first `emitAutoJoinRoom` call.
+- [x] **2 (Mittel)** Same gap in Imposter and Blackout (inferred from code): same missing `saveSession()` in embedded path and same absent session-restore on mount. Fixed alongside finding 1.
+- [x] **3 (Niedrig)** PROGRESS.md contradictions: round-1 audit still "In Progress", Bug 2 sub-items described as "needs" work while all checkboxes set. Fixed.
+
+---
+
+## Codex Security Audit — Round 5 (2026-03-21)
+
+### Status: Complete
+
+Two findings from fifth Codex review.
+
+- [x] **1 (Mittel)** Secret Signals replay path fragile: on embedded re-mount (replay), the saved session was restored but stale `store.room` from the old game was not cleared (unlike Imposter which calls `store.reset()`). This caused `emitAutoJoinRoom` to be blocked by the `store.room` guard, and `handleSocketConnect` to attempt `resumePlayer` against the old `roomCode`. Fixed by adding `store.reset()` before `store.setSession(savedSession)` in the SS embedded mount path — the same load → reset → restore pattern already used in Imposter.
+- [x] **2 (Niedrig)** PROGRESS.md stale `customResolver` description (line 222) — replaced with accurate `sharedAliasPlugin()` description.
+
+---
+
 ## Open Questions / Blockers
 
-- `games/*/e2e/` tests target the old standalone game flow and need to be rewritten for the platform flow.
 - The `@blackout-client`, `@imposter-client`, `@secret-signals-client` aliases in the old `registry/index.ts` were replaced with proper `@blackout-ui`, `@imposter-ui`, `@secret-signals-ui` Vite aliases.
 - Blackout's `server/src/socketHandlers.ts` uses `bindPlayerToSocket` — this is an internal function verified to exist; the `cleanupMatch` import of `getSessionRoom`/`deleteRoom` is from the same module and correct.

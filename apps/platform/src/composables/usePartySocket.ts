@@ -5,17 +5,21 @@ interface PartyClientToServerEvents {
   createParty: (
     data: { playerName: string },
     cb: (
-      res: { ok: true; partyView: PartyView; playerId: string } | { ok: false; error: string }
+      res:
+        | { ok: true; partyView: PartyView; playerId: string; resumeToken: string }
+        | { ok: false; error: string }
     ) => void
   ) => void;
   joinParty: (
     data: { inviteCode: string; playerName: string },
     cb: (
-      res: { ok: true; partyView: PartyView; playerId: string } | { ok: false; error: string }
+      res:
+        | { ok: true; partyView: PartyView; playerId: string; resumeToken: string }
+        | { ok: false; error: string }
     ) => void
   ) => void;
   resumeParty: (
-    data: { inviteCode: string; playerId: string },
+    data: { inviteCode: string; playerId: string; resumeToken: string },
     cb: (res: { ok: true; partyView: PartyView } | { ok: false; error: string }) => void
   ) => void;
   leaveParty: (data: { playerId: string }) => void;

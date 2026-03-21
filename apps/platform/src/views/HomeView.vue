@@ -27,6 +27,7 @@ function handleCreate() {
       playerId: res.playerId,
       playerName: name,
       inviteCode: res.partyView.inviteCode,
+      resumeToken: res.resumeToken,
     });
     store.applyPartyUpdate(res.partyView);
     store.saveSession(res.partyView.inviteCode);
@@ -49,6 +50,7 @@ function handleJoin() {
       playerId: res.playerId,
       playerName: name,
       inviteCode: res.partyView.inviteCode,
+      resumeToken: res.resumeToken,
     });
     store.applyPartyUpdate(res.partyView);
     store.saveSession(res.partyView.inviteCode);
@@ -62,7 +64,11 @@ function tryResume() {
 
   socket.emit(
     'resumeParty',
-    { inviteCode: session.inviteCode, playerId: session.playerId },
+    {
+      inviteCode: session.inviteCode,
+      playerId: session.playerId,
+      resumeToken: session.resumeToken,
+    },
     (res) => {
       if (!res.ok) {
         store.clearSession();
@@ -72,6 +78,7 @@ function tryResume() {
         playerId: session.playerId,
         playerName: session.playerName,
         inviteCode: session.inviteCode,
+        resumeToken: session.resumeToken,
       });
       store.applyPartyUpdate(res.partyView);
 
@@ -86,17 +93,18 @@ function tryResume() {
 
 onMounted(() => {
   socket.on('partyUpdate', store.applyPartyUpdate);
+  socket.on('connect', tryResume);
 
   if (socket.connected) {
     tryResume();
   } else {
-    socket.once('connect', tryResume);
     socket.connect();
   }
 });
 
 onBeforeUnmount(() => {
   socket.off('partyUpdate', store.applyPartyUpdate);
+  socket.off('connect', tryResume);
 });
 </script>
 

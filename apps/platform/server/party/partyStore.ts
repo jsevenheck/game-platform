@@ -21,15 +21,17 @@ export function createParty(
   hostPlayerId: string,
   hostName: string,
   socketId: string
-): PartySession {
+): { party: PartySession; hostResumeToken: string } {
   const partyId = nanoid(12);
   const inviteCode = generateInviteCode();
+  const hostResumeToken = nanoid(24);
 
   const host: PartyMember = {
     playerId: hostPlayerId,
     name: hostName,
     connected: true,
     socketId,
+    resumeToken: hostResumeToken,
   };
 
   const party: PartySession = {
@@ -48,7 +50,7 @@ export function createParty(
   inviteCodeToParty.set(inviteCode, partyId);
   socketToParty.set(socketId, partyId);
 
-  return party;
+  return { party, hostResumeToken };
 }
 
 export function getParty(partyId: string): PartySession | undefined {
@@ -91,7 +93,7 @@ export function partyToView(party: PartySession) {
     partyId: party.partyId,
     inviteCode: party.inviteCode,
     hostPlayerId: party.hostPlayerId,
-    members: Array.from(party.members.values()),
+    members: Array.from(party.members.values()).map(({ resumeToken: _rt, ...pub }) => pub),
     selectedGameId: party.selectedGameId,
     activeMatch: party.activeMatch,
     status: party.status,

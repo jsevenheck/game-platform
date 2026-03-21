@@ -81,7 +81,13 @@ Platform embedding flow. The server maps `sessionId -> roomCode` and reuses the 
 
 ```ts
 autoJoinRoom(
-  data: { sessionId: string; playerId: string; name: string },
+  data: {
+    sessionId: string;
+    playerId: string;
+    name: string;
+    isHost?: boolean;
+    resumeToken?: string;
+  },
   cb
 )
 ```
@@ -96,6 +102,12 @@ Success:
   resumeToken: string;
 }
 ```
+
+Notes:
+
+- When `isHost: true`, the server transfers host to this player.
+- **First join** (no existing slot for `playerId`): `resumeToken` is not required.
+- **Reconnect** (slot already exists): `resumeToken` must be present and valid. Missing or wrong token returns an error (`Resume token required` or `Invalid resume token`).
 
 #### `resumePlayer`
 

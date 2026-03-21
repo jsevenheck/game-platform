@@ -45,49 +45,57 @@ function handlePartyUpdate(view: Parameters<typeof store.applyPartyUpdate>[0]) {
   }
 }
 
-onMounted(() => {
-  socket.on('partyUpdate', handlePartyUpdate);
-
-  // If we already have party state (arrived via redirect), stay
-  if (store.party?.inviteCode === props.inviteCode) return;
-
-  // Otherwise resume from session
+// Hoisted so it can be registered for reconnects as well as initial mount.
+// Reads the session fresh each time — safe to call repeatedly.
+function doResume() {
   const session = store.loadSession();
   if (!session || session.inviteCode !== props.inviteCode) {
     router.push('/');
     return;
   }
-
-  const doResume = () => {
-    socket.emit(
-      'resumeParty',
-      { inviteCode: session.inviteCode, playerId: session.playerId },
-      (res) => {
-        if (!res.ok) {
-          store.clearSession();
-          router.push('/');
-          return;
-        }
-        store.setSession({
-          playerId: session.playerId,
-          playerName: session.playerName,
-          inviteCode: session.inviteCode,
-        });
-        store.applyPartyUpdate(res.partyView);
+  socket.emit(
+    'resumeParty',
+    {
+      inviteCode: session.inviteCode,
+      playerId: session.playerId,
+      resumeToken: session.resumeToken,
+    },
+    (res) => {
+      if (!res.ok) {
+        store.clearSession();
+        router.push('/');
+        return;
       }
-    );
-  };
+      store.setSession({
+        playerId: session.playerId,
+        playerName: session.playerName,
+        inviteCode: session.inviteCode,
+        resumeToken: session.resumeToken,
+      });
+      store.applyPartyUpdate(res.partyView);
+    }
+  );
+}
 
+onMounted(() => {
+  socket.on('partyUpdate', handlePartyUpdate);
+  // Re-bind to party on every reconnect (network drop → new socket ID on server)
+  socket.on('connect', doResume);
+
+  // If we already have party state (arrived via redirect), no initial resume needed
+  if (store.party?.inviteCode === props.inviteCode) return;
+
+  // Otherwise resume from session
   if (socket.connected) {
     doResume();
   } else {
-    socket.once('connect', doResume);
     socket.connect();
   }
 });
 
 onBeforeUnmount(() => {
   socket.off('partyUpdate', handlePartyUpdate);
+  socket.off('connect', doResume);
 });
 </script>
 

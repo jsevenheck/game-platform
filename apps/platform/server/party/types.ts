@@ -5,6 +5,8 @@ export interface PartyMember {
   name: string;
   connected: boolean;
   socketId: string | null;
+  /** Server-issued secret; never broadcast. Required to re-bind after disconnect. */
+  resumeToken: string;
 }
 
 export interface PartyMatch {

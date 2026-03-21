@@ -34,7 +34,7 @@ export const clientGameRegistry: PlatformGameModule[] = [
       id: 'secret-signals',
       name: 'Secret Signals',
       minPlayers: 4,
-      maxPlayers: 16,
+      maxPlayers: 24,
     },
     loadClient: () => import('@secret-signals-ui/PlatformAdapter.vue'),
   },

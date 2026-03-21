@@ -17,7 +17,12 @@ interface PartyClientToServerEvents {
     data: { playerName: string },
     cb: (
       res:
-        | { ok: true; partyView: ReturnType<typeof partyToView>; playerId: string }
+        | {
+            ok: true;
+            partyView: ReturnType<typeof partyToView>;
+            playerId: string;
+            resumeToken: string;
+          }
         | { ok: false; error: string }
     ) => void
   ) => void;
@@ -25,12 +30,17 @@ interface PartyClientToServerEvents {
     data: { inviteCode: string; playerName: string },
     cb: (
       res:
-        | { ok: true; partyView: ReturnType<typeof partyToView>; playerId: string }
+        | {
+            ok: true;
+            partyView: ReturnType<typeof partyToView>;
+            playerId: string;
+            resumeToken: string;
+          }
         | { ok: false; error: string }
     ) => void
   ) => void;
   resumeParty: (
-    data: { inviteCode: string; playerId: string },
+    data: { inviteCode: string; playerId: string; resumeToken: string },
     cb: (
       res: { ok: true; partyView: ReturnType<typeof partyToView> } | { ok: false; error: string }
     ) => void
@@ -81,10 +91,10 @@ export function registerPartyHandlers(io: Server): void {
       }
 
       const playerId = nanoid(8);
-      const party = createParty(playerId, name, socket.id);
+      const { party, hostResumeToken } = createParty(playerId, name, socket.id);
       socket.join(party.partyId);
 
-      cb({ ok: true, partyView: partyToView(party), playerId });
+      cb({ ok: true, partyView: partyToView(party), playerId, resumeToken: hostResumeToken });
     });
 
     socket.on('joinParty', (data, cb) => {
@@ -110,18 +120,20 @@ export function registerPartyHandlers(io: Server): void {
       }
 
       const playerId = nanoid(8);
+      const memberResumeToken = nanoid(24);
       party.members.set(playerId, {
         playerId,
         name,
         connected: true,
         socketId: socket.id,
+        resumeToken: memberResumeToken,
       });
 
       registerSocket(socket.id, party.partyId);
       socket.join(party.partyId);
       broadcastParty(io, party);
 
-      cb({ ok: true, partyView: partyToView(party), playerId });
+      cb({ ok: true, partyView: partyToView(party), playerId, resumeToken: memberResumeToken });
     });
 
     socket.on('resumeParty', (data, cb) => {
@@ -136,6 +148,11 @@ export function registerPartyHandlers(io: Server): void {
       const member = party.members.get(playerId);
       if (!member) {
         return cb({ ok: false, error: 'Player not in party' });
+      }
+
+      // Verify server-issued resume token — prevents session hijacking via public playerId.
+      if (member.resumeToken !== data.resumeToken) {
+        return cb({ ok: false, error: 'Invalid resume token' });
       }
 
       // Update socket binding
@@ -184,7 +201,8 @@ export function registerPartyHandlers(io: Server): void {
     socket.on('selectGame', (data, cb) => {
       const party = getPartyBySocket(socket.id);
       if (!party) return cb({ ok: false, error: 'Not in a party' });
-      if (party.hostPlayerId !== data.playerId) {
+      const actor = Array.from(party.members.values()).find((m) => m.socketId === socket.id);
+      if (!actor || actor.playerId !== party.hostPlayerId) {
         return cb({ ok: false, error: 'Only the host can select a game' });
       }
       if (!getGame(data.gameId)) {
@@ -199,7 +217,8 @@ export function registerPartyHandlers(io: Server): void {
     socket.on('launchGame', (data, cb) => {
       const party = getPartyBySocket(socket.id);
       if (!party) return cb({ ok: false, error: 'Not in a party' });
-      if (party.hostPlayerId !== data.playerId) {
+      const actor = Array.from(party.members.values()).find((m) => m.socketId === socket.id);
+      if (!actor || actor.playerId !== party.hostPlayerId) {
         return cb({ ok: false, error: 'Only the host can launch a game' });
       }
       if (!party.selectedGameId) {
@@ -245,7 +264,8 @@ export function registerPartyHandlers(io: Server): void {
     socket.on('replayGame', (data, cb) => {
       const party = getPartyBySocket(socket.id);
       if (!party) return cb({ ok: false, error: 'Not in a party' });
-      if (party.hostPlayerId !== data.playerId) {
+      const actor = Array.from(party.members.values()).find((m) => m.socketId === socket.id);
+      if (!actor || actor.playerId !== party.hostPlayerId) {
         return cb({ ok: false, error: 'Only the host can replay' });
       }
       if (party.status !== 'in-match' || !party.activeMatch) {
@@ -295,7 +315,8 @@ export function registerPartyHandlers(io: Server): void {
     socket.on('returnToLobby', (data, cb) => {
       const party = getPartyBySocket(socket.id);
       if (!party) return cb({ ok: false, error: 'Not in a party' });
-      if (party.hostPlayerId !== data.playerId) {
+      const actor = Array.from(party.members.values()).find((m) => m.socketId === socket.id);
+      if (!actor || actor.playerId !== party.hostPlayerId) {
         return cb({ ok: false, error: 'Only the host can return to lobby' });
       }
       if (!party.activeMatch) {

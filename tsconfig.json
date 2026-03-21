@@ -14,7 +14,6 @@
     "games/*/server/src/**/*",
     "games/*/__tests__/**/*",
     "games/*/e2e/**/*",
-    "games/blackout/global.d.ts",
     "apps/platform/server/**/*"
   ],
   "exclude": ["node_modules", "apps/platform/src", "games/*/ui-vue"]

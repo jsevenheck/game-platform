@@ -163,6 +163,7 @@ describe('socketHandlers embedded autoJoinRoom', () => {
         sessionId: 'session-1',
         playerId: 'hub-1',
         name: 'Embedded Tester',
+        resumeToken: room.players['hub-1'].resumeToken,
       },
       cb
     );
