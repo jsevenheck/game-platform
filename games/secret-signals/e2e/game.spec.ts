@@ -1,35 +1,31 @@
-import { expect, test, type Page } from '@playwright/test';
+import { expect, test, type Browser, type BrowserContext, type Page } from '@playwright/test';
 
-async function createRoom(page: Page, name: string): Promise<string> {
+// ── Platform helpers ──────────────────────────────────────────────────────────
+
+async function createParty(page: Page, name: string): Promise<string> {
   await page.goto('/');
-  await page.getByPlaceholder('Your name').fill(name);
-  await page.getByRole('button', { name: 'Create Room' }).click();
-  await page.getByRole('button', { name: 'Create Room' }).click();
-  await expect(page.locator('.room-code-display')).toBeVisible();
-  const code = (await page.locator('.code').textContent())?.trim();
-  if (!code) {
-    throw new Error('Room code was not rendered');
-  }
-  return code;
+  await page.fill('#name', name);
+  await page.click('button[type="submit"]');
+  await page.waitForSelector('.code');
+  return (await page.locator('.code').textContent())?.trim() ?? '';
 }
 
-async function joinRoom(page: Page, name: string, code: string): Promise<void> {
+async function joinParty(page: Page, name: string, inviteCode: string): Promise<void> {
   await page.goto('/');
-  await page.getByPlaceholder('Your name').fill(name);
-  await page.getByRole('button', { name: 'Join Room' }).click();
-  await page.getByPlaceholder('Room code').fill(code);
-  await page.getByRole('button', { name: 'Join Room' }).click();
-  await expect(page.locator('.room-code-display')).toContainText(code);
+  await page.getByRole('button', { name: 'Join Party' }).click();
+  await page.fill('#name', name);
+  await page.fill('#code', inviteCode);
+  await page.click('button[type="submit"]');
+  await page.waitForSelector('.code');
 }
 
-async function reclaimRoomSlot(page: Page, name: string, code: string): Promise<void> {
-  await page.goto('/');
-  await page.getByPlaceholder('Your name').fill(name);
-  await page.getByRole('button', { name: 'Join Room' }).click();
-  await page.getByPlaceholder('Room code').fill(code);
-  await page.getByRole('button', { name: 'Join Room' }).click();
-  await expect(page.locator('.turn-indicator')).toBeVisible();
+async function launchGame(hostPage: Page, gameName: string): Promise<void> {
+  await hostPage.getByRole('button', { name: gameName }).click();
+  await hostPage.getByRole('button', { name: 'Launch Game' }).click();
+  await hostPage.waitForURL(/\/game\//);
 }
+
+// ── Game helpers ──────────────────────────────────────────────────────────────
 
 async function chooseTeam(page: Page, teamColor: string): Promise<void> {
   await page.locator(`[data-self-team="${teamColor}"]`).click();
@@ -39,145 +35,192 @@ async function chooseRole(page: Page, role: 'director' | 'agent'): Promise<void>
   await page.locator(`[data-self-role="${role}"]`).click();
 }
 
-test('Secret Signals landing screen is available', async ({ page }) => {
-  await page.goto('/');
-  await expect(page.getByRole('heading', { name: 'Secret Signals' })).toBeVisible();
-  await expect(page.getByRole('button', { name: 'Create Room' })).toBeVisible();
-  await expect(page.getByRole('button', { name: 'Join Room' })).toBeVisible();
-});
+/** Set up 4 players in a Secret Signals match and start the game. */
+async function setupFourPlayers(browser: Browser): Promise<{
+  inviteCode: string;
+  ctxs: BrowserContext[];
+  pages: Page[];
+}> {
+  const ctxs = await Promise.all([
+    browser.newContext(),
+    browser.newContext(),
+    browser.newContext(),
+    browser.newContext(),
+  ]);
+  const pages = await Promise.all(ctxs.map((c) => c.newPage()));
 
-test('host can configure the lobby and complete the opening turn', async ({ browser }) => {
-  const host = await browser.newPage();
-  const bob = await browser.newPage();
-  const cara = await browser.newPage();
-  const dan = await browser.newPage();
+  const inviteCode = await createParty(pages[0]!, 'Alice');
+  await joinParty(pages[1]!, 'Bob', inviteCode);
+  await joinParty(pages[2]!, 'Cara', inviteCode);
+  await joinParty(pages[3]!, 'Dan', inviteCode);
 
-  const roomCode = await createRoom(host, 'Alice');
-  await joinRoom(bob, 'Bob', roomCode);
-  await joinRoom(cara, 'Cara', roomCode);
-  await joinRoom(dan, 'Dan', roomCode);
+  await expect(pages[0]!.locator('text=Players (4)')).toBeVisible();
+  await launchGame(pages[0]!, 'Secret Signals');
 
-  await chooseTeam(host, 'red');
-  await chooseRole(host, 'director');
-  await chooseTeam(bob, 'red');
-  await chooseRole(bob, 'agent');
-  await chooseTeam(cara, 'blue');
-  await chooseRole(cara, 'director');
-  await chooseTeam(dan, 'blue');
-  await chooseRole(dan, 'agent');
+  for (let i = 1; i < 4; i++) {
+    await pages[i]!.waitForURL(/\/game\/secret-signals/, { timeout: 15_000 });
+  }
 
-  await expect(host.getByRole('button', { name: 'Start Game' })).toBeEnabled();
-  await host.getByRole('button', { name: 'Start Game' }).click();
+  // Wait for team-setup lobby to load after autoJoinRoom
+  await pages[0]!.waitForSelector('.lobby', { timeout: 10_000 });
 
-  await expect(host.locator('.turn-indicator')).toContainText('Red Team');
-  await host.getByPlaceholder('Clue word').fill('ALPHA');
-  await host.getByRole('button', { name: 'Send Signal' }).click();
+  // Assign teams and roles
+  await chooseTeam(pages[0]!, 'red');
+  await chooseRole(pages[0]!, 'director');
+  await chooseTeam(pages[1]!, 'red');
+  await chooseRole(pages[1]!, 'agent');
+  await chooseTeam(pages[2]!, 'blue');
+  await chooseRole(pages[2]!, 'director');
+  await chooseTeam(pages[3]!, 'blue');
+  await chooseRole(pages[3]!, 'agent');
 
-  const redFirstCard = bob.locator('[data-card-index="0"]');
-  await expect(redFirstCard).toBeEnabled();
-  await redFirstCard.click();
-  await expect(redFirstCard).toContainText('Bob');
-  await redFirstCard.click();
-  await expect(bob.getByRole('button', { name: 'Reveal Card' })).toBeVisible();
-  await bob.getByRole('button', { name: 'Reveal Card' }).click();
-  await bob.getByRole('button', { name: 'End Turn' }).click();
+  await expect(pages[0]!.getByRole('button', { name: 'Start Game' })).toBeEnabled();
+  await pages[0]!.getByRole('button', { name: 'Start Game' }).click();
 
-  await expect(cara.locator('.turn-indicator')).toContainText('Blue Team');
-  await expect(cara.getByRole('button', { name: 'Send Signal' })).toBeEnabled();
+  return { inviteCode, ctxs, pages };
+}
 
-  await host.close();
-  await bob.close();
-  await cara.close();
-  await dan.close();
-});
+// ── Tests ─────────────────────────────────────────────────────────────────────
 
-test('host can toggle assassin behavior in the lobby', async ({ page }) => {
-  await createRoom(page, 'Host');
-  await expect(page.locator('.mode-hint')).toContainText('ends the match immediately');
-  await page.locator('[data-mode="elimination"]').click();
-  await expect(page.locator('.mode-hint')).toContainText('removes that team');
-});
+test.describe('Secret Signals via Platform', () => {
+  test('platform home shows Game Platform screen', async ({ page }) => {
+    await page.goto('/');
+    await expect(page.getByRole('heading', { name: 'Game Platform' })).toBeVisible();
+    // Two tab buttons exist; use class selector to avoid strict-mode violation with the submit button
+    await expect(page.locator('button.tab', { hasText: 'Create Party' })).toBeVisible();
+    await expect(page.locator('button.tab', { hasText: 'Join Party' })).toBeVisible();
+  });
 
-test('player resumes session after page reload and can leave cleanly', async ({ page }) => {
-  const roomCode = await createRoom(page, 'ReconnectHost');
-  await page.reload();
+  test('host can configure the lobby and complete the opening turn', async ({ browser }) => {
+    const { ctxs, pages } = await setupFourPlayers(browser);
+    const [host, bob, cara] = pages as [Page, Page, Page, Page];
 
-  await expect(page.locator('.room-code-display')).toBeVisible();
-  await expect(page.locator('.code')).toContainText(roomCode);
-  await expect(page.getByRole('button', { name: 'Leave' })).toBeVisible();
+    await expect(host.locator('.turn-indicator')).toContainText('Red Team');
 
-  await page.getByRole('button', { name: 'Leave' }).click();
-  await expect(page.getByRole('heading', { name: 'Secret Signals' })).toBeVisible();
-  await expect(page.locator('.room-code-display')).toHaveCount(0);
-});
+    await host.getByPlaceholder('Clue word').fill('ALPHA');
+    await host.getByRole('button', { name: 'Send Signal' }).click();
 
-test('host can skip the current guess round', async ({ browser }) => {
-  const host = await browser.newPage();
-  const bob = await browser.newPage();
-  const cara = await browser.newPage();
-  const dan = await browser.newPage();
+    const redFirstCard = bob.locator('[data-card-index="0"]');
+    await expect(redFirstCard).toBeEnabled();
+    await redFirstCard.click();
+    await expect(redFirstCard).toContainText('Bob');
+    await redFirstCard.click();
+    await expect(bob.getByRole('button', { name: 'Reveal Card' })).toBeVisible();
+    await bob.getByRole('button', { name: 'Reveal Card' }).click();
+    await bob.getByRole('button', { name: 'End Turn' }).click();
 
-  const roomCode = await createRoom(host, 'Alice');
-  await joinRoom(bob, 'Bob', roomCode);
-  await joinRoom(cara, 'Cara', roomCode);
-  await joinRoom(dan, 'Dan', roomCode);
+    await expect(cara.locator('.turn-indicator')).toContainText('Blue Team');
+    await expect(cara.getByRole('button', { name: 'Send Signal' })).toBeEnabled();
 
-  await chooseTeam(host, 'red');
-  await chooseRole(host, 'director');
-  await chooseTeam(bob, 'red');
-  await chooseRole(bob, 'agent');
-  await chooseTeam(cara, 'blue');
-  await chooseRole(cara, 'director');
-  await chooseTeam(dan, 'blue');
-  await chooseRole(dan, 'agent');
+    await Promise.all(ctxs.map((c) => c.close()));
+  });
 
-  await host.getByRole('button', { name: 'Start Game' }).click();
-  await host.getByPlaceholder('Clue word').fill('ALPHA');
-  await host.getByRole('button', { name: 'Send Signal' }).click();
-  await host.getByRole('button', { name: 'Skip Turn' }).click();
+  test('host can toggle assassin behavior in the lobby', async ({ browser }) => {
+    const ctx1 = await browser.newContext();
+    const ctx2 = await browser.newContext();
+    const ctx3 = await browser.newContext();
+    const ctx4 = await browser.newContext();
+    const host = await ctx1.newPage();
+    const p2 = await ctx2.newPage();
+    const p3 = await ctx3.newPage();
+    const p4 = await ctx4.newPage();
 
-  await expect(cara.locator('.turn-indicator')).toContainText('Blue Team');
+    const inviteCode = await createParty(host, 'Host');
+    await joinParty(p2, 'B', inviteCode);
+    await joinParty(p3, 'C', inviteCode);
+    await joinParty(p4, 'D', inviteCode);
 
-  await host.close();
-  await bob.close();
-  await cara.close();
-  await dan.close();
-});
+    await launchGame(host, 'Secret Signals');
+    await host.waitForSelector('.lobby', { timeout: 10_000 });
 
-test('disconnected player can rejoin an active game by reclaiming the same name', async ({
-  browser,
-}) => {
-  const host = await browser.newPage();
-  const bob = await browser.newPage();
-  const cara = await browser.newPage();
-  const dan = await browser.newPage();
+    await expect(host.locator('.mode-hint')).toContainText('ends the match immediately');
+    await host.locator('[data-mode="elimination"]').click();
+    await expect(host.locator('.mode-hint')).toContainText('removes that team');
 
-  const roomCode = await createRoom(host, 'Alice');
-  await joinRoom(bob, 'Bob', roomCode);
-  await joinRoom(cara, 'Cara', roomCode);
-  await joinRoom(dan, 'Dan', roomCode);
+    await ctx1.close();
+    await ctx2.close();
+    await ctx3.close();
+    await ctx4.close();
+  });
 
-  await chooseTeam(host, 'red');
-  await chooseRole(host, 'director');
-  await chooseTeam(bob, 'red');
-  await chooseRole(bob, 'agent');
-  await chooseTeam(cara, 'blue');
-  await chooseRole(cara, 'director');
-  await chooseTeam(dan, 'blue');
-  await chooseRole(dan, 'agent');
+  test('player resumes session after page reload', async ({ browser }) => {
+    const ctx1 = await browser.newContext();
+    const ctx2 = await browser.newContext();
+    const ctx3 = await browser.newContext();
+    const ctx4 = await browser.newContext();
+    const host = await ctx1.newPage();
+    const p2 = await ctx2.newPage();
+    const p3 = await ctx3.newPage();
+    const p4 = await ctx4.newPage();
 
-  await host.getByRole('button', { name: 'Start Game' }).click();
-  await expect(host.locator('.turn-indicator')).toContainText('Red Team');
+    const inviteCode = await createParty(host, 'ReconnectHost');
+    await joinParty(p2, 'B', inviteCode);
+    await joinParty(p3, 'C', inviteCode);
+    await joinParty(p4, 'D', inviteCode);
 
-  await bob.close();
+    // Reload host — platform resume redirects back to party lobby
+    await host.reload();
+    await host.waitForURL(/\/party\//, { timeout: 8_000 });
+    await expect(host.locator('.code')).toContainText(inviteCode);
 
-  const bobReconnect = await browser.newPage();
-  await reclaimRoomSlot(bobReconnect, 'Bob', roomCode);
-  await expect(bobReconnect.locator('.turn-indicator')).toContainText('Red Team');
-  await expect(host.locator('.agent-name', { hasText: 'Bob' })).toBeVisible();
+    await ctx1.close();
+    await ctx2.close();
+    await ctx3.close();
+    await ctx4.close();
+  });
 
-  await host.close();
-  await cara.close();
-  await dan.close();
-  await bobReconnect.close();
+  test('host can skip the current guess round', async ({ browser }) => {
+    const { ctxs, pages } = await setupFourPlayers(browser);
+    const [host] = pages as [Page, Page, Page, Page];
+
+    await expect(host.locator('.turn-indicator')).toContainText('Red Team');
+    await host.getByPlaceholder('Clue word').fill('ALPHA');
+    await host.getByRole('button', { name: 'Send Signal' }).click();
+    await host.getByRole('button', { name: 'Skip Turn' }).click();
+
+    await expect(pages[2]!.locator('.turn-indicator')).toContainText('Blue Team');
+
+    await Promise.all(ctxs.map((c) => c.close()));
+  });
+
+  test('disconnected player can rejoin an active game by reclaiming the same name', async ({
+    browser,
+  }) => {
+    const { ctxs, pages } = await setupFourPlayers(browser);
+    const [host, bob, _cara, _dan] = pages as [Page, Page, Page, Page];
+
+    await expect(host.locator('.turn-indicator')).toContainText('Red Team');
+
+    // Bob disconnects and rejoins via a new page through the platform
+    await bob.close();
+
+    const bobReconnect = await ctxs[1]!.newPage();
+    // Resume session — platform uses stored session to rejoin
+    await bobReconnect.goto('/');
+    await bobReconnect.waitForURL(/\/party\/|\/game\//, { timeout: 10_000 });
+    await expect(bobReconnect.locator('.turn-indicator')).toContainText('Red Team', {
+      timeout: 10_000,
+    });
+    await expect(host.locator('.agent-name', { hasText: 'Bob' })).toBeVisible();
+
+    await ctxs[0]!.close();
+    await ctxs[2]!.close();
+    await ctxs[3]!.close();
+    await bobReconnect.close();
+  });
+
+  test('host returns to party lobby via platform overlay after match ends', async ({ browser }) => {
+    const { ctxs, pages, inviteCode } = await setupFourPlayers(browser);
+    const [host] = pages as [Page, Page, Page, Page];
+
+    // Wait for the platform overlay to appear when the match ends
+    await host.waitForSelector('.platform-overlay', { timeout: 120_000 });
+    await expect(host.locator('.btn-lobby')).toBeVisible();
+
+    await host.locator('.btn-lobby').click();
+    await host.waitForURL(/\/party\/[A-Z0-9]+$/, { timeout: 10_000 });
+    await expect(host.locator('.code')).toContainText(inviteCode);
+
+    await Promise.all(ctxs.map((c) => c.close()));
+  });
 });

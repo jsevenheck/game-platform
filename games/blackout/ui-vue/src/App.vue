@@ -19,7 +19,10 @@ const props = withDefaults(defineProps<HubIntegrationProps>(), {
   joinToken: undefined,
   wsNamespace: undefined,
   apiBaseUrl: undefined,
+  isHost: undefined,
 });
+
+const emit = defineEmits<{ 'phase-change': [phase: string] }>();
 
 const store = useGameStore();
 const error = ref('');
@@ -54,6 +57,7 @@ function handleRoomUpdate(room: RoomView) {
   store.setRoom(room);
   embeddedError.value = '';
   clearEmbeddedRetryTimer();
+  emit('phase-change', room.phase);
 }
 
 function handleCreate(name: string) {
@@ -148,6 +152,7 @@ function emitAutoJoinRoom() {
       sessionId: props.sessionId,
       playerId: props.playerId || '',
       name: embeddedPlayerName(),
+      isHost: props.isHost,
     },
     (res) => {
       if (res.ok) {
@@ -266,10 +271,7 @@ onBeforeUnmount(() => {
 
 <template>
   <div class="app">
-    <Header
-      v-if="store.room"
-      @leave="handleLeave"
-    />
+    <Header v-if="store.room" @leave="handleLeave" />
 
     <main class="main">
       <template v-if="!store.room && isEmbedded">
@@ -285,11 +287,7 @@ onBeforeUnmount(() => {
           Retry
         </button>
       </template>
-      <Landing
-        v-else-if="!store.room"
-        @create="handleCreate"
-        @join="handleJoin"
-      />
+      <Landing v-else-if="!store.room" @create="handleCreate" @join="handleJoin" />
       <Lobby
         v-else-if="store.phase === 'lobby'"
         @update-max-rounds="handleUpdateMaxRounds"
@@ -304,18 +302,12 @@ onBeforeUnmount(() => {
         @skip="handleSkip"
       />
       <Scoreboard v-else-if="store.phase === 'roundEnd'" />
-      <GameOver
-        v-else-if="store.phase === 'ended'"
-        @restart="handleRestart"
-      />
+      <GameOver v-else-if="store.phase === 'ended'" @restart="handleRestart" />
     </main>
 
     <PlayersPanel v-if="store.room" />
 
-    <p
-      v-if="error"
-      class="global-error"
-    >
+    <p v-if="error" class="global-error">
       {{ error }}
     </p>
   </div>

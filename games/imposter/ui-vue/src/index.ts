@@ -1,4 +1,4 @@
-// Library entry point — used when building as a Game Hub plugin.
+// UI module entry point.
 import GameComponent from './App.vue';
 
 export const manifest = {
@@ -11,6 +11,6 @@ export const manifest = {
 export { GameComponent };
 export default GameComponent;
 
-// Re-export shared types so Game Hub can import them from the library
+// Re-export shared types
 export type { RoomView, PlayerView } from '@shared/types';
 export type { ClientToServerEvents, ServerToClientEvents } from '@shared/events';

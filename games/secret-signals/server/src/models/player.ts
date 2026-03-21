@@ -3,9 +3,9 @@ import type { Player } from '../../../core/src/types';
 
 const socketIndex = new Map<string, { roomCode: string; playerId: string }>();
 
-export function createPlayer(name: string, isHost: boolean): Player {
+export function createPlayer(name: string, isHost: boolean, stableId?: string): Player {
   return {
-    id: nanoid(8),
+    id: stableId ?? nanoid(8),
     name,
     resumeToken: nanoid(16),
     score: 0,

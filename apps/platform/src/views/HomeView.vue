@@ -23,7 +23,11 @@ function handleCreate() {
       error.value = res.error;
       return;
     }
-    store.setSession({ playerId: res.playerId, playerName: name, inviteCode: res.partyView.inviteCode });
+    store.setSession({
+      playerId: res.playerId,
+      playerName: name,
+      inviteCode: res.partyView.inviteCode,
+    });
     store.applyPartyUpdate(res.partyView);
     store.saveSession(res.partyView.inviteCode);
     router.push(`/party/${res.partyView.inviteCode}`);
@@ -41,7 +45,11 @@ function handleJoin() {
       error.value = res.error;
       return;
     }
-    store.setSession({ playerId: res.playerId, playerName: name, inviteCode: res.partyView.inviteCode });
+    store.setSession({
+      playerId: res.playerId,
+      playerName: name,
+      inviteCode: res.partyView.inviteCode,
+    });
     store.applyPartyUpdate(res.partyView);
     store.saveSession(res.partyView.inviteCode);
     router.push(`/party/${res.partyView.inviteCode}`);
@@ -52,20 +60,28 @@ function tryResume() {
   const session = store.loadSession();
   if (!session) return;
 
-  socket.emit('resumeParty', { inviteCode: session.inviteCode, playerId: session.playerId }, (res) => {
-    if (!res.ok) {
-      store.clearSession();
-      return;
-    }
-    store.setSession({ playerId: session.playerId, playerName: session.playerName, inviteCode: session.inviteCode });
-    store.applyPartyUpdate(res.partyView);
+  socket.emit(
+    'resumeParty',
+    { inviteCode: session.inviteCode, playerId: session.playerId },
+    (res) => {
+      if (!res.ok) {
+        store.clearSession();
+        return;
+      }
+      store.setSession({
+        playerId: session.playerId,
+        playerName: session.playerName,
+        inviteCode: session.inviteCode,
+      });
+      store.applyPartyUpdate(res.partyView);
 
-    if (res.partyView.activeMatch) {
-      router.push(`/party/${session.inviteCode}/game/${res.partyView.activeMatch.gameId}`);
-    } else {
-      router.push(`/party/${session.inviteCode}`);
+      if (res.partyView.activeMatch) {
+        router.push(`/party/${session.inviteCode}/game/${res.partyView.activeMatch.gameId}`);
+      } else {
+        router.push(`/party/${session.inviteCode}`);
+      }
     }
-  });
+  );
 }
 
 onMounted(() => {

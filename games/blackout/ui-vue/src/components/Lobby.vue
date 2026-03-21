@@ -54,15 +54,11 @@ function saveExcludedLetters() {
 <template>
   <div class="lobby">
     <div class="room-code-display">
-      <p class="label">
-        Room Code
-      </p>
+      <p class="label">Room Code</p>
       <h2 class="code">
         {{ store.roomCode }}
       </h2>
-      <p class="hint">
-        Share this code with your friends!
-      </p>
+      <p class="hint">Share this code with your friends!</p>
     </div>
 
     <div class="players-list">
@@ -74,40 +70,18 @@ function saveExcludedLetters() {
         :class="{ disconnected: !player.connected }"
       >
         <span class="player-name">{{ player.name }}</span>
-        <span
-          v-if="store.room?.ownerId === player.id"
-          class="badge owner"
-        >Owner</span>
-        <span
-          v-if="player.isHost"
-          class="badge host"
-        >Host</span>
-        <span
-          v-if="!player.connected"
-          class="badge offline"
-        >Offline</span>
+        <span v-if="store.room?.ownerId === player.id" class="badge owner">Owner</span>
+        <span v-if="player.isHost" class="badge host">Host</span>
+        <span v-if="!player.connected" class="badge offline">Offline</span>
       </div>
     </div>
 
-    <div
-      v-if="store.isHost"
-      class="config"
-    >
+    <div v-if="store.isHost" class="config">
       <div class="rounds-config">
         <span>Rounds:</span>
-        <button
-          class="btn-sm"
-          @click="adjustRounds(-1)"
-        >
-          -
-        </button>
+        <button class="btn-sm" @click="adjustRounds(-1)">-</button>
         <span class="rounds-value">{{ store.room?.maxRounds }}</span>
-        <button
-          class="btn-sm"
-          @click="adjustRounds(1)"
-        >
-          +
-        </button>
+        <button class="btn-sm" @click="adjustRounds(1)">+</button>
       </div>
 
       <div class="language-config">
@@ -139,13 +113,8 @@ function saveExcludedLetters() {
             placeholder="Q, X, Y"
             @keydown.enter.prevent="saveExcludedLetters"
             @blur="saveExcludedLetters"
-          >
-          <button
-            class="btn-sm letters-save"
-            @click="saveExcludedLetters"
-          >
-            Save
-          </button>
+          />
+          <button class="btn-sm letters-save" @click="saveExcludedLetters">Save</button>
         </div>
       </div>
 
@@ -156,18 +125,12 @@ function saveExcludedLetters() {
       >
         Start Game
       </button>
-      <p
-        v-if="connectedCount() < MIN_PLAYERS"
-        class="hint"
-      >
+      <p v-if="connectedCount() < MIN_PLAYERS" class="hint">
         Need at least {{ MIN_PLAYERS }} players to start
       </p>
     </div>
 
-    <div
-      v-else
-      class="waiting"
-    >
+    <div v-else class="waiting">
       <p>Waiting for host to start the game...</p>
     </div>
   </div>

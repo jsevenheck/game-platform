@@ -21,7 +21,7 @@ function generateRoomCode(): string {
 function scheduleRoomCleanup(code: string): void {
   clearRoomCleanup(code);
   const timer = setTimeout(() => {
-    rooms.delete(code);
+    deleteRoom(code);
   }, ROOM_CLEANUP_DELAY_MS);
   roomCleanupTimers.set(code, timer);
 }
@@ -36,10 +36,11 @@ export function clearRoomCleanup(code: string): void {
 
 export function createRoom(
   hostName: string,
-  socketId: string
+  socketId: string,
+  hostPlayerId?: string
 ): { room: Room; hostId: string; resumeToken: string } {
   const code = generateRoomCode();
-  const host = createPlayer(hostName, true);
+  const host = createPlayer(hostName, true, hostPlayerId);
   host.socketId = socketId;
 
   const room: Room = {
@@ -74,7 +75,13 @@ export function getRoom(code: string): Room | undefined {
 }
 
 export function deleteRoom(code: string): void {
+  clearRoomCleanup(code);
   rooms.delete(code);
+  for (const [sessionId, roomCode] of sessionToRoom.entries()) {
+    if (roomCode === code) {
+      sessionToRoom.delete(sessionId);
+    }
+  }
 }
 
 export function setSessionToRoom(sessionId: string, roomCode: string): void {

@@ -198,7 +198,9 @@ if (table === 'categories') {
   });
   tx(dataRows);
 } else {
-  console.error(`Unsupported table "${table}". Use one of: categories, tasks, default_excluded_letters`);
+  console.error(
+    `Unsupported table "${table}". Use one of: categories, tasks, default_excluded_letters`
+  );
   process.exit(1);
 }
 

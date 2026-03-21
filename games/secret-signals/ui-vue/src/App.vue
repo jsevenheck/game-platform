@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { onBeforeUnmount, onMounted, ref } from 'vue';
 import type { AssassinPenaltyMode, PlayerRole, TeamColor } from '@shared/types';
+import type { HubIntegrationProps } from './types/config';
 import { useGameStore } from './stores/game';
 import { useSocket } from './composables/useSocket';
 import Landing from './components/Landing.vue';
@@ -8,53 +9,69 @@ import Lobby from './components/Lobby.vue';
 import GamePlay from './components/GamePlay.vue';
 import GameOver from './components/GameOver.vue';
 
+const props = withDefaults(defineProps<HubIntegrationProps>(), {
+  playerId: undefined,
+  playerName: undefined,
+  sessionId: undefined,
+  joinToken: undefined,
+  wsNamespace: undefined,
+  apiBaseUrl: undefined,
+  isHost: undefined,
+});
+
+const emit = defineEmits<{ 'phase-change': [phase: string] }>();
+
 const store = useGameStore();
-const { socket } = useSocket();
+const { socket } = useSocket({
+  apiBaseUrl: props.apiBaseUrl,
+  sessionId: props.sessionId,
+  playerId: props.playerId,
+  wsNamespace: props.wsNamespace,
+});
+
+const isEmbedded = !!props.wsNamespace;
+const embeddedError = ref('');
 const landingError = ref('');
 const isRestoringSession = ref(false);
+const autoJoinInFlight = ref(false);
+let autoJoinRetryTimer: number | undefined;
 
 function handleRoomState(state: Parameters<typeof store.applyRoomState>[0]) {
   store.applyRoomState(state);
   isRestoringSession.value = false;
+  autoJoinInFlight.value = false;
+  embeddedError.value = '';
   landingError.value = '';
+  if (state.phase) emit('phase-change', state.phase);
 }
 
 socket.on('roomState', handleRoomState);
 
-function handleSocketConnect() {
-  if (!store.loadSession()) return;
-  if (store.currentPlayer?.connected) return;
-  resumeStoredSession();
-}
+function emitAutoJoinRoom() {
+  if (!props.sessionId || !socket.connected || store.room || autoJoinInFlight.value) return;
 
-function resumeStoredSession() {
-  const session = store.loadSession();
-  if (!session) {
-    isRestoringSession.value = false;
-    return;
-  }
-
-  isRestoringSession.value = true;
-  store.setSession({
-    playerId: session.playerId,
-    roomCode: session.roomCode,
-    resumeToken: session.resumeToken,
-    name: session.name,
-  });
-
+  embeddedError.value = '';
+  autoJoinInFlight.value = true;
   socket.emit(
-    'resumePlayer',
+    'autoJoinRoom',
     {
-      roomCode: session.roomCode,
-      playerId: session.playerId,
-      resumeToken: session.resumeToken,
+      sessionId: props.sessionId,
+      playerId: props.playerId || '',
+      name: props.playerName || props.playerId || 'Player',
+      isHost: props.isHost,
     },
     (res) => {
+      autoJoinInFlight.value = false;
       if (!res.ok) {
-        store.clearSession();
-        isRestoringSession.value = false;
-        landingError.value = 'Previous session could not be restored.';
+        embeddedError.value = res.error;
+        return;
       }
+      store.setSession({
+        playerId: res.playerId,
+        roomCode: res.roomCode,
+        resumeToken: res.resumeToken,
+        name: props.playerName || props.playerId || 'Player',
+      });
     }
   );
 }
@@ -104,7 +121,6 @@ function handleLeave() {
       return;
     }
     store.clearSession();
-    landingError.value = '';
   });
 }
 
@@ -183,20 +199,83 @@ function handleRestart() {
   socket.emit('restartGame', { roomCode: store.roomCode, playerId: store.playerId }, () => {});
 }
 
-onMounted(() => {
+function resumeStoredSession() {
   const session = store.loadSession();
-  if (!session) return;
-
-  if (socket.connected) {
-    resumeStoredSession();
+  if (!session) {
+    isRestoringSession.value = false;
     return;
   }
 
   isRestoringSession.value = true;
+  store.setSession({
+    playerId: session.playerId,
+    roomCode: session.roomCode,
+    resumeToken: session.resumeToken,
+    name: session.name,
+  });
+
+  socket.emit(
+    'resumePlayer',
+    {
+      roomCode: session.roomCode,
+      playerId: session.playerId,
+      resumeToken: session.resumeToken,
+    },
+    (res) => {
+      if (!res.ok) {
+        store.clearSession();
+        isRestoringSession.value = false;
+        landingError.value = 'Previous session could not be restored.';
+      }
+    }
+  );
+}
+
+function handleSocketConnect() {
+  if (isEmbedded) {
+    emitAutoJoinRoom();
+    return;
+  }
+  if (!store.loadSession()) return;
+  if (store.currentPlayer?.connected) return;
+  resumeStoredSession();
+}
+
+onMounted(() => {
+  socket.on('connect', handleSocketConnect);
+
+  if (isEmbedded && props.sessionId) {
+    if (socket.connected) {
+      emitAutoJoinRoom();
+    } else {
+      socket.connect();
+    }
+
+    autoJoinRetryTimer = window.setTimeout(() => {
+      if (!store.room) emitAutoJoinRoom();
+    }, 3000);
+    return;
+  }
+
+  // Standalone mode
+  const session = store.loadSession();
+  if (!session) {
+    socket.connect();
+    return;
+  }
+
+  if (socket.connected) {
+    resumeStoredSession();
+  } else {
+    isRestoringSession.value = true;
+    socket.connect();
+  }
 });
-socket.on('connect', handleSocketConnect);
 
 onBeforeUnmount(() => {
+  if (autoJoinRetryTimer !== undefined) {
+    clearTimeout(autoJoinRetryTimer);
+  }
   socket.off('roomState', handleRoomState);
   socket.off('connect', handleSocketConnect);
 });
@@ -204,13 +283,17 @@ onBeforeUnmount(() => {
 
 <template>
   <div class="app">
-    <header v-if="store.room" class="app-header">
+    <header v-if="store.room && !isEmbedded" class="app-header">
       <span class="header-room">{{ store.roomCode }}</span>
       <button class="leave-button" type="button" @click="handleLeave">Leave</button>
     </header>
-    <div v-if="store.phase === null && isRestoringSession" class="session-status">
-      Reconnecting to your room...
-    </div>
+
+    <template v-if="!store.room && isEmbedded">
+      <p class="session-status">{{ embeddedError || 'Connecting...' }}</p>
+    </template>
+    <template v-else-if="store.phase === null && isRestoringSession">
+      <p class="session-status">Reconnecting to your room...</p>
+    </template>
     <Landing
       v-else-if="store.phase === null"
       :server-error="landingError"

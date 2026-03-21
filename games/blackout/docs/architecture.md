@@ -106,9 +106,9 @@ flowchart TD
   C -->|createRoom| D[Create room + host]
   C -->|joinRoom| E[Validate code + add player]
   C -->|autoJoinRoom| F[Lookup sessionId map]
-  F -->|mapped + player exists| G[Reconnect existing player by stable hub playerId]
+  F -->|mapped + player exists| G[Reconnect existing player by stable platform playerId]
   F -->|mapped + new player| H[Add player to mapped room]
-  F -->|no mapping| I[Create mapped room with hub playerId as host id]
+  F -->|no mapping| I[Create mapped room with platform playerId as host id]
   D --> J[broadcastRoom]
   E --> J
   G --> J
@@ -170,21 +170,11 @@ return {
 };
 ```
 
-## Standalone Runtime Notes
-
-- `standalone-server/src/staticDir.ts` resolves the static directory in this order:
-  1. `dist/standalone-web` (preferred for `start:standalone` if present)
-  2. `dist/client`
-  3. `dist/standalone-web`
-  4. `ui-vue` (dev fallback)
-- `standalone-server/src/index.ts` serves `/health` and SPA fallback while skipping `/socket.io`.
-
 ## SQLite and Build Notes
 
-- Runtime DB path is resolved via `__dirname` first (so compiled standalone uses `dist/standalone-server/server/src/db/blackout.sqlite`) then falls back to CWD-relative candidates. `DB_PATH` env var overrides all.
+- Runtime DB path is resolved via `__dirname` first, then CWD-relative candidates. `DB_PATH` env var overrides all.
 - DB schema lives in `server/src/db/schema.sql`.
 - Default content lives in CSV files under `server/src/db/data/`.
 - On startup, missing or empty tables are initialized from those CSV files.
-- `pnpm build:standalone-server` runs:
-  - TypeScript compile (`tsc -p standalone-server/tsconfig.json`)
-  - `node scripts/copy-db-assets.mjs` — copies schema + CSVs into dist **and deletes any existing standalone SQLite** so the next start re-seeds from the current CSVs.
+- The platform server (`apps/platform/server/`) runs the game on `/g/blackout`.
+- `node games/blackout/scripts/copy-db-assets.mjs` — copies schema + CSVs into dist so the next start re-seeds from the current CSVs.

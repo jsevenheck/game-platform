@@ -262,11 +262,11 @@ The same cleanup contract also applies when the party chooses `Play Again`: the 
 
 The games do not use the same event name for state updates:
 
-| Game | Broadcast Event |
-|---|---|
-| Blackout | `roomUpdate` |
-| Imposter | `roomState` |
-| Secret Signals | `roomState` |
+| Game           | Broadcast Event |
+| -------------- | --------------- |
+| Blackout       | `roomUpdate`    |
+| Imposter       | `roomState`     |
+| Secret Signals | `roomState`     |
 
 All three include `phase: 'ended'` when a match is over. Each client adapter must know which event to listen for to detect game-end. This is not a blocker but it means the adapters are necessarily game-specific rather than generic.
 

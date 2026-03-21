@@ -17,7 +17,11 @@ function generateInviteCode(): string {
   return code;
 }
 
-export function createParty(hostPlayerId: string, hostName: string, socketId: string): PartySession {
+export function createParty(
+  hostPlayerId: string,
+  hostName: string,
+  socketId: string
+): PartySession {
   const partyId = nanoid(12);
   const inviteCode = generateInviteCode();
 

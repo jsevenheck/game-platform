@@ -6,7 +6,12 @@ jest.mock('nanoid', () => ({
   nanoid: jest.fn(() => 'mock-id'),
 }));
 
-import { createRoom, deleteRoom, getSessionRoom, setSessionToRoom } from '../server/src/models/room';
+import {
+  createRoom,
+  deleteRoom,
+  getSessionRoom,
+  setSessionToRoom,
+} from '../server/src/models/room';
 import { deleteSocketIndex } from '../server/src/models/player';
 
 describe('room model session mapping cleanup', () => {

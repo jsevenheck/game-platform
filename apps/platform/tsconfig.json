@@ -11,6 +11,5 @@
     "verbatimModuleSyntax": true,
     "baseUrl": "."
   },
-  "include": ["src/**/*", "env.d.ts"],
-  "references": [{ "path": "./tsconfig.server.json" }]
+  "include": ["src/**/*", "env.d.ts"]
 }

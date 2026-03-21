@@ -22,30 +22,22 @@ const winners = computed(() => {
 
 <template>
   <div class="game-over">
-    <h1 class="title">
-      Game Over!
-    </h1>
+    <h1 class="title">Game Over!</h1>
 
     <div class="winner-section">
       <template v-if="winners.length === 1">
-        <p class="winner-label">
-          Winner
-        </p>
+        <p class="winner-label">Winner</p>
         <h2 class="winner-name">
           {{ winners[0]?.name }}
         </h2>
       </template>
       <template v-else>
-        <p class="winner-label">
-          Tie!
-        </p>
+        <p class="winner-label">Tie!</p>
         <h2 class="winner-name">
           {{ winners.map((w) => w.name).join(' & ') }}
         </h2>
       </template>
-      <p class="winner-score">
-        {{ topScore }} points
-      </p>
+      <p class="winner-score">{{ topScore }} points</p>
     </div>
 
     <div class="final-scores">
@@ -62,19 +54,10 @@ const winners = computed(() => {
       </div>
     </div>
 
-    <button
-      v-if="store.isHost"
-      class="btn btn-primary"
-      @click="$emit('restart')"
-    >
+    <button v-if="store.isHost" class="btn btn-primary" @click="$emit('restart')">
       Play Again
     </button>
-    <p
-      v-else
-      class="hint"
-    >
-      Waiting for host to restart...
-    </p>
+    <p v-else class="hint">Waiting for host to restart...</p>
   </div>
 </template>
 

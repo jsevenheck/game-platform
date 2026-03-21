@@ -17,7 +17,10 @@ const props = withDefaults(defineProps<HubIntegrationProps>(), {
   joinToken: undefined,
   wsNamespace: undefined,
   apiBaseUrl: undefined,
+  isHost: undefined,
 });
+
+const emit = defineEmits<{ 'phase-change': [phase: string] }>();
 
 const store = useGameStore();
 const { socket } = useSocket({
@@ -40,6 +43,7 @@ socket.on('roomState', (state) => {
   autoJoinInFlight.value = false;
   embeddedError.value = '';
   lobbyError.value = '';
+  if (state.phase) emit('phase-change', state.phase);
 });
 
 socket.on('disconnect', () => {
@@ -75,6 +79,7 @@ function emitAutoJoinRoom() {
       sessionId: props.sessionId,
       playerId: props.playerId || '',
       name: props.playerName || props.playerId || 'Player',
+      isHost: props.isHost,
     },
     (res) => {
       autoJoinInFlight.value = false;

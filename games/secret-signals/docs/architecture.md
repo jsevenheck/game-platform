@@ -61,7 +61,7 @@ Handler responsibilities:
 - host, Director, and Agent permissions
 - whether the local player can signal, guess, or end the turn
 - minimum players required for the configured team count
-- local session persistence for standalone resume after reload
+- local session persistence for resume after reload
 
 ### Components
 
@@ -77,7 +77,7 @@ Handler responsibilities:
 
 ### Socket layer
 
-`composables/useSocket.ts` creates the typed Socket.IO connection to the Secret Signals namespace. `App.vue` then restores stored standalone sessions with `resumePlayer`, keeps the local session in sync, and exposes an explicit `leaveRoom` flow.
+`composables/useSocket.ts` creates the typed Socket.IO connection to the Secret Signals namespace. `App.vue` restores stored sessions with `resumePlayer`, keeps the local session in sync, and exposes an explicit `leaveRoom` flow.
 
 If a player disconnects during an active match, they can either resume with the stored `resumeToken` or reclaim the same slot by joining the room again with the same player name.
 
@@ -124,7 +124,7 @@ Important room state fields:
 - Agents only see card ownership after reveal
 - the full board is revealed for everyone once the match ends
 
-## Standalone runtime
+## Platform Runtime
 
-- `standalone-server/src/index.ts` serves the API, Socket.IO namespace, `/health`, and SPA fallback
-- `standalone-server/src/staticDir.ts` resolves static assets from built standalone output or the Vue app during development
+The game server module registers on `/g/secret-signals` via the platform's game registry.
+The platform (`apps/platform/`) owns the full party lifecycle; Secret Signals is launched as an internal module.

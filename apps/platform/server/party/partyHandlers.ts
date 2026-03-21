@@ -10,20 +10,30 @@ import {
   deleteParty,
 } from './partyStore';
 import type { PartySession } from './types';
-import { getGame, gameRegistry } from '../registry/index';
+import { getGame } from '../registry/index';
 
 interface PartyClientToServerEvents {
   createParty: (
     data: { playerName: string },
-    cb: (res: { ok: true; partyView: ReturnType<typeof partyToView>; playerId: string } | { ok: false; error: string }) => void
+    cb: (
+      res:
+        | { ok: true; partyView: ReturnType<typeof partyToView>; playerId: string }
+        | { ok: false; error: string }
+    ) => void
   ) => void;
   joinParty: (
     data: { inviteCode: string; playerName: string },
-    cb: (res: { ok: true; partyView: ReturnType<typeof partyToView>; playerId: string } | { ok: false; error: string }) => void
+    cb: (
+      res:
+        | { ok: true; partyView: ReturnType<typeof partyToView>; playerId: string }
+        | { ok: false; error: string }
+    ) => void
   ) => void;
   resumeParty: (
     data: { inviteCode: string; playerId: string },
-    cb: (res: { ok: true; partyView: ReturnType<typeof partyToView> } | { ok: false; error: string }) => void
+    cb: (
+      res: { ok: true; partyView: ReturnType<typeof partyToView> } | { ok: false; error: string }
+    ) => void
   ) => void;
   leaveParty: (data: { playerId: string }) => void;
   selectGame: (

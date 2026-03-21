@@ -208,6 +208,7 @@ export function registerBlackout(io: Server, namespace: string | Namespace = '/g
     socket.on('autoJoinRoom', (data, cb) => {
       const sessionId = data.sessionId?.trim();
       const name = data.name?.trim();
+      const wantsHost = data.isHost === true;
       const stablePlayerId =
         normalizeStablePlayerId(data.playerId) ?? normalizeStablePlayerId(socket.data.playerId);
 
@@ -219,14 +220,18 @@ export function registerBlackout(io: Server, namespace: string | Namespace = '/g
       const roomCode = getSessionRoom(sessionId);
       const existingRoom = roomCode ? getRoom(roomCode) : undefined;
       if (existingRoom) {
-        const indexedPlayerId = getSocketIndex(socket.id)?.roomCode === existingRoom.code
-          ? getSocketIndex(socket.id)?.playerId
-          : undefined;
+        const indexedPlayerId =
+          getSocketIndex(socket.id)?.roomCode === existingRoom.code
+            ? getSocketIndex(socket.id)?.playerId
+            : undefined;
         const reconnectPlayerId = stablePlayerId ?? indexedPlayerId;
 
         if (reconnectPlayerId && existingRoom.players[reconnectPlayerId]) {
           const player = existingRoom.players[reconnectPlayerId];
           bindPlayerToSocket(nsp, socket, existingRoom, reconnectPlayerId);
+          if (wantsHost && existingRoom.hostId !== reconnectPlayerId) {
+            assignHost(existingRoom, reconnectPlayerId);
+          }
           broadcastRoom(nsp, existingRoom);
           return cb({
             ok: true,
@@ -248,6 +253,9 @@ export function registerBlackout(io: Server, namespace: string | Namespace = '/g
         player.socketId = socket.id;
         existingRoom.players[player.id] = player;
         bindPlayerToSocket(nsp, socket, existingRoom, player.id);
+        if (wantsHost) {
+          assignHost(existingRoom, player.id);
+        }
         broadcastRoom(nsp, existingRoom);
 
         return cb({
@@ -259,7 +267,11 @@ export function registerBlackout(io: Server, namespace: string | Namespace = '/g
       }
 
       // Create a new room for this session
-      const { room, hostId, resumeToken } = createRoom(name, socket.id, stablePlayerId ?? undefined);
+      const { room, hostId, resumeToken } = createRoom(
+        name,
+        socket.id,
+        stablePlayerId ?? undefined
+      );
       setSessionToRoom(sessionId, room.code);
       clearRoomCleanup(room.code);
       socket.join(room.code);

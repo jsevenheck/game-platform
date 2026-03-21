@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref, computed, onMounted, onBeforeUnmount, shallowRef, watch } from 'vue';
+import { ref, computed, onMounted, onBeforeUnmount, shallowRef } from 'vue';
 import { useRouter } from 'vue-router';
 import { usePartyStore } from '../stores/party';
 import { usePartySocket } from '../composables/usePartySocket';
@@ -120,14 +120,12 @@ onBeforeUnmount(() => {
   <div class="game-view">
     <p v-if="loadError" class="load-error">{{ loadError }}</p>
 
-    <p v-else-if="!gameComponent || !matchKey" class="loading">
-      Loading game...
-    </p>
+    <p v-else-if="!gameComponent || !matchKey" class="loading">Loading game...</p>
 
     <!-- key on matchKey forces full re-mount when the match changes (replay) -->
     <component
-      v-else
       :is="gameComponent"
+      v-else
       :key="matchKey"
       :match-key="matchKey"
       :player-id="store.playerId ?? ''"

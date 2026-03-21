@@ -5,6 +5,7 @@ export interface HubIntegrationProps {
   joinToken?: string;
   wsNamespace?: string;
   apiBaseUrl?: string;
+  isHost?: boolean;
 }
 
 export type GameComponentProps = HubIntegrationProps;

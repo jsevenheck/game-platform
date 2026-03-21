@@ -6,19 +6,26 @@ const GAME_ID = 'secret-signals';
 
 export type GameSocket = Socket<ServerToClientEvents, ClientToServerEvents>;
 
-export function useSocket(opts?: { apiBaseUrl?: string; sessionId?: string; playerId?: string }): {
+export function useSocket(opts?: {
+  apiBaseUrl?: string;
+  sessionId?: string;
+  playerId?: string;
+  wsNamespace?: string;
+}): {
   socket: GameSocket;
   connected: ReturnType<typeof ref<boolean>>;
 } {
   const connected = ref(false);
 
   const url = opts?.apiBaseUrl || window.location.origin;
+  const namespace = opts?.wsNamespace ?? `/g/${GAME_ID}`;
 
-  const socket: GameSocket = io(`${url}/g/${GAME_ID}`, {
+  const socket: GameSocket = io(`${url}${namespace}`, {
     auth: {
       sessionId: opts?.sessionId,
       playerId: opts?.playerId,
     },
+    autoConnect: false,
     transports: ['websocket', 'polling'],
   });
 

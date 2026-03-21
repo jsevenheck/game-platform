@@ -44,7 +44,12 @@ createRoom(data: { name: string }, cb)
 Success:
 
 ```ts
-{ ok: true; roomCode: string; playerId: string; resumeToken: string }
+{
+  ok: true;
+  roomCode: string;
+  playerId: string;
+  resumeToken: string;
+}
 ```
 
 #### `joinRoom`
@@ -56,18 +61,22 @@ joinRoom(data: { name: string; code: string }, cb)
 Success:
 
 ```ts
-{ ok: true; playerId: string; resumeToken: string }
+{
+  ok: true;
+  playerId: string;
+  resumeToken: string;
+}
 ```
 
 Notes:
 
 - In lobby mode, duplicate names are rejected.
-- In an active standalone game, a disconnected player can reclaim their old slot by rejoining with the same room code and same player name.
+- In an active game, a disconnected player can reclaim their old slot by rejoining with the same room code and same player name.
 - New players cannot join after the game has started.
 
 #### `autoJoinRoom`
 
-Embedded Game Hub flow. The server maps `sessionId -> roomCode` and reuses the stable hub
+Platform embedding flow. The server maps `sessionId -> roomCode` and reuses the stable platform
 `playerId` when reconnecting the same player.
 
 ```ts
@@ -80,12 +89,17 @@ autoJoinRoom(
 Success:
 
 ```ts
-{ ok: true; roomCode: string; playerId: string; resumeToken: string }
+{
+  ok: true;
+  roomCode: string;
+  playerId: string;
+  resumeToken: string;
+}
 ```
 
 #### `resumePlayer`
 
-Reconnects a stored standalone session after reload or brief disconnect.
+Reconnects a stored session after reload or brief disconnect.
 
 ```ts
 resumePlayer(data: { roomCode: string; playerId: string; resumeToken: string }, cb)
@@ -94,7 +108,9 @@ resumePlayer(data: { roomCode: string; playerId: string; resumeToken: string }, 
 Success:
 
 ```ts
-{ ok: true }
+{
+  ok: true;
+}
 ```
 
 #### `leaveRoom`

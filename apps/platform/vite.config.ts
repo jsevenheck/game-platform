@@ -1,11 +1,41 @@
-import { defineConfig } from 'vite';
+import { defineConfig, Plugin } from 'vite';
 import vue from '@vitejs/plugin-vue';
 import { resolve } from 'path';
 
 const GAMES_ROOT = resolve(__dirname, '../../games');
 
+/**
+ * Resolves `@shared/*` imports to the correct game's `core/src/` directory
+ * based on which game directory the importing file lives in.
+ */
+function sharedAliasPlugin(): Plugin {
+  return {
+    name: 'shared-alias',
+    async resolveId(source, importer) {
+      if (!source.startsWith('@shared')) return null;
+      if (!importer) return null;
+      const normalized = importer.replace(/\\/g, '/');
+      const subpath = source.replace(/^@shared\/?/, '');
+      let baseDir: string | undefined;
+      if (normalized.includes('/games/blackout/')) {
+        baseDir = resolve(GAMES_ROOT, 'blackout/core/src');
+      } else if (normalized.includes('/games/imposter/')) {
+        baseDir = resolve(GAMES_ROOT, 'imposter/core/src');
+      } else if (normalized.includes('/games/secret-signals/')) {
+        baseDir = resolve(GAMES_ROOT, 'secret-signals/core/src');
+      }
+      if (!baseDir) return null;
+      // Delegate to Vite's resolver so .ts / index.ts extensions are handled
+      const resolved = await this.resolve('./' + subpath, resolve(baseDir, '_placeholder.ts'), {
+        skipSelf: true,
+      });
+      return resolved;
+    },
+  };
+}
+
 export default defineConfig({
-  plugins: [vue()],
+  plugins: [sharedAliasPlugin(), vue()],
   resolve: {
     alias: [
       // Platform source alias
@@ -14,26 +44,6 @@ export default defineConfig({
       { find: '@blackout-ui', replacement: resolve(GAMES_ROOT, 'blackout/ui-vue/src') },
       { find: '@imposter-ui', replacement: resolve(GAMES_ROOT, 'imposter/ui-vue/src') },
       { find: '@secret-signals-ui', replacement: resolve(GAMES_ROOT, 'secret-signals/ui-vue/src') },
-      // Context-sensitive @shared alias: resolve to the correct game's core/src
-      // based on which game's directory the importing file lives in.
-      {
-        find: '@shared',
-        replacement: '',
-        customResolver(source, importer) {
-          if (!importer) return null;
-          const subpath = source.replace(/^@shared\/?/, '');
-          if (importer.includes('/games/blackout/')) {
-            return resolve(GAMES_ROOT, 'blackout/core/src', subpath);
-          }
-          if (importer.includes('/games/imposter/')) {
-            return resolve(GAMES_ROOT, 'imposter/core/src', subpath);
-          }
-          if (importer.includes('/games/secret-signals/')) {
-            return resolve(GAMES_ROOT, 'secret-signals/core/src', subpath);
-          }
-          return null;
-        },
-      },
     ],
   },
   server: {

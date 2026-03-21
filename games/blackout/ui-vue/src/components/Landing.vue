@@ -34,17 +34,10 @@ function handleJoin() {
 
 <template>
   <div class="landing">
-    <h1 class="title">
-      BLACKOUT
-    </h1>
-    <p class="subtitle">
-      The fast-thinking party game
-    </p>
+    <h1 class="title">BLACKOUT</h1>
+    <p class="subtitle">The fast-thinking party game</p>
 
-    <div
-      v-if="mode === 'menu'"
-      class="menu"
-    >
+    <div v-if="mode === 'menu'" class="menu">
       <input
         v-model="name"
         type="text"
@@ -52,25 +45,12 @@ function handleJoin() {
         maxlength="20"
         class="input"
         @keyup.enter="mode = 'create'"
-      >
-      <button
-        class="btn btn-primary"
-        @click="mode = 'create'"
-      >
-        Create Room
-      </button>
-      <button
-        class="btn btn-secondary"
-        @click="mode = 'join'"
-      >
-        Join Room
-      </button>
+      />
+      <button class="btn btn-primary" @click="mode = 'create'">Create Room</button>
+      <button class="btn btn-secondary" @click="mode = 'join'">Join Room</button>
     </div>
 
-    <div
-      v-else-if="mode === 'create'"
-      class="menu"
-    >
+    <div v-else-if="mode === 'create'" class="menu">
       <input
         v-model="name"
         type="text"
@@ -78,32 +58,13 @@ function handleJoin() {
         maxlength="20"
         class="input"
         @keyup.enter="handleCreate"
-      >
-      <button
-        class="btn btn-primary"
-        @click="handleCreate"
-      >
-        Create Room
-      </button>
-      <button
-        class="btn btn-back"
-        @click="mode = 'menu'"
-      >
-        Back
-      </button>
+      />
+      <button class="btn btn-primary" @click="handleCreate">Create Room</button>
+      <button class="btn btn-back" @click="mode = 'menu'">Back</button>
     </div>
 
-    <div
-      v-else
-      class="menu"
-    >
-      <input
-        v-model="name"
-        type="text"
-        placeholder="Your name"
-        maxlength="20"
-        class="input"
-      >
+    <div v-else class="menu">
+      <input v-model="name" type="text" placeholder="Your name" maxlength="20" class="input" />
       <input
         v-model="roomCode"
         type="text"
@@ -111,25 +72,12 @@ function handleJoin() {
         maxlength="4"
         class="input input-code"
         @keyup.enter="handleJoin"
-      >
-      <button
-        class="btn btn-primary"
-        @click="handleJoin"
-      >
-        Join Room
-      </button>
-      <button
-        class="btn btn-back"
-        @click="mode = 'menu'"
-      >
-        Back
-      </button>
+      />
+      <button class="btn btn-primary" @click="handleJoin">Join Room</button>
+      <button class="btn btn-back" @click="mode = 'menu'">Back</button>
     </div>
 
-    <p
-      v-if="error"
-      class="error"
-    >
+    <p v-if="error" class="error">
       {{ error }}
     </p>
   </div>

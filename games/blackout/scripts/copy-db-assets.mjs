@@ -4,10 +4,24 @@ import { fileURLToPath } from 'node:url';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
-const rootDir = path.resolve(__dirname, '..');
+const gameDir = path.resolve(__dirname, '..');
+// Workspace root is 2 levels up from games/blackout/
+const workspaceRoot = path.resolve(gameDir, '..', '..');
 
-const sourceDir = path.join(rootDir, 'server', 'src', 'db');
-const targetDir = path.join(rootDir, 'dist', 'standalone-server', 'server', 'src', 'db');
+const sourceDir = path.join(gameDir, 'server', 'src', 'db');
+// Target: platform's compiled server output alongside the compiled Blackout server code
+const targetDir = path.join(
+  workspaceRoot,
+  'apps',
+  'platform',
+  'dist',
+  'server',
+  'games',
+  'blackout',
+  'server',
+  'src',
+  'db'
+);
 
 if (!existsSync(sourceDir)) {
   console.error(`[copy-db-assets] Source directory not found: ${sourceDir}`);
@@ -22,10 +36,10 @@ if (existsSync(legacySeedPath)) {
   rmSync(legacySeedPath);
 }
 
-// Remove the old standalone DB so the server re-seeds from the current CSVs on next start
-const standaloneDbPath = path.join(targetDir, 'blackout.sqlite');
+// Remove old DB so the server re-seeds from the current CSVs on next start
+const dbPath = path.join(targetDir, 'blackout.sqlite');
 for (const ext of ['', '-shm', '-wal']) {
-  const f = standaloneDbPath + ext;
+  const f = dbPath + ext;
   if (existsSync(f)) rmSync(f);
 }
 

@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref, onMounted, onBeforeUnmount, watch } from 'vue';
+import { ref, onMounted, onBeforeUnmount } from 'vue';
 import { useRouter } from 'vue-router';
 import { usePartyStore } from '../stores/party';
 import { usePartySocket } from '../composables/usePartySocket';
@@ -111,7 +111,9 @@ onBeforeUnmount(() => {
             :class="['member', { disconnected: !member.connected }]"
           >
             <span class="member-name">{{ member.name }}</span>
-            <span v-if="member.playerId === store.party?.hostPlayerId" class="host-badge">HOST</span>
+            <span v-if="member.playerId === store.party?.hostPlayerId" class="host-badge"
+              >HOST</span
+            >
             <span v-if="!member.connected" class="dc-badge">away</span>
           </li>
         </ul>
@@ -127,14 +129,20 @@ onBeforeUnmount(() => {
             @click="handleSelectGame(game.definition.id)"
           >
             <span class="game-name">{{ game.definition.name }}</span>
-            <span class="game-players">{{ game.definition.minPlayers }}–{{ game.definition.maxPlayers }} players</span>
+            <span class="game-players"
+              >{{ game.definition.minPlayers }}–{{ game.definition.maxPlayers }} players</span
+            >
           </button>
         </div>
       </section>
 
       <section v-else-if="store.party?.selectedGameId" class="waiting-game">
         <p class="selected-game">
-          Game selected: <strong>{{ clientGameRegistry.find(g => g.definition.id === store.party?.selectedGameId)?.definition.name }}</strong>
+          Game selected:
+          <strong>{{
+            clientGameRegistry.find((g) => g.definition.id === store.party?.selectedGameId)
+              ?.definition.name
+          }}</strong>
         </p>
         <p class="waiting-msg">Waiting for host to launch...</p>
       </section>

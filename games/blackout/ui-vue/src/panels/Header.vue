@@ -20,20 +20,12 @@ function roundDisplay(): string {
       <span class="room-code">{{ store.roomCode }}</span>
     </div>
     <div class="center">
-      <span
-        v-if="store.phase === 'playing' || store.phase === 'roundEnd'"
-        class="round-info"
-      >
+      <span v-if="store.phase === 'playing' || store.phase === 'roundEnd'" class="round-info">
         {{ roundDisplay() }}
       </span>
     </div>
     <div class="right">
-      <button
-        class="btn-leave"
-        @click="$emit('leave')"
-      >
-        Leave
-      </button>
+      <button class="btn-leave" @click="$emit('leave')">Leave</button>
     </div>
   </header>
 </template>

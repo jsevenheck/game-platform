@@ -1,9 +1,0 @@
-{
-  "serverDependencies": {
-    "better-sqlite3": "^11.0.0",
-    "nanoid": "^5.1.6"
-  },
-  "serverDevDependencies": {
-    "@types/better-sqlite3": "^7.6.13"
-  }
-}

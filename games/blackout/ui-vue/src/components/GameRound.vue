@@ -39,71 +39,31 @@ const selectablePlayers = computed(() => {
   <div class="game-round">
     <!-- Pre-reveal: Host sees category, others wait -->
     <template v-if="!round?.revealed">
-      <div
-        v-if="isReader"
-        class="reader-view"
-      >
-        <p class="label">
-          You are the Host!
-        </p>
+      <div v-if="isReader" class="reader-view">
+        <p class="label">You are the Host!</p>
         <div class="category-card">
-          <span
-            v-if="isCategoryReused"
-            class="reused-badge"
-          >Already played</span>
+          <span v-if="isCategoryReused" class="reused-badge">Already played</span>
           <p class="category-name">
             {{ round?.category?.name }}
           </p>
           <p class="task-text">
             {{ taskText }}
           </p>
-          <p
-            v-if="round?.letter"
-            class="letter"
-          >
+          <p v-if="round?.letter" class="letter">
             {{ round?.letter }}
           </p>
         </div>
-        <button
-          class="btn btn-reveal"
-          @click="$emit('reveal')"
-        >
-          Reveal!
-        </button>
-        <button
-          class="btn btn-reroll"
-          @click="$emit('reroll')"
-        >
-          New Task + Category
-        </button>
-        <button
-          v-if="canSkip"
-          class="btn btn-skip"
-          @click="$emit('skip')"
-        >
-          Skip Round
-        </button>
-        <p class="hint">
-          Click to reveal the prompt to all players
-        </p>
+        <button class="btn btn-reveal" @click="$emit('reveal')">Reveal!</button>
+        <button class="btn btn-reroll" @click="$emit('reroll')">New Task + Category</button>
+        <button v-if="canSkip" class="btn btn-skip" @click="$emit('skip')">Skip Round</button>
+        <p class="hint">Click to reveal the prompt to all players</p>
       </div>
-      <div
-        v-else
-        class="waiting-view"
-      >
-        <p class="label">
-          Waiting for the host to reveal...
-        </p>
+      <div v-else class="waiting-view">
+        <p class="label">Waiting for the host to reveal...</p>
         <p class="reader-name">
           Host: {{ store.room?.players.find((p) => p.id === round?.readerId)?.name }}
         </p>
-        <button
-          v-if="canSkip"
-          class="btn btn-skip"
-          @click="$emit('skip')"
-        >
-          Skip Round
-        </button>
+        <button v-if="canSkip" class="btn btn-skip" @click="$emit('skip')">Skip Round</button>
       </div>
     </template>
 
@@ -111,69 +71,35 @@ const selectablePlayers = computed(() => {
     <template v-else>
       <div class="revealed-view">
         <div class="category-display">
-          <span
-            v-if="isCategoryReused"
-            class="reused-badge"
-          >Already played</span>
+          <span v-if="isCategoryReused" class="reused-badge">Already played</span>
           <p class="category-name">
             {{ round?.category?.name }}
           </p>
           <p class="task-text">
             {{ taskText }}
           </p>
-          <p
-            v-if="round?.letter"
-            class="letter-big"
-          >
+          <p v-if="round?.letter" class="letter-big">
             {{ round?.letter }}
           </p>
         </div>
 
-        <div
-          v-if="isReader"
-          class="answers-list"
-        >
+        <div v-if="isReader" class="answers-list">
           <h3>Who was correct?</h3>
-          <div
-            v-for="player in selectablePlayers"
-            :key="player.id"
-            class="answer-entry"
-          >
+          <div v-for="player in selectablePlayers" :key="player.id" class="answer-entry">
             <span class="answer-name">{{ player.name }}</span>
-            <button
-              class="btn btn-correct"
-              @click="$emit('selectWinner', player.id)"
-            >
+            <button class="btn btn-correct" @click="$emit('selectWinner', player.id)">
               Correct!
             </button>
           </div>
         </div>
-        <p
-          v-else
-          class="hint"
-        >
-          Speak your answer out loud. Host will select the correct player.
-        </p>
+        <p v-else class="hint">Speak your answer out loud. Host will select the correct player.</p>
 
         <!-- Host controls -->
-        <div
-          v-if="isReader || canSkip"
-          class="reader-controls"
-        >
-          <button
-            v-if="isReader"
-            class="btn btn-reroll"
-            @click="$emit('reroll')"
-          >
+        <div v-if="isReader || canSkip" class="reader-controls">
+          <button v-if="isReader" class="btn btn-reroll" @click="$emit('reroll')">
             New Task + Category
           </button>
-          <button
-            v-if="canSkip"
-            class="btn btn-skip"
-            @click="$emit('skip')"
-          >
-            Skip Round
-          </button>
+          <button v-if="canSkip" class="btn btn-skip" @click="$emit('skip')">Skip Round</button>
         </div>
       </div>
     </template>

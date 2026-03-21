@@ -1,5 +1,6 @@
 import type { Server, Namespace } from 'socket.io';
 import { registerBlackout } from './socketHandlers';
+import { getSessionRoom, deleteRoom } from './models/room';
 
 // Optional: define the hub contract locally so we don't need a dev dependency
 interface GameDefinition {
@@ -22,6 +23,13 @@ export const definition: GameDefinition = {
 
 export function register(io: Server, namespace: Namespace): void {
   return registerBlackout(io, namespace);
+}
+
+export function cleanupMatch(matchKey: string): void {
+  const roomCode = getSessionRoom(matchKey);
+  if (roomCode) {
+    deleteRoom(roomCode);
+  }
 }
 
 export const handler: GameHandler = { definition, register };

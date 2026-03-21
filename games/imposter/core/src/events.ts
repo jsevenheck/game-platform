@@ -23,7 +23,7 @@ export interface ClientToServerEvents {
 
   /** Embedded mode: auto-create or rejoin a room keyed by platform session */
   autoJoinRoom: (
-    data: { sessionId: string; playerId: string; name: string },
+    data: { sessionId: string; playerId: string; name: string; isHost?: boolean },
     cb: (
       res:
         | { ok: true; roomCode: string; playerId: string; resumeToken: string }

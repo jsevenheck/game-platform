@@ -4,11 +4,15 @@ import type { PartyView } from '../stores/party';
 interface PartyClientToServerEvents {
   createParty: (
     data: { playerName: string },
-    cb: (res: { ok: true; partyView: PartyView; playerId: string } | { ok: false; error: string }) => void
+    cb: (
+      res: { ok: true; partyView: PartyView; playerId: string } | { ok: false; error: string }
+    ) => void
   ) => void;
   joinParty: (
     data: { inviteCode: string; playerName: string },
-    cb: (res: { ok: true; partyView: PartyView; playerId: string } | { ok: false; error: string }) => void
+    cb: (
+      res: { ok: true; partyView: PartyView; playerId: string } | { ok: false; error: string }
+    ) => void
   ) => void;
   resumeParty: (
     data: { inviteCode: string; playerId: string },

@@ -31,7 +31,9 @@ import {
   createRoom,
   deleteRoom,
   getRoom,
+  getSessionRoom,
   scheduleRoomCleanup,
+  setSessionToRoom,
 } from '../models/room';
 
 const GAME_ID = 'secret-signals';
@@ -114,6 +116,76 @@ export function registerGame(io: Server, namespace = `/g/${GAME_ID}`): void {
       broadcastRoom(nsp, room);
 
       cb({ ok: true, playerId: player.id, resumeToken: player.resumeToken });
+    });
+
+    socket.on('autoJoinRoom', (data, cb) => {
+      const sessionId = data.sessionId?.trim();
+      const name = data.name?.trim();
+      const hubPlayerId = data.playerId?.trim();
+
+      if (!sessionId || !name) {
+        return cb({ ok: false, error: 'Missing session info' });
+      }
+
+      const mappedRoomCode = getSessionRoom(sessionId);
+      const mappedRoom = mappedRoomCode ? getRoom(mappedRoomCode) : undefined;
+
+      if (!mappedRoom) {
+        const { room, hostId, resumeToken } = createRoom(name, socket.id, hubPlayerId || undefined);
+        setSessionToRoom(sessionId, room.code);
+        socket.join(room.code);
+        broadcastRoom(nsp, room);
+        return cb({ ok: true, roomCode: room.code, playerId: hostId, resumeToken });
+      }
+
+      if (hubPlayerId) {
+        const existingPlayer = mappedRoom.players[hubPlayerId];
+        if (existingPlayer) {
+          if (existingPlayer.socketId && existingPlayer.socketId !== socket.id) {
+            deleteSocketIndex(existingPlayer.socketId);
+          }
+          existingPlayer.socketId = socket.id;
+          existingPlayer.connected = true;
+          if (existingPlayer.isHost) {
+            mappedRoom.hostId = existingPlayer.id;
+          }
+          setSocketIndex(socket.id, mappedRoom.code, existingPlayer.id);
+          clearRoomCleanup(mappedRoom.code);
+          socket.join(mappedRoom.code);
+          broadcastRoom(nsp, mappedRoom);
+          return cb({
+            ok: true,
+            roomCode: mappedRoom.code,
+            playerId: existingPlayer.id,
+            resumeToken: existingPlayer.resumeToken,
+          });
+        }
+      }
+
+      if (mappedRoom.phase !== 'lobby') {
+        return cb({ ok: false, error: 'Game already started' });
+      }
+
+      const nameExists = Object.values(mappedRoom.players).some(
+        (player) => player.name.toLowerCase() === name.toLowerCase()
+      );
+      if (nameExists) {
+        return cb({ ok: false, error: 'Name already taken' });
+      }
+
+      const player = createPlayer(name, false, hubPlayerId || undefined);
+      player.socketId = socket.id;
+      mappedRoom.players[player.id] = player;
+      setSocketIndex(socket.id, mappedRoom.code, player.id);
+      clearRoomCleanup(mappedRoom.code);
+      socket.join(mappedRoom.code);
+      broadcastRoom(nsp, mappedRoom);
+      cb({
+        ok: true,
+        roomCode: mappedRoom.code,
+        playerId: player.id,
+        resumeToken: player.resumeToken,
+      });
     });
 
     socket.on('resumePlayer', (data, cb) => {

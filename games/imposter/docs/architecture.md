@@ -37,7 +37,7 @@ Design goals:
 ### Models
 
 - `models/room.ts`
-  in-memory room registry, room cleanup timers, `sessionId -> roomCode` map for Game Hub
+  in-memory room registry, room cleanup timers, `sessionId -> roomCode` map for platform embedding
 - `models/player.ts`
   player factory and `socketId -> { roomCode, playerId }` auth index
 
@@ -86,7 +86,7 @@ Behavior:
 - if host disconnects, host transfers to another connected player
 - if the owner reconnects, host control returns to the owner automatically
 
-## Standalone Reconnect / Leave Behavior
+## Reconnect / Leave Behavior
 
 Standalone mode stores:
 
@@ -109,7 +109,7 @@ Leave behavior:
 - in `lobby` or `ended`, the player is removed from the room
 - in an active round, the player becomes disconnected so they can reclaim the same slot later
 
-## Embedded Game Hub Behavior
+## Platform Embedding Behavior
 
 Embedded mode uses:
 
@@ -120,7 +120,7 @@ Embedded mode uses:
 - optional `joinToken`
 
 The client emits `autoJoinRoom`, and the server resolves the room through the in-memory
-`sessionId -> roomCode` map. Stable hub player IDs are preserved for reconnects.
+`sessionId -> roomCode` map. Stable platform player IDs are preserved for reconnects.
 
 ## Phase State Machine
 
@@ -185,11 +185,11 @@ At that point the game moves to `ended`.
 
 ## Server-owned Timers
 
-| Timer | Runtime | E2E | Trigger | Result |
-| --- | --- | --- | --- | --- |
-| Discussion | configurable, default 90 s | 2 s | all clues done | enters `voting` |
-| Guess timeout | 30 s | 3 s | waiting for infiltrator guess | auto-skip guess |
-| Room cleanup | 5 min | 5 min | no connected players | deletes room |
+| Timer         | Runtime                    | E2E   | Trigger                       | Result          |
+| ------------- | -------------------------- | ----- | ----------------------------- | --------------- |
+| Discussion    | configurable, default 90 s | 2 s   | all clues done                | enters `voting` |
+| Guess timeout | 30 s                       | 3 s   | waiting for infiltrator guess | auto-skip guess |
+| Room cleanup  | 5 min                      | 5 min | no connected players          | deletes room    |
 
 `E2E_TESTS=1` only shortens timing-related constants. It does not disable randomness.
 
@@ -230,3 +230,4 @@ Host-only lobby controls currently include:
 - kick another player from the lobby
 
 Any player may submit a custom word to the library.
+

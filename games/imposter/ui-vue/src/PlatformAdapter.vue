@@ -3,13 +3,12 @@
  * Platform adapter for Imposter.
  *
  * Maps PlatformGameProps → HubIntegrationProps and detects game-end via
- * the `roomState` event (Imposter's broadcast event name).
+ * the `phase-change` event emitted by the game component.
  */
-import { ref, computed, onMounted, onBeforeUnmount } from 'vue';
-import { io, type Socket } from 'socket.io-client';
+import { ref, computed } from 'vue';
 import GameApp from './App.vue';
 
-const props = defineProps<{
+defineProps<{
   matchKey: string;
   playerId: string;
   playerName: string;
@@ -19,30 +18,12 @@ const props = defineProps<{
   onReturnToLobby?: () => void;
 }>();
 
-let monitorSocket: Socket | null = null;
 const gamePhase = ref<string | null>(null);
 const gameEnded = computed(() => gamePhase.value === 'ended');
 
-function initMonitor() {
-  monitorSocket = io(props.namespace, { autoConnect: false });
-
-  monitorSocket.on('roomState', (room: { phase?: string }) => {
-    if (room.phase) {
-      gamePhase.value = room.phase;
-    }
-  });
-
-  monitorSocket.connect();
+function onPhaseChange(phase: string) {
+  gamePhase.value = phase;
 }
-
-onMounted(() => {
-  initMonitor();
-});
-
-onBeforeUnmount(() => {
-  monitorSocket?.disconnect();
-  monitorSocket = null;
-});
 </script>
 
 <template>
@@ -52,6 +33,8 @@ onBeforeUnmount(() => {
       :player-name="playerName"
       :session-id="matchKey"
       :ws-namespace="namespace"
+      :is-host="isHost"
+      @phase-change="onPhaseChange"
     />
 
     <Transition name="fade">

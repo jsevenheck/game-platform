@@ -16,7 +16,7 @@ export interface ClientToServerEvents {
     ) => void
   ) => void;
   autoJoinRoom: (
-    data: { sessionId: string; playerId: string; name: string },
+    data: { sessionId: string; playerId: string; name: string; isHost?: boolean },
     cb: (
       res:
         | { ok: true; roomCode: string; playerId: string; resumeToken: string }

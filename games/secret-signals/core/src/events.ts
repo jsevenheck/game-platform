@@ -101,6 +101,16 @@ export interface ClientToServerEvents {
     data: { roomCode: string; playerId: string },
     cb: (res: { ok: true } | { ok: false; error: string }) => void
   ) => void;
+
+  /** Platform-driven auto-join: joins or creates a room for the given sessionId (matchKey) */
+  autoJoinRoom: (
+    data: { sessionId: string; playerId: string; name: string; isHost?: boolean },
+    cb: (
+      res:
+        | { ok: true; roomCode: string; playerId: string; resumeToken: string }
+        | { ok: false; error: string }
+    ) => void
+  ) => void;
 }
 
 // ─── Server → Client ─────────────────────────────────────────────────────────

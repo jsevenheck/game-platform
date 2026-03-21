@@ -2,7 +2,7 @@
 
 Secret Signals is a real-time multiplayer word-deduction party game. Players split into teams, each team assigns one Director and one or more Agents, and the active Director gives a one-word signal plus a number for their Agents to interpret.
 
-Current game rules implemented in this repo:
+Current game rules:
 
 - 5x5 board with unique words
 - 800 curated German board words in `server/src/data/words.ts`
@@ -15,27 +15,6 @@ Current game rules implemented in this repo:
   - `instant-loss`: the team that reveals the assassin loses immediately and all surviving opponents win
   - `elimination`: the team that reveals the assassin is eliminated and play continues for the remaining teams
 
-## Quick Start
-
-Development:
-
-```bash
-pnpm install
-pnpm dev
-```
-
-The Socket.IO server runs on `http://localhost:3001` and the Vite client runs on `http://localhost:5173`.
-
-Production:
-
-```bash
-pnpm install
-pnpm build
-pnpm start
-```
-
-Open `http://localhost:3001`.
-
 ## Gameplay Notes
 
 - Team setup is validated before the match starts.
@@ -46,43 +25,27 @@ Open `http://localhost:3001`.
 - The in-game layout shows each team's Director and Agents around the board.
 - In multi-team games, eliminated teams are skipped in turn rotation.
 - The host can force-skip the active turn, including the Director thinking step.
-- Standalone sessions are stored locally, so a page reload reconnects you to the same player slot.
-- A disconnected player can also rejoin an active room by joining again with the same name.
+- A disconnected player can rejoin an active room by joining again with the same name.
 
-## Scripts
+## Development
 
-| Script                  | Purpose                                      |
-| ----------------------- | -------------------------------------------- |
-| `pnpm dev`              | Run the standalone server and Vue client     |
-| `pnpm dev:standalone`   | Run standalone server and standalone web app |
-| `pnpm build`            | Build the production client and server       |
-| `pnpm build:standalone` | Build standalone web and standalone server   |
-| `pnpm build:lib`        | Build the embeddable Vue library bundle      |
-| `pnpm typecheck`        | Run TypeScript and Vue type checks           |
-| `pnpm lint`             | Run ESLint with zero warnings allowed        |
-| `pnpm format:check`     | Verify Prettier formatting                   |
-| `pnpm test`             | Run Jest unit tests                          |
-| `pnpm test:e2e`         | Run Playwright browser tests                 |
-
-## Docker
+Run from the workspace root:
 
 ```bash
-docker build -t secret-signals .
-docker run --rm -p 3001:3001 secret-signals
+pnpm dev        # start platform (server + client)
+pnpm test       # run all unit tests
+pnpm test:e2e   # run Playwright e2e tests (platform must be running)
+pnpm typecheck  # TypeScript check
+pnpm lint       # ESLint
 ```
-
-Override the port with `-e PORT=<port>`.
 
 ## Project Layout
 
 - `core/src`: shared game types, event contracts, constants
 - `server/src`: authoritative game state, managers, Socket.IO handlers
 - `ui-vue/src`: Vue 3 client, Pinia store, gameplay components
-- `standalone-server/src`: Express and Socket.IO wrapper for standalone runtime
-- `standalone-web`: standalone web entrypoint
 
 ## Documentation
 
 - `docs/architecture.md`: runtime and code structure
 - `docs/api.md`: Socket.IO event contracts
-- `docs/game-hub-integration.md`: Game Hub packaging and sync workflow

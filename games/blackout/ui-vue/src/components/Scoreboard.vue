@@ -25,18 +25,8 @@ const winnerName = computed(() => {
   <div class="scoreboard">
     <h2>Round {{ lastResult?.roundNumber }} Complete!</h2>
 
-    <div
-      v-if="winnerName"
-      class="winner-banner"
-    >
-      {{ winnerName }} got it right!
-    </div>
-    <div
-      v-else
-      class="skip-banner"
-    >
-      Round skipped - no correct answer
-    </div>
+    <div v-if="winnerName" class="winner-banner">{{ winnerName }} got it right!</div>
+    <div v-else class="skip-banner">Round skipped - no correct answer</div>
 
     <div class="scores">
       <div
@@ -51,9 +41,7 @@ const winnerName = computed(() => {
       </div>
     </div>
 
-    <p class="next-round">
-      Next round starting...
-    </p>
+    <p class="next-round">Next round starting...</p>
   </div>
 </template>
 

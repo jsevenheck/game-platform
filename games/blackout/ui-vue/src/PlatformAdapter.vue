@@ -3,14 +3,13 @@
  * Platform adapter for Blackout.
  *
  * Receives PlatformGameProps from the platform's GameView, maps them to
- * Blackout's HubIntegrationProps, and detects game-end via the `roomUpdate`
- * event so it can surface the platform-level post-match actions.
+ * Blackout's HubIntegrationProps, and detects game-end via the `phase-change`
+ * event emitted by the game component.
  */
-import { ref, onMounted, onBeforeUnmount } from 'vue';
-import { io, type Socket } from 'socket.io-client';
+import { ref, computed } from 'vue';
 import GameApp from './App.vue';
 
-const props = defineProps<{
+defineProps<{
   matchKey: string;
   playerId: string;
   playerName: string;
@@ -20,33 +19,12 @@ const props = defineProps<{
   onReturnToLobby?: () => void;
 }>();
 
-// Monitor socket just for detecting game phase
-let monitorSocket: Socket | null = null;
 const gamePhase = ref<string | null>(null);
 const gameEnded = computed(() => gamePhase.value === 'ended');
 
-import { computed } from 'vue';
-
-function initMonitor() {
-  monitorSocket = io(props.namespace, { autoConnect: false });
-
-  monitorSocket.on('roomUpdate', (room: { phase?: string }) => {
-    if (room.phase) {
-      gamePhase.value = room.phase;
-    }
-  });
-
-  monitorSocket.connect();
+function onPhaseChange(phase: string) {
+  gamePhase.value = phase;
 }
-
-onMounted(() => {
-  initMonitor();
-});
-
-onBeforeUnmount(() => {
-  monitorSocket?.disconnect();
-  monitorSocket = null;
-});
 </script>
 
 <template>
@@ -57,6 +35,8 @@ onBeforeUnmount(() => {
       :player-name="playerName"
       :session-id="matchKey"
       :ws-namespace="namespace"
+      :is-host="isHost"
+      @phase-change="onPhaseChange"
     />
 
     <!-- Platform overlay shown when game ends -->

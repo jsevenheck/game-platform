@@ -7,55 +7,19 @@ players are **Infiltrators** who do not know the word and must bluff their way t
 clues are in, players discuss, vote for suspected Infiltrators, and caught Infiltrators get one
 last chance to guess the secret word and steal the round.
 
-## Quick Start
+## Development
 
-**Production mode:**
-
-```bash
-pnpm install
-pnpm run build
-pnpm start
-```
-
-Open `http://localhost:3001`.
-
-**Development mode** (with hot reload):
+Run from the workspace root:
 
 ```bash
-pnpm install
-pnpm run dev
+pnpm dev        # start platform (server + client)
+pnpm test       # run all unit tests
+pnpm test:e2e   # run Playwright e2e tests (platform must be running)
+pnpm typecheck  # TypeScript check
+pnpm lint       # ESLint
 ```
-
-Backend server on port `3001`, Vite dev server on port `5173`.
-Open `http://localhost:5173`.
-
-## Scripts
-
-| Script | What it does |
-| --- | --- |
-| `pnpm dev` | Server + Vite client together |
-| `pnpm build` | Production build (server + client) |
-| `pnpm build:standalone` | Full standalone build (web + server) |
-| `pnpm build:lib` | Library bundle for Game Hub embedding |
-| `pnpm typecheck` | `tsc` + `vue-tsc` |
-| `pnpm lint` | ESLint check (0 warnings required) |
-| `pnpm lint:fix` | ESLint auto-fix |
-| `pnpm format` | Prettier rewrite all files in place |
-| `pnpm format:check` | Prettier dry-run, exit 1 on diffs |
-| `pnpm test` | Jest unit tests |
-| `pnpm test:e2e` | Playwright E2E (auto-starts server + client) |
-
-## Docker
-
-```bash
-docker build -t imposter .
-docker run --rm -p 3001:3001 imposter
-```
-
-Override port with `-e PORT=<port>`.
 
 ## Project Docs
 
 - Architecture: `docs/architecture.md`
 - Socket.IO API: `docs/api.md`
-- Game Hub integration: `docs/game-hub-integration.md`
