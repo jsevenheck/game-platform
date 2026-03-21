@@ -1,10 +1,9 @@
 import express from 'express';
 import { createServer } from 'http';
 import { Server } from 'socket.io';
-import { resolve } from 'path';
-import { existsSync } from 'fs';
 import { registerPartyHandlers } from './party/partyHandlers';
 import { gameRegistry } from './registry/index';
+import { registerHttpRoutes } from './httpRoutes';
 
 const app = express();
 const httpServer = createServer(app);
@@ -29,23 +28,7 @@ for (const [gameId, game] of gameRegistry) {
 registerPartyHandlers(io);
 console.log('[platform] Party handlers registered on /party');
 
-// ─── Static files ─────────────────────────────────────────────────────────────
-
-// In the compiled output __dirname is dist/server/apps/platform/server/ — four levels
-// up lands in dist/, then into client/ where Vite writes the SPA bundle.
-const clientDist = resolve(__dirname, '../../../../client');
-if (existsSync(clientDist)) {
-  app.use(express.static(clientDist));
-  app.get('*', (_req, res) => {
-    res.sendFile(resolve(clientDist, 'index.html'));
-  });
-}
-
-// ─── Health check ─────────────────────────────────────────────────────────────
-
-app.get('/health', (_req, res) => {
-  res.json({ ok: true });
-});
+registerHttpRoutes(app);
 
 // ─── Start ────────────────────────────────────────────────────────────────────
 

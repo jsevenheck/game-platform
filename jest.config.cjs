@@ -14,6 +14,17 @@ const sharedTsconfig = {
 module.exports = {
   projects: [
     {
+      displayName: 'platform',
+      rootDir: 'apps/platform',
+      preset: 'ts-jest',
+      testEnvironment: 'node',
+      clearMocks: true,
+      testMatch: ['**/__tests__/**/*.test.ts'],
+      transform: {
+        '^.+\\.ts$': ['ts-jest', { tsconfig: sharedTsconfig }],
+      },
+    },
+    {
       displayName: 'blackout',
       rootDir: 'games/blackout',
       preset: 'ts-jest',

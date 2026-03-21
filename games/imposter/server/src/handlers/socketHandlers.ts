@@ -10,7 +10,7 @@ import {
   clearRoomCleanup,
   scheduleRoomCleanup,
   getSessionRoom,
-  setSessionRoom,
+  setSessionToRoom,
   setHost,
 } from '../models/room';
 import { persistWord } from '../utils/wordLibrary';
@@ -218,7 +218,7 @@ export function registerGame(io: Server, namespace = `/g/${GAME_ID}`): void {
 
       if (!mappedRoom) {
         const { room, hostId, resumeToken } = createRoom(name, socket.id, hubPlayerId || undefined);
-        setSessionRoom(sessionId, room.code);
+        setSessionToRoom(sessionId, room.code);
         socket.join(room.code);
         broadcastRoom(nsp, room);
         return cb({ ok: true, roomCode: room.code, playerId: hostId, resumeToken });

@@ -8,6 +8,8 @@ import {
   registerSocket,
   unregisterSocket,
   deleteParty,
+  schedulePartyCleanup,
+  clearPartyCleanup,
 } from './partyStore';
 import type { PartySession } from './types';
 import { getGame } from '../registry/index';
@@ -67,7 +69,6 @@ interface PartyClientToServerEvents {
 
 interface PartyServerToClientEvents {
   partyUpdate: (partyView: ReturnType<typeof partyToView>) => void;
-  partyError: (message: string) => void;
 }
 
 type PartySocket = Socket<PartyClientToServerEvents, PartyServerToClientEvents>;
@@ -130,6 +131,7 @@ export function registerPartyHandlers(io: Server): void {
       });
 
       registerSocket(socket.id, party.partyId);
+      clearPartyCleanup(party.partyId);
       socket.join(party.partyId);
       broadcastParty(io, party);
 
@@ -162,6 +164,7 @@ export function registerPartyHandlers(io: Server): void {
       member.socketId = socket.id;
       member.connected = true;
       registerSocket(socket.id, party.partyId);
+      clearPartyCleanup(party.partyId);
       socket.join(party.partyId);
       broadcastParty(io, party);
 
@@ -193,6 +196,10 @@ export function registerPartyHandlers(io: Server): void {
       if (party.members.size === 0) {
         deleteParty(party.partyId);
         return;
+      }
+
+      if (connectedMemberCount(party) === 0) {
+        schedulePartyCleanup(party.partyId);
       }
 
       broadcastParty(io, party);
@@ -341,9 +348,9 @@ export function registerPartyHandlers(io: Server): void {
       if (!party || party.status !== 'returning') return;
 
       const member = party.members.get(data.playerId);
-      if (member) {
-        party.returnAcks.add(data.playerId);
-      }
+      if (!member || member.socketId !== socket.id) return;
+
+      party.returnAcks.add(data.playerId);
 
       const connected = Array.from(party.members.values())
         .filter((m) => m.connected)
@@ -367,6 +374,20 @@ export function registerPartyHandlers(io: Server): void {
       if (member) {
         member.connected = false;
         member.socketId = null;
+      }
+
+      // Transfer host if the disconnected member was the host
+      if (member && party.hostPlayerId === member.playerId) {
+        const nextConnected = Array.from(party.members.values()).find((m) => m.connected);
+        if (nextConnected) {
+          party.hostPlayerId = nextConnected.playerId;
+        }
+      }
+
+      // Schedule cleanup if nobody is connected any more
+      const anyConnected = Array.from(party.members.values()).some((m) => m.connected);
+      if (!anyConnected) {
+        schedulePartyCleanup(party.partyId);
       }
 
       broadcastParty(io, party);

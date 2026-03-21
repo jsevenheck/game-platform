@@ -190,6 +190,10 @@ export function registerBlackout(io: Server, namespace: string | Namespace = '/g
         return cb({ ok: false, error: 'Room not found' });
       }
 
+      if (room.phase !== 'lobby') {
+        return cb({ ok: false, error: 'Game already started' });
+      }
+
       // Check duplicate name
       const nameExists = Object.values(room.players).some(
         (p) => p.name.toLowerCase() === name.toLowerCase()
@@ -259,6 +263,10 @@ export function registerBlackout(io: Server, namespace: string | Namespace = '/g
         );
         if (nameExists) {
           return cb({ ok: false, error: 'Name already taken' });
+        }
+
+        if (existingRoom.phase !== 'lobby') {
+          return cb({ ok: false, error: 'Game already started' });
         }
 
         const player = createPlayer(name, false, stablePlayerId ?? undefined);

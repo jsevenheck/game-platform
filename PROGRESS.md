@@ -1,5 +1,12 @@
 # Migration Progress
 
+## Latest Verification: 2026-03-21
+
+- [x] `pnpm test` -> 122/122 pass
+- [x] `pnpm test:e2e` -> 16/16 pass
+- [x] Platform HTTP route registration extracted to `apps/platform/server/httpRoutes.ts`
+- [x] Party lifecycle edge cases covered by new platform tests (`partyStore`, `partyHandlers`, `serverRoutes`)
+
 ## Current Phase: Phase 1–3 complete (initial implementation session)
 
 ---

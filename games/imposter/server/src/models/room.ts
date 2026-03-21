@@ -106,7 +106,7 @@ export function deleteRoom(code: string): void {
   }
 }
 
-export function setSessionRoom(sessionId: string, roomCode: string): void {
+export function setSessionToRoom(sessionId: string, roomCode: string): void {
   sessionToRoom.set(sessionId, roomCode);
 }
 

@@ -37,7 +37,7 @@ pnpm test           # run all unit tests (jest, all 3 games)
 pnpm lint           # eslint across all source
 pnpm format         # prettier across all source
 pnpm typecheck      # tsc via apps/platform
-pnpm test:e2e       # playwright (platform must be running)
+pnpm test:e2e       # playwright (starts server automatically)
 ```
 
 ## Structure

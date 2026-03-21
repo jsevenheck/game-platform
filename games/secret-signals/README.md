@@ -34,7 +34,7 @@ Run from the workspace root:
 ```bash
 pnpm dev        # start platform (server + client)
 pnpm test       # run all unit tests
-pnpm test:e2e   # run Playwright e2e tests (platform must be running)
+pnpm test:e2e   # run Playwright e2e tests (starts server automatically)
 pnpm typecheck  # TypeScript check
 pnpm lint       # ESLint
 ```
