@@ -1,0 +1,36 @@
+{
+  "name": "platform",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "concurrently \"pnpm run dev:server\" \"pnpm run dev:client\"",
+    "dev:server": "tsx watch server/index.ts",
+    "dev:client": "vite",
+    "build": "pnpm run build:client && pnpm run build:server",
+    "build:client": "vue-tsc --noEmit && vite build",
+    "build:server": "tsc -p tsconfig.server.json",
+    "start": "node dist/server/index.js",
+    "typecheck": "vue-tsc --noEmit && tsc -p tsconfig.server.json --noEmit",
+    "lint": "eslint . --max-warnings 0"
+  },
+  "dependencies": {
+    "express": "^5.2.1",
+    "nanoid": "^5.1.6",
+    "socket.io": "^4.8.3",
+    "vue-router": "^4.5.1",
+    "pinia": "^3.0.2",
+    "vue": "^3.5.16"
+  },
+  "devDependencies": {
+    "@types/express": "^5.0.6",
+    "@types/node": "^22.19.7",
+    "@vitejs/plugin-vue": "^6.0.3",
+    "concurrently": "^9.2.1",
+    "socket.io-client": "^4.8.3",
+    "tsx": "^4.21.0",
+    "typescript": "^5.9.3",
+    "vite": "^7.3.1",
+    "vue-tsc": "^3.2.2"
+  }
+}

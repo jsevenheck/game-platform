@@ -1,0 +1,24 @@
+{
+  "extends": "../../tsconfig.base.json",
+  "compilerOptions": {
+    "target": "ES2020",
+    "module": "CommonJS",
+    "moduleResolution": "node",
+    "outDir": "dist/server",
+    "baseUrl": ".",
+    "paths": {
+      "@blackout/*": ["../../games/blackout/*"],
+      "@imposter/*": ["../../games/imposter/*"],
+      "@secret-signals/*": ["../../games/secret-signals/*"]
+    }
+  },
+  "include": [
+    "server/**/*",
+    "../../games/blackout/server/src/**/*",
+    "../../games/blackout/core/src/**/*",
+    "../../games/imposter/server/src/**/*",
+    "../../games/imposter/core/src/**/*",
+    "../../games/secret-signals/server/src/**/*",
+    "../../games/secret-signals/core/src/**/*"
+  ]
+}
