@@ -118,7 +118,7 @@ onBeforeUnmount(() => {
       </button>
     </header>
 
-    <main class="mx-auto flex max-w-[560px] flex-col gap-8 p-4 pt-6">
+    <main class="mx-auto flex max-w-140 flex-col gap-8 p-4 pt-6">
       <section>
         <h2 class="ui-section-label">Players ({{ store.connectedMembers.length }})</h2>
         <ul class="flex flex-col gap-1.5">
@@ -148,7 +148,7 @@ onBeforeUnmount(() => {
             class="flex cursor-pointer flex-col gap-1 rounded-[--radius-md] border border-border-strong bg-panel p-4 text-left transition-all duration-150"
             :class="
               store.party?.selectedGameId === game.definition.id
-                ? 'border-accent bg-accent-muted'
+                ? 'border-accent! bg-accent-muted!'
                 : 'hover:border-accent'
             "
             @click="handleSelectGame(game.definition.id)"

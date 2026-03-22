@@ -7,6 +7,13 @@ import type { Language } from '@shared/types';
 const store = useGameStore();
 const excludedLettersInput = ref('');
 
+const props = withDefaults(
+  defineProps<{
+    isEmbedded?: boolean;
+  }>(),
+  { isEmbedded: false }
+);
+
 const emit = defineEmits<{
   updateMaxRounds: [rounds: number];
   updateRoomSettings: [settings: { language: Language; excludedLetters: string[] }];
@@ -53,7 +60,7 @@ function saveExcludedLetters() {
 
 <template>
   <div class="lobby flex flex-col items-center gap-8 px-4 py-8">
-    <div class="text-center">
+    <div v-if="!props.isEmbedded" class="text-center">
       <p class="ui-section-label">Room Code</p>
       <h2 class="text-5xl font-black tracking-[0.4em] text-blackout">{{ store.roomCode }}</h2>
       <p class="mt-1 text-sm text-muted-foreground">Share this code with your friends!</p>
@@ -81,25 +88,25 @@ function saveExcludedLetters() {
     <div v-if="store.isHost" class="flex flex-col items-center gap-4">
       <div class="rounds-config flex items-center gap-3 text-foreground">
         <span>Rounds:</span>
-        <button class="ui-stepper-btn hover:!border-blackout" @click="adjustRounds(-1)">-</button>
+        <button class="ui-stepper-btn hover:border-blackout!" @click="adjustRounds(-1)">-</button>
         <span class="rounds-value min-w-8 text-center text-2xl font-bold">{{
           store.room?.maxRounds
         }}</span>
-        <button class="ui-stepper-btn hover:!border-blackout" @click="adjustRounds(1)">+</button>
+        <button class="ui-stepper-btn hover:border-blackout!" @click="adjustRounds(1)">+</button>
       </div>
 
       <div class="flex items-center gap-2 text-foreground">
         <span>Language:</span>
         <button
-          class="ui-stepper-btn text-sm hover:!border-blackout"
-          :class="store.room?.language === 'de' && '!border-blackout text-foreground'"
+          class="ui-stepper-btn text-sm hover:border-blackout!"
+          :class="store.room?.language === 'de' && 'border-blackout! text-foreground'"
           @click="updateLanguage('de')"
         >
           DE
         </button>
         <button
-          class="ui-stepper-btn text-sm hover:!border-blackout"
-          :class="store.room?.language === 'en' && '!border-blackout text-foreground'"
+          class="ui-stepper-btn text-sm hover:border-blackout!"
+          :class="store.room?.language === 'en' && 'border-blackout! text-foreground'"
           @click="updateLanguage('en')"
         >
           EN
@@ -112,14 +119,14 @@ function saveExcludedLetters() {
           <input
             id="excluded-letters"
             v-model="excludedLettersInput"
-            class="ui-input flex-1 focus:!border-blackout"
+            class="ui-input flex-1 focus:border-blackout!"
             type="text"
             placeholder="Q, X, Y"
             @keydown.enter.prevent="saveExcludedLetters"
             @blur="saveExcludedLetters"
           />
           <button
-            class="ui-stepper-btn w-auto min-w-14 px-3 text-sm hover:!border-blackout"
+            class="ui-stepper-btn w-auto min-w-14 px-3 text-sm hover:border-blackout!"
             @click="saveExcludedLetters"
           >
             Save
@@ -128,7 +135,7 @@ function saveExcludedLetters() {
       </div>
 
       <button
-        class="ui-btn-primary !bg-blackout px-12 py-4 text-xl hover:!bg-blackout-hover"
+        class="ui-btn-primary bg-blackout! px-12 py-4 text-xl hover:bg-blackout-hover!"
         :disabled="connectedCount() < MIN_PLAYERS"
         @click="$emit('startGame')"
       >

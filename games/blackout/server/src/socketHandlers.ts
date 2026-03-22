@@ -248,6 +248,9 @@ export function registerBlackout(io: Server, namespace: string | Namespace = '/g
           if (wantsHost && existingRoom.hostId !== reconnectPlayerId) {
             assignHost(existingRoom, reconnectPlayerId);
           }
+          if (wantsHost) {
+            existingRoom.ownerId = reconnectPlayerId;
+          }
           broadcastRoom(nsp, existingRoom);
           return cb({
             ok: true,
@@ -275,6 +278,7 @@ export function registerBlackout(io: Server, namespace: string | Namespace = '/g
         bindPlayerToSocket(nsp, socket, existingRoom, player.id);
         if (wantsHost) {
           assignHost(existingRoom, player.id);
+          existingRoom.ownerId = player.id;
         }
         broadcastRoom(nsp, existingRoom);
 
@@ -331,7 +335,8 @@ export function registerBlackout(io: Server, namespace: string | Namespace = '/g
       deleteSocketIndex(socket.id);
 
       if (room.ownerId === player.id) {
-        room.ownerId = null;
+        const remainingForOwner = Object.values(room.players);
+        room.ownerId = remainingForOwner.length > 0 ? remainingForOwner[0].id : null;
       }
 
       // If host left, assign new host

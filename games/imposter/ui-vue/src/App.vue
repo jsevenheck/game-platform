@@ -346,7 +346,7 @@ onBeforeUnmount(() => {
         store.roomCode
       }}</span>
       <button
-        class="ui-btn-ghost !rounded-full !px-4 !py-1.5 !text-sm border border-border-strong hover:!border-danger hover:!text-danger"
+        class="ui-btn-ghost rounded-full! px-4! py-1.5! text-sm! border border-border-strong hover:border-danger! hover:text-danger!"
         type="button"
         @click="handleLeave"
       >

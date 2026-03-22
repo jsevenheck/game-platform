@@ -27,7 +27,7 @@
   /* Platform accent (orange) */
   --color-accent: #f97316;
   --color-accent-hover: #fb923c;
-  --color-accent-muted: rgba(249, 115, 22, 0.15);
+  --color-accent-muted: rgba(249, 115, 22, 0.25);
 
   /* Game accents */
   --color-blackout: #8b5cf6;

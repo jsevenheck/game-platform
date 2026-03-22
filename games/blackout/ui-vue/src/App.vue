@@ -282,9 +282,9 @@ onBeforeUnmount(() => {
 
 <template>
   <div class="min-h-dvh">
-    <Header v-if="store.room" @leave="handleLeave" />
+    <Header v-if="store.room && !isEmbedded" @leave="handleLeave" />
 
-    <main class="mx-auto max-w-[600px] p-4">
+    <main class="mx-auto max-w-150 p-4">
       <template v-if="!store.room && isEmbedded">
         <p class="mt-8 text-center text-muted">
           {{ embeddedError || 'Connecting...' }}
@@ -301,6 +301,7 @@ onBeforeUnmount(() => {
       <Landing v-else-if="!store.room" @create="handleCreate" @join="handleJoin" />
       <Lobby
         v-else-if="store.phase === 'lobby'"
+        :is-embedded="isEmbedded"
         @update-max-rounds="handleUpdateMaxRounds"
         @update-room-settings="handleUpdateRoomSettings"
         @start-game="handleStartGame"
