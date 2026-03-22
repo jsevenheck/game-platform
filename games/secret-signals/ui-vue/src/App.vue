@@ -306,7 +306,9 @@ onBeforeUnmount(() => {
 <template>
   <div class="min-h-dvh">
     <header v-if="store.room && !isEmbedded" class="ui-shell-header">
-      <span class="text-signals text-sm font-extrabold tracking-[0.16em] uppercase">{{ store.roomCode }}</span>
+      <span class="text-signals text-sm font-extrabold tracking-[0.16em] uppercase">{{
+        store.roomCode
+      }}</span>
       <button
         class="ui-btn-ghost !px-3 !py-1.5 !text-sm !rounded-full border border-border-strong hover:!border-danger hover:!text-red-200 hover:!bg-danger/10"
         type="button"

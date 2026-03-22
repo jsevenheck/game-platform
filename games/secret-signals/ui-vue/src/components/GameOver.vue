@@ -23,11 +23,13 @@ const winningLabel = computed(() => {
 </script>
 
 <template>
-  <div class="flex flex-col items-center gap-8 px-4 py-8">
+  <div class="game-over flex flex-col items-center gap-8 px-4 py-8">
     <h1 class="text-4xl font-black text-foreground">Game Over!</h1>
 
     <div v-if="store.room?.winningTeams.length" class="text-center">
-      <p class="text-muted uppercase text-sm tracking-[0.1em]">{{ store.room.winningTeams.length === 1 ? 'Winner' : 'Winners' }}</p>
+      <p class="text-muted uppercase text-sm tracking-[0.1em]">
+        {{ store.room.winningTeams.length === 1 ? 'Winner' : 'Winners' }}
+      </p>
       <h2
         class="text-3xl font-bold"
         :style="{
@@ -54,14 +56,27 @@ const winningLabel = computed(() => {
         class="flex items-center gap-2 px-3 py-2.5 bg-elevated rounded-[--radius-sm]"
         :class="{ 'opacity-50': team.eliminated }"
       >
-        <span class="w-3 h-3 rounded-full" :style="{ backgroundColor: TEAM_HEX_BY_COLOR[team.color] }" />
-        <span class="flex-1 text-foreground font-semibold">{{ TEAM_NAME_BY_COLOR[team.color] }}</span>
-        <span class="text-signals font-bold">{{ team.revealedCount }} / {{ team.targetCount }}</span>
+        <span
+          class="w-3 h-3 rounded-full"
+          :style="{ backgroundColor: TEAM_HEX_BY_COLOR[team.color] }"
+        />
+        <span class="flex-1 text-foreground font-semibold">{{
+          TEAM_NAME_BY_COLOR[team.color]
+        }}</span>
+        <span class="text-signals font-bold"
+          >{{ team.revealedCount }} / {{ team.targetCount }}</span
+        >
         <span v-if="team.eliminated" class="text-[0.7rem] text-danger uppercase">Eliminated</span>
       </div>
     </div>
 
-    <button v-if="isHost" class="ui-btn-primary !bg-signals hover:!bg-signals-hover" @click="$emit('restart')">Play Again</button>
+    <button
+      v-if="isHost"
+      class="ui-btn-primary !bg-signals hover:!bg-signals-hover"
+      @click="$emit('restart')"
+    >
+      Play Again
+    </button>
     <p v-else class="text-muted-foreground">Waiting for host to restart...</p>
   </div>
 </template>

@@ -318,7 +318,10 @@ onBeforeUnmount(() => {
 
     <PlayersPanel v-if="store.room" />
 
-    <p v-if="error" class="fixed bottom-4 left-1/2 -translate-x-1/2 rounded-[--radius-md] bg-danger-muted px-6 py-3 text-sm text-danger">
+    <p
+      v-if="error"
+      class="fixed bottom-4 left-1/2 -translate-x-1/2 rounded-[--radius-md] bg-danger-muted px-6 py-3 text-sm text-danger"
+    >
       {{ error }}
     </p>
   </div>

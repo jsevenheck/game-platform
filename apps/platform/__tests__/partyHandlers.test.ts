@@ -3,7 +3,6 @@ import { registerPartyHandlers } from '../server/party/partyHandlers';
 import {
   getParty,
   getPartyByInviteCode,
-  getPartyBySocket,
   deleteParty,
   clearPartyCleanup,
 } from '../server/party/partyStore';
@@ -165,10 +164,7 @@ describe('partyHandlers', () => {
 
     const joiner = connectSocket(ctx, 'sock-2');
     const cb = jest.fn();
-    joiner.handlers.joinParty(
-      { inviteCode: hostRes.partyView.inviteCode, playerName: 'Late' },
-      cb
-    );
+    joiner.handlers.joinParty({ inviteCode: hostRes.partyView.inviteCode, playerName: 'Late' }, cb);
     expect(cb.mock.calls[0][0]).toEqual({ ok: false, error: 'Party is already in a match' });
   });
 
@@ -370,8 +366,14 @@ describe('partyHandlers', () => {
     );
 
     const selectCb = jest.fn();
-    joiner.handlers.selectGame({ playerId: joinCb.mock.calls[0][0].playerId, gameId: 'test-game' }, selectCb);
-    expect(selectCb.mock.calls[0][0]).toEqual({ ok: false, error: 'Only the host can select a game' });
+    joiner.handlers.selectGame(
+      { playerId: joinCb.mock.calls[0][0].playerId, gameId: 'test-game' },
+      selectCb
+    );
+    expect(selectCb.mock.calls[0][0]).toEqual({
+      ok: false,
+      error: 'Only the host can select a game',
+    });
   });
 
   it('host can select a game and launch it', () => {

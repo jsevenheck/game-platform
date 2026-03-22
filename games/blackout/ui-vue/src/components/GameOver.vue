@@ -21,7 +21,7 @@ const winners = computed(() => {
 </script>
 
 <template>
-  <div class="flex flex-col items-center gap-8 px-4 py-8">
+  <div class="game-over flex flex-col items-center gap-8 px-4 py-8">
     <h1 class="text-4xl font-black text-foreground">Game Over!</h1>
 
     <div class="text-center">
@@ -31,7 +31,9 @@ const winners = computed(() => {
       </template>
       <template v-else>
         <p class="ui-section-label">Tie!</p>
-        <h2 class="text-3xl font-bold text-blackout">{{ winners.map((w) => w.name).join(' & ') }}</h2>
+        <h2 class="text-3xl font-bold text-blackout">
+          {{ winners.map((w) => w.name).join(' & ') }}
+        </h2>
       </template>
       <p class="mt-1 text-xl text-foreground">{{ topScore }} points</p>
     </div>
@@ -50,7 +52,13 @@ const winners = computed(() => {
       </div>
     </div>
 
-    <button v-if="store.isHost" class="ui-btn-primary !bg-blackout hover:!bg-blackout-hover" @click="$emit('restart')">Play Again</button>
+    <button
+      v-if="store.isHost"
+      class="ui-btn-primary !bg-blackout hover:!bg-blackout-hover"
+      @click="$emit('restart')"
+    >
+      Play Again
+    </button>
     <p v-else class="text-muted-foreground">Waiting for host to restart...</p>
   </div>
 </template>

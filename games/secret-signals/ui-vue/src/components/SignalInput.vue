@@ -48,23 +48,31 @@ function submit() {
         :disabled="disabled"
         @keyup.enter="submit"
       />
-      <div class="flex items-center bg-panel border-2 border-border-strong rounded-[--radius-sm] overflow-hidden">
+      <div
+        class="flex items-center bg-panel border-2 border-border-strong rounded-[--radius-sm] overflow-hidden"
+      >
         <button
           class="w-8 h-9 bg-transparent border-none text-foreground/80 text-lg font-bold cursor-pointer hover:bg-border-strong disabled:opacity-30 disabled:cursor-not-allowed"
           :disabled="disabled || number <= 0"
           @click="number--"
-        >-</button>
+        >
+          -
+        </button>
         <span class="w-7 text-center text-foreground font-bold">{{ number }}</span>
         <button
           class="w-8 h-9 bg-transparent border-none text-foreground/80 text-lg font-bold cursor-pointer hover:bg-border-strong disabled:opacity-30 disabled:cursor-not-allowed"
           :disabled="disabled || number >= MAX_SIGNAL_NUMBER"
           @click="number++"
-        >+</button>
+        >
+          +
+        </button>
       </div>
       <button
         class="ui-btn-primary !rounded-[--radius-sm]"
         :style="{
-          backgroundColor: teamColor ? (TEAM_HEX_BY_COLOR[teamColor] ?? 'var(--color-signals)') : 'var(--color-signals)',
+          backgroundColor: teamColor
+            ? (TEAM_HEX_BY_COLOR[teamColor] ?? 'var(--color-signals)')
+            : 'var(--color-signals)',
         }"
         :disabled="disabled"
         @click="submit"

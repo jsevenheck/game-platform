@@ -114,9 +114,9 @@ onBeforeUnmount(() => {
 
     <div class="mb-6 flex gap-2">
       <button
-        v-for="tab in (['create', 'join'] as const)"
+        v-for="tab in ['create', 'join'] as const"
         :key="tab"
-        class="flex-1 cursor-pointer rounded-[--radius-md] border border-border-strong bg-transparent px-4 py-2.5 text-muted transition-all duration-150"
+        class="tab flex-1 cursor-pointer rounded-[--radius-md] border border-border-strong bg-transparent px-4 py-2.5 text-muted transition-all duration-150"
         :class="mode === tab && 'border-accent bg-shell text-foreground'"
         @click="mode = tab"
       >
@@ -124,7 +124,10 @@ onBeforeUnmount(() => {
       </button>
     </div>
 
-    <form class="flex flex-col gap-4" @submit.prevent="mode === 'create' ? handleCreate() : handleJoin()">
+    <form
+      class="flex flex-col gap-4"
+      @submit.prevent="mode === 'create' ? handleCreate() : handleJoin()"
+    >
       <div class="flex flex-col gap-1.5">
         <label for="name" class="text-sm text-muted">Your Name</label>
         <input
@@ -151,7 +154,7 @@ onBeforeUnmount(() => {
         />
       </div>
 
-      <p v-if="error" class="text-sm text-danger">{{ error }}</p>
+      <p v-if="error" class="error text-sm text-danger">{{ error }}</p>
 
       <button type="submit" class="ui-btn-primary">
         {{ mode === 'create' ? 'Create Party' : 'Join Party' }}

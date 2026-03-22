@@ -20,6 +20,11 @@ function roundDisplay(): string {
     <span v-if="store.phase === 'playing' || store.phase === 'roundEnd'" class="text-sm text-muted">
       {{ roundDisplay() }}
     </span>
-    <button class="ui-btn-ghost rounded-[--radius-sm] border border-border-strong px-3 py-1 text-xs hover:border-danger hover:text-danger" @click="$emit('leave')">Leave</button>
+    <button
+      class="ui-btn-ghost rounded-[--radius-sm] border border-border-strong px-3 py-1 text-xs hover:border-danger hover:text-danger"
+      @click="$emit('leave')"
+    >
+      Leave
+    </button>
   </header>
 </template>

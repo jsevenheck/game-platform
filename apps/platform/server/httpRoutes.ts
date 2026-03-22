@@ -2,7 +2,10 @@ import express, { type Express } from 'express';
 import { existsSync } from 'fs';
 import { resolve } from 'path';
 
-export function registerHttpRoutes(app: Express, clientDist = resolve(__dirname, '../../../../client')): void {
+export function registerHttpRoutes(
+  app: Express,
+  clientDist = resolve(__dirname, '../../../../client')
+): void {
   app.get('/health', (_req, res) => {
     res.json({ ok: true });
   });

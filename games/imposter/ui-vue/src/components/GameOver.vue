@@ -31,7 +31,7 @@ const singleWinner = computed(() =>
 
 <template>
   <div
-    class="flex flex-col items-center gap-6 px-4 py-8 min-h-dvh bg-gradient-to-br from-imposter-gradient-1 via-imposter-gradient-2 to-imposter-gradient-3"
+    class="game-over flex flex-col items-center gap-6 px-4 py-8 min-h-dvh bg-gradient-to-br from-imposter-gradient-1 via-imposter-gradient-2 to-imposter-gradient-3"
   >
     <h1
       class="text-4xl font-black bg-gradient-to-br from-imposter via-danger to-pink-500 bg-clip-text text-transparent"
@@ -56,7 +56,7 @@ const singleWinner = computed(() =>
       </p>
     </div>
 
-    <div class="w-full max-w-[340px]">
+    <div class="final-scores w-full max-w-[340px]">
       <h3 class="text-muted text-center text-sm mb-3">Final Scores</h3>
       <div
         v-for="(player, index) in sortedPlayers"
@@ -86,13 +86,20 @@ const singleWinner = computed(() =>
       >
         <span class="text-muted-foreground text-xs font-bold min-w-8">R{{ index + 1 }}</span>
         <span class="flex-1 text-foreground text-sm">{{ round.secretWord }}</span>
-        <span class="text-xs font-semibold" :class="round.winner === 'civilians' ? 'text-success' : 'text-danger'">
+        <span
+          class="text-xs font-semibold"
+          :class="round.winner === 'civilians' ? 'text-success' : 'text-danger'"
+        >
           {{ round.winner === 'civilians' ? 'CIV' : 'IMP' }}
         </span>
       </div>
     </div>
 
-    <button v-if="isHost" class="ui-btn-primary !bg-imposter hover:!bg-imposter-hover !py-4 !px-10 !text-lg" @click="$emit('restart')">
+    <button
+      v-if="isHost"
+      class="ui-btn-primary !bg-imposter hover:!bg-imposter-hover !py-4 !px-10 !text-lg"
+      @click="$emit('restart')"
+    >
       Play Again
     </button>
     <p v-else class="text-muted-foreground italic">Waiting for host to restart...</p>

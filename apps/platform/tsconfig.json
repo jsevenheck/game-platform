@@ -11,5 +11,5 @@
     "verbatimModuleSyntax": true,
     "baseUrl": "."
   },
-  "include": ["src/**/*", "env.d.ts"]
+  "include": ["src/**/*", "__tests__/**/*", "env.d.ts"]
 }

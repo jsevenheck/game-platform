@@ -103,10 +103,19 @@ onBeforeUnmount(() => {
   <div class="min-h-dvh">
     <header class="ui-shell-header">
       <div class="flex flex-col">
-        <span class="text-[0.7rem] uppercase tracking-widest text-muted-foreground">Party Code</span>
-        <span class="text-lg font-extrabold tracking-[0.2em] text-accent">{{ store.party?.inviteCode ?? inviteCode }}</span>
+        <span class="text-[0.7rem] uppercase tracking-widest text-muted-foreground"
+          >Party Code</span
+        >
+        <span class="code text-lg font-extrabold tracking-[0.2em] text-accent">{{
+          store.party?.inviteCode ?? inviteCode
+        }}</span>
       </div>
-      <button class="ui-btn-ghost rounded-pill border border-border-strong px-4 py-1.5 text-sm" @click="handleLeave">Leave</button>
+      <button
+        class="ui-btn-ghost rounded-pill border border-border-strong px-4 py-1.5 text-sm"
+        @click="handleLeave"
+      >
+        Leave
+      </button>
     </header>
 
     <main class="mx-auto flex max-w-[560px] flex-col gap-8 p-4 pt-6">
@@ -120,7 +129,11 @@ onBeforeUnmount(() => {
             :class="{ 'opacity-50': !member.connected }"
           >
             <span class="flex-1 font-medium">{{ member.name }}</span>
-            <span v-if="member.playerId === store.party?.hostPlayerId" class="ui-badge bg-blackout text-white">HOST</span>
+            <span
+              v-if="member.playerId === store.party?.hostPlayerId"
+              class="ui-badge bg-blackout text-white"
+              >HOST</span
+            >
             <span v-if="!member.connected" class="text-[0.7rem] text-muted-foreground">away</span>
           </li>
         </ul>
@@ -133,11 +146,17 @@ onBeforeUnmount(() => {
             v-for="game in clientGameRegistry"
             :key="game.definition.id"
             class="flex cursor-pointer flex-col gap-1 rounded-[--radius-md] border border-border-strong bg-panel p-4 text-left transition-all duration-150"
-            :class="store.party?.selectedGameId === game.definition.id ? 'border-accent bg-accent-muted' : 'hover:border-accent'"
+            :class="
+              store.party?.selectedGameId === game.definition.id
+                ? 'border-accent bg-accent-muted'
+                : 'hover:border-accent'
+            "
             @click="handleSelectGame(game.definition.id)"
           >
             <span class="text-base font-bold">{{ game.definition.name }}</span>
-            <span class="text-xs text-muted-foreground">{{ game.definition.minPlayers }}–{{ game.definition.maxPlayers }} players</span>
+            <span class="text-xs text-muted-foreground"
+              >{{ game.definition.minPlayers }}–{{ game.definition.maxPlayers }} players</span
+            >
           </button>
         </div>
       </section>

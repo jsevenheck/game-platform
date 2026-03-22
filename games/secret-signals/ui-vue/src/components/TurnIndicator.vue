@@ -6,7 +6,9 @@ const store = useGameStore();
 </script>
 
 <template>
-  <div class="flex items-center justify-center gap-6 px-4 py-3 bg-shell border-b border-border flex-wrap">
+  <div
+    class="turn-indicator flex items-center justify-center gap-6 px-4 py-3 bg-shell border-b border-border flex-wrap"
+  >
     <div class="flex items-center gap-3">
       <div
         v-if="store.room?.currentTurnTeam"
@@ -45,8 +47,13 @@ const store = useGameStore();
         class="flex items-center gap-1"
         :class="{ 'opacity-30 line-through': team.eliminated }"
       >
-        <span class="w-2.5 h-2.5 rounded-full" :style="{ backgroundColor: TEAM_HEX_BY_COLOR[team.color] }" />
-        <span class="text-foreground/85 text-xs font-semibold">{{ team.revealedCount }}/{{ team.targetCount }}</span>
+        <span
+          class="w-2.5 h-2.5 rounded-full"
+          :style="{ backgroundColor: TEAM_HEX_BY_COLOR[team.color] }"
+        />
+        <span class="text-foreground/85 text-xs font-semibold"
+          >{{ team.revealedCount }}/{{ team.targetCount }}</span
+        >
       </div>
     </div>
   </div>

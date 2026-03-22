@@ -32,7 +32,7 @@ const canStart = computed(() => {
 </script>
 
 <template>
-  <div class="flex flex-col items-center gap-8 px-4 py-8">
+  <div class="lobby flex flex-col items-center gap-8 px-4 py-8">
     <div class="text-center">
       <p class="ui-section-label">Room Code</p>
       <h2 class="text-5xl font-black tracking-[0.4em] text-signals">{{ store.roomCode }}</h2>
@@ -49,7 +49,9 @@ const canStart = computed(() => {
       >
         <span class="flex-1 text-foreground">{{ player.name }}</span>
         <span v-if="player.isHost" class="ui-badge bg-signals text-white">Host</span>
-        <span v-if="!player.connected" class="ui-badge bg-border-strong text-muted-foreground">Offline</span>
+        <span v-if="!player.connected" class="ui-badge bg-border-strong text-muted-foreground"
+          >Offline</span
+        >
       </div>
     </div>
 
@@ -62,7 +64,11 @@ const canStart = computed(() => {
     />
 
     <div v-if="isHost" class="flex flex-col items-center gap-4">
-      <button class="ui-btn-primary !bg-signals hover:!bg-signals-hover !py-4 !px-12 !text-xl" :disabled="!canStart" @click="$emit('start-game')">
+      <button
+        class="ui-btn-primary !bg-signals hover:!bg-signals-hover !py-4 !px-12 !text-xl"
+        :disabled="!canStart"
+        @click="$emit('start-game')"
+      >
         Start Game
       </button>
       <p v-if="connectedCount < store.minimumPlayers" class="text-muted-foreground text-sm">

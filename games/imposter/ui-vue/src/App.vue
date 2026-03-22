@@ -342,10 +342,21 @@ onBeforeUnmount(() => {
 <template>
   <div class="min-h-dvh">
     <header v-if="store.room && !isEmbedded" class="imposter-header ui-shell-header">
-      <span class="text-imposter text-xs font-extrabold uppercase tracking-[0.16em]">{{ store.roomCode }}</span>
-      <button class="ui-btn-ghost !rounded-full !px-4 !py-1.5 !text-sm border border-border-strong hover:!border-danger hover:!text-danger" type="button" @click="handleLeave">Leave</button>
+      <span class="text-imposter text-xs font-extrabold uppercase tracking-[0.16em]">{{
+        store.roomCode
+      }}</span>
+      <button
+        class="ui-btn-ghost !rounded-full !px-4 !py-1.5 !text-sm border border-border-strong hover:!border-danger hover:!text-danger"
+        type="button"
+        @click="handleLeave"
+      >
+        Leave
+      </button>
     </header>
-    <p v-if="store.phase === null && isEmbedded" class="py-8 px-4 text-center text-muted-foreground">
+    <p
+      v-if="store.phase === null && isEmbedded"
+      class="py-8 px-4 text-center text-muted-foreground"
+    >
       {{ embeddedError || 'Connecting...' }}
     </p>
     <Landing

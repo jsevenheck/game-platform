@@ -159,7 +159,9 @@ onBeforeUnmount(() => {
   <div class="min-h-dvh">
     <p v-if="loadError" class="p-8 text-center text-danger">{{ loadError }}</p>
 
-    <p v-else-if="!gameComponent || !matchKey" class="p-8 text-center text-muted-foreground">Loading game...</p>
+    <p v-else-if="!gameComponent || !matchKey" class="p-8 text-center text-muted-foreground">
+      Loading game...
+    </p>
 
     <!-- key on matchKey forces full re-mount when the match changes (replay) -->
     <component

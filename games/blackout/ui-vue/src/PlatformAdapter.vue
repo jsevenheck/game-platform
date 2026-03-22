@@ -41,13 +41,15 @@ function onPhaseChange(phase: string) {
 
     <!-- Platform overlay shown when game ends -->
     <Transition name="fade">
-      <div v-if="gameEnded && isHost" class="ui-overlay">
+      <div v-if="gameEnded && isHost" class="platform-overlay ui-overlay">
         <div class="ui-dialog">
           <h2 class="mb-2 text-2xl font-extrabold">Match Over</h2>
           <p class="mb-6 text-sm text-muted-foreground">What would you like to do?</p>
           <div class="flex flex-col gap-3">
-            <button class="ui-btn-primary" @click="onReplayGame?.()">Play Again</button>
-            <button class="ui-btn-secondary" @click="onReturnToLobby?.()">Back to Party</button>
+            <button class="btn-replay ui-btn-primary" @click="onReplayGame?.()">Play Again</button>
+            <button class="btn-lobby ui-btn-secondary" @click="onReturnToLobby?.()">
+              Back to Party
+            </button>
           </div>
         </div>
       </div>

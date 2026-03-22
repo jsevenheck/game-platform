@@ -25,8 +25,15 @@ const winnerName = computed(() => {
   <div class="flex flex-col items-center gap-6 px-4 py-8">
     <h2 class="text-foreground">Round {{ lastResult?.roundNumber }} Complete!</h2>
 
-    <div v-if="winnerName" class="rounded-[--radius-md] bg-blackout px-8 py-3 text-xl font-semibold text-white">{{ winnerName }} got it right!</div>
-    <div v-else class="rounded-[--radius-md] bg-elevated px-8 py-3 text-muted">Round skipped - no correct answer</div>
+    <div
+      v-if="winnerName"
+      class="rounded-[--radius-md] bg-blackout px-8 py-3 text-xl font-semibold text-white"
+    >
+      {{ winnerName }} got it right!
+    </div>
+    <div v-else class="rounded-[--radius-md] bg-elevated px-8 py-3 text-muted">
+      Round skipped - no correct answer
+    </div>
 
     <div class="w-full max-w-xs">
       <div

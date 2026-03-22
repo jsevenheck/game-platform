@@ -94,7 +94,7 @@ defineExpose({ isSetupValid });
         {{ mode === 'instant-loss' ? 'End Match' : 'Eliminate Team' }}
       </button>
     </div>
-    <p class="mb-4 text-center text-muted-foreground text-xs">
+    <p class="mode-hint mb-4 text-center text-muted-foreground text-xs">
       {{
         store.room?.assassinPenaltyMode === 'instant-loss'
           ? 'An assassin hit ends the match immediately.'
@@ -102,7 +102,10 @@ defineExpose({ isSetupValid });
       }}
     </p>
 
-    <div v-if="currentPlayer" class="mb-5 p-3.5 border border-border rounded-[--radius-lg] bg-shell">
+    <div
+      v-if="currentPlayer"
+      class="mb-5 p-3.5 border border-border rounded-[--radius-lg] bg-shell"
+    >
       <h4 class="ui-section-label">Your Seat</h4>
       <p class="mb-3 text-center text-muted text-sm">
         Pick your own team and role. The host only controls match settings and start.
@@ -145,7 +148,10 @@ defineExpose({ isSetupValid });
         </button>
       </div>
 
-      <p v-if="currentPlayerTeam && isDirectorUnavailable(currentPlayerTeam)" class="mt-2.5 text-center text-muted text-xs">
+      <p
+        v-if="currentPlayerTeam && isDirectorUnavailable(currentPlayerTeam)"
+        class="mt-2.5 text-center text-muted text-xs"
+      >
         Director is already taken on {{ TEAM_NAME_BY_COLOR[currentPlayerTeam] }} Team.
       </p>
     </div>
@@ -159,26 +165,37 @@ defineExpose({ isSetupValid });
         class="inline-flex items-center gap-1 px-3 py-1 bg-elevated rounded-full text-foreground/85 text-sm mx-0.5 my-0.5"
       >
         {{ player.name }}
-        <span v-if="player.isHost" class="ui-badge bg-signals text-white !text-[0.6rem] !px-1.5 !py-0.5 !rounded-sm">H</span>
+        <span
+          v-if="player.isHost"
+          class="ui-badge bg-signals text-white !text-[0.6rem] !px-1.5 !py-0.5 !rounded-sm"
+          >H</span
+        >
       </div>
     </div>
 
     <div class="grid grid-cols-[repeat(auto-fit,minmax(140px,1fr))] gap-3">
-      <div v-for="color in activeTeams" :key="color" :data-team-color="color" class="bg-shell rounded-[--radius-sm] p-3">
+      <div
+        v-for="color in activeTeams"
+        :key="color"
+        :data-team-color="color"
+        class="bg-shell rounded-[--radius-sm] p-3"
+      >
         <h4
           class="text-foreground/90 text-sm font-bold uppercase tracking-wider pb-2 border-b-[3px] mb-2"
           :style="{ borderBottomColor: TEAM_HEX_BY_COLOR[color] }"
         >
           {{ TEAM_NAME_BY_COLOR[color] }} Team
         </h4>
-        <div v-if="teamPlayers(color).length === 0" class="text-muted-foreground/60 text-xs italic">No players</div>
+        <div v-if="teamPlayers(color).length === 0" class="text-muted-foreground/60 text-xs italic">
+          No players
+        </div>
         <div
           v-for="player in teamPlayers(color)"
           :key="player.id"
           :data-player-name="player.name"
           class="flex items-center justify-between py-1"
         >
-          <span class="text-foreground/85 text-sm">{{ player.name }}</span>
+          <span class="agent-name text-foreground/85 text-sm">{{ player.name }}</span>
           <button
             v-if="player.role"
             class="px-1.5 py-0.5 rounded-sm text-[0.65rem] font-bold uppercase border-none cursor-default"
@@ -189,7 +206,12 @@ defineExpose({ isSetupValid });
           >
             {{ player.role === 'director' ? 'DIR' : 'AGT' }}
           </button>
-          <button v-else class="px-1.5 py-0.5 rounded-sm text-[0.65rem] font-bold bg-elevated text-muted-foreground border border-dashed border-muted-foreground/40 cursor-default">?</button>
+          <button
+            v-else
+            class="px-1.5 py-0.5 rounded-sm text-[0.65rem] font-bold bg-elevated text-muted-foreground border border-dashed border-muted-foreground/40 cursor-default"
+          >
+            ?
+          </button>
         </div>
       </div>
     </div>

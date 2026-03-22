@@ -52,7 +52,7 @@ function saveExcludedLetters() {
 </script>
 
 <template>
-  <div class="flex flex-col items-center gap-8 px-4 py-8">
+  <div class="lobby flex flex-col items-center gap-8 px-4 py-8">
     <div class="text-center">
       <p class="ui-section-label">Room Code</p>
       <h2 class="text-5xl font-black tracking-[0.4em] text-blackout">{{ store.roomCode }}</h2>
@@ -68,17 +68,23 @@ function saveExcludedLetters() {
         :class="{ 'opacity-50': !player.connected }"
       >
         <span class="flex-1 text-foreground">{{ player.name }}</span>
-        <span v-if="store.room?.ownerId === player.id" class="ui-badge bg-signals text-white">Owner</span>
+        <span v-if="store.room?.ownerId === player.id" class="ui-badge bg-signals text-white"
+          >Owner</span
+        >
         <span v-if="player.isHost" class="ui-badge bg-blackout text-white">Host</span>
-        <span v-if="!player.connected" class="ui-badge bg-elevated text-muted-foreground">Offline</span>
+        <span v-if="!player.connected" class="ui-badge bg-elevated text-muted-foreground"
+          >Offline</span
+        >
       </div>
     </div>
 
     <div v-if="store.isHost" class="flex flex-col items-center gap-4">
-      <div class="flex items-center gap-3 text-foreground">
+      <div class="rounds-config flex items-center gap-3 text-foreground">
         <span>Rounds:</span>
         <button class="ui-stepper-btn hover:!border-blackout" @click="adjustRounds(-1)">-</button>
-        <span class="min-w-8 text-center text-2xl font-bold">{{ store.room?.maxRounds }}</span>
+        <span class="rounds-value min-w-8 text-center text-2xl font-bold">{{
+          store.room?.maxRounds
+        }}</span>
         <button class="ui-stepper-btn hover:!border-blackout" @click="adjustRounds(1)">+</button>
       </div>
 
@@ -88,12 +94,16 @@ function saveExcludedLetters() {
           class="ui-stepper-btn text-sm hover:!border-blackout"
           :class="store.room?.language === 'de' && '!border-blackout text-foreground'"
           @click="updateLanguage('de')"
-        >DE</button>
+        >
+          DE
+        </button>
         <button
           class="ui-stepper-btn text-sm hover:!border-blackout"
           :class="store.room?.language === 'en' && '!border-blackout text-foreground'"
           @click="updateLanguage('en')"
-        >EN</button>
+        >
+          EN
+        </button>
       </div>
 
       <div class="flex w-full max-w-xs flex-col gap-1">
@@ -108,7 +118,12 @@ function saveExcludedLetters() {
             @keydown.enter.prevent="saveExcludedLetters"
             @blur="saveExcludedLetters"
           />
-          <button class="ui-stepper-btn w-auto min-w-14 px-3 text-sm hover:!border-blackout" @click="saveExcludedLetters">Save</button>
+          <button
+            class="ui-stepper-btn w-auto min-w-14 px-3 text-sm hover:!border-blackout"
+            @click="saveExcludedLetters"
+          >
+            Save
+          </button>
         </div>
       </div>
 
@@ -116,7 +131,9 @@ function saveExcludedLetters() {
         class="ui-btn-primary !bg-blackout px-12 py-4 text-xl hover:!bg-blackout-hover"
         :disabled="connectedCount() < MIN_PLAYERS"
         @click="$emit('startGame')"
-      >Start Game</button>
+      >
+        Start Game
+      </button>
       <p v-if="connectedCount() < MIN_PLAYERS" class="text-sm text-muted-foreground">
         Need at least {{ MIN_PLAYERS }} players to start
       </p>

@@ -46,9 +46,15 @@ function handleJoin() {
 </script>
 
 <template>
-  <div class="flex flex-col items-center justify-center min-h-dvh gap-6 px-4 py-8 bg-gradient-to-br from-imposter-gradient-1 via-imposter-gradient-2 to-imposter-gradient-3">
+  <div
+    class="flex flex-col items-center justify-center min-h-dvh gap-6 px-4 py-8 bg-gradient-to-br from-imposter-gradient-1 via-imposter-gradient-2 to-imposter-gradient-3"
+  >
     <div class="text-center mb-4">
-      <h1 class="text-[3.5rem] font-black tracking-[0.2em] bg-gradient-to-br from-imposter via-danger to-pink-500 bg-clip-text text-transparent">IMPOSTER</h1>
+      <h1
+        class="text-[3.5rem] font-black tracking-[0.2em] bg-gradient-to-br from-imposter via-danger to-pink-500 bg-clip-text text-transparent"
+      >
+        IMPOSTER
+      </h1>
       <p class="text-muted uppercase text-sm tracking-[0.15em] mt-1">Social Deduction Word Game</p>
     </div>
 
@@ -62,10 +68,18 @@ function handleJoin() {
         @input="clearError"
         @keyup.enter="mode = 'create'"
       />
-      <button id="btn-create-room" class="ui-btn-primary !bg-imposter hover:!bg-imposter-hover" @click="mode = 'create'">
+      <button
+        id="btn-create-room"
+        class="ui-btn-primary !bg-imposter hover:!bg-imposter-hover"
+        @click="mode = 'create'"
+      >
         Create Room
       </button>
-      <button id="btn-join-room" class="ui-btn-secondary hover:!border-imposter hover:!text-imposter" @click="mode = 'join'">
+      <button
+        id="btn-join-room"
+        class="ui-btn-secondary hover:!border-imposter hover:!text-imposter"
+        @click="mode = 'join'"
+      >
         Join Room
       </button>
     </div>
@@ -80,10 +94,19 @@ function handleJoin() {
         @input="clearError"
         @keyup.enter="handleCreate"
       />
-      <button id="btn-create-confirm" class="ui-btn-primary !bg-imposter hover:!bg-imposter-hover" @click="handleCreate">
+      <button
+        id="btn-create-confirm"
+        class="ui-btn-primary !bg-imposter hover:!bg-imposter-hover"
+        @click="handleCreate"
+      >
         Create Room
       </button>
-      <button class="ui-btn-ghost !text-muted-foreground hover:!text-foreground !text-sm" @click="mode = 'menu'">â† Back</button>
+      <button
+        class="ui-btn-ghost !text-muted-foreground hover:!text-foreground !text-sm"
+        @click="mode = 'menu'"
+      >
+        &larr; Back
+      </button>
     </div>
 
     <div v-else class="flex flex-col gap-3 w-[300px]">
@@ -104,23 +127,56 @@ function handleJoin() {
         @input="clearError"
         @keyup.enter="handleJoin"
       />
-      <button id="btn-join-confirm" class="ui-btn-primary !bg-imposter hover:!bg-imposter-hover" @click="handleJoin">Join Room</button>
-      <button class="ui-btn-ghost !text-muted-foreground hover:!text-foreground !text-sm" @click="mode = 'menu'">â† Back</button>
+      <button
+        id="btn-join-confirm"
+        class="ui-btn-primary !bg-imposter hover:!bg-imposter-hover"
+        @click="handleJoin"
+      >
+        Join Room
+      </button>
+      <button
+        class="ui-btn-ghost !text-muted-foreground hover:!text-foreground !text-sm"
+        @click="mode = 'menu'"
+      >
+        &larr; Back
+      </button>
     </div>
 
-    <p v-if="error || serverError" class="text-danger text-sm px-4 py-2 bg-danger-muted rounded-lg border border-danger/20">
+    <p
+      v-if="error || serverError"
+      class="text-danger text-sm px-4 py-2 bg-danger-muted rounded-lg border border-danger/20"
+    >
       {{ error || serverError }}
     </p>
 
     <div class="w-[300px] mt-4">
       <details>
-        <summary class="text-muted-foreground cursor-pointer text-sm text-center list-none py-2 hover:text-muted">How to Play</summary>
+        <summary
+          class="text-muted-foreground cursor-pointer text-sm text-center list-none py-2 hover:text-muted"
+        >
+          How to Play
+        </summary>
         <div class="mt-3 p-4 bg-white/5 rounded-[--radius-lg] border border-white/[0.08]">
-          <p class="text-muted text-sm mb-2.5 leading-relaxed"><strong class="text-foreground">Goal:</strong> Find the Imposter â€” the player who doesn't know the secret word!</p>
-          <p class="text-muted text-sm mb-2.5 leading-relaxed"><strong class="text-foreground">Describe:</strong> Give a short clue that proves you know the word â€” but don't make it too obvious.</p>
-          <p class="text-muted text-sm mb-2.5 leading-relaxed"><strong class="text-foreground">Vote:</strong> Discuss and vote on who you think the Imposter is.</p>
-          <p class="text-muted text-sm mb-2.5 leading-relaxed"><strong class="text-foreground">Match:</strong> Keep playing rounds until someone reaches the target score set in the lobby.</p>
-          <p class="text-muted text-sm leading-relaxed"><strong class="text-foreground">Imposter:</strong> If caught, you get one chance to guess the word and steal the win!</p>
+          <p class="text-muted text-sm mb-2.5 leading-relaxed">
+            <strong class="text-foreground">Goal:</strong> Find the Imposter &mdash; the player who
+            doesn't know the secret word!
+          </p>
+          <p class="text-muted text-sm mb-2.5 leading-relaxed">
+            <strong class="text-foreground">Describe:</strong> Give a short clue that proves you
+            know the word &mdash; but don't make it too obvious.
+          </p>
+          <p class="text-muted text-sm mb-2.5 leading-relaxed">
+            <strong class="text-foreground">Vote:</strong> Discuss and vote on who you think the
+            Imposter is.
+          </p>
+          <p class="text-muted text-sm mb-2.5 leading-relaxed">
+            <strong class="text-foreground">Match:</strong> Keep playing rounds until someone
+            reaches the target score set in the lobby.
+          </p>
+          <p class="text-muted text-sm leading-relaxed">
+            <strong class="text-foreground">Imposter:</strong> If caught, you get one chance to
+            guess the word and steal the win!
+          </p>
         </div>
       </details>
     </div>
