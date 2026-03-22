@@ -21,145 +21,36 @@ const winners = computed(() => {
 </script>
 
 <template>
-  <div class="game-over">
-    <h1 class="title">Game Over!</h1>
+  <div class="flex flex-col items-center gap-8 px-4 py-8">
+    <h1 class="text-4xl font-black text-foreground">Game Over!</h1>
 
-    <div class="winner-section">
+    <div class="text-center">
       <template v-if="winners.length === 1">
-        <p class="winner-label">Winner</p>
-        <h2 class="winner-name">
-          {{ winners[0]?.name }}
-        </h2>
+        <p class="ui-section-label">Winner</p>
+        <h2 class="text-3xl font-bold text-blackout">{{ winners[0]?.name }}</h2>
       </template>
       <template v-else>
-        <p class="winner-label">Tie!</p>
-        <h2 class="winner-name">
-          {{ winners.map((w) => w.name).join(' & ') }}
-        </h2>
+        <p class="ui-section-label">Tie!</p>
+        <h2 class="text-3xl font-bold text-blackout">{{ winners.map((w) => w.name).join(' & ') }}</h2>
       </template>
-      <p class="winner-score">{{ topScore }} points</p>
+      <p class="mt-1 text-xl text-foreground">{{ topScore }} points</p>
     </div>
 
-    <div class="final-scores">
-      <h3>Final Scores</h3>
+    <div class="w-full max-w-xs">
+      <h3 class="mb-3 text-center text-muted">Final Scores</h3>
       <div
         v-for="(player, index) in sortedPlayers"
         :key="player.id"
-        class="score-row"
-        :class="{ winner: player.score === topScore }"
+        class="mb-2 flex items-center gap-3 rounded-[--radius-sm] bg-elevated px-3 py-2.5"
+        :class="player.score === topScore && 'border-2 border-blackout bg-blackout-muted'"
       >
-        <span class="rank">#{{ index + 1 }}</span>
-        <span class="name">{{ player.name }}</span>
-        <span class="score">{{ player.score }}</span>
+        <span class="min-w-8 font-semibold text-muted-foreground">#{{ index + 1 }}</span>
+        <span class="flex-1 text-foreground">{{ player.name }}</span>
+        <span class="text-xl font-bold text-blackout">{{ player.score }}</span>
       </div>
     </div>
 
-    <button v-if="store.isHost" class="btn btn-primary" @click="$emit('restart')">
-      Play Again
-    </button>
-    <p v-else class="hint">Waiting for host to restart...</p>
+    <button v-if="store.isHost" class="ui-btn-primary !bg-blackout hover:!bg-blackout-hover" @click="$emit('restart')">Play Again</button>
+    <p v-else class="text-muted-foreground">Waiting for host to restart...</p>
   </div>
 </template>
-
-<style scoped>
-.game-over {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 2rem;
-  padding: 2rem 1rem;
-}
-
-.title {
-  font-size: 2.5rem;
-  font-weight: 900;
-  color: #fff;
-}
-
-.winner-section {
-  text-align: center;
-}
-
-.winner-label {
-  color: #a1a1aa;
-  text-transform: uppercase;
-  font-size: 0.875rem;
-  letter-spacing: 0.1em;
-}
-
-.winner-name {
-  font-size: 2rem;
-  color: #8b5cf6;
-  font-weight: 700;
-}
-
-.winner-score {
-  color: #d4d4d8;
-  font-size: 1.25rem;
-}
-
-.final-scores {
-  width: 100%;
-  max-width: 320px;
-}
-
-.final-scores h3 {
-  color: #a1a1aa;
-  margin-bottom: 0.75rem;
-  text-align: center;
-}
-
-.score-row {
-  display: flex;
-  align-items: center;
-  gap: 0.75rem;
-  padding: 0.6rem 0.75rem;
-  background: #27272a;
-  border-radius: 6px;
-  margin-bottom: 0.5rem;
-}
-
-.score-row.winner {
-  border: 2px solid #8b5cf6;
-  background: rgba(139, 92, 246, 0.1);
-}
-
-.rank {
-  color: #71717a;
-  font-weight: 600;
-  min-width: 2rem;
-}
-
-.name {
-  flex: 1;
-  color: #fff;
-}
-
-.score {
-  color: #8b5cf6;
-  font-weight: 700;
-  font-size: 1.25rem;
-}
-
-.btn {
-  padding: 0.75rem 2rem;
-  border: none;
-  border-radius: 8px;
-  font-size: 1rem;
-  font-weight: 600;
-  cursor: pointer;
-}
-
-.btn-primary {
-  background: #8b5cf6;
-  color: #fff;
-}
-
-.btn-primary:hover {
-  background: #7c3aed;
-}
-
-.hint {
-  color: #71717a;
-}
-</style>

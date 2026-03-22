@@ -37,140 +37,51 @@ function handleJoin() {
 </script>
 
 <template>
-  <div class="landing">
-    <h1 class="title">Secret Signals</h1>
+  <div class="flex flex-col items-center justify-center min-h-[80vh] gap-4">
+    <h1 class="text-5xl font-black tracking-[0.2em] text-foreground">Secret Signals</h1>
 
-    <div v-if="mode === 'menu'" class="menu">
+    <div v-if="mode === 'menu'" class="flex flex-col gap-3 w-[280px]">
       <input
         v-model="name"
         type="text"
         placeholder="Your name"
         maxlength="20"
-        class="input"
+        class="ui-input !bg-white/5 !border-white/10 focus:!border-signals"
         @keyup.enter="mode = 'create'"
       />
-      <button class="btn btn-primary" @click="mode = 'create'">Create Room</button>
-      <button class="btn btn-secondary" @click="mode = 'join'">Join Room</button>
+      <button class="ui-btn-primary !bg-signals hover:!bg-signals-hover" @click="mode = 'create'">Create Room</button>
+      <button class="ui-btn-secondary hover:!border-signals hover:!text-signals" @click="mode = 'join'">Join Room</button>
     </div>
 
-    <div v-else-if="mode === 'create'" class="menu">
+    <div v-else-if="mode === 'create'" class="flex flex-col gap-3 w-[280px]">
       <input
         v-model="name"
         type="text"
         placeholder="Your name"
         maxlength="20"
-        class="input"
+        class="ui-input !bg-white/5 !border-white/10 focus:!border-signals"
         @keyup.enter="handleCreate"
       />
-      <button class="btn btn-primary" @click="handleCreate">Create Room</button>
-      <button class="btn btn-back" @click="mode = 'menu'">Back</button>
+      <button class="ui-btn-primary !bg-signals hover:!bg-signals-hover" @click="handleCreate">Create Room</button>
+      <button class="ui-btn-ghost !text-muted-foreground hover:!text-foreground" @click="mode = 'menu'">Back</button>
     </div>
 
-    <div v-else class="menu">
-      <input v-model="name" type="text" placeholder="Your name" maxlength="20" class="input" />
+    <div v-else class="flex flex-col gap-3 w-[280px]">
+      <input v-model="name" type="text" placeholder="Your name" maxlength="20" class="ui-input !bg-white/5 !border-white/10 focus:!border-signals" />
       <input
         v-model="roomCode"
         type="text"
         placeholder="Room code"
         maxlength="4"
-        class="input input-code"
+        class="ui-input !bg-white/5 !border-white/10 focus:!border-signals uppercase text-center tracking-[0.3em] !text-xl"
         @keyup.enter="handleJoin"
       />
-      <button class="btn btn-primary" @click="handleJoin">Join Room</button>
-      <button class="btn btn-back" @click="mode = 'menu'">Back</button>
+      <button class="ui-btn-primary !bg-signals hover:!bg-signals-hover" @click="handleJoin">Join Room</button>
+      <button class="ui-btn-ghost !text-muted-foreground hover:!text-foreground" @click="mode = 'menu'">Back</button>
     </div>
 
-    <p v-if="serverError || error" class="error">
+    <p v-if="serverError || error" class="text-danger text-sm">
       {{ serverError || error }}
     </p>
   </div>
 </template>
-
-<style scoped>
-.landing {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  min-height: 80vh;
-  gap: 1rem;
-}
-
-.title {
-  font-size: 3rem;
-  font-weight: 900;
-  letter-spacing: 0.2em;
-}
-
-.menu {
-  display: flex;
-  flex-direction: column;
-  gap: 0.75rem;
-  width: 280px;
-}
-
-.input {
-  padding: 0.75rem 1rem;
-  border: 2px solid #3f3f46;
-  border-radius: 8px;
-  background: #18181b;
-  color: #fff;
-  font-size: 1rem;
-  outline: none;
-  transition: border-color 0.2s;
-}
-
-.input:focus {
-  border-color: #8b5cf6;
-}
-
-.input-code {
-  text-transform: uppercase;
-  text-align: center;
-  letter-spacing: 0.3em;
-  font-size: 1.25rem;
-}
-
-.btn {
-  padding: 0.75rem 1.5rem;
-  border: none;
-  border-radius: 8px;
-  font-size: 1rem;
-  font-weight: 600;
-  cursor: pointer;
-  transition: all 0.2s;
-}
-
-.btn-primary {
-  background: #8b5cf6;
-  color: #fff;
-}
-
-.btn-primary:hover {
-  background: #7c3aed;
-}
-
-.btn-secondary {
-  background: #27272a;
-  color: #d4d4d8;
-  border: 2px solid #3f3f46;
-}
-
-.btn-secondary:hover {
-  border-color: #8b5cf6;
-}
-
-.btn-back {
-  background: transparent;
-  color: #71717a;
-}
-
-.btn-back:hover {
-  color: #d4d4d8;
-}
-
-.error {
-  color: #ef4444;
-  font-size: 0.875rem;
-}
-</style>

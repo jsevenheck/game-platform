@@ -28,7 +28,7 @@ function onPhaseChange(phase: string) {
 </script>
 
 <template>
-  <div class="adapter-wrapper">
+  <div class="relative min-h-dvh">
     <!-- The actual game, running in embedded/platform mode -->
     <GameApp
       :player-id="playerId"
@@ -41,95 +41,16 @@ function onPhaseChange(phase: string) {
 
     <!-- Platform overlay shown when game ends -->
     <Transition name="fade">
-      <div v-if="gameEnded && isHost" class="platform-overlay">
-        <div class="overlay-card">
-          <h2 class="overlay-title">Match Over</h2>
-          <p class="overlay-sub">What would you like to do?</p>
-          <div class="overlay-actions">
-            <button class="btn-replay" @click="onReplayGame?.()">Play Again</button>
-            <button class="btn-lobby" @click="onReturnToLobby?.()">Back to Party</button>
+      <div v-if="gameEnded && isHost" class="ui-overlay">
+        <div class="ui-dialog">
+          <h2 class="mb-2 text-2xl font-extrabold">Match Over</h2>
+          <p class="mb-6 text-sm text-muted-foreground">What would you like to do?</p>
+          <div class="flex flex-col gap-3">
+            <button class="ui-btn-primary" @click="onReplayGame?.()">Play Again</button>
+            <button class="ui-btn-secondary" @click="onReturnToLobby?.()">Back to Party</button>
           </div>
         </div>
       </div>
     </Transition>
   </div>
 </template>
-
-<style scoped>
-.adapter-wrapper {
-  position: relative;
-  min-height: 100dvh;
-}
-
-.platform-overlay {
-  position: fixed;
-  inset: 0;
-  z-index: 9999;
-  background: rgba(9, 9, 11, 0.85);
-  backdrop-filter: blur(8px);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-}
-
-.overlay-card {
-  background: #18181b;
-  border: 1px solid #3f3f46;
-  border-radius: 16px;
-  padding: 2.5rem 2rem;
-  text-align: center;
-  max-width: 320px;
-  width: 100%;
-}
-
-.overlay-title {
-  font-size: 1.5rem;
-  font-weight: 800;
-  margin-bottom: 0.5rem;
-}
-
-.overlay-sub {
-  color: #71717a;
-  font-size: 0.9rem;
-  margin-bottom: 1.5rem;
-}
-
-.overlay-actions {
-  display: flex;
-  flex-direction: column;
-  gap: 0.75rem;
-}
-
-.btn-replay {
-  padding: 0.85rem;
-  border: none;
-  border-radius: 10px;
-  background: #f97316;
-  color: #fff;
-  font: inherit;
-  font-size: 1rem;
-  font-weight: 700;
-  cursor: pointer;
-}
-
-.btn-lobby {
-  padding: 0.85rem;
-  border: 1px solid #3f3f46;
-  border-radius: 10px;
-  background: transparent;
-  color: #e4e4e7;
-  font: inherit;
-  font-size: 1rem;
-  cursor: pointer;
-}
-
-.fade-enter-active,
-.fade-leave-active {
-  transition: opacity 0.25s ease;
-}
-
-.fade-enter-from,
-.fade-leave-to {
-  opacity: 0;
-}
-</style>

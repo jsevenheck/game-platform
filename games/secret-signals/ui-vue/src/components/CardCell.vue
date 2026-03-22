@@ -68,8 +68,8 @@ function borderColor(): string {
     <span v-if="isFocused && focusedByName" class="focus-chip">
       {{ focusedByName }}
     </span>
-    <span class="card-word">{{ card.word }}</span>
-    <span v-if="isDirectorView && !card.revealed && card.type === 'assassin'" class="assassin-mark"
+    <span class="relative z-[1]">{{ card.word }}</span>
+    <span v-if="isDirectorView && !card.revealed && card.type === 'assassin'" class="absolute top-1 right-1.5 text-xs opacity-70"
       >&#x2620;</span
     >
   </button>
@@ -82,8 +82,8 @@ function borderColor(): string {
   align-items: center;
   justify-content: center;
   aspect-ratio: 3 / 2;
-  border: 2px solid #3f3f46;
-  border-radius: 8px;
+  border: 2px solid var(--color-border-strong);
+  border-radius: var(--radius-sm);
   font-size: clamp(0.6rem, 1.4vw, 0.9rem);
   font-weight: 600;
   text-transform: uppercase;
@@ -108,7 +108,7 @@ function borderColor(): string {
 .card-cell.clickable:hover {
   transform: scale(1.04);
   box-shadow: 0 4px 16px rgba(0, 0, 0, 0.4);
-  border-color: #8b5cf6;
+  border-color: var(--color-signals);
 }
 
 .card-cell.revealed {
@@ -123,19 +123,15 @@ function borderColor(): string {
     0 10px 24px rgba(0, 0, 0, 0.35);
 }
 
-.card-word {
-  z-index: 1;
-}
-
 .focus-chip {
   position: absolute;
   top: 6px;
   left: 6px;
   max-width: calc(100% - 12px);
   padding: 0.14rem 0.38rem;
-  border-radius: 999px;
+  border-radius: var(--radius-pill);
   background: rgba(9, 9, 11, 0.78);
-  color: #fafafa;
+  color: var(--color-foreground);
   font-size: 0.62rem;
   font-weight: 800;
   letter-spacing: 0.04em;
@@ -143,13 +139,5 @@ function borderColor(): string {
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
-}
-
-.assassin-mark {
-  position: absolute;
-  top: 4px;
-  right: 6px;
-  font-size: 0.75rem;
-  opacity: 0.7;
 }
 </style>

@@ -100,66 +100,64 @@ onBeforeUnmount(() => {
 </script>
 
 <template>
-  <div class="party-view">
-    <header class="header">
-      <div class="invite-code">
-        <span class="label">Party Code</span>
-        <span class="code">{{ store.party?.inviteCode ?? inviteCode }}</span>
+  <div class="min-h-dvh">
+    <header class="ui-shell-header">
+      <div class="flex flex-col">
+        <span class="text-[0.7rem] uppercase tracking-widest text-muted-foreground">Party Code</span>
+        <span class="text-lg font-extrabold tracking-[0.2em] text-accent">{{ store.party?.inviteCode ?? inviteCode }}</span>
       </div>
-      <button class="leave-btn" @click="handleLeave">Leave</button>
+      <button class="ui-btn-ghost rounded-pill border border-border-strong px-4 py-1.5 text-sm" @click="handleLeave">Leave</button>
     </header>
 
-    <main class="main">
-      <section class="members-section">
-        <h2>Players ({{ store.connectedMembers.length }})</h2>
-        <ul class="member-list">
+    <main class="mx-auto flex max-w-[560px] flex-col gap-8 p-4 pt-6">
+      <section>
+        <h2 class="ui-section-label">Players ({{ store.connectedMembers.length }})</h2>
+        <ul class="flex flex-col gap-1.5">
           <li
             v-for="member in store.party?.members ?? []"
             :key="member.playerId"
-            :class="['member', { disconnected: !member.connected }]"
+            class="flex items-center gap-2 rounded-[--radius-md] border border-border bg-panel px-3 py-2.5"
+            :class="{ 'opacity-50': !member.connected }"
           >
-            <span class="member-name">{{ member.name }}</span>
-            <span v-if="member.playerId === store.party?.hostPlayerId" class="host-badge"
-              >HOST</span
-            >
-            <span v-if="!member.connected" class="dc-badge">away</span>
+            <span class="flex-1 font-medium">{{ member.name }}</span>
+            <span v-if="member.playerId === store.party?.hostPlayerId" class="ui-badge bg-blackout text-white">HOST</span>
+            <span v-if="!member.connected" class="text-[0.7rem] text-muted-foreground">away</span>
           </li>
         </ul>
       </section>
 
-      <section v-if="store.isHost" class="game-select">
-        <h2>Select a Game</h2>
-        <div class="game-grid">
+      <section v-if="store.isHost">
+        <h2 class="ui-section-label">Select a Game</h2>
+        <div class="grid grid-cols-[repeat(auto-fill,minmax(150px,1fr))] gap-3">
           <button
             v-for="game in clientGameRegistry"
             :key="game.definition.id"
-            :class="['game-card', { selected: store.party?.selectedGameId === game.definition.id }]"
+            class="flex cursor-pointer flex-col gap-1 rounded-[--radius-md] border border-border-strong bg-panel p-4 text-left transition-all duration-150"
+            :class="store.party?.selectedGameId === game.definition.id ? 'border-accent bg-accent-muted' : 'hover:border-accent'"
             @click="handleSelectGame(game.definition.id)"
           >
-            <span class="game-name">{{ game.definition.name }}</span>
-            <span class="game-players"
-              >{{ game.definition.minPlayers }}–{{ game.definition.maxPlayers }} players</span
-            >
+            <span class="text-base font-bold">{{ game.definition.name }}</span>
+            <span class="text-xs text-muted-foreground">{{ game.definition.minPlayers }}–{{ game.definition.maxPlayers }} players</span>
           </button>
         </div>
       </section>
 
-      <section v-else-if="store.party?.selectedGameId" class="waiting-game">
-        <p class="selected-game">
+      <section v-else-if="store.party?.selectedGameId" class="text-center text-muted">
+        <p class="mb-2 text-base">
           Game selected:
-          <strong>{{
+          <strong class="text-foreground">{{
             clientGameRegistry.find((g) => g.definition.id === store.party?.selectedGameId)
               ?.definition.name
           }}</strong>
         </p>
-        <p class="waiting-msg">Waiting for host to launch...</p>
+        <p class="text-sm text-muted-foreground">Waiting for host to launch...</p>
       </section>
 
-      <p v-if="error" class="error">{{ error }}</p>
+      <p v-if="error" class="text-sm text-danger">{{ error }}</p>
 
       <button
         v-if="store.isHost"
-        class="launch-btn"
+        class="ui-btn-primary text-lg"
         :disabled="!store.party?.selectedGameId || launching"
         @click="handleLaunch"
       >
@@ -168,198 +166,3 @@ onBeforeUnmount(() => {
     </main>
   </div>
 </template>
-
-<style scoped>
-.party-view {
-  min-height: 100dvh;
-}
-
-.header {
-  position: sticky;
-  top: 0;
-  z-index: 10;
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  padding: 0.85rem 1rem;
-  background: rgba(9, 9, 11, 0.92);
-  border-bottom: 1px solid #27272a;
-  backdrop-filter: blur(12px);
-}
-
-.invite-code {
-  display: flex;
-  flex-direction: column;
-}
-
-.label {
-  font-size: 0.7rem;
-  color: #71717a;
-  text-transform: uppercase;
-  letter-spacing: 0.08em;
-}
-
-.code {
-  font-size: 1.1rem;
-  font-weight: 800;
-  letter-spacing: 0.2em;
-  color: #f97316;
-}
-
-.leave-btn {
-  border: 1px solid #3f3f46;
-  border-radius: 999px;
-  background: transparent;
-  color: #e4e4e7;
-  padding: 0.45rem 0.95rem;
-  font: inherit;
-  cursor: pointer;
-}
-
-.leave-btn:hover {
-  border-color: #ef4444;
-  color: #fecaca;
-}
-
-.main {
-  max-width: 560px;
-  margin: 0 auto;
-  padding: 1.5rem 1rem;
-  display: flex;
-  flex-direction: column;
-  gap: 2rem;
-}
-
-h2 {
-  font-size: 0.85rem;
-  text-transform: uppercase;
-  letter-spacing: 0.1em;
-  color: #71717a;
-  margin-bottom: 0.75rem;
-}
-
-.member-list {
-  list-style: none;
-  display: flex;
-  flex-direction: column;
-  gap: 0.4rem;
-}
-
-.member {
-  display: flex;
-  align-items: center;
-  gap: 0.5rem;
-  padding: 0.6rem 0.8rem;
-  background: #18181b;
-  border-radius: 8px;
-  border: 1px solid #27272a;
-}
-
-.member.disconnected {
-  opacity: 0.5;
-}
-
-.member-name {
-  flex: 1;
-  font-weight: 500;
-}
-
-.host-badge {
-  font-size: 0.7rem;
-  font-weight: 700;
-  padding: 0.2rem 0.5rem;
-  background: #7c3aed;
-  border-radius: 999px;
-  color: #fff;
-}
-
-.dc-badge {
-  font-size: 0.7rem;
-  color: #71717a;
-}
-
-.game-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
-  gap: 0.75rem;
-}
-
-.game-card {
-  padding: 1rem;
-  border: 1px solid #3f3f46;
-  border-radius: 10px;
-  background: #18181b;
-  color: inherit;
-  cursor: pointer;
-  display: flex;
-  flex-direction: column;
-  gap: 0.3rem;
-  text-align: left;
-  transition: all 0.15s ease;
-}
-
-.game-card:hover {
-  border-color: #f97316;
-}
-
-.game-card.selected {
-  border-color: #f97316;
-  background: #1c1410;
-}
-
-.game-name {
-  font-weight: 700;
-  font-size: 1rem;
-}
-
-.game-players {
-  font-size: 0.75rem;
-  color: #71717a;
-}
-
-.waiting-game {
-  text-align: center;
-  color: #a1a1aa;
-}
-
-.selected-game {
-  font-size: 1rem;
-  margin-bottom: 0.5rem;
-}
-
-.selected-game strong {
-  color: #fafafa;
-}
-
-.waiting-msg {
-  font-size: 0.875rem;
-  color: #71717a;
-}
-
-.error {
-  color: #f87171;
-  font-size: 0.875rem;
-}
-
-.launch-btn {
-  padding: 0.85rem 1.5rem;
-  border: none;
-  border-radius: 10px;
-  background: #f97316;
-  color: #fff;
-  font: inherit;
-  font-size: 1rem;
-  font-weight: 700;
-  cursor: pointer;
-  transition: opacity 0.15s ease;
-}
-
-.launch-btn:disabled {
-  opacity: 0.4;
-  cursor: not-allowed;
-}
-
-.launch-btn:not(:disabled):hover {
-  opacity: 0.9;
-}
-</style>

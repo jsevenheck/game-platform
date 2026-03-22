@@ -1,5 +1,6 @@
-import { defineConfig, Plugin } from 'vite';
+import { defineConfig, type Plugin, type PluginOption } from 'vite';
 import vue from '@vitejs/plugin-vue';
+import tailwindcss from '@tailwindcss/vite';
 import { resolve } from 'path';
 
 const GAMES_ROOT = resolve(__dirname, '../../games');
@@ -35,7 +36,7 @@ function sharedAliasPlugin(): Plugin {
 }
 
 export default defineConfig({
-  plugins: [sharedAliasPlugin(), vue()],
+  plugins: [sharedAliasPlugin(), ...(tailwindcss() as PluginOption[]), vue()],
   resolve: {
     alias: [
       // Platform source alias

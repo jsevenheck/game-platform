@@ -281,17 +281,17 @@ onBeforeUnmount(() => {
 </script>
 
 <template>
-  <div class="app">
+  <div class="min-h-dvh">
     <Header v-if="store.room" @leave="handleLeave" />
 
-    <main class="main">
+    <main class="mx-auto max-w-[600px] p-4">
       <template v-if="!store.room && isEmbedded">
-        <p style="text-align: center; margin-top: 2rem">
+        <p class="mt-8 text-center text-muted">
           {{ embeddedError || 'Connecting...' }}
         </p>
         <button
           v-if="embeddedError"
-          class="embedded-retry"
+          class="ui-btn-secondary mx-auto mt-4 block"
           type="button"
           @click="retryEmbeddedJoin"
         >
@@ -318,62 +318,8 @@ onBeforeUnmount(() => {
 
     <PlayersPanel v-if="store.room" />
 
-    <p v-if="error" class="global-error">
+    <p v-if="error" class="fixed bottom-4 left-1/2 -translate-x-1/2 rounded-[--radius-md] bg-danger-muted px-6 py-3 text-sm text-danger">
       {{ error }}
     </p>
   </div>
 </template>
-
-<style>
-* {
-  margin: 0;
-  padding: 0;
-  box-sizing: border-box;
-}
-
-body {
-  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-  background: #09090b;
-  color: #fafafa;
-  min-height: 100vh;
-}
-
-#app {
-  min-height: 100vh;
-}
-</style>
-
-<style scoped>
-.app {
-  min-height: 100vh;
-}
-
-.main {
-  max-width: 600px;
-  margin: 0 auto;
-  padding: 1rem;
-}
-
-.global-error {
-  position: fixed;
-  bottom: 1rem;
-  left: 50%;
-  transform: translateX(-50%);
-  background: #7f1d1d;
-  color: #fca5a5;
-  padding: 0.75rem 1.5rem;
-  border-radius: 8px;
-  font-size: 0.875rem;
-}
-
-.embedded-retry {
-  display: block;
-  margin: 1rem auto 0;
-  padding: 0.75rem 1.5rem;
-  border: 1px solid #3f3f46;
-  border-radius: 8px;
-  background: #18181b;
-  color: #fafafa;
-  cursor: pointer;
-}
-</style>

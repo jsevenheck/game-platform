@@ -77,13 +77,13 @@ watch(
 </script>
 
 <template>
-  <div class="game-play">
+  <div class="flex flex-col min-h-dvh bg-canvas">
     <TurnIndicator />
 
-    <div class="game-content">
-      <div class="board-area">
-        <div class="table-layout">
-          <aside class="roster-column">
+    <div class="gameplay-content">
+      <div class="gameplay-board-area">
+        <div class="gameplay-table-layout">
+          <aside class="gameplay-roster-column">
             <TeamRosterPanel
               v-for="team in leftRosterTeams"
               :key="team.color"
@@ -94,20 +94,20 @@ watch(
             />
           </aside>
 
-          <div class="board-stack">
+          <div class="relative flex flex-col items-center gap-4">
             <div
               v-if="store.isDirector && store.isMyTurn && store.room?.turnPhase === 'guessing'"
-              class="director-waiting"
+              class="text-muted-foreground text-sm italic"
             >
               Your agents are guessing...
             </div>
-            <div v-if="store.isDirector && !store.isMyTurn" class="director-waiting">
+            <div v-if="store.isDirector && !store.isMyTurn" class="text-muted-foreground text-sm italic">
               Waiting for other team...
             </div>
 
             <GameBoard @card-press="handleCardPress" />
 
-            <div v-if="store.canGiveSignal" class="signal-area">
+            <div v-if="store.canGiveSignal" class="mt-2">
               <SignalInput
                 :disabled="!store.canGiveSignal"
                 :team-color="store.myTeam"
@@ -115,29 +115,29 @@ watch(
               />
             </div>
 
-            <div v-if="store.canEndTurn" class="end-turn-area">
-              <button class="btn btn-end-turn" @click="emit('end-turn')">End Turn</button>
+            <div v-if="store.canEndTurn" class="mt-2">
+              <button class="ui-btn-secondary hover:!border-signals hover:!text-signals" @click="emit('end-turn')">End Turn</button>
             </div>
 
-            <div v-if="store.isHost && store.room?.turnPhase" class="skip-turn-area">
-              <button class="btn btn-skip-round" @click="emit('skip-guess-round')">
+            <div v-if="store.isHost && store.room?.turnPhase" class="-mt-1">
+              <button class="ui-btn-ghost !text-xs !rounded-full !border !border-border-strong hover:!border-signals !text-muted hover:!text-foreground" @click="emit('skip-guess-round')">
                 Skip Turn
               </button>
             </div>
 
             <div
               v-if="store.isAgent && store.isMyTurn && store.room?.turnPhase === 'giving-signal'"
-              class="agent-waiting"
+              class="text-muted-foreground text-sm italic"
             >
               Waiting for your Director's signal...
             </div>
 
-            <div v-if="!store.isMyTurn && store.isAgent" class="agent-waiting">
+            <div v-if="!store.isMyTurn && store.isAgent" class="text-muted-foreground text-sm italic">
               Waiting for other team...
             </div>
           </div>
 
-          <aside class="roster-column">
+          <aside class="gameplay-roster-column">
             <TeamRosterPanel
               v-for="team in rightRosterTeams"
               :key="team.color"
@@ -150,20 +150,20 @@ watch(
         </div>
       </div>
 
-      <div class="log-sidebar">
+      <div class="gameplay-log-sidebar">
         <GameLog />
       </div>
     </div>
 
     <Teleport to="body">
-      <div v-if="confirmCard" class="confirm-overlay" @click.self="confirmCardIndex = null">
-        <div class="confirm-dialog" role="dialog" aria-modal="true" aria-labelledby="confirm-title">
-          <p class="confirm-label">Confirm Reveal</p>
-          <h3 id="confirm-title" class="confirm-word">{{ confirmCard.word }}</h3>
-          <p class="confirm-copy">This card is only marked so far. Reveal it for the whole room?</p>
-          <div class="confirm-actions">
-            <button class="btn btn-cancel" @click="confirmCardIndex = null">Keep Marked</button>
-            <button class="btn btn-confirm" @click="handleConfirmReveal">Reveal Card</button>
+      <div v-if="confirmCard" class="ui-overlay !z-90" @click.self="confirmCardIndex = null">
+        <div class="ui-dialog !max-w-[440px] !p-5" role="dialog" aria-modal="true" aria-labelledby="confirm-title">
+          <p class="text-signals text-xs font-extrabold uppercase tracking-[0.1em]">Confirm Reveal</p>
+          <h3 id="confirm-title" class="mt-2 text-foreground text-[clamp(1.6rem,6vw,2.5rem)] font-black uppercase tracking-[0.08em] leading-tight">{{ confirmCard.word }}</h3>
+          <p class="mt-3 text-muted text-base leading-relaxed">This card is only marked so far. Reveal it for the whole room?</p>
+          <div class="flex justify-center flex-wrap gap-2.5 mt-5">
+            <button class="ui-btn-secondary min-w-40 !py-3 !font-extrabold" @click="confirmCardIndex = null">Keep Marked</button>
+            <button class="ui-btn-danger min-w-40 !py-3 !font-extrabold" @click="handleConfirmReveal">Reveal Card</button>
           </div>
         </div>
       </div>
@@ -172,19 +172,12 @@ watch(
 </template>
 
 <style scoped>
-.game-play {
-  display: flex;
-  flex-direction: column;
-  min-height: 100dvh;
-  background: #09090b;
-}
-
-.game-content {
+.gameplay-content {
   display: flex;
   flex: 1;
 }
 
-.board-area {
+.gameplay-board-area {
   flex: 1;
   display: flex;
   flex-direction: column;
@@ -192,7 +185,7 @@ watch(
   padding: 1.5rem 1rem;
 }
 
-.table-layout {
+.gameplay-table-layout {
   display: grid;
   grid-template-columns: minmax(180px, 220px) minmax(0, 1fr) minmax(180px, 220px);
   gap: 1rem;
@@ -201,182 +194,37 @@ watch(
   max-width: 1280px;
 }
 
-.roster-column {
+.gameplay-roster-column {
   display: flex;
   flex-direction: column;
   gap: 0.85rem;
 }
 
-.board-stack {
-  position: relative;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 1rem;
-}
-
-.log-sidebar {
+.gameplay-log-sidebar {
   width: 240px;
   flex-shrink: 0;
 }
 
-.signal-area {
-  margin-top: 0.5rem;
-}
-
-.end-turn-area {
-  margin-top: 0.5rem;
-}
-
-.skip-turn-area {
-  margin-top: -0.25rem;
-}
-
-.btn-end-turn {
-  padding: 0.6rem 1.5rem;
-  border: 2px solid #3f3f46;
-  border-radius: 8px;
-  background: transparent;
-  color: #d4d4d8;
-  font-size: 0.9rem;
-  font-weight: 600;
-  cursor: pointer;
-  transition: all 0.2s;
-}
-
-.btn-end-turn:hover,
-.btn-skip-round:hover {
-  border-color: #8b5cf6;
-  color: #fff;
-}
-
-.btn-skip-round {
-  padding: 0.55rem 1.2rem;
-  border: 1px solid #52525b;
-  border-radius: 999px;
-  background: transparent;
-  color: #a1a1aa;
-  font-size: 0.82rem;
-  font-weight: 700;
-  cursor: pointer;
-  transition: all 0.2s;
-}
-
-.director-waiting,
-.agent-waiting {
-  color: #71717a;
-  font-size: 0.9rem;
-  font-style: italic;
-}
-
-.confirm-overlay {
-  position: fixed;
-  inset: 0;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  padding: 1rem;
-  background: rgba(9, 9, 11, 0.78);
-  backdrop-filter: blur(8px);
-  z-index: 90;
-}
-
-.confirm-dialog {
-  position: relative;
-  isolation: isolate;
-  overflow: hidden;
-  width: min(440px, calc(100vw - 2rem));
-  padding: 1.35rem;
-  border: 1px solid #3f3f46;
-  border-radius: 20px;
-  background: #16161a;
-  box-shadow: 0 28px 60px rgba(0, 0, 0, 0.48);
-  text-align: center;
-}
-
-.confirm-label {
-  color: #8b5cf6;
-  font-size: 0.78rem;
-  font-weight: 800;
-  text-transform: uppercase;
-  letter-spacing: 0.1em;
-}
-
-.confirm-word {
-  margin-top: 0.55rem;
-  color: #fafafa;
-  font-size: clamp(1.6rem, 6vw, 2.5rem);
-  font-weight: 900;
-  text-transform: uppercase;
-  letter-spacing: 0.08em;
-  line-height: 1.05;
-}
-
-.confirm-copy {
-  margin-top: 0.85rem;
-  color: #a1a1aa;
-  font-size: 1rem;
-  line-height: 1.5;
-}
-
-.confirm-actions {
-  display: flex;
-  justify-content: center;
-  flex-wrap: wrap;
-  gap: 0.65rem;
-  margin-top: 1.25rem;
-}
-
-.btn-cancel,
-.btn-confirm {
-  min-width: 160px;
-  padding: 0.8rem 1rem;
-  border-radius: 12px;
-  font-size: 0.98rem;
-  font-weight: 800;
-  cursor: pointer;
-}
-
-.btn-cancel {
-  border: 1px solid #3f3f46;
-  background: #202027;
-  color: #d4d4d8;
-}
-
-.btn-confirm {
-  border: none;
-  background: #ef4444;
-  color: #fff;
-}
-
-.btn-cancel:hover {
-  background: #2a2a33;
-}
-
-.btn-confirm:hover {
-  background: #dc2626;
-}
-
 @media (max-width: 768px) {
-  .game-content {
+  .gameplay-content {
     flex-direction: column;
   }
 
-  .table-layout {
+  .gameplay-table-layout {
     grid-template-columns: 1fr;
   }
 
-  .roster-column {
+  .gameplay-roster-column {
     flex-direction: row;
     flex-wrap: wrap;
     width: 100%;
   }
 
-  .log-sidebar {
+  .gameplay-log-sidebar {
     width: 100%;
     max-height: 200px;
     border-left: none;
-    border-top: 1px solid #27272a;
+    border-top: 1px solid var(--color-border);
   }
 }
 </style>

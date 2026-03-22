@@ -52,291 +52,78 @@ function saveExcludedLetters() {
 </script>
 
 <template>
-  <div class="lobby">
-    <div class="room-code-display">
-      <p class="label">Room Code</p>
-      <h2 class="code">
-        {{ store.roomCode }}
-      </h2>
-      <p class="hint">Share this code with your friends!</p>
+  <div class="flex flex-col items-center gap-8 px-4 py-8">
+    <div class="text-center">
+      <p class="ui-section-label">Room Code</p>
+      <h2 class="text-5xl font-black tracking-[0.4em] text-blackout">{{ store.roomCode }}</h2>
+      <p class="mt-1 text-sm text-muted-foreground">Share this code with your friends!</p>
     </div>
 
-    <div class="players-list">
-      <h3>Players ({{ connectedCount() }})</h3>
+    <div class="w-full max-w-xs">
+      <h3 class="mb-3 text-muted">Players ({{ connectedCount() }})</h3>
       <div
         v-for="player in store.room?.players"
         :key="player.id"
-        class="player-item"
-        :class="{ disconnected: !player.connected }"
+        class="mb-2 flex items-center gap-2 rounded-[--radius-sm] bg-elevated px-3 py-2"
+        :class="{ 'opacity-50': !player.connected }"
       >
-        <span class="player-name">{{ player.name }}</span>
-        <span v-if="store.room?.ownerId === player.id" class="badge owner">Owner</span>
-        <span v-if="player.isHost" class="badge host">Host</span>
-        <span v-if="!player.connected" class="badge offline">Offline</span>
+        <span class="flex-1 text-foreground">{{ player.name }}</span>
+        <span v-if="store.room?.ownerId === player.id" class="ui-badge bg-signals text-white">Owner</span>
+        <span v-if="player.isHost" class="ui-badge bg-blackout text-white">Host</span>
+        <span v-if="!player.connected" class="ui-badge bg-elevated text-muted-foreground">Offline</span>
       </div>
     </div>
 
-    <div v-if="store.isHost" class="config">
-      <div class="rounds-config">
+    <div v-if="store.isHost" class="flex flex-col items-center gap-4">
+      <div class="flex items-center gap-3 text-foreground">
         <span>Rounds:</span>
-        <button class="btn-sm" @click="adjustRounds(-1)">-</button>
-        <span class="rounds-value">{{ store.room?.maxRounds }}</span>
-        <button class="btn-sm" @click="adjustRounds(1)">+</button>
+        <button class="ui-stepper-btn hover:!border-blackout" @click="adjustRounds(-1)">-</button>
+        <span class="min-w-8 text-center text-2xl font-bold">{{ store.room?.maxRounds }}</span>
+        <button class="ui-stepper-btn hover:!border-blackout" @click="adjustRounds(1)">+</button>
       </div>
 
-      <div class="language-config">
+      <div class="flex items-center gap-2 text-foreground">
         <span>Language:</span>
         <button
-          class="btn-sm lang-btn"
-          :class="{ active: store.room?.language === 'de' }"
+          class="ui-stepper-btn text-sm hover:!border-blackout"
+          :class="store.room?.language === 'de' && '!border-blackout text-foreground'"
           @click="updateLanguage('de')"
-        >
-          DE
-        </button>
+        >DE</button>
         <button
-          class="btn-sm lang-btn"
-          :class="{ active: store.room?.language === 'en' }"
+          class="ui-stepper-btn text-sm hover:!border-blackout"
+          :class="store.room?.language === 'en' && '!border-blackout text-foreground'"
           @click="updateLanguage('en')"
-        >
-          EN
-        </button>
+        >EN</button>
       </div>
 
-      <div class="letters-config">
-        <label for="excluded-letters">Excluded letters</label>
-        <div class="letters-row">
+      <div class="flex w-full max-w-xs flex-col gap-1">
+        <label for="excluded-letters" class="text-sm text-muted">Excluded letters</label>
+        <div class="flex gap-2">
           <input
             id="excluded-letters"
             v-model="excludedLettersInput"
-            class="letters-input"
+            class="ui-input flex-1 focus:!border-blackout"
             type="text"
             placeholder="Q, X, Y"
             @keydown.enter.prevent="saveExcludedLetters"
             @blur="saveExcludedLetters"
           />
-          <button class="btn-sm letters-save" @click="saveExcludedLetters">Save</button>
+          <button class="ui-stepper-btn w-auto min-w-14 px-3 text-sm hover:!border-blackout" @click="saveExcludedLetters">Save</button>
         </div>
       </div>
 
       <button
-        class="btn btn-primary btn-start"
+        class="ui-btn-primary !bg-blackout px-12 py-4 text-xl hover:!bg-blackout-hover"
         :disabled="connectedCount() < MIN_PLAYERS"
         @click="$emit('startGame')"
-      >
-        Start Game
-      </button>
-      <p v-if="connectedCount() < MIN_PLAYERS" class="hint">
+      >Start Game</button>
+      <p v-if="connectedCount() < MIN_PLAYERS" class="text-sm text-muted-foreground">
         Need at least {{ MIN_PLAYERS }} players to start
       </p>
     </div>
 
-    <div v-else class="waiting">
+    <div v-else class="text-muted-foreground">
       <p>Waiting for host to start the game...</p>
     </div>
   </div>
 </template>
-
-<style scoped>
-.lobby {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 2rem;
-  padding: 2rem 1rem;
-}
-
-.room-code-display {
-  text-align: center;
-}
-
-.label {
-  color: #71717a;
-  text-transform: uppercase;
-  font-size: 0.75rem;
-  letter-spacing: 0.1em;
-}
-
-.code {
-  font-size: 3rem;
-  font-weight: 900;
-  letter-spacing: 0.4em;
-  color: #8b5cf6;
-}
-
-.hint {
-  color: #71717a;
-  font-size: 0.875rem;
-}
-
-.players-list {
-  width: 100%;
-  max-width: 320px;
-}
-
-.players-list h3 {
-  color: #a1a1aa;
-  margin-bottom: 0.75rem;
-}
-
-.player-item {
-  display: flex;
-  align-items: center;
-  gap: 0.5rem;
-  padding: 0.5rem 0.75rem;
-  background: #27272a;
-  border-radius: 6px;
-  margin-bottom: 0.5rem;
-}
-
-.player-item.disconnected {
-  opacity: 0.5;
-}
-
-.player-name {
-  flex: 1;
-  color: #fff;
-}
-
-.badge {
-  font-size: 0.7rem;
-  padding: 0.15rem 0.5rem;
-  border-radius: 4px;
-  text-transform: uppercase;
-  font-weight: 600;
-}
-
-.badge.host {
-  background: #8b5cf6;
-  color: #fff;
-}
-
-.badge.owner {
-  background: #0ea5e9;
-  color: #fff;
-}
-
-.badge.offline {
-  background: #3f3f46;
-  color: #71717a;
-}
-
-.config {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 1rem;
-}
-
-.rounds-config {
-  display: flex;
-  align-items: center;
-  gap: 0.75rem;
-  color: #d4d4d8;
-}
-
-.language-config {
-  display: flex;
-  align-items: center;
-  gap: 0.5rem;
-  color: #d4d4d8;
-}
-
-.lang-btn.active {
-  border-color: #8b5cf6;
-  color: #fff;
-}
-
-.letters-config {
-  display: flex;
-  flex-direction: column;
-  gap: 0.35rem;
-  width: 100%;
-  max-width: 320px;
-  color: #d4d4d8;
-}
-
-.letters-config label {
-  font-size: 0.85rem;
-  color: #a1a1aa;
-}
-
-.letters-row {
-  display: flex;
-  gap: 0.5rem;
-}
-
-.letters-input {
-  flex: 1;
-  padding: 0.55rem 0.7rem;
-  border: 1px solid #3f3f46;
-  border-radius: 6px;
-  background: #18181b;
-  color: #fafafa;
-}
-
-.letters-input:focus {
-  outline: none;
-  border-color: #8b5cf6;
-}
-
-.rounds-value {
-  font-size: 1.5rem;
-  font-weight: 700;
-  min-width: 2rem;
-  text-align: center;
-}
-
-.btn-sm {
-  width: 2rem;
-  height: 2rem;
-  border: 2px solid #3f3f46;
-  border-radius: 6px;
-  background: #18181b;
-  color: #d4d4d8;
-  font-size: 1.2rem;
-  cursor: pointer;
-}
-
-.btn-sm:hover {
-  border-color: #8b5cf6;
-}
-
-.btn-sm.letters-save {
-  width: auto;
-  min-width: 3.5rem;
-  padding: 0 0.8rem;
-  font-size: 0.85rem;
-}
-
-.btn {
-  padding: 0.75rem 2rem;
-  border: none;
-  border-radius: 8px;
-  font-size: 1rem;
-  font-weight: 600;
-  cursor: pointer;
-}
-
-.btn-primary {
-  background: #8b5cf6;
-  color: #fff;
-}
-
-.btn-primary:hover:not(:disabled) {
-  background: #7c3aed;
-}
-
-.btn-primary:disabled {
-  opacity: 0.5;
-  cursor: not-allowed;
-}
-
-.btn-start {
-  padding: 1rem 3rem;
-  font-size: 1.25rem;
-}
-
-.waiting {
-  color: #71717a;
-}
-</style>

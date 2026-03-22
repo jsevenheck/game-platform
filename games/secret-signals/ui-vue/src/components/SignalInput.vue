@@ -38,31 +38,33 @@ function submit() {
 </script>
 
 <template>
-  <div class="signal-input">
-    <div class="signal-form">
+  <div class="flex flex-col items-center gap-2">
+    <div class="flex items-center gap-2 flex-wrap justify-center">
       <input
         v-model="word"
         type="text"
         placeholder="Clue word"
-        class="input input-word"
+        class="ui-input !w-40 !bg-white/5 !border-white/10 focus:!border-signals uppercase"
         :disabled="disabled"
         @keyup.enter="submit"
       />
-      <div class="number-control">
-        <button class="num-btn" :disabled="disabled || number <= 0" @click="number--">-</button>
-        <span class="num-display">{{ number }}</span>
+      <div class="flex items-center bg-panel border-2 border-border-strong rounded-[--radius-sm] overflow-hidden">
         <button
-          class="num-btn"
+          class="w-8 h-9 bg-transparent border-none text-foreground/80 text-lg font-bold cursor-pointer hover:bg-border-strong disabled:opacity-30 disabled:cursor-not-allowed"
+          :disabled="disabled || number <= 0"
+          @click="number--"
+        >-</button>
+        <span class="w-7 text-center text-foreground font-bold">{{ number }}</span>
+        <button
+          class="w-8 h-9 bg-transparent border-none text-foreground/80 text-lg font-bold cursor-pointer hover:bg-border-strong disabled:opacity-30 disabled:cursor-not-allowed"
           :disabled="disabled || number >= MAX_SIGNAL_NUMBER"
           @click="number++"
-        >
-          +
-        </button>
+        >+</button>
       </div>
       <button
-        class="btn btn-signal"
+        class="ui-btn-primary !rounded-[--radius-sm]"
         :style="{
-          backgroundColor: teamColor ? (TEAM_HEX_BY_COLOR[teamColor] ?? '#8b5cf6') : '#8b5cf6',
+          backgroundColor: teamColor ? (TEAM_HEX_BY_COLOR[teamColor] ?? 'var(--color-signals)') : 'var(--color-signals)',
         }"
         :disabled="disabled"
         @click="submit"
@@ -70,112 +72,7 @@ function submit() {
         Send Signal
       </button>
     </div>
-    <p v-if="error" class="error">{{ error }}</p>
-    <p class="hint">0 = unlimited guesses</p>
+    <p v-if="error" class="text-danger text-xs">{{ error }}</p>
+    <p class="text-muted-foreground text-xs">0 = unlimited guesses</p>
   </div>
 </template>
-
-<style scoped>
-.signal-input {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 0.5rem;
-}
-
-.signal-form {
-  display: flex;
-  align-items: center;
-  gap: 0.5rem;
-  flex-wrap: wrap;
-  justify-content: center;
-}
-
-.input {
-  padding: 0.6rem 0.75rem;
-  border: 2px solid #3f3f46;
-  border-radius: 8px;
-  background: #18181b;
-  color: #fff;
-  font-size: 0.95rem;
-  outline: none;
-  transition: border-color 0.2s;
-}
-
-.input:focus {
-  border-color: #8b5cf6;
-}
-
-.input-word {
-  width: 160px;
-  text-transform: uppercase;
-}
-
-.number-control {
-  display: flex;
-  align-items: center;
-  gap: 0;
-  background: #18181b;
-  border: 2px solid #3f3f46;
-  border-radius: 8px;
-  overflow: hidden;
-}
-
-.num-btn {
-  width: 32px;
-  height: 36px;
-  background: transparent;
-  border: none;
-  color: #d4d4d8;
-  font-size: 1.1rem;
-  font-weight: 700;
-  cursor: pointer;
-}
-
-.num-btn:hover:not(:disabled) {
-  background: #3f3f46;
-}
-
-.num-btn:disabled {
-  opacity: 0.3;
-  cursor: not-allowed;
-}
-
-.num-display {
-  width: 28px;
-  text-align: center;
-  color: #fff;
-  font-weight: 700;
-  font-size: 1rem;
-}
-
-.btn-signal {
-  padding: 0.6rem 1.25rem;
-  border: none;
-  border-radius: 8px;
-  color: #fff;
-  font-size: 0.95rem;
-  font-weight: 600;
-  cursor: pointer;
-  transition: opacity 0.2s;
-}
-
-.btn-signal:hover:not(:disabled) {
-  opacity: 0.85;
-}
-
-.btn-signal:disabled {
-  opacity: 0.4;
-  cursor: not-allowed;
-}
-
-.error {
-  color: #ef4444;
-  font-size: 0.8rem;
-}
-
-.hint {
-  color: #71717a;
-  font-size: 0.75rem;
-}
-</style>

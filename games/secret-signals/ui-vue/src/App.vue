@@ -304,17 +304,23 @@ onBeforeUnmount(() => {
 </script>
 
 <template>
-  <div class="app">
-    <header v-if="store.room && !isEmbedded" class="app-header">
-      <span class="header-room">{{ store.roomCode }}</span>
-      <button class="leave-button" type="button" @click="handleLeave">Leave</button>
+  <div class="min-h-dvh">
+    <header v-if="store.room && !isEmbedded" class="ui-shell-header">
+      <span class="text-signals text-sm font-extrabold tracking-[0.16em] uppercase">{{ store.roomCode }}</span>
+      <button
+        class="ui-btn-ghost !px-3 !py-1.5 !text-sm !rounded-full border border-border-strong hover:!border-danger hover:!text-red-200 hover:!bg-danger/10"
+        type="button"
+        @click="handleLeave"
+      >
+        Leave
+      </button>
     </header>
 
     <template v-if="!store.room && isEmbedded">
-      <p class="session-status">{{ embeddedError || 'Connecting...' }}</p>
+      <p class="py-8 px-4 text-center text-muted">{{ embeddedError || 'Connecting...' }}</p>
     </template>
     <template v-else-if="store.phase === null && isRestoringSession">
-      <p class="session-status">Reconnecting to your room...</p>
+      <p class="py-8 px-4 text-center text-muted">Reconnecting to your room...</p>
     </template>
     <Landing
       v-else-if="store.phase === null"
@@ -341,64 +347,3 @@ onBeforeUnmount(() => {
     <GameOver v-else-if="store.phase === 'ended'" @restart="handleRestart" />
   </div>
 </template>
-
-<style>
-* {
-  box-sizing: border-box;
-  margin: 0;
-  padding: 0;
-}
-
-body {
-  font-family: system-ui, sans-serif;
-  background: #09090b;
-  color: #e4e4e7;
-}
-
-.app {
-  min-height: 100dvh;
-}
-
-.app-header {
-  position: sticky;
-  top: 0;
-  z-index: 20;
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  padding: 0.85rem 1rem;
-  background: rgba(9, 9, 11, 0.92);
-  border-bottom: 1px solid #27272a;
-  backdrop-filter: blur(12px);
-}
-
-.header-room {
-  color: #8b5cf6;
-  font-size: 0.85rem;
-  font-weight: 800;
-  letter-spacing: 0.16em;
-  text-transform: uppercase;
-}
-
-.leave-button {
-  border: 1px solid #3f3f46;
-  border-radius: 999px;
-  background: transparent;
-  color: #e4e4e7;
-  padding: 0.45rem 0.95rem;
-  font: inherit;
-  cursor: pointer;
-}
-
-.leave-button:hover {
-  border-color: #ef4444;
-  color: #fecaca;
-  background: rgba(239, 68, 68, 0.12);
-}
-
-.session-status {
-  padding: 2rem 1rem;
-  text-align: center;
-  color: #a1a1aa;
-}
-</style>

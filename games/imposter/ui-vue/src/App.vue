@@ -340,12 +340,12 @@ onBeforeUnmount(() => {
 </script>
 
 <template>
-  <div class="app">
-    <header v-if="store.room && !isEmbedded" class="app-header">
-      <span class="header-room">{{ store.roomCode }}</span>
-      <button class="leave-button" type="button" @click="handleLeave">Leave</button>
+  <div class="min-h-dvh">
+    <header v-if="store.room && !isEmbedded" class="imposter-header ui-shell-header">
+      <span class="text-imposter text-xs font-extrabold uppercase tracking-[0.16em]">{{ store.roomCode }}</span>
+      <button class="ui-btn-ghost !rounded-full !px-4 !py-1.5 !text-sm border border-border-strong hover:!border-danger hover:!text-danger" type="button" @click="handleLeave">Leave</button>
     </header>
-    <p v-if="store.phase === null && isEmbedded" class="embedded-status">
+    <p v-if="store.phase === null && isEmbedded" class="py-8 px-4 text-center text-muted-foreground">
       {{ embeddedError || 'Connecting...' }}
     </p>
     <Landing
@@ -382,71 +382,3 @@ onBeforeUnmount(() => {
     <GameOver v-else-if="store.phase === 'ended'" @restart="handleRestart" />
   </div>
 </template>
-
-<style>
-@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap');
-
-* {
-  box-sizing: border-box;
-  margin: 0;
-  padding: 0;
-}
-
-body {
-  font-family: 'Inter', system-ui, sans-serif;
-  background: #0f0f23;
-  color: #e2e8f0;
-  -webkit-font-smoothing: antialiased;
-  -moz-osx-font-smoothing: grayscale;
-}
-
-.app {
-  min-height: 100dvh;
-}
-
-.app-header {
-  position: sticky;
-  top: 0;
-  z-index: 10;
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  padding: 0.85rem 1rem;
-  background: rgba(15, 15, 35, 0.92);
-  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
-  backdrop-filter: blur(14px);
-}
-
-.header-room {
-  color: #f97316;
-  font-size: 0.85rem;
-  font-weight: 800;
-  letter-spacing: 0.16em;
-  text-transform: uppercase;
-}
-
-.leave-button {
-  border: 1px solid rgba(255, 255, 255, 0.18);
-  border-radius: 999px;
-  background: transparent;
-  color: #cbd5e1;
-  padding: 0.45rem 0.95rem;
-  font: inherit;
-  cursor: pointer;
-  transition:
-    border-color 0.2s ease,
-    color 0.2s ease,
-    background-color 0.2s ease;
-}
-
-.leave-button:hover {
-  border-color: rgba(239, 68, 68, 0.7);
-  color: #fecaca;
-  background: rgba(239, 68, 68, 0.12);
-}
-
-.embedded-status {
-  padding: 2rem 1rem;
-  text-align: center;
-}
-</style>

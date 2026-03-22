@@ -25,7 +25,7 @@ function focusedLabel(index: number): string | null {
 </script>
 
 <template>
-  <div class="game-board">
+  <div class="grid grid-cols-5 gap-2 max-w-[720px] w-full mx-auto max-[480px]:gap-1">
     <CardCell
       v-for="(card, index) in store.board"
       :key="index"
@@ -40,20 +40,3 @@ function focusedLabel(index: number): string | null {
     />
   </div>
 </template>
-
-<style scoped>
-.game-board {
-  display: grid;
-  grid-template-columns: repeat(5, 1fr);
-  gap: 0.5rem;
-  max-width: 720px;
-  width: 100%;
-  margin: 0 auto;
-}
-
-@media (max-width: 480px) {
-  .game-board {
-    gap: 0.25rem;
-  }
-}
-</style>

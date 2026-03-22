@@ -71,77 +71,78 @@ function getDescriptionText(playerId: string): string {
 </script>
 
 <template>
-  <div class="voting-phase">
-    <div class="round-badge">Round {{ store.room?.roundNumber }}</div>
+  <div class="flex flex-col items-center gap-6 px-4 py-8 min-h-dvh bg-gradient-to-br from-imposter-gradient-1 via-imposter-gradient-2 to-imposter-gradient-3">
+    <div class="bg-imposter-muted text-imposter px-4 py-1.5 rounded-full text-sm font-bold tracking-wide uppercase border border-imposter/30">
+      Round {{ store.room?.roundNumber }}
+    </div>
 
     <!-- Descriptions display -->
-    <div class="descriptions-section">
-      <h2 class="section-title">📝 Descriptions</h2>
-      <div class="descriptions-grid">
+    <div class="w-full max-w-[400px]">
+      <h2 class="text-foreground text-lg mb-4 text-center">Descriptions</h2>
+      <div class="flex flex-col gap-2">
         <div
           v-for="player in orderedPlayers"
           :key="player.id"
-          class="description-card"
-          :class="{ 'is-me': player.id === store.playerId }"
+          class="px-4 py-3 bg-white/[0.04] border border-white/[0.08] rounded-[--radius-lg] transition-all"
+          :class="{ '!border-imposter/30 !bg-imposter/5': player.id === store.playerId }"
         >
-          <div class="description-header">
-            <span class="player-name">{{ player.name }}</span>
-            <span v-if="player.id === store.playerId" class="badge me">You</span>
+          <div class="flex items-center gap-2 mb-1">
+            <span class="text-muted text-xs font-semibold">{{ player.name }}</span>
+            <span v-if="player.id === store.playerId" class="ui-badge bg-imposter-muted text-imposter">You</span>
           </div>
-          <p class="description-text">
+          <p class="text-foreground text-base font-medium">
             {{ getDescriptionText(player.id) }}
           </p>
         </div>
       </div>
-      <p class="descriptions-hint">
+      <p class="text-muted-foreground text-xs mt-3 text-center">
         Clues are shown in the shared round order so everyone reads the same list.
       </p>
     </div>
 
     <!-- Discussion Timer -->
-    <div v-if="isDiscussion" class="discussion-section">
-      <h2 class="section-title">💬 Discussion Time</h2>
-      <div class="timer-container">
-        <div class="timer-ring">
-          <svg viewBox="0 0 100 100" class="timer-svg">
-            <circle cx="50" cy="50" r="42" class="timer-track" />
+    <div v-if="isDiscussion" class="w-full max-w-[400px]">
+      <h2 class="text-foreground text-lg mb-4 text-center">Discussion Time</h2>
+      <div class="flex flex-col items-center gap-4">
+        <div class="relative w-[120px] h-[120px]">
+          <svg viewBox="0 0 100 100" class="w-full h-full -rotate-90">
+            <circle cx="50" cy="50" r="42" fill="none" stroke="rgba(255,255,255,0.08)" stroke-width="6" />
             <circle
-              cx="50"
-              cy="50"
-              r="42"
-              class="timer-progress"
+              cx="50" cy="50" r="42"
+              fill="none" stroke-width="6" stroke-linecap="round"
+              class="transition-[stroke-dasharray] duration-1000 linear"
               :style="{
                 strokeDasharray: `${timerPercent * 2.64} 264`,
-                stroke: timeRemaining < 10 ? '#ef4444' : '#f97316',
+                stroke: timeRemaining < 10 ? '#ef4444' : 'var(--color-imposter)',
               }"
             />
           </svg>
-          <span class="timer-text" :class="{ urgent: timeRemaining < 10 }">
+          <span class="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 text-4xl font-black" :class="timeRemaining < 10 ? 'text-danger animate-pulse' : 'text-imposter'">
             {{ timeRemaining }}
           </span>
         </div>
-        <p class="timer-hint">Discuss who might be the Imposter!</p>
+        <p class="text-muted-foreground text-sm italic">Discuss who might be the Imposter!</p>
       </div>
     </div>
 
     <!-- Voting -->
-    <div v-if="isVoting" class="voting-section">
-      <h2 class="section-title">🗳️ Cast Your Vote</h2>
+    <div v-if="isVoting" class="w-full max-w-[400px]">
+      <h2 class="text-foreground text-lg mb-4 text-center">Cast Your Vote</h2>
 
-      <div v-if="!store.hasVoted" class="vote-options">
+      <div v-if="!store.hasVoted" class="flex flex-col gap-2">
         <button
           v-for="player in otherPlayers"
           :key="player.id"
-          class="vote-btn"
-          :class="{ selected: selectedTarget === player.id }"
+          class="flex items-center justify-between px-4 py-3.5 bg-white/[0.04] border-2 border-white/10 rounded-[--radius-lg] cursor-pointer text-foreground text-base transition-all hover:border-imposter/40 hover:bg-imposter/5"
+          :class="{ '!border-imposter !bg-imposter/10': selectedTarget === player.id }"
           @click="selectedTarget = player.id"
         >
-          <span class="vote-name">{{ player.name }}</span>
-          <span v-if="selectedTarget === player.id" class="vote-check">✓</span>
+          <span class="font-medium">{{ player.name }}</span>
+          <span v-if="selectedTarget === player.id" class="text-imposter font-bold text-lg">âœ“</span>
         </button>
         <button
           id="btn-confirm-vote"
-          class="btn btn-primary btn-vote"
+          class="ui-btn-primary !bg-imposter hover:!bg-imposter-hover w-full !py-4 mt-3"
           :disabled="!selectedTarget"
           @click="handleVote"
         >
@@ -149,296 +150,21 @@ function getDescriptionText(playerId: string): string {
         </button>
       </div>
 
-      <div v-else class="vote-submitted">
-        <p class="check">✅ Vote submitted!</p>
+      <div v-else class="text-center p-4 bg-success-muted border border-success/20 rounded-[--radius-lg]">
+        <p class="text-success font-semibold">Vote submitted!</p>
       </div>
 
-      <div class="vote-progress">
-        <p class="progress-text">
+      <div class="mt-4 text-center">
+        <p class="text-muted-foreground text-xs mb-2">
           {{ store.room?.submittedVoteIds.length ?? 0 }} / {{ store.connectedPlayers.length }} voted
         </p>
-        <div class="progress-bar">
+        <div class="ui-progress-track">
           <div
-            class="progress-fill"
-            :style="{
-              width: `${((store.room?.submittedVoteIds.length ?? 0) / (store.connectedPlayers.length || 1)) * 100}%`,
-            }"
+            class="ui-progress-fill !bg-imposter"
+            :style="{ width: `${((store.room?.submittedVoteIds.length ?? 0) / (store.connectedPlayers.length || 1)) * 100}%` }"
           ></div>
         </div>
       </div>
     </div>
   </div>
 </template>
-
-<style scoped>
-.voting-phase {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 1.5rem;
-  padding: 2rem 1rem;
-  min-height: 100dvh;
-  background: linear-gradient(135deg, #0f0f23 0%, #1a1a2e 50%, #16213e 100%);
-}
-
-.round-badge {
-  background: rgba(249, 115, 22, 0.15);
-  color: #f97316;
-  padding: 0.4rem 1rem;
-  border-radius: 20px;
-  font-size: 0.85rem;
-  font-weight: 700;
-  letter-spacing: 0.1em;
-  text-transform: uppercase;
-  border: 1px solid rgba(249, 115, 22, 0.3);
-}
-
-.section-title {
-  color: #e2e8f0;
-  font-size: 1.1rem;
-  margin-bottom: 1rem;
-  text-align: center;
-}
-
-.descriptions-section {
-  width: 100%;
-  max-width: 400px;
-}
-
-.descriptions-grid {
-  display: flex;
-  flex-direction: column;
-  gap: 0.5rem;
-}
-
-.descriptions-hint {
-  color: #64748b;
-  font-size: 0.8rem;
-  margin-top: 0.75rem;
-  text-align: center;
-}
-
-.description-card {
-  padding: 0.75rem 1rem;
-  background: rgba(255, 255, 255, 0.04);
-  border: 1px solid rgba(255, 255, 255, 0.08);
-  border-radius: 12px;
-  transition: all 0.2s;
-}
-
-.description-card.is-me {
-  border-color: rgba(249, 115, 22, 0.3);
-  background: rgba(249, 115, 22, 0.05);
-}
-
-.description-header {
-  display: flex;
-  align-items: center;
-  gap: 0.5rem;
-  margin-bottom: 0.35rem;
-}
-
-.player-name {
-  color: #94a3b8;
-  font-size: 0.8rem;
-  font-weight: 600;
-}
-
-.badge.me {
-  font-size: 0.6rem;
-  padding: 0.1rem 0.35rem;
-  border-radius: 4px;
-  background: rgba(249, 115, 22, 0.2);
-  color: #f97316;
-  text-transform: uppercase;
-  font-weight: 700;
-}
-
-.description-text {
-  color: #e2e8f0;
-  font-size: 1rem;
-  font-weight: 500;
-}
-
-.discussion-section {
-  width: 100%;
-  max-width: 400px;
-}
-
-.timer-container {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 1rem;
-}
-
-.timer-ring {
-  position: relative;
-  width: 120px;
-  height: 120px;
-}
-
-.timer-svg {
-  width: 100%;
-  height: 100%;
-  transform: rotate(-90deg);
-}
-
-.timer-track {
-  fill: none;
-  stroke: rgba(255, 255, 255, 0.08);
-  stroke-width: 6;
-}
-
-.timer-progress {
-  fill: none;
-  stroke-width: 6;
-  stroke-linecap: round;
-  transition: stroke-dasharray 1s linear;
-}
-
-.timer-text {
-  position: absolute;
-  top: 50%;
-  left: 50%;
-  transform: translate(-50%, -50%);
-  font-size: 2.5rem;
-  font-weight: 900;
-  color: #f97316;
-}
-
-.timer-text.urgent {
-  color: #ef4444;
-  animation: pulse 1s ease-in-out infinite;
-}
-
-@keyframes pulse {
-  0%,
-  100% {
-    opacity: 1;
-  }
-  50% {
-    opacity: 0.5;
-  }
-}
-
-.timer-hint {
-  color: #64748b;
-  font-size: 0.85rem;
-  font-style: italic;
-}
-
-.voting-section {
-  width: 100%;
-  max-width: 400px;
-}
-
-.vote-options {
-  display: flex;
-  flex-direction: column;
-  gap: 0.5rem;
-}
-
-.vote-btn {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  padding: 0.85rem 1rem;
-  background: rgba(255, 255, 255, 0.04);
-  border: 2px solid rgba(255, 255, 255, 0.1);
-  border-radius: 12px;
-  cursor: pointer;
-  transition: all 0.2s;
-  color: #e2e8f0;
-  font-size: 1rem;
-}
-
-.vote-btn:hover {
-  border-color: rgba(249, 115, 22, 0.4);
-  background: rgba(249, 115, 22, 0.05);
-}
-
-.vote-btn.selected {
-  border-color: #f97316;
-  background: rgba(249, 115, 22, 0.1);
-}
-
-.vote-name {
-  font-weight: 500;
-}
-
-.vote-check {
-  color: #f97316;
-  font-weight: 700;
-  font-size: 1.2rem;
-}
-
-.btn {
-  padding: 0.85rem 1.5rem;
-  border: none;
-  border-radius: 12px;
-  font-size: 1rem;
-  font-weight: 600;
-  cursor: pointer;
-  transition: all 0.3s;
-}
-
-.btn-primary {
-  background: linear-gradient(135deg, #f97316, #ef4444);
-  color: #fff;
-  box-shadow: 0 4px 15px rgba(249, 115, 22, 0.3);
-}
-
-.btn-primary:hover:not(:disabled) {
-  transform: translateY(-2px);
-}
-
-.btn-primary:disabled {
-  opacity: 0.4;
-  cursor: not-allowed;
-}
-
-.btn-vote {
-  margin-top: 0.75rem;
-  width: 100%;
-  padding: 1rem;
-}
-
-.vote-submitted {
-  text-align: center;
-  padding: 1rem;
-  background: rgba(34, 197, 94, 0.1);
-  border: 1px solid rgba(34, 197, 94, 0.2);
-  border-radius: 12px;
-}
-
-.check {
-  color: #22c55e;
-  font-weight: 600;
-}
-
-.vote-progress {
-  margin-top: 1rem;
-  text-align: center;
-}
-
-.progress-text {
-  color: #64748b;
-  font-size: 0.8rem;
-  margin-bottom: 0.5rem;
-}
-
-.progress-bar {
-  height: 6px;
-  background: rgba(255, 255, 255, 0.1);
-  border-radius: 3px;
-  overflow: hidden;
-}
-
-.progress-fill {
-  height: 100%;
-  background: linear-gradient(90deg, #f97316, #ef4444);
-  border-radius: 3px;
-  transition: width 0.5s ease;
-}
-</style>
