@@ -29,6 +29,8 @@ const error = ref('');
 const embeddedError = ref('');
 let socket: BlackoutSocket;
 let retryTimer: number | undefined;
+let autoJoinRetryCount = 0;
+const MAX_AUTO_JOIN_RETRIES = 3;
 let standaloneConnectHandler: (() => void) | undefined;
 
 const isEmbedded = !!props.wsNamespace;
@@ -56,6 +58,7 @@ function clearEmbeddedRetryTimer() {
 function handleRoomUpdate(room: RoomView) {
   store.setRoom(room);
   embeddedError.value = '';
+  autoJoinRetryCount = 0;
   clearEmbeddedRetryTimer();
   emit('phase-change', room.phase);
 }
@@ -242,6 +245,12 @@ onMounted(() => {
     // connect events or lost ack/roomUpdate on first connection attempt).
     retryTimer = window.setTimeout(() => {
       if (!store.room) {
+        autoJoinRetryCount++;
+        if (autoJoinRetryCount >= MAX_AUTO_JOIN_RETRIES) {
+          embeddedError.value =
+            'Unable to join the game. Please return to the party and try again.';
+          return;
+        }
         emitAutoJoinRoom();
       }
     }, 3000);

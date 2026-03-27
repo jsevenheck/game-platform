@@ -24,9 +24,7 @@ import {
 const blackoutModule: GameServerModule = {
   definition: blackoutDef,
   registerServer(io: Server, namespacePath: string) {
-    // Blackout's register() expects a Namespace object, not a string path
-    const nsp = io.of(namespacePath);
-    blackoutRegister(io, nsp);
+    blackoutRegister(io, namespacePath);
   },
   cleanupMatch: blackoutCleanup,
 };

@@ -10,6 +10,8 @@ import {
   deleteParty,
   schedulePartyCleanup,
   clearPartyCleanup,
+  scheduleMatchTimeout,
+  clearMatchTimeout,
 } from './partyStore';
 import type { PartySession } from './types';
 import { getGame } from '../registry/index';
@@ -83,6 +85,20 @@ function connectedMemberCount(party: PartySession): number {
 
 export function registerPartyHandlers(io: Server): void {
   const nsp = io.of('/party');
+
+  function triggerMatchTimeout(party: PartySession): void {
+    if (party.status !== 'in-match' || !party.activeMatch) return;
+
+    const matchToClean = party.activeMatch;
+    party.activeMatch = null;
+    party.status = 'returning';
+    party.returnAcks = new Set();
+
+    broadcastParty(io, party);
+
+    const game = getGame(matchToClean.gameId);
+    scheduleReturnCleanup(io, party, matchToClean.matchKey, game?.cleanupMatch);
+  }
 
   nsp.on('connection', (socket: PartySocket) => {
     socket.on('createParty', (data, cb) => {
@@ -263,6 +279,7 @@ export function registerPartyHandlers(io: Server): void {
       };
       party.status = 'in-match';
       party.pendingCleanupMatchKey = null;
+      scheduleMatchTimeout(party.partyId, () => triggerMatchTimeout(party));
 
       broadcastParty(io, party);
       cb({ ok: true });
@@ -301,6 +318,7 @@ export function registerPartyHandlers(io: Server): void {
         startedAt: Date.now(),
       };
       // status stays 'in-match'
+      scheduleMatchTimeout(party.partyId, () => triggerMatchTimeout(party));
 
       broadcastParty(io, party);
 
@@ -308,8 +326,8 @@ export function registerPartyHandlers(io: Server): void {
       setTimeout(() => {
         try {
           game.cleanupMatch(previousMatchKey);
-        } catch {
-          // Cleanup is best-effort
+        } catch (err) {
+          console.warn(`[party] cleanupMatch failed for matchKey=${previousMatchKey}:`, err);
         }
         if (party.pendingCleanupMatchKey === previousMatchKey) {
           party.pendingCleanupMatchKey = null;
@@ -334,6 +352,7 @@ export function registerPartyHandlers(io: Server): void {
       party.activeMatch = null;
       party.status = 'returning';
       party.returnAcks = new Set();
+      clearMatchTimeout(party.partyId);
 
       broadcastParty(io, party);
       cb({ ok: true });
@@ -411,8 +430,8 @@ function scheduleReturnCleanup(
     if (cleanupFn) {
       try {
         cleanupFn(matchKey);
-      } catch {
-        // Cleanup is best-effort
+      } catch (err) {
+        console.warn(`[party] cleanupMatch failed for matchKey=${matchKey}:`, err);
       }
     }
   }, 10000);

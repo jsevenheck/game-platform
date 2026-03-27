@@ -1,4 +1,4 @@
-import type { Server, Namespace } from 'socket.io';
+import type { Server } from 'socket.io';
 import { registerBlackout } from './socketHandlers';
 import { getSessionRoom, deleteRoom } from './models/room';
 
@@ -11,7 +11,7 @@ interface GameDefinition {
 }
 interface GameHandler {
   definition: GameDefinition;
-  register: (io: Server, namespace: Namespace) => void;
+  register: (io: Server, namespace?: string) => void;
 }
 
 export const definition: GameDefinition = {
@@ -21,7 +21,7 @@ export const definition: GameDefinition = {
   maxPlayers: 20,
 };
 
-export function register(io: Server, namespace: Namespace): void {
+export function register(io: Server, namespace = `/g/${definition.id}`): void {
   return registerBlackout(io, namespace);
 }
 

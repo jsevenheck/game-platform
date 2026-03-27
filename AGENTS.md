@@ -22,16 +22,16 @@ games/secret-signals/ <- internal source module
 
 Custom skills live in `.skills/`.
 
-| Skill | Trigger description |
-| --- | --- |
-| `find-skills` | Discover and install agent skills when the user asks for capabilities, tooling, or "is there a skill for X?" |
-| `frontend-design` | Build distinctive, production-grade frontend UI with strong visual direction and polished implementation |
-| `playwright-cli` | Browser automation via `playwright-cli` for navigation, interaction, screenshots, and debugging |
-| `pnpm` | pnpm-specific commands, workspace config, catalogs, overrides, and patches |
-| `tailwind-design-system` | Tailwind CSS v4 design systems, tokens, shared component patterns, and responsive styling |
-| `ui-ux-pro-max` | UI/UX design intelligence for styles, palettes, typography, accessibility, and frontend direction |
-| `vite` | Vite build tool configuration, plugin API, SSR, and Vite 8 Rolldown migration |
-| `vue-best-practices` | Vue 3 Composition API, reactive components, SSR, TypeScript patterns, and Pinia/Vue Router integration |
+| Skill                    | Trigger description                                                                                          |
+| ------------------------ | ------------------------------------------------------------------------------------------------------------ |
+| `find-skills`            | Discover and install agent skills when the user asks for capabilities, tooling, or "is there a skill for X?" |
+| `frontend-design`        | Build distinctive, production-grade frontend UI with strong visual direction and polished implementation     |
+| `playwright-cli`         | Browser automation via `playwright-cli` for navigation, interaction, screenshots, and debugging              |
+| `pnpm`                   | pnpm-specific commands, workspace config, catalogs, overrides, and patches                                   |
+| `tailwind-design-system` | Tailwind CSS v4 design systems, tokens, shared component patterns, and responsive styling                    |
+| `ui-ux-pro-max`          | UI/UX design intelligence for styles, palettes, typography, accessibility, and frontend direction            |
+| `vite`                   | Vite build tool configuration, plugin API, SSR, and Vite 8 Rolldown migration                                |
+| `vue-best-practices`     | Vue 3 Composition API, reactive components, SSR, TypeScript patterns, and Pinia/Vue Router integration       |
 
 ## Commands (always run from workspace root)
 
@@ -54,14 +54,14 @@ Tailwind CSS v4.2 with `@tailwindcss/vite` plugin. Single design-system entry po
 
 ### Design tokens (defined in `@theme`)
 
-| Category | Tokens |
-| --- | --- |
-| Surfaces | `canvas`, `shell`, `panel`, `elevated` (4 depth levels) |
-| Text | `foreground`, `muted`, `muted-foreground` |
-| Borders | `border`, `border-strong`, `ring` |
-| Platform accent | `accent` (orange `#f97316`) |
-| Game accents | `blackout` (violet `#8b5cf6`), `imposter` (crimson `#e11d48`), `signals` (cyan `#06b6d4`) |
-| Semantic | `danger`, `success`, `warning` plus `-muted` variants |
+| Category        | Tokens                                                                                    |
+| --------------- | ----------------------------------------------------------------------------------------- |
+| Surfaces        | `canvas`, `shell`, `panel`, `elevated` (4 depth levels)                                   |
+| Text            | `foreground`, `muted`, `muted-foreground`                                                 |
+| Borders         | `border`, `border-strong`, `ring`                                                         |
+| Platform accent | `accent` (orange `#f97316`)                                                               |
+| Game accents    | `blackout` (violet `#8b5cf6`), `imposter` (crimson `#e11d48`), `signals` (cyan `#06b6d4`) |
+| Semantic        | `danger`, `success`, `warning` plus `-muted` variants                                     |
 
 ### Shared component classes (`@layer components`)
 

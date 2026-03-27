@@ -16,6 +16,7 @@ defineProps<{
   isHost?: boolean;
   onReplayGame?: () => void;
   onReturnToLobby?: () => void;
+  actionError?: string;
 }>();
 
 const gamePhase = ref<string | null>(null);
@@ -48,6 +49,7 @@ function onPhaseChange(phase: string) {
               Back to Party
             </button>
           </div>
+          <p v-if="actionError" class="mt-3 text-center text-sm text-danger">{{ actionError }}</p>
         </div>
       </div>
     </Transition>

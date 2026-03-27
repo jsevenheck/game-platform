@@ -13,6 +13,7 @@ const socket = usePartySocket();
 
 const gameComponent = shallowRef<Component | null>(null);
 const loadError = ref('');
+const actionError = ref('');
 
 // The matchKey drives which match instance is rendered.
 // When it changes, Vue re-mounts the game adapter with the new match.
@@ -22,15 +23,23 @@ const namespace = computed(() => store.party?.activeMatch?.namespace ?? `/g/${pr
 // Platform callbacks passed down to the game adapter
 function onReplayGame(): void {
   if (!store.playerId) return;
+  actionError.value = '';
   socket.emit('replayGame', { playerId: store.playerId }, (res) => {
-    if (!res.ok) console.error('[GameView] replayGame failed:', res.error);
+    if (!res.ok) {
+      actionError.value = res.error ?? 'Replay failed';
+      console.error('[GameView] replayGame failed:', res.error);
+    }
   });
 }
 
 function onReturnToLobby(): void {
   if (!store.playerId) return;
+  actionError.value = '';
   socket.emit('returnToLobby', { playerId: store.playerId }, (res) => {
-    if (!res.ok) console.error('[GameView] returnToLobby failed:', res.error);
+    if (!res.ok) {
+      actionError.value = res.error ?? 'Return to lobby failed';
+      console.error('[GameView] returnToLobby failed:', res.error);
+    }
   });
 }
 
@@ -175,6 +184,7 @@ onBeforeUnmount(() => {
       :is-host="store.isHost"
       :on-replay-game="onReplayGame"
       :on-return-to-lobby="onReturnToLobby"
+      :action-error="actionError"
     />
   </div>
 </template>

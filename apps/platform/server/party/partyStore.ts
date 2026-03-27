@@ -2,11 +2,13 @@ import { nanoid } from 'nanoid';
 import type { PartySession, PartyMember } from './types';
 
 const PARTY_IDLE_TIMEOUT_MS = 30 * 60 * 1000; // 30 minutes
+const MATCH_TIMEOUT_MS = 2 * 60 * 60 * 1000; // 2 hours
 
 const parties = new Map<string, PartySession>();
 const inviteCodeToParty = new Map<string, string>();
 const socketToParty = new Map<string, string>();
 const partyCleanupTimers = new Map<string, ReturnType<typeof setTimeout>>();
+const matchTimeoutTimers = new Map<string, ReturnType<typeof setTimeout>>();
 
 function generateInviteCode(): string {
   const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
@@ -83,6 +85,7 @@ export function deleteParty(partyId: string): void {
   if (!party) return;
 
   clearPartyCleanup(partyId);
+  clearMatchTimeout(partyId);
   inviteCodeToParty.delete(party.inviteCode);
   for (const member of party.members.values()) {
     if (member.socketId) {
@@ -113,6 +116,25 @@ export function clearPartyCleanup(partyId: string): void {
   if (timer) {
     clearTimeout(timer);
     partyCleanupTimers.delete(partyId);
+  }
+}
+
+export function scheduleMatchTimeout(partyId: string, onTimeout: () => void): void {
+  clearMatchTimeout(partyId);
+  matchTimeoutTimers.set(
+    partyId,
+    setTimeout(() => {
+      matchTimeoutTimers.delete(partyId);
+      onTimeout();
+    }, MATCH_TIMEOUT_MS)
+  );
+}
+
+export function clearMatchTimeout(partyId: string): void {
+  const timer = matchTimeoutTimers.get(partyId);
+  if (timer) {
+    clearTimeout(timer);
+    matchTimeoutTimers.delete(partyId);
   }
 }
 

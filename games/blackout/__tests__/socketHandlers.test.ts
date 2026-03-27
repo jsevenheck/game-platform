@@ -121,7 +121,8 @@ describe('socketHandlers embedded autoJoinRoom', () => {
     );
 
     const namespace = makeNamespace();
-    registerBlackout({} as never, namespace.nsp as never);
+    const io = { of: () => namespace.nsp } as never;
+    registerBlackout(io, '/g/blackout');
 
     const socket = makeSocket('socket-host', { playerId: 'hub-1' });
     namespace.connect(socket);
@@ -152,7 +153,8 @@ describe('socketHandlers embedded autoJoinRoom', () => {
     });
     setSocketIndex('socket-old', room.code, 'hub-1');
 
-    registerBlackout({} as never, namespace.nsp as never);
+    const io = { of: () => namespace.nsp } as never;
+    registerBlackout(io, '/g/blackout');
 
     const socket = makeSocket('socket-new', { playerId: 'hub-1' });
     namespace.connect(socket);

@@ -36,11 +36,14 @@ const landingError = ref('');
 const lobbyError = ref('');
 const autoJoinInFlight = ref(false);
 let autoJoinRetryTimer: number | undefined;
+let autoJoinRetryCount = 0;
+const MAX_AUTO_JOIN_RETRIES = 3;
 let pendingLobbyConfig = Promise.resolve();
 
 socket.on('roomState', (state) => {
   store.applyRoomState(state);
   autoJoinInFlight.value = false;
+  autoJoinRetryCount = 0;
   embeddedError.value = '';
   lobbyError.value = '';
   if (state.phase) emit('phase-change', state.phase);
@@ -296,6 +299,12 @@ onMounted(() => {
 
     autoJoinRetryTimer = window.setTimeout(() => {
       if (!store.room) {
+        autoJoinRetryCount++;
+        if (autoJoinRetryCount >= MAX_AUTO_JOIN_RETRIES) {
+          embeddedError.value =
+            'Unable to join the game. Please return to the party and try again.';
+          return;
+        }
         emitAutoJoinRoom();
       }
     }, 3000);

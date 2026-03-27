@@ -35,11 +35,14 @@ const landingError = ref('');
 const isRestoringSession = ref(false);
 const autoJoinInFlight = ref(false);
 let autoJoinRetryTimer: number | undefined;
+let autoJoinRetryCount = 0;
+const MAX_AUTO_JOIN_RETRIES = 3;
 
 function handleRoomState(state: Parameters<typeof store.applyRoomState>[0]) {
   store.applyRoomState(state);
   isRestoringSession.value = false;
   autoJoinInFlight.value = false;
+  autoJoinRetryCount = 0;
   embeddedError.value = '';
   landingError.value = '';
   if (state.phase) emit('phase-change', state.phase);
@@ -274,7 +277,15 @@ onMounted(() => {
     }
 
     autoJoinRetryTimer = window.setTimeout(() => {
-      if (!store.room) emitAutoJoinRoom();
+      if (!store.room) {
+        autoJoinRetryCount++;
+        if (autoJoinRetryCount >= MAX_AUTO_JOIN_RETRIES) {
+          embeddedError.value =
+            'Unable to join the game. Please return to the party and try again.';
+          return;
+        }
+        emitAutoJoinRoom();
+      }
     }, 3000);
     return;
   }
@@ -310,7 +321,7 @@ onBeforeUnmount(() => {
         store.roomCode
       }}</span>
       <button
-        class="ui-btn-ghost !px-3 !py-1.5 !text-sm !rounded-full border border-border-strong hover:!border-danger hover:!text-red-200 hover:!bg-danger/10"
+        class="ui-btn-ghost px-3! py-1.5! text-sm! rounded-full! border border-border-strong hover:border-danger! hover:text-red-200! hover:bg-danger/10!"
         type="button"
         @click="handleLeave"
       >

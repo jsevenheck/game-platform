@@ -124,8 +124,8 @@ function bindPlayerToSocket(
   socket.join(room.code);
 }
 
-export function registerBlackout(io: Server, namespace: string | Namespace = '/g/blackout'): void {
-  const nsp = typeof namespace === 'string' ? io.of(namespace) : namespace;
+export function registerBlackout(io: Server, namespace = '/g/blackout'): void {
+  const nsp = io.of(namespace);
 
   nsp.use((socket, next) => {
     const auth = socket.handshake.auth || {};

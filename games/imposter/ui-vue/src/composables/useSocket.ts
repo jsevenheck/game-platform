@@ -27,6 +27,7 @@ export function useSocket(opts?: {
       joinToken: opts?.joinToken,
       playerId: opts?.playerId,
     },
+    autoConnect: false,
     transports: ['websocket', 'polling'],
   });
 
