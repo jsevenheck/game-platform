@@ -1,4 +1,4 @@
-export type PartyStatus = 'lobby' | 'launching' | 'in-match' | 'returning';
+export type PartyStatus = 'lobby' | 'in-match' | 'returning';
 
 export interface PartyMember {
   playerId: string;
