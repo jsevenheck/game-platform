@@ -143,7 +143,9 @@ export function partyToView(party: PartySession) {
     partyId: party.partyId,
     inviteCode: party.inviteCode,
     hostPlayerId: party.hostPlayerId,
-    members: Array.from(party.members.values()).map(({ resumeToken: _rt, ...pub }) => pub),
+    members: Array.from(party.members.values()).map(
+      ({ resumeToken: _rt, socketId: _sid, ...pub }) => pub
+    ),
     selectedGameId: party.selectedGameId,
     activeMatch: party.activeMatch,
     status: party.status,

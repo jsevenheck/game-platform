@@ -118,6 +118,13 @@ onBeforeUnmount(() => {
       </button>
     </header>
 
+    <div
+      v-if="store.connectionLost"
+      class="bg-warning-muted text-warning border-b border-warning px-4 py-2 text-center text-sm font-medium"
+    >
+      Connection lost — reconnecting...
+    </div>
+
     <main class="mx-auto flex max-w-140 flex-col gap-8 p-4 pt-6">
       <section>
         <h2 class="ui-section-label">Players ({{ store.connectedMembers.length }})</h2>

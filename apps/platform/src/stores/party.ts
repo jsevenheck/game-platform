@@ -5,7 +5,6 @@ export interface PartyMemberView {
   playerId: string;
   name: string;
   connected: boolean;
-  socketId: string | null;
 }
 
 export interface PartyMatchView {
@@ -15,7 +14,7 @@ export interface PartyMatchView {
   startedAt: number;
 }
 
-export type PartyStatus = 'lobby' | 'launching' | 'in-match' | 'returning';
+export type PartyStatus = 'lobby' | 'in-match' | 'returning';
 
 export interface PartyView {
   partyId: string;
@@ -41,6 +40,7 @@ export const usePartyStore = defineStore('platform-party', () => {
   const playerId = ref<string | null>(null);
   const playerName = ref<string | null>(null);
   const resumeToken = ref<string | null>(null);
+  const connectionLost = ref(false);
 
   const isHost = computed(() => {
     if (!party.value || !playerId.value) return false;
@@ -104,6 +104,7 @@ export const usePartyStore = defineStore('platform-party', () => {
     playerId,
     playerName,
     resumeToken,
+    connectionLost,
     isHost,
     self,
     connectedMembers,

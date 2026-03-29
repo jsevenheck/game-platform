@@ -166,6 +166,13 @@ onBeforeUnmount(() => {
 
 <template>
   <div class="min-h-dvh">
+    <div
+      v-if="store.connectionLost"
+      class="bg-warning-muted text-warning border-b border-warning px-4 py-2 text-center text-sm font-medium"
+    >
+      Connection lost — reconnecting...
+    </div>
+
     <p v-if="loadError" class="p-8 text-center text-danger">{{ loadError }}</p>
 
     <p v-else-if="!gameComponent || !matchKey" class="p-8 text-center text-muted-foreground">

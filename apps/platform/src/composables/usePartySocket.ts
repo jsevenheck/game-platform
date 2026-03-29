@@ -1,5 +1,6 @@
 import { io, type Socket } from 'socket.io-client';
 import type { PartyView } from '../stores/party';
+import { usePartyStore } from '../stores/party';
 
 interface PartyClientToServerEvents {
   createParty: (
@@ -56,6 +57,17 @@ export function usePartySocket(apiBaseUrl?: string): PartySocket {
     socket = io(`${base}/party`, {
       autoConnect: false,
     }) as PartySocket;
+
+    const store = usePartyStore();
+    socket.on('connect', () => {
+      store.connectionLost = false;
+    });
+    socket.on('disconnect', () => {
+      store.connectionLost = true;
+    });
+    socket.on('connect_error', () => {
+      store.connectionLost = true;
+    });
   }
   return socket;
 }
