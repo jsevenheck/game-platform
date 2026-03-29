@@ -70,6 +70,7 @@ describe('socketHandlers autoJoinRoom', () => {
     deleteSocketIndex('socket-1');
     deleteSocketIndex('socket-2');
     deleteSocketIndex('socket-3');
+    deleteSocketIndex('socket-4');
   });
 
   it('creates a room keyed by session and preserves the hub player id', () => {
