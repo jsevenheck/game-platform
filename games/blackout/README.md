@@ -3,6 +3,9 @@
 Blackout is a real-time multiplayer party game where the host reveals a category/task prompt
 (optionally with a required letter), players answer out loud, and the host marks the correct player.
 
+Blackout now runs only through the platform party flow. Players enter via the platform and the game
+creates or reclaims its room through `autoJoinRoom`.
+
 ## Features
 
 - Real-time multiplayer game flow with Socket.IO

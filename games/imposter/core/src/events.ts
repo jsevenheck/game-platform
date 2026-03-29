@@ -3,25 +3,7 @@ import type { RoomView } from './types';
 // ─── Client → Server ─────────────────────────────────────────────────────────
 
 export interface ClientToServerEvents {
-  /** Create a new room and become host */
-  createRoom: (
-    data: { name: string },
-    cb: (
-      res:
-        | { ok: true; roomCode: string; playerId: string; resumeToken: string }
-        | { ok: false; error: string }
-    ) => void
-  ) => void;
-
-  /** Join an existing room by code */
-  joinRoom: (
-    data: { name: string; code: string },
-    cb: (
-      res: { ok: true; playerId: string; resumeToken: string } | { ok: false; error: string }
-    ) => void
-  ) => void;
-
-  /** Embedded mode: auto-create or rejoin a room keyed by platform session */
+  /** Platform mode: auto-create or rejoin a room keyed by platform session */
   autoJoinRoom: (
     data: {
       sessionId: string;

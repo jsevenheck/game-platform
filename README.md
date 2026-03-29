@@ -35,7 +35,7 @@ games/{game}/                 ← internal source modules (not standalone)
   core/src/                   ← shared types, constants, event definitions
   server/src/                 ← Socket.IO game server (namespace /g/{game})
   ui-vue/src/
-    App.vue                   ← game root component
+    App.vue                   ← platform-only game root component
     PlatformAdapter.vue       ← platform wrapper (overlay for replay/return)
   __tests__/                  ← Jest unit tests
   e2e/                        ← Playwright E2E specs

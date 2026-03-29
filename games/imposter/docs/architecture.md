@@ -2,8 +2,8 @@
 
 ## High-level Overview
 
-The project is split into shared contracts, an authoritative Socket.IO game server,
-and a Vue 3 client.
+The project is split into shared contracts, an authoritative Socket.IO game server, and a
+platform-launched Vue 3 client.
 
 ```text
 core
@@ -22,6 +22,7 @@ Design goals:
 - shared contracts between client and server
 - explicit phase transitions
 - per-player sanitized room views
+- platform-owned room entry and reconnect flow
 
 ## Shared Core (`core/src`)
 
@@ -37,7 +38,7 @@ Design goals:
 ### Models
 
 - `models/room.ts`
-  in-memory room registry, room cleanup timers, `sessionId -> roomCode` map for platform embedding
+  in-memory room registry, room cleanup timers, `sessionId -> roomCode` map for platform joins
 - `models/player.ts`
   player factory and `socketId -> { roomCode, playerId }` auth index
 
@@ -63,7 +64,7 @@ Design goals:
 
 Responsibilities:
 
-- parse handshake auth (`sessionId`, `joinToken`, `playerId`)
+- validate `autoJoinRoom` / `resumePlayer`
 - verify socket ownership for authenticated events
 - validate inputs and permissions
 - call manager functions for state transitions
@@ -76,7 +77,7 @@ Responsibilities:
 Each room keeps both:
 
 - `ownerId`
-  the player who created the lobby
+  the player who first created the match room for the platform session
 - `hostId`
   the player currently holding host controls
 
@@ -97,22 +98,28 @@ The client stores:
 
 in local storage for reconnect support.
 
-The platform provides `sessionId`, `playerId`, `playerName`, and an optional `joinToken`.
+The platform provides `sessionId`, `playerId`, and `playerName`.
 The client emits `autoJoinRoom`, and the server resolves the room through the in-memory
-`sessionId -> roomCode` map. When reclaiming an existing slot (reconnect), the client must supply
-the server-issued `resumeToken`; the server rejects missing or mismatched tokens.
+`sessionId -> roomCode` map. When reclaiming an existing slot, the client must supply the
+server-issued `resumeToken`; the server rejects missing or mismatched tokens.
 
 Reconnect paths:
 
+- `autoJoinRoom`
+  joins the platform match room for the current `sessionId`
 - `resumePlayer`
   resumes the exact session using the stored `resumeToken`
-- `joinRoom`
-  can reclaim an active disconnected slot when the same player name rejoins the same room code
 
 Leave behavior:
 
 - in `lobby` or `ended`, the player is removed from the room
 - in an active round, the player becomes disconnected so they can reclaim the same slot later
+
+## Vue Client
+
+`App.vue` is platform-only. Before room state exists it renders a connection state; after that it
+switches between lobby, description, discussion, voting, reveal, and ended views. There is no
+standalone landing screen anymore.
 
 ## Phase State Machine
 

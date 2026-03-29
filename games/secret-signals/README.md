@@ -25,7 +25,8 @@ Current game rules:
 - The in-game layout shows each team's Director and Agents around the board.
 - In multi-team games, eliminated teams are skipped in turn rotation.
 - The host can force-skip the active turn, including the Director thinking step.
-- A disconnected player can rejoin an active room by joining again with the same name.
+- A disconnected player can reclaim their slot through the platform-driven reconnect flow using the
+  stored resume token.
 
 ## Development
 

@@ -68,7 +68,10 @@ export function registerGame(io: Server, namespace = `/g/${GAME_ID}`): void {
       }
 
       if (normalizedName.length > MAX_PLAYER_NAME_LENGTH) {
-        return cb({ ok: false, error: `Name must be ${MAX_PLAYER_NAME_LENGTH} characters or fewer` });
+        return cb({
+          ok: false,
+          error: `Name must be ${MAX_PLAYER_NAME_LENGTH} characters or fewer`,
+        });
       }
 
       const mappedRoomCode = getSessionRoom(sessionId);

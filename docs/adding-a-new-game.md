@@ -10,7 +10,7 @@ A game consists of three parts:
 | ---------- | ----------------------------- | --------------------------------------------------- |
 | **Core**   | `games/quiz-rush/core/src/`   | Shared types, constants, event definitions          |
 | **Server** | `games/quiz-rush/server/src/` | Socket.IO game logic (runs on the platform server)  |
-| **UI**     | `games/quiz-rush/ui-vue/src/` | Vue 3 components (bundled into the platform client) |
+| **UI**     | `games/quiz-rush/ui-vue/src/` | Vue 3 components for the platform runtime only      |
 
 Games are **internal source modules** — they have no standalone server, client, or build step. The platform imports them directly.
 
@@ -33,7 +33,7 @@ games/quiz-rush/
 │   ├── tsconfig.json
 │   ├── env.d.ts
 │   └── src/
-│       ├── App.vue           ← game root component
+│       ├── App.vue           ← platform-only game root component
 │       └── PlatformAdapter.vue ← platform wrapper (loaded directly by platform)
 ├── __tests__/                ← Jest unit tests
 ├── e2e/                      ← Playwright E2E specs
@@ -196,7 +196,7 @@ This is the critical integration point. The handler must:
 
 ### `ui-vue/src/App.vue`
 
-The game's root component. It receives props from `PlatformAdapter.vue` and connects to the game's Socket.IO namespace:
+The game's root component. It is always launched by `PlatformAdapter.vue` and connects to the game's Socket.IO namespace:
 
 ```vue
 <script setup lang="ts">

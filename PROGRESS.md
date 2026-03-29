@@ -1,11 +1,15 @@
 # Migration Progress
 
-## Latest Verification: 2026-03-21
+## Latest Verification: 2026-03-29
 
+- [x] Standalone create/join game flows removed from Blackout, Imposter, and Secret Signals
+- [x] Shared game socket contracts now expose only the platform-driven entry points (`autoJoinRoom`, `resumePlayer`, etc.)
 - [x] `pnpm test` -> 122/122 pass
 - [x] `pnpm test:e2e` -> 16/16 pass
 - [x] Platform HTTP route registration extracted to `apps/platform/server/httpRoutes.ts`
 - [x] Party lifecycle edge cases covered by new platform tests (`partyStore`, `partyHandlers`, `serverRoutes`)
+
+Historical notes below may still mention the earlier migration from standalone game flows to the platform-owned flow. The current architecture is platform-only.
 
 ## Current Phase: Phase 1–3 complete (initial implementation session)
 
