@@ -3,7 +3,7 @@ import { registerGame } from '../server/src/handlers/socketHandlers';
 import { deleteRoom, getRoom } from '../server/src/models/room';
 import { deleteSocketIndex } from '../server/src/models/player';
 
-jest.mock('nanoid', () => {
+vi.mock('nanoid', () => {
   let counter = 0;
 
   return {
@@ -19,14 +19,14 @@ function createNamespace() {
   const sockets = new Map<string, any>();
 
   return {
-    use: jest.fn(),
-    on: jest.fn((event: string, handler: (socket: any) => void) => {
+    use: vi.fn(),
+    on: vi.fn((event: string, handler: (socket: any) => void) => {
       if (event === 'connection') {
         connectionHandler = handler;
       }
     }),
-    to: jest.fn(() => ({
-      emit: jest.fn(),
+    to: vi.fn(() => ({
+      emit: vi.fn(),
     })),
     sockets,
     getConnectionHandler: () => connectionHandler,
@@ -40,12 +40,12 @@ function createSocket(id: string) {
     id,
     data: {},
     handshake: { auth: {} },
-    on: jest.fn((event: string, handler: Handler) => {
+    on: vi.fn((event: string, handler: Handler) => {
       handlers[event] = handler;
     }),
-    emit: jest.fn(),
-    join: jest.fn(),
-    leave: jest.fn(),
+    emit: vi.fn(),
+    join: vi.fn(),
+    leave: vi.fn(),
     handlers,
   };
 }
@@ -60,7 +60,7 @@ function autoJoin(
     isHost?: boolean;
   }
 ) {
-  const cb = jest.fn();
+  const cb = vi.fn();
   socket.handlers.autoJoinRoom(payload, cb);
   return cb;
 }
@@ -76,7 +76,7 @@ describe('socketHandlers autoJoinRoom', () => {
   it('creates a room keyed by session and preserves the hub player id', () => {
     const namespace = createNamespace();
     const io = {
-      of: jest.fn(() => namespace),
+      of: vi.fn(() => namespace),
     } as unknown as Server;
 
     registerGame(io);
@@ -88,7 +88,7 @@ describe('socketHandlers autoJoinRoom', () => {
     namespace.sockets.set(socket.id, socket);
     connectionHandler!(socket);
 
-    const cb = jest.fn();
+    const cb = vi.fn();
     socket.handlers.autoJoinRoom(
       { sessionId: 'session-1', playerId: 'hub-player-1', name: 'Host' },
       cb
@@ -112,7 +112,7 @@ describe('socketHandlers autoJoinRoom', () => {
   it('reconnects the same hub player to the mapped room', () => {
     const namespace = createNamespace();
     const io = {
-      of: jest.fn(() => namespace),
+      of: vi.fn(() => namespace),
     } as unknown as Server;
 
     registerGame(io);
@@ -124,7 +124,7 @@ describe('socketHandlers autoJoinRoom', () => {
     namespace.sockets.set(firstSocket.id, firstSocket);
     connectionHandler!(firstSocket);
 
-    const firstCb = jest.fn();
+    const firstCb = vi.fn();
     firstSocket.handlers.autoJoinRoom(
       { sessionId: 'session-2', playerId: 'hub-player-2', name: 'Host' },
       firstCb
@@ -137,7 +137,7 @@ describe('socketHandlers autoJoinRoom', () => {
     namespace.sockets.set(secondSocket.id, secondSocket);
     connectionHandler!(secondSocket);
 
-    const reconnectCb = jest.fn();
+    const reconnectCb = vi.fn();
     secondSocket.handlers.autoJoinRoom(
       { sessionId: 'session-2', playerId: 'hub-player-2', name: 'Host', resumeToken },
       reconnectCb
@@ -156,7 +156,7 @@ describe('socketHandlers autoJoinRoom', () => {
   it('restores the owner as host when they reconnect', () => {
     const namespace = createNamespace();
     const io = {
-      of: jest.fn(() => namespace),
+      of: vi.fn(() => namespace),
     } as unknown as Server;
 
     registerGame(io);
@@ -197,7 +197,7 @@ describe('socketHandlers autoJoinRoom', () => {
     const reconnectSocket = createSocket('socket-3');
     namespace.sockets.set(reconnectSocket.id, reconnectSocket);
     connectionHandler!(reconnectSocket);
-    const resumeCb = jest.fn();
+    const resumeCb = vi.fn();
     reconnectSocket.handlers.resumePlayer(
       { roomCode, playerId: ownerPlayerId, resumeToken: ownerResumeToken },
       resumeCb
@@ -216,7 +216,7 @@ describe('socketHandlers autoJoinRoom', () => {
   it('removes a lobby player when they leave the room', () => {
     const namespace = createNamespace();
     const io = {
-      of: jest.fn(() => namespace),
+      of: vi.fn(() => namespace),
     } as unknown as Server;
 
     registerGame(io);
@@ -246,7 +246,7 @@ describe('socketHandlers autoJoinRoom', () => {
     });
     const guestPlayerId = joinCb.mock.calls[0]?.[0]?.playerId as string;
 
-    const leaveCb = jest.fn();
+    const leaveCb = vi.fn();
     guestSocket.handlers.leaveRoom({ roomCode, playerId: guestPlayerId }, leaveCb);
 
     expect(leaveCb).toHaveBeenCalledWith({ ok: true });
@@ -262,7 +262,7 @@ describe('socketHandlers autoJoinRoom', () => {
   it('lets a player rejoin an active game by reclaiming their disconnected name', () => {
     const namespace = createNamespace();
     const io = {
-      of: jest.fn(() => namespace),
+      of: vi.fn(() => namespace),
     } as unknown as Server;
 
     registerGame(io);
@@ -301,9 +301,9 @@ describe('socketHandlers autoJoinRoom', () => {
       name: 'Guest 2',
     });
 
-    ownerSocket.handlers.startGame({ roomCode, playerId: ownerPlayerId }, jest.fn());
+    ownerSocket.handlers.startGame({ roomCode, playerId: ownerPlayerId }, vi.fn());
 
-    const leaveCb = jest.fn();
+    const leaveCb = vi.fn();
     guestSocket.handlers.leaveRoom({ roomCode, playerId: guestPlayerId }, leaveCb);
     expect(leaveCb).toHaveBeenCalledWith({ ok: true });
 
@@ -337,7 +337,7 @@ describe('socketHandlers autoJoinRoom', () => {
   it('host can kick a player from the lobby', () => {
     const namespace = createNamespace();
     const io = {
-      of: jest.fn(() => namespace),
+      of: vi.fn(() => namespace),
     } as unknown as Server;
 
     registerGame(io);
@@ -367,7 +367,7 @@ describe('socketHandlers autoJoinRoom', () => {
     });
     const guestPlayerId = joinCb.mock.calls[0]?.[0]?.playerId as string;
 
-    const kickCb = jest.fn();
+    const kickCb = vi.fn();
     ownerSocket.handlers.kickPlayer(
       { roomCode, playerId: ownerPlayerId, targetId: guestPlayerId },
       kickCb

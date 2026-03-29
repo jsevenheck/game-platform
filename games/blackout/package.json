@@ -2,5 +2,8 @@
   "name": "blackout",
   "version": "1.0.0",
   "private": true,
-  "type": "commonjs"
+  "type": "commonjs",
+  "scripts": {
+    "test": "vitest run"
+  }
 }

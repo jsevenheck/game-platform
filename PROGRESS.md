@@ -29,7 +29,7 @@ Historical notes below may still mention the earlier migration from standalone g
 
 **Pending (Phase 5 scope, deliberately deferred):**
 
-- Game-level config files (tsconfig, jest, playwright, prettier, eslint) stay per-game for now — consolidation deferred to Phase 5 per plan guidance. Root-level `.prettierrc`/`.gitignore` can be added as a separate cleanup step.
+- Game-level config files (tsconfig, unit-test runner, playwright, prettier, eslint) stay per-game for now — consolidation deferred to Phase 5 per plan guidance. Root-level `.prettierrc`/`.gitignore` can be added as a separate cleanup step.
 
 ---
 
@@ -90,8 +90,8 @@ Per PLAN_V3.md — games are now internal source modules, not independent produc
 - [x] `standalone-server/` and `standalone-web/`
 - [x] `hub.config.json`, `.mcp.json`, `AGENTS.md`, `Dockerfile`, `.dockerignore`
 - [x] `.gitignore`, `.prettierrc`, `.prettierignore`, `.gitattributes` (root versions handle these)
-- [x] `eslint.config.mjs`, `jest.config.cjs`, `jest.setup.ts`, `playwright.config.ts`
-- [x] `tsconfig.json`, `tsconfig.jest.json`, `tsconfig.client.json`, `tsconfig.playwright.json`, `tsconfig.server.json`
+- [x] `eslint.config.mjs`, per-game unit-test config/setup, `playwright.config.ts`
+- [x] `tsconfig.json`, legacy test/client/playwright/server tsconfig variants
 - [x] `pnpm-lock.yaml`
 - [x] `ui-vue/package.json`, `ui-vue/vite.config.ts`, `ui-vue/vite.lib.config.ts`, `ui-vue/index.html`
 - [x] Empty `global.d.ts` from imposter + secret-signals
@@ -107,7 +107,7 @@ Per PLAN_V3.md — games are now internal source modules, not independent produc
 
 **Created at root:**
 
-- [x] `jest.config.cjs` — 3 jest projects (inline tsconfig, `moduleNameMapper` handles `@shared`)
+- [x] `vitest.config.ts` — 4 Vitest projects (platform + 3 games, explicit `@shared` aliases per game)
 - [x] `eslint.config.mjs` — covers all server + Vue + test source, `projectService: true`
 - [x] `.prettierrc`, `.gitignore`, `.gitattributes`
 - [x] `playwright.config.ts` — points at platform server/client (e2e tests need updating for platform flow)

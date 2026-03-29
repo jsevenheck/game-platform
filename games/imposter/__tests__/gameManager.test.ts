@@ -71,14 +71,14 @@ function makeRoom(playerCount = 4): Room {
 
 describe('gameManager', () => {
   beforeEach(() => {
-    jest.spyOn(helperUtils, 'getRandomInt').mockImplementation((maxExclusive: number) => {
+    vi.spyOn(helperUtils, 'getRandomInt').mockImplementation((maxExclusive: number) => {
       return maxExclusive - 1;
     });
-    jest.spyOn(helperUtils, 'shuffle').mockImplementation(<T>(arr: T[]) => [...arr]);
+    vi.spyOn(helperUtils, 'shuffle').mockImplementation(<T>(arr: T[]) => [...arr]);
   });
 
   afterEach(() => {
-    jest.restoreAllMocks();
+    vi.restoreAllMocks();
   });
 
   describe('initGameState', () => {
@@ -208,8 +208,8 @@ describe('gameManager', () => {
 
   describe('random round helpers', () => {
     test('randomizes clue order outside deterministic test mode', () => {
-      jest.restoreAllMocks();
-      const shuffleSpy = jest.spyOn(helperUtils, 'shuffle').mockReturnValue(['p2', 'p3', 'p1']);
+      vi.restoreAllMocks();
+      const shuffleSpy = vi.spyOn(helperUtils, 'shuffle').mockReturnValue(['p2', 'p3', 'p1']);
 
       const descriptionOrder = getRandomDescriptionOrder(['p1', 'p2', 'p3']);
 
@@ -219,8 +219,8 @@ describe('gameManager', () => {
     });
 
     test('randomly selects infiltrators outside deterministic test mode', () => {
-      jest.restoreAllMocks();
-      const shuffleSpy = jest.spyOn(helperUtils, 'shuffle').mockReturnValue(['p2', 'p3', 'p1']);
+      vi.restoreAllMocks();
+      const shuffleSpy = vi.spyOn(helperUtils, 'shuffle').mockReturnValue(['p2', 'p3', 'p1']);
 
       const infiltratorIds = selectRandomInfiltrators(['p1', 'p2', 'p3'], 2);
 

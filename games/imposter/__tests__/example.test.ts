@@ -3,14 +3,14 @@ import type { Room } from '../core/src/types';
 import * as helperUtils from '../server/src/utils/helpers';
 
 beforeEach(() => {
-  jest.spyOn(helperUtils, 'getRandomInt').mockImplementation((maxExclusive: number) => {
+  vi.spyOn(helperUtils, 'getRandomInt').mockImplementation((maxExclusive: number) => {
     return maxExclusive - 1;
   });
-  jest.spyOn(helperUtils, 'shuffle').mockImplementation(<T>(arr: T[]) => [...arr]);
+  vi.spyOn(helperUtils, 'shuffle').mockImplementation(<T>(arr: T[]) => [...arr]);
 });
 
 afterEach(() => {
-  jest.restoreAllMocks();
+  vi.restoreAllMocks();
 });
 
 function makeRoom(playerCount = 3): Room {

@@ -9,7 +9,8 @@
     "useDefineForClassFields": true,
     "isolatedModules": true,
     "verbatimModuleSyntax": true,
-    "baseUrl": "."
+    "baseUrl": ".",
+    "types": ["node", "vitest/globals"]
   },
   "include": ["src/**/*", "__tests__/**/*", "env.d.ts"]
 }

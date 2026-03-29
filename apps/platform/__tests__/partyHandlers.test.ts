@@ -7,20 +7,20 @@ import {
   clearPartyCleanup,
 } from '../server/party/partyStore';
 
-jest.mock('nanoid', () => {
+vi.mock('nanoid', () => {
   let counter = 0;
   return {
     nanoid: (size?: number) => `id-${size ?? 0}-${++counter}`,
   };
 });
 
-jest.mock('../server/registry/index', () => ({
+vi.mock('../server/registry/index', () => ({
   getGame: (gameId: string) => {
     if (gameId === 'test-game') {
       return {
         definition: { id: 'test-game', name: 'Test', minPlayers: 2, maxPlayers: 10 },
-        registerServer: jest.fn(),
-        cleanupMatch: jest.fn(),
+        registerServer: vi.fn(),
+        cleanupMatch: vi.fn(),
       };
     }
     return undefined;
@@ -32,10 +32,10 @@ type Handler = (...args: any[]) => void;
 function createNamespace() {
   let connectionHandler: ((socket: any) => void) | undefined;
   return {
-    on: jest.fn((event: string, handler: (socket: any) => void) => {
+    on: vi.fn((event: string, handler: (socket: any) => void) => {
       if (event === 'connection') connectionHandler = handler;
     }),
-    to: jest.fn(() => ({ emit: jest.fn() })),
+    to: vi.fn(() => ({ emit: vi.fn() })),
     getConnectionHandler: () => connectionHandler,
   };
 }
@@ -44,19 +44,19 @@ function createSocket(id: string) {
   const handlers: Record<string, Handler> = {};
   return {
     id,
-    on: jest.fn((event: string, handler: Handler) => {
+    on: vi.fn((event: string, handler: Handler) => {
       handlers[event] = handler;
     }),
-    join: jest.fn(),
-    leave: jest.fn(),
-    emit: jest.fn(),
+    join: vi.fn(),
+    leave: vi.fn(),
+    emit: vi.fn(),
     handlers,
   };
 }
 
 function setup() {
   const namespace = createNamespace();
-  const io = { of: jest.fn(() => namespace) } as unknown as Server;
+  const io = { of: vi.fn(() => namespace) } as unknown as Server;
   registerPartyHandlers(io);
   const connectionHandler = namespace.getConnectionHandler()!;
   return { io, namespace, connectionHandler };
@@ -72,7 +72,7 @@ describe('partyHandlers', () => {
   const partyIds: string[] = [];
 
   afterEach(() => {
-    jest.useRealTimers();
+    vi.useRealTimers();
     for (const id of partyIds) {
       clearPartyCleanup(id);
       deleteParty(id);
@@ -82,7 +82,7 @@ describe('partyHandlers', () => {
 
   function createPartyViaSocket(ctx: ReturnType<typeof setup>, socketId: string, name = 'Host') {
     const socket = connectSocket(ctx, socketId);
-    const cb = jest.fn();
+    const cb = vi.fn();
     socket.handlers.createParty({ playerName: name }, cb);
     const res = cb.mock.calls[0][0];
     if (res.ok) partyIds.push(res.partyView.partyId);
@@ -106,7 +106,7 @@ describe('partyHandlers', () => {
   it('rejects party creation with empty name', () => {
     const ctx = setup();
     const socket = connectSocket(ctx, 'sock-1');
-    const cb = jest.fn();
+    const cb = vi.fn();
     socket.handlers.createParty({ playerName: '  ' }, cb);
     expect(cb.mock.calls[0][0].ok).toBe(false);
   });
@@ -116,7 +116,7 @@ describe('partyHandlers', () => {
     const { res: hostRes } = createPartyViaSocket(ctx, 'sock-1');
 
     const joiner = connectSocket(ctx, 'sock-2');
-    const cb = jest.fn();
+    const cb = vi.fn();
     joiner.handlers.joinParty(
       { inviteCode: hostRes.partyView.inviteCode, playerName: 'Joiner' },
       cb
@@ -128,7 +128,7 @@ describe('partyHandlers', () => {
   });
 
   it('join cancels a previously scheduled party cleanup timer', () => {
-    jest.useFakeTimers();
+    vi.useFakeTimers();
     const ctx = setup();
     const { socket: hostSocket, res: hostRes } = createPartyViaSocket(ctx, 'sock-1');
     const partyId = hostRes.partyView.partyId;
@@ -136,7 +136,7 @@ describe('partyHandlers', () => {
     hostSocket.handlers.disconnect();
 
     const joiner = connectSocket(ctx, 'sock-2');
-    const cb = jest.fn();
+    const cb = vi.fn();
     joiner.handlers.joinParty(
       { inviteCode: hostRes.partyView.inviteCode, playerName: 'Joiner' },
       cb
@@ -144,14 +144,14 @@ describe('partyHandlers', () => {
 
     expect(cb.mock.calls[0][0].ok).toBe(true);
 
-    jest.advanceTimersByTime(29 * 60 * 1000);
+    vi.advanceTimersByTime(29 * 60 * 1000);
     joiner.handlers.leaveParty({ playerId: cb.mock.calls[0][0].playerId });
 
     // Crossing the original timeout must not delete the party if join cleared the old timer.
-    jest.advanceTimersByTime(2 * 60 * 1000);
+    vi.advanceTimersByTime(2 * 60 * 1000);
     expect(getParty(partyId)).toBeDefined();
 
-    jest.advanceTimersByTime(29 * 60 * 1000);
+    vi.advanceTimersByTime(29 * 60 * 1000);
     expect(getParty(partyId)).toBeUndefined();
     partyIds.pop();
   });
@@ -163,7 +163,7 @@ describe('partyHandlers', () => {
     party.status = 'in-match';
 
     const joiner = connectSocket(ctx, 'sock-2');
-    const cb = jest.fn();
+    const cb = vi.fn();
     joiner.handlers.joinParty({ inviteCode: hostRes.partyView.inviteCode, playerName: 'Late' }, cb);
     expect(cb.mock.calls[0][0]).toEqual({ ok: false, error: 'Party is already in a match' });
   });
@@ -173,7 +173,7 @@ describe('partyHandlers', () => {
     const { res: hostRes } = createPartyViaSocket(ctx, 'sock-1', 'Alice');
 
     const joiner = connectSocket(ctx, 'sock-2');
-    const cb = jest.fn();
+    const cb = vi.fn();
     joiner.handlers.joinParty(
       { inviteCode: hostRes.partyView.inviteCode, playerName: 'alice' },
       cb
@@ -191,7 +191,7 @@ describe('partyHandlers', () => {
     const { res: hostRes } = createPartyViaSocket(ctx, 'sock-1');
 
     const newSocket = connectSocket(ctx, 'sock-2');
-    const cb = jest.fn();
+    const cb = vi.fn();
     newSocket.handlers.resumeParty(
       {
         inviteCode: hostRes.partyView.inviteCode,
@@ -208,7 +208,7 @@ describe('partyHandlers', () => {
     const { res: hostRes } = createPartyViaSocket(ctx, 'sock-1');
 
     const newSocket = connectSocket(ctx, 'sock-2');
-    const cb = jest.fn();
+    const cb = vi.fn();
     newSocket.handlers.resumeParty(
       {
         inviteCode: hostRes.partyView.inviteCode,
@@ -221,7 +221,7 @@ describe('partyHandlers', () => {
   });
 
   it('resume cancels pending party cleanup', () => {
-    jest.useFakeTimers();
+    vi.useFakeTimers();
     const ctx = setup();
     const { socket, res: hostRes } = createPartyViaSocket(ctx, 'sock-1');
     const partyId = hostRes.partyView.partyId;
@@ -231,7 +231,7 @@ describe('partyHandlers', () => {
 
     // Resume on new socket
     const newSocket = connectSocket(ctx, 'sock-2');
-    const cb = jest.fn();
+    const cb = vi.fn();
     newSocket.handlers.resumeParty(
       {
         inviteCode: hostRes.partyView.inviteCode,
@@ -243,7 +243,7 @@ describe('partyHandlers', () => {
     expect(cb.mock.calls[0][0].ok).toBe(true);
 
     // Advance past cleanup timeout — party should survive
-    jest.advanceTimersByTime(31 * 60 * 1000);
+    vi.advanceTimersByTime(31 * 60 * 1000);
     expect(getParty(partyId)).toBeDefined();
   });
 
@@ -257,7 +257,7 @@ describe('partyHandlers', () => {
 
     // Second player joins
     const joiner = connectSocket(ctx, 'sock-2');
-    const joinCb = jest.fn();
+    const joinCb = vi.fn();
     joiner.handlers.joinParty(
       { inviteCode: hostRes.partyView.inviteCode, playerName: 'Joiner' },
       joinCb
@@ -284,14 +284,14 @@ describe('partyHandlers', () => {
   });
 
   it('schedules cleanup when leaveParty leaves only disconnected members behind', () => {
-    jest.useFakeTimers();
+    vi.useFakeTimers();
     const ctx = setup();
     const { socket: hostSocket, res: hostRes } = createPartyViaSocket(ctx, 'sock-host');
 
     hostSocket.handlers.disconnect();
 
     const joiner = connectSocket(ctx, 'sock-join');
-    const joinCb = jest.fn();
+    const joinCb = vi.fn();
     joiner.handlers.joinParty(
       { inviteCode: hostRes.partyView.inviteCode, playerName: 'Joiner' },
       joinCb
@@ -303,7 +303,7 @@ describe('partyHandlers', () => {
     const partyId = hostRes.partyView.partyId;
     expect(getParty(partyId)).toBeDefined();
 
-    jest.advanceTimersByTime(31 * 60 * 1000);
+    vi.advanceTimersByTime(31 * 60 * 1000);
     expect(getParty(partyId)).toBeUndefined();
     partyIds.pop();
   });
@@ -317,7 +317,7 @@ describe('partyHandlers', () => {
     const { socket: hostSocket, res: hostRes } = createPartyViaSocket(ctx, 'sock-1');
 
     const joiner = connectSocket(ctx, 'sock-2');
-    const joinCb = jest.fn();
+    const joinCb = vi.fn();
     joiner.handlers.joinParty(
       { inviteCode: hostRes.partyView.inviteCode, playerName: 'Joiner' },
       joinCb
@@ -334,7 +334,7 @@ describe('partyHandlers', () => {
   });
 
   it('schedules party cleanup when all members disconnect', () => {
-    jest.useFakeTimers();
+    vi.useFakeTimers();
     const ctx = setup();
     const { socket, res } = createPartyViaSocket(ctx, 'sock-1');
     const partyId = res.partyView.partyId;
@@ -345,7 +345,7 @@ describe('partyHandlers', () => {
     expect(getParty(partyId)).toBeDefined();
 
     // Deleted after timeout
-    jest.advanceTimersByTime(31 * 60 * 1000);
+    vi.advanceTimersByTime(31 * 60 * 1000);
     expect(getParty(partyId)).toBeUndefined();
     partyIds.pop();
   });
@@ -359,13 +359,13 @@ describe('partyHandlers', () => {
     const { res: hostRes } = createPartyViaSocket(ctx, 'sock-1');
 
     const joiner = connectSocket(ctx, 'sock-2');
-    const joinCb = jest.fn();
+    const joinCb = vi.fn();
     joiner.handlers.joinParty(
       { inviteCode: hostRes.partyView.inviteCode, playerName: 'Joiner' },
       joinCb
     );
 
-    const selectCb = jest.fn();
+    const selectCb = vi.fn();
     joiner.handlers.selectGame(
       { playerId: joinCb.mock.calls[0][0].playerId, gameId: 'test-game' },
       selectCb
@@ -382,19 +382,19 @@ describe('partyHandlers', () => {
 
     // Need 2 players to meet minPlayers
     const joiner = connectSocket(ctx, 'sock-join');
-    const joinCb = jest.fn();
+    const joinCb = vi.fn();
     joiner.handlers.joinParty(
       { inviteCode: hostRes.partyView.inviteCode, playerName: 'P2' },
       joinCb
     );
 
     // Select
-    const selectCb = jest.fn();
+    const selectCb = vi.fn();
     hostSocket.handlers.selectGame({ playerId: hostRes.playerId, gameId: 'test-game' }, selectCb);
     expect(selectCb.mock.calls[0][0]).toEqual({ ok: true });
 
     // Launch
-    const launchCb = jest.fn();
+    const launchCb = vi.fn();
     hostSocket.handlers.launchGame({ playerId: hostRes.playerId }, launchCb);
     expect(launchCb.mock.calls[0][0]).toEqual({ ok: true });
 
@@ -408,11 +408,11 @@ describe('partyHandlers', () => {
     const ctx = setup();
     const { socket, res } = createPartyViaSocket(ctx, 'sock-1');
 
-    const selectCb = jest.fn();
+    const selectCb = vi.fn();
     socket.handlers.selectGame({ playerId: res.playerId, gameId: 'test-game' }, selectCb);
 
     // Only 1 player, minPlayers is 2
-    const launchCb = jest.fn();
+    const launchCb = vi.fn();
     socket.handlers.launchGame({ playerId: res.playerId }, launchCb);
     expect(launchCb.mock.calls[0][0].ok).toBe(false);
     expect(launchCb.mock.calls[0][0].error).toContain('at least');
@@ -422,7 +422,7 @@ describe('partyHandlers', () => {
     const ctx = setup();
     const { socket, res } = createPartyViaSocket(ctx, 'sock-1');
 
-    const cb = jest.fn();
+    const cb = vi.fn();
     socket.handlers.selectGame({ playerId: res.playerId, gameId: 'nonexistent' }, cb);
     expect(cb.mock.calls[0][0]).toEqual({ ok: false, error: 'Unknown game' });
   });
@@ -436,7 +436,7 @@ describe('partyHandlers', () => {
     const { socket: hostSocket, res: hostRes } = createPartyViaSocket(ctx, 'sock-host');
 
     const joiner = connectSocket(ctx, 'sock-join');
-    const joinCb = jest.fn();
+    const joinCb = vi.fn();
     joiner.handlers.joinParty(
       { inviteCode: hostRes.partyView.inviteCode, playerName: 'P2' },
       joinCb
@@ -459,7 +459,7 @@ describe('partyHandlers', () => {
     const { res: hostRes } = createPartyViaSocket(ctx, 'sock-host');
 
     const joiner = connectSocket(ctx, 'sock-join');
-    const joinCb = jest.fn();
+    const joinCb = vi.fn();
     joiner.handlers.joinParty(
       { inviteCode: hostRes.partyView.inviteCode, playerName: 'P2' },
       joinCb

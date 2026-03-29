@@ -35,7 +35,7 @@ games/quiz-rush/
 │   └── src/
 │       ├── App.vue           ← platform-only game root component
 │       └── PlatformAdapter.vue ← platform wrapper (loaded directly by platform)
-├── __tests__/                ← Jest unit tests
+├── __tests__/                ← Vitest unit tests
 ├── e2e/                      ← Playwright E2E specs
 └── docs/                     ← game-specific documentation
 ```
@@ -378,21 +378,19 @@ packages:
 
 ### Unit Tests
 
-Create `games/quiz-rush/__tests__/` with Jest test files. Register the project in `jest.config.cjs`:
+Create `games/quiz-rush/__tests__/` with Vitest test files. Register the project in `vitest.config.ts`:
 
-```js
+```ts
 {
-  displayName: 'quiz-rush',
-  rootDir: 'games/quiz-rush',
-  preset: 'ts-jest',
-  testEnvironment: 'node',
-  clearMocks: true,
-  testMatch: ['**/__tests__/**/*.test.ts'],
-  moduleNameMapper: {
-    '^@shared/(.*)$': '<rootDir>/core/src/$1',
+  resolve: {
+    alias: [{ find: '@shared', replacement: resolve(GAMES_ROOT, 'quiz-rush/core/src') }],
   },
-  transform: {
-    '^.+\\.ts$': ['ts-jest', { tsconfig: sharedTsconfig }],
+  test: {
+    name: 'quiz-rush',
+    include: ['games/quiz-rush/__tests__/**/*.test.ts'],
+    environment: 'node',
+    globals: true,
+    clearMocks: true,
   },
 },
 ```
@@ -471,7 +469,7 @@ Create `games/quiz-rush/docs/` with:
 - [ ] `apps/platform/server/registry/index.ts` — game registered
 - [ ] `apps/platform/src/games/index.ts` — client module registered
 - [ ] `apps/platform/vite.config.ts` — UI alias + `@shared` plugin entry added
-- [ ] `jest.config.cjs` — test project added
+- [ ] `vitest.config.ts` — test project added
 - [ ] `pnpm install` — no errors
 - [ ] `pnpm lint` — passes
 - [ ] `pnpm typecheck` — passes
