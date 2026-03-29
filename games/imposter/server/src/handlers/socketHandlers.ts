@@ -36,6 +36,7 @@ import {
 } from '../managers/gameManager';
 
 const GAME_ID = 'imposter';
+const MAX_PLAYER_NAME_LENGTH = 20;
 
 type GameSocket = Socket<ClientToServerEvents, ServerToClientEvents>;
 
@@ -134,11 +135,16 @@ export function registerGame(io: Server, namespace = `/g/${GAME_ID}`): void {
   nsp.on('connection', (socket: GameSocket) => {
     socket.on('autoJoinRoom', (data, cb) => {
       const sessionId = data.sessionId?.trim();
-      const name = data.name?.trim();
+      const normalizedName = (data.name ?? '').trim();
+      const name = normalizedName.slice(0, MAX_PLAYER_NAME_LENGTH);
       const hubPlayerId = data.playerId?.trim();
 
-      if (!sessionId || !name) {
+      if (!sessionId || !normalizedName) {
         return cb({ ok: false, error: 'Missing session info' });
+      }
+
+      if (normalizedName.length > MAX_PLAYER_NAME_LENGTH) {
+        return cb({ ok: false, error: `Name must be ${MAX_PLAYER_NAME_LENGTH} characters or fewer` });
       }
 
       const mappedRoomCode = getSessionRoom(sessionId);
