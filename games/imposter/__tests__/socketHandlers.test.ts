@@ -50,6 +50,21 @@ function createSocket(id: string) {
   };
 }
 
+function autoJoin(
+  socket: ReturnType<typeof createSocket>,
+  payload: {
+    sessionId: string;
+    playerId: string;
+    name: string;
+    resumeToken?: string;
+    isHost?: boolean;
+  }
+) {
+  const cb = jest.fn();
+  socket.handlers.autoJoinRoom(payload, cb);
+  return cb;
+}
+
 describe('socketHandlers autoJoinRoom', () => {
   afterEach(() => {
     deleteSocketIndex('socket-1');
@@ -152,8 +167,12 @@ describe('socketHandlers autoJoinRoom', () => {
     namespace.sockets.set(ownerSocket.id, ownerSocket);
     connectionHandler!(ownerSocket);
 
-    const createCb = jest.fn();
-    ownerSocket.handlers.createRoom({ name: 'Owner' }, createCb);
+    const createCb = autoJoin(ownerSocket, {
+      sessionId: 'session-owner-host',
+      playerId: 'owner-1',
+      name: 'Owner',
+      isHost: true,
+    });
 
     const roomCode = createCb.mock.calls[0]?.[0]?.roomCode as string;
     const ownerPlayerId = createCb.mock.calls[0]?.[0]?.playerId as string;
@@ -162,8 +181,11 @@ describe('socketHandlers autoJoinRoom', () => {
     const joinSocket = createSocket('socket-2');
     namespace.sockets.set(joinSocket.id, joinSocket);
     connectionHandler!(joinSocket);
-    const joinCb = jest.fn();
-    joinSocket.handlers.joinRoom({ name: 'Guest', code: roomCode }, joinCb);
+    const joinCb = autoJoin(joinSocket, {
+      sessionId: 'session-owner-host',
+      playerId: 'guest-1',
+      name: 'Guest',
+    });
     const guestPlayerId = joinCb.mock.calls[0]?.[0]?.playerId as string;
 
     ownerSocket.handlers.disconnect();
@@ -204,16 +226,23 @@ describe('socketHandlers autoJoinRoom', () => {
     const ownerSocket = createSocket('socket-1');
     namespace.sockets.set(ownerSocket.id, ownerSocket);
     connectionHandler!(ownerSocket);
-    const createCb = jest.fn();
-    ownerSocket.handlers.createRoom({ name: 'Owner' }, createCb);
+    const createCb = autoJoin(ownerSocket, {
+      sessionId: 'session-leave-lobby',
+      playerId: 'owner-2',
+      name: 'Owner',
+      isHost: true,
+    });
 
     const roomCode = createCb.mock.calls[0]?.[0]?.roomCode as string;
 
     const guestSocket = createSocket('socket-2');
     namespace.sockets.set(guestSocket.id, guestSocket);
     connectionHandler!(guestSocket);
-    const joinCb = jest.fn();
-    guestSocket.handlers.joinRoom({ name: 'Guest', code: roomCode }, joinCb);
+    const joinCb = autoJoin(guestSocket, {
+      sessionId: 'session-leave-lobby',
+      playerId: 'guest-2',
+      name: 'Guest',
+    });
     const guestPlayerId = joinCb.mock.calls[0]?.[0]?.playerId as string;
 
     const leaveCb = jest.fn();
@@ -243,22 +272,33 @@ describe('socketHandlers autoJoinRoom', () => {
     const ownerSocket = createSocket('socket-1');
     namespace.sockets.set(ownerSocket.id, ownerSocket);
     connectionHandler!(ownerSocket);
-    const createCb = jest.fn();
-    ownerSocket.handlers.createRoom({ name: 'Owner' }, createCb);
+    const createCb = autoJoin(ownerSocket, {
+      sessionId: 'session-rejoin-active',
+      playerId: 'owner-3',
+      name: 'Owner',
+      isHost: true,
+    });
     const roomCode = createCb.mock.calls[0]?.[0]?.roomCode as string;
     const ownerPlayerId = createCb.mock.calls[0]?.[0]?.playerId as string;
 
     const guestSocket = createSocket('socket-2');
     namespace.sockets.set(guestSocket.id, guestSocket);
     connectionHandler!(guestSocket);
-    const joinCb = jest.fn();
-    guestSocket.handlers.joinRoom({ name: 'Jona', code: roomCode }, joinCb);
+    const joinCb = autoJoin(guestSocket, {
+      sessionId: 'session-rejoin-active',
+      playerId: 'guest-3',
+      name: 'Jona',
+    });
     const guestPlayerId = joinCb.mock.calls[0]?.[0]?.playerId as string;
 
     const thirdSocket = createSocket('socket-4');
     namespace.sockets.set(thirdSocket.id, thirdSocket);
     connectionHandler!(thirdSocket);
-    thirdSocket.handlers.joinRoom({ name: 'Guest 2', code: roomCode }, jest.fn());
+    autoJoin(thirdSocket, {
+      sessionId: 'session-rejoin-active',
+      playerId: 'guest-4',
+      name: 'Guest 2',
+    });
 
     ownerSocket.handlers.startGame({ roomCode, playerId: ownerPlayerId }, jest.fn());
 
@@ -272,8 +312,12 @@ describe('socketHandlers autoJoinRoom', () => {
     const rejoinSocket = createSocket('socket-3');
     namespace.sockets.set(rejoinSocket.id, rejoinSocket);
     connectionHandler!(rejoinSocket);
-    const rejoinCb = jest.fn();
-    rejoinSocket.handlers.joinRoom({ name: 'Jona', code: roomCode }, rejoinCb);
+    const rejoinCb = autoJoin(rejoinSocket, {
+      sessionId: 'session-rejoin-active',
+      playerId: guestPlayerId,
+      name: 'Jona',
+      resumeToken: joinCb.mock.calls[0]?.[0]?.resumeToken as string,
+    });
 
     expect(rejoinCb).toHaveBeenCalledWith(
       expect.objectContaining({
@@ -303,16 +347,23 @@ describe('socketHandlers autoJoinRoom', () => {
     const ownerSocket = createSocket('socket-1');
     namespace.sockets.set(ownerSocket.id, ownerSocket);
     connectionHandler!(ownerSocket);
-    const createCb = jest.fn();
-    ownerSocket.handlers.createRoom({ name: 'Owner' }, createCb);
+    const createCb = autoJoin(ownerSocket, {
+      sessionId: 'session-kick-lobby',
+      playerId: 'owner-4',
+      name: 'Owner',
+      isHost: true,
+    });
     const roomCode = createCb.mock.calls[0]?.[0]?.roomCode as string;
     const ownerPlayerId = createCb.mock.calls[0]?.[0]?.playerId as string;
 
     const guestSocket = createSocket('socket-2');
     namespace.sockets.set(guestSocket.id, guestSocket);
     connectionHandler!(guestSocket);
-    const joinCb = jest.fn();
-    guestSocket.handlers.joinRoom({ name: 'Guest', code: roomCode }, joinCb);
+    const joinCb = autoJoin(guestSocket, {
+      sessionId: 'session-kick-lobby',
+      playerId: 'guest-5',
+      name: 'Guest',
+    });
     const guestPlayerId = joinCb.mock.calls[0]?.[0]?.playerId as string;
 
     const kickCb = jest.fn();
