@@ -7,13 +7,6 @@ import type { Language } from '@shared/types';
 const store = useGameStore();
 const excludedLettersInput = ref('');
 
-const props = withDefaults(
-  defineProps<{
-    isEmbedded?: boolean;
-  }>(),
-  { isEmbedded: false }
-);
-
 const emit = defineEmits<{
   updateMaxRounds: [rounds: number];
   updateRoomSettings: [settings: { language: Language; excludedLetters: string[] }];
@@ -60,12 +53,6 @@ function saveExcludedLetters() {
 
 <template>
   <div class="lobby flex flex-col items-center gap-8 px-4 py-8">
-    <div v-if="!props.isEmbedded" class="text-center">
-      <p class="ui-section-label">Room Code</p>
-      <h2 class="text-5xl font-black tracking-[0.4em] text-blackout">{{ store.roomCode }}</h2>
-      <p class="mt-1 text-sm text-muted-foreground">Share this code with your friends!</p>
-    </div>
-
     <div class="w-full max-w-xs">
       <h3 class="mb-3 text-muted">Players ({{ connectedCount() }})</h3>
       <div

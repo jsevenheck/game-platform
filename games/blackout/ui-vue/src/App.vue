@@ -4,9 +4,7 @@ import { useGameStore } from './stores/game';
 import { useSocket, type BlackoutSocket } from './composables/useSocket';
 import type { HubIntegrationProps } from './types/config';
 import type { Language, RoomView } from '@shared/types';
-import Header from './panels/Header.vue';
 import PlayersPanel from './panels/PlayersPanel.vue';
-import Landing from './components/Landing.vue';
 import Lobby from './components/Lobby.vue';
 import GameRound from './components/GameRound.vue';
 import Scoreboard from './components/Scoreboard.vue';
@@ -31,9 +29,7 @@ let socket: BlackoutSocket;
 let retryTimer: number | undefined;
 let autoJoinRetryCount = 0;
 const MAX_AUTO_JOIN_RETRIES = 3;
-let standaloneConnectHandler: (() => void) | undefined;
 
-const isEmbedded = !!props.wsNamespace;
 const embeddedPlayerName = () => props.playerName || props.playerId || 'Player';
 
 function initSocket() {
@@ -61,41 +57,6 @@ function handleRoomUpdate(room: RoomView) {
   autoJoinRetryCount = 0;
   clearEmbeddedRetryTimer();
   emit('phase-change', room.phase);
-}
-
-function handleCreate(name: string) {
-  error.value = '';
-  socket.emit('createRoom', { name }, (res) => {
-    if (res.ok) {
-      store.playerId = res.playerId;
-      store.playerName = name;
-      store.roomCode = res.roomCode;
-      store.resumeToken = res.resumeToken;
-      store.saveSession();
-    } else {
-      error.value = res.error;
-    }
-  });
-}
-
-function handleJoin(name: string, code: string) {
-  error.value = '';
-  socket.emit('joinRoom', { name, code }, (res) => {
-    if (res.ok) {
-      store.playerId = res.playerId;
-      store.playerName = name;
-      store.roomCode = code;
-      store.resumeToken = res.resumeToken;
-      store.saveSession();
-    } else {
-      error.value = res.error;
-    }
-  });
-}
-
-function handleLeave() {
-  socket.emit('leaveRoom', { roomCode: store.roomCode, playerId: store.playerId });
-  store.clearSession();
 }
 
 function handleUpdateMaxRounds(rounds: number) {
@@ -191,91 +152,46 @@ function handleEmbeddedConnectError() {
   }
 }
 
-function resumeStandaloneSession(session: {
-  roomCode: string;
-  playerId: string;
-  resumeToken: string;
-}): void {
-  socket.emit(
-    'resumePlayer',
-    {
-      roomCode: session.roomCode,
-      playerId: session.playerId,
-      resumeToken: session.resumeToken,
-    },
-    (res) => {
-      if (!res.ok) {
-        store.clearSession();
-      }
-    }
-  );
-}
-
 onMounted(() => {
   initSocket();
 
-  // Try to resume session
-  if (isEmbedded) {
-    if (!props.sessionId) {
-      embeddedError.value = 'Missing session info.';
-      return;
-    }
-
-    // Restore saved game session so the token is available for slot reclaim on reload.
-    const savedSession = store.loadSession();
-    if (savedSession) {
-      store.playerId = savedSession.playerId;
-      store.playerName = savedSession.name;
-      store.roomCode = savedSession.roomCode;
-      store.resumeToken = savedSession.resumeToken;
-    }
-
-    socket.on('connect', handleEmbeddedConnect);
-    socket.on('connect_error', handleEmbeddedConnectError);
-
-    if (socket.connected) {
-      emitAutoJoinRoom();
-    } else {
-      // The host app's platform socket may have created a shared Socket.IO
-      // manager with autoConnect disabled, so the game namespace must connect
-      // explicitly instead of relying on the client default.
-      socket.connect();
-    }
-    // Retry after 3 s if the room hasn't loaded yet (guards against missed
-    // connect events or lost ack/roomUpdate on first connection attempt).
-    retryTimer = window.setTimeout(() => {
-      if (!store.room) {
-        autoJoinRetryCount++;
-        if (autoJoinRetryCount >= MAX_AUTO_JOIN_RETRIES) {
-          embeddedError.value =
-            'Unable to join the game. Please return to the party and try again.';
-          return;
-        }
-        emitAutoJoinRoom();
-      }
-    }, 3000);
-  } else {
-    const session = store.loadSession();
-    if (session) {
-      store.playerId = session.playerId;
-      store.playerName = session.name;
-      store.roomCode = session.roomCode;
-      store.resumeToken = session.resumeToken;
-
-      standaloneConnectHandler = () => {
-        resumeStandaloneSession(session);
-      };
-      socket.on('connect', standaloneConnectHandler);
-
-      if (socket.connected) {
-        resumeStandaloneSession(session);
-      } else {
-        socket.connect();
-      }
-    } else if (!socket.connected) {
-      socket.connect();
-    }
+  if (!props.sessionId) {
+    embeddedError.value = 'Missing session info.';
+    return;
   }
+
+  // Restore saved game session so the token is available for slot reclaim on reload.
+  const savedSession = store.loadSession();
+  if (savedSession) {
+    store.playerId = savedSession.playerId;
+    store.playerName = savedSession.name;
+    store.roomCode = savedSession.roomCode;
+    store.resumeToken = savedSession.resumeToken;
+  }
+
+  socket.on('connect', handleEmbeddedConnect);
+  socket.on('connect_error', handleEmbeddedConnectError);
+
+  if (socket.connected) {
+    emitAutoJoinRoom();
+  } else {
+    // The host app's platform socket may have created a shared Socket.IO
+    // manager with autoConnect disabled, so the game namespace must connect
+    // explicitly instead of relying on the client default.
+    socket.connect();
+  }
+  // Retry after 3 s if the room hasn't loaded yet (guards against missed
+  // connect events or lost ack/roomUpdate on first connection attempt).
+  retryTimer = window.setTimeout(() => {
+    if (!store.room) {
+      autoJoinRetryCount++;
+      if (autoJoinRetryCount >= MAX_AUTO_JOIN_RETRIES) {
+        embeddedError.value = 'Unable to join the game. Please return to the party and try again.';
+        return;
+      }
+      emitAutoJoinRoom();
+    }
+  }, 3000);
 });
 
 onBeforeUnmount(() => {
@@ -283,18 +199,13 @@ onBeforeUnmount(() => {
   socket.off('roomUpdate', handleRoomUpdate);
   socket.off('connect', handleEmbeddedConnect);
   socket.off('connect_error', handleEmbeddedConnectError);
-  if (standaloneConnectHandler) {
-    socket.off('connect', standaloneConnectHandler);
-  }
 });
 </script>
 
 <template>
   <div class="min-h-dvh">
-    <Header v-if="store.room && !isEmbedded" @leave="handleLeave" />
-
     <main class="mx-auto max-w-150 p-4">
-      <template v-if="!store.room && isEmbedded">
+      <template v-if="!store.room">
         <p class="mt-8 text-center text-muted">
           {{ embeddedError || 'Connecting...' }}
         </p>
@@ -307,10 +218,8 @@ onBeforeUnmount(() => {
           Retry
         </button>
       </template>
-      <Landing v-else-if="!store.room" @create="handleCreate" @join="handleJoin" />
       <Lobby
         v-else-if="store.phase === 'lobby'"
-        :is-embedded="isEmbedded"
         @update-max-rounds="handleUpdateMaxRounds"
         @update-room-settings="handleUpdateRoomSettings"
         @start-game="handleStartGame"

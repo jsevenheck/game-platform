@@ -36,6 +36,7 @@ import {
 } from '../managers/gameManager';
 
 const GAME_ID = 'imposter';
+const MAX_PLAYER_NAME_LENGTH = 20;
 
 type GameSocket = Socket<ClientToServerEvents, ServerToClientEvents>;
 
@@ -132,85 +133,21 @@ export function registerGame(io: Server, namespace = `/g/${GAME_ID}`): void {
   });
 
   nsp.on('connection', (socket: GameSocket) => {
-    socket.on('createRoom', (data, cb) => {
-      const name = data.name?.trim();
-      if (!name || name.length > 20) {
-        return cb({ ok: false, error: 'Invalid name' });
-      }
-
-      const { room, hostId, resumeToken } = createRoom(name, socket.id);
-      socket.join(room.code);
-      broadcastRoom(nsp, room);
-
-      cb({ ok: true, roomCode: room.code, playerId: hostId, resumeToken });
-    });
-
-    socket.on('joinRoom', (data, cb) => {
-      const name = data.name?.trim();
-      const code = data.code?.trim().toUpperCase();
-      if (!name || name.length > 20) {
-        return cb({ ok: false, error: 'Invalid name' });
-      }
-
-      const room = getRoom(code);
-      if (!room) {
-        return cb({ ok: false, error: 'Room not found' });
-      }
-
-      const matchingDisconnectedPlayer = Object.values(room.players).find(
-        (player) => player.name.toLowerCase() === name.toLowerCase() && !player.connected
-      );
-      if (matchingDisconnectedPlayer) {
-        matchingDisconnectedPlayer.socketId = socket.id;
-        matchingDisconnectedPlayer.connected = true;
-        if (matchingDisconnectedPlayer.id === room.ownerId) {
-          setHost(room, matchingDisconnectedPlayer.id);
-        } else if (matchingDisconnectedPlayer.isHost && room.hostId === null) {
-          setHost(room, matchingDisconnectedPlayer.id);
-        }
-        setSocketIndex(socket.id, code, matchingDisconnectedPlayer.id);
-        clearRoomCleanup(code);
-
-        socket.join(code);
-        broadcastRoom(nsp, room);
-
-        return cb({
-          ok: true,
-          playerId: matchingDisconnectedPlayer.id,
-          resumeToken: matchingDisconnectedPlayer.resumeToken,
-        });
-      }
-
-      if (room.phase !== 'lobby') {
-        return cb({ ok: false, error: 'Game already started' });
-      }
-
-      const nameExists = Object.values(room.players).some(
-        (player) => player.name.toLowerCase() === name.toLowerCase()
-      );
-      if (nameExists) {
-        return cb({ ok: false, error: 'Name already taken' });
-      }
-
-      const player = createPlayer(name, false);
-      player.socketId = socket.id;
-      room.players[player.id] = player;
-      setSocketIndex(socket.id, code, player.id);
-      clearRoomCleanup(code);
-
-      socket.join(code);
-      broadcastRoom(nsp, room);
-
-      cb({ ok: true, playerId: player.id, resumeToken: player.resumeToken });
-    });
-
     socket.on('autoJoinRoom', (data, cb) => {
       const sessionId = data.sessionId?.trim();
-      const name = data.name?.trim();
+      const normalizedName = (data.name ?? '').trim();
+      const name = normalizedName.slice(0, MAX_PLAYER_NAME_LENGTH);
       const hubPlayerId = data.playerId?.trim();
 
-      if (!sessionId || !name) {
+      if (!sessionId || !normalizedName) {
         return cb({ ok: false, error: 'Missing session info' });
+      }
+
+      if (normalizedName.length > MAX_PLAYER_NAME_LENGTH) {
+        return cb({
+          ok: false,
+          error: `Name must be ${MAX_PLAYER_NAME_LENGTH} characters or fewer`,
+        });
       }
 
       const mappedRoomCode = getSessionRoom(sessionId);

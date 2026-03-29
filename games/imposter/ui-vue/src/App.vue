@@ -3,7 +3,6 @@ import { onBeforeUnmount, onMounted, ref } from 'vue';
 import { useGameStore } from './stores/game';
 import { useSocket } from './composables/useSocket';
 import type { HubIntegrationProps } from './types/config';
-import Landing from './components/Landing.vue';
 import Lobby from './components/Lobby.vue';
 import DescriptionPhase from './components/DescriptionPhase.vue';
 import VotingPhase from './components/VotingPhase.vue';
@@ -30,9 +29,7 @@ const { socket } = useSocket({
   playerId: props.playerId,
   wsNamespace: props.wsNamespace,
 });
-const isEmbedded = !!props.wsNamespace;
 const embeddedError = ref('');
-const landingError = ref('');
 const lobbyError = ref('');
 const autoJoinInFlight = ref(false);
 let autoJoinRetryTimer: number | undefined;
@@ -54,21 +51,8 @@ socket.on('disconnect', () => {
 });
 
 socket.on('kicked', (reason) => {
-  if (isEmbedded) {
-    embeddedError.value = reason;
-    store.reset();
-    return;
-  }
-
-  lobbyError.value = '';
-  embeddedError.value = '';
-  store.clearSession();
-  landingError.value = reason;
-
-  if (socket.connected) {
-    socket.disconnect();
-  }
-  socket.connect();
+  embeddedError.value = reason;
+  store.reset();
 });
 
 function emitAutoJoinRoom() {
@@ -101,70 +85,6 @@ function emitAutoJoinRoom() {
       store.saveSession();
     }
   );
-}
-
-function handleCreate(name: string) {
-  landingError.value = '';
-  socket.emit('createRoom', { name }, (res) => {
-    if (!res.ok) {
-      landingError.value = res.error;
-      return;
-    }
-    store.setSession({
-      playerId: res.playerId,
-      roomCode: res.roomCode,
-      resumeToken: res.resumeToken,
-      name,
-    });
-    store.saveSession();
-  });
-}
-
-function handleJoin(name: string, code: string) {
-  landingError.value = '';
-  socket.emit('joinRoom', { name, code }, (res) => {
-    if (!res.ok) {
-      landingError.value = res.error;
-      return;
-    }
-    store.setSession({
-      playerId: res.playerId,
-      roomCode: code,
-      resumeToken: res.resumeToken,
-      name,
-    });
-    store.saveSession();
-  });
-}
-
-function finalizeLeave() {
-  landingError.value = '';
-  lobbyError.value = '';
-  embeddedError.value = '';
-  store.clearSession();
-
-  if (socket.connected) {
-    socket.disconnect();
-  }
-
-  if (!isEmbedded) {
-    socket.connect();
-  }
-}
-
-function handleLeave() {
-  if (!store.roomCode || !store.playerId || isEmbedded) {
-    return;
-  }
-
-  socket.emit('leaveRoom', { roomCode: store.roomCode, playerId: store.playerId }, (res) => {
-    if (!res.ok) {
-      landingError.value = res.error;
-      return;
-    }
-
-    finalizeLeave();
-  });
 }
 
 async function handleStartGame() {
@@ -282,62 +202,36 @@ function handleEmbeddedConnect() {
 }
 
 onMounted(() => {
-  if (isEmbedded && props.sessionId) {
-    const savedSession = store.loadSession();
-    store.reset(); // Clear stale state from a previous match (e.g. after replay re-mount)
-    // Restore the saved token so emitAutoJoinRoom can reclaim the slot on reload.
-    if (savedSession) {
-      store.setSession(savedSession);
-    }
-    socket.on('connect', handleEmbeddedConnect);
-
-    if (socket.connected) {
-      emitAutoJoinRoom();
-    } else {
-      socket.connect();
-    }
-
-    autoJoinRetryTimer = window.setTimeout(() => {
-      if (!store.room) {
-        autoJoinRetryCount++;
-        if (autoJoinRetryCount >= MAX_AUTO_JOIN_RETRIES) {
-          embeddedError.value =
-            'Unable to join the game. Please return to the party and try again.';
-          return;
-        }
-        emitAutoJoinRoom();
-      }
-    }, 3000);
+  if (!props.sessionId) {
+    embeddedError.value = 'Missing session info.';
     return;
   }
 
-  const session = store.loadSession();
-  if (!session) return;
+  socket.on('connect', handleEmbeddedConnect);
 
-  const doResume = () => {
-    socket.emit(
-      'resumePlayer',
-      { roomCode: session.roomCode, playerId: session.playerId, resumeToken: session.resumeToken },
-      (res) => {
-        if (res.ok) {
-          store.setSession({
-            playerId: session.playerId,
-            roomCode: session.roomCode,
-            resumeToken: session.resumeToken,
-            name: session.name,
-          });
-        } else {
-          store.clearSession();
-        }
-      }
-    );
-  };
+  const savedSession = store.loadSession();
+  store.reset(); // Clear stale state from a previous match (e.g. after replay re-mount)
+  // Restore the saved token so emitAutoJoinRoom can reclaim the slot on reload.
+  if (savedSession) {
+    store.setSession(savedSession);
+  }
 
   if (socket.connected) {
-    doResume();
+    emitAutoJoinRoom();
   } else {
-    socket.once('connect', doResume);
+    socket.connect();
   }
+
+  autoJoinRetryTimer = window.setTimeout(() => {
+    if (!store.room) {
+      autoJoinRetryCount++;
+      if (autoJoinRetryCount >= MAX_AUTO_JOIN_RETRIES) {
+        embeddedError.value = 'Unable to join the game. Please return to the party and try again.';
+        return;
+      }
+      emitAutoJoinRoom();
+    }
+  }, 3000);
 });
 
 onBeforeUnmount(() => {
@@ -350,30 +244,9 @@ onBeforeUnmount(() => {
 
 <template>
   <div class="min-h-dvh">
-    <header v-if="store.room && !isEmbedded" class="imposter-header ui-shell-header">
-      <span class="text-imposter text-xs font-extrabold uppercase tracking-[0.16em]">{{
-        store.roomCode
-      }}</span>
-      <button
-        class="ui-btn-ghost rounded-full! px-4! py-1.5! text-sm! border border-border-strong hover:border-danger! hover:text-danger!"
-        type="button"
-        @click="handleLeave"
-      >
-        Leave
-      </button>
-    </header>
-    <p
-      v-if="store.phase === null && isEmbedded"
-      class="py-8 px-4 text-center text-muted-foreground"
-    >
+    <p v-if="store.phase === null" class="py-8 px-4 text-center text-muted-foreground">
       {{ embeddedError || 'Connecting...' }}
     </p>
-    <Landing
-      v-else-if="store.phase === null"
-      :server-error="landingError"
-      @create="handleCreate"
-      @join="handleJoin"
-    />
     <Lobby
       v-else-if="store.phase === 'lobby'"
       :error-message="lobbyError"

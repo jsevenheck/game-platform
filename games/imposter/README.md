@@ -7,6 +7,9 @@ players are **Infiltrators** who do not know the word and must bluff their way t
 clues are in, players discuss, vote for suspected Infiltrators, and caught Infiltrators get one
 last chance to guess the secret word and steal the round.
 
+Imposter now runs only through the platform party flow. The platform launches the match and the
+game uses `autoJoinRoom` plus `resumePlayer` for join and reconnect behavior.
+
 ## Development
 
 Run from the workspace root:

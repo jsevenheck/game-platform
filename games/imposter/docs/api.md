@@ -2,6 +2,9 @@
 
 Namespace: `/g/imposter`
 
+Imposter is platform-only. Players enter through the platform match flow and the server uses
+`autoJoinRoom` plus `resumePlayer` for create/join/reconnect behavior.
+
 ## Authentication
 
 The server maintains a `socketId -> { roomCode, playerId }` index.
@@ -19,8 +22,6 @@ If that mapping does not match, the event is rejected with:
 
 The unauthenticated entry points are:
 
-- `createRoom`
-- `joinRoom`
 - `autoJoinRoom`
 - `resumePlayer`
 
@@ -33,50 +34,9 @@ All callback responses follow one of these shapes:
 
 ### Session
 
-#### `createRoom`
-
-Creates a room and makes the creator both `owner` and current `host`.
-
-```ts
-createRoom(data: { name: string }, cb)
-```
-
-Success:
-
-```ts
-{
-  ok: true;
-  roomCode: string;
-  playerId: string;
-  resumeToken: string;
-}
-```
-
-#### `joinRoom`
-
-```ts
-joinRoom(data: { name: string; code: string }, cb)
-```
-
-Success:
-
-```ts
-{
-  ok: true;
-  playerId: string;
-  resumeToken: string;
-}
-```
-
-Notes:
-
-- In lobby mode, duplicate names are rejected.
-- In an active game, a disconnected player can reclaim their old slot by rejoining with the same room code and same player name.
-- New players cannot join after the game has started.
-
 #### `autoJoinRoom`
 
-Platform embedding flow. The server maps `sessionId -> roomCode` and reuses the stable platform
+Platform-driven join flow. The server maps `sessionId -> roomCode` and reuses the stable platform
 `playerId` when reconnecting the same player.
 
 ```ts
@@ -105,9 +65,10 @@ Success:
 
 Notes:
 
+- Names must be 20 characters or fewer.
 - When `isHost: true`, the server transfers host to this player.
-- **First join** (no existing slot for `playerId`): `resumeToken` is not required.
-- **Reconnect** (slot already exists): `resumeToken` must be present and valid. Missing or wrong token returns an error (`Resume token required` or `Invalid resume token`).
+- On first join for a given `playerId`, `resumeToken` is not required.
+- When reclaiming an existing slot, `resumeToken` must be present and valid.
 
 #### `resumePlayer`
 
@@ -195,7 +156,7 @@ kickPlayer(
 Notes:
 
 - The host cannot kick themselves.
-- The kicked player receives a `kicked` event and is returned to the landing screen.
+- The kicked player receives a `kicked` event and is removed from the active game session.
 
 #### `startGame`
 

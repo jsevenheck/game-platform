@@ -2,7 +2,8 @@
 
 ## High-level Overview
 
-Blackout is split into shared contracts, a Socket.IO game server, and a Vue client.
+Blackout is split into shared contracts, a Socket.IO game server, and a platform-launched Vue
+client.
 
 ```text
 core (shared contracts)
@@ -12,10 +13,11 @@ core (shared contracts)
 
 Key design goals:
 
-- one authoritative room state on server
+- one authoritative room state on the server
 - strict shared event/type contracts between client and server
 - per-player sanitized room views
 - explicit phase state machine
+- platform-owned entry and reconnect flow
 
 ## Shared Core (`core/src`)
 
@@ -30,11 +32,12 @@ Core state model highlights:
 - `Room.phase`: `lobby | playing | roundEnd | ended`
 - `Room.language`: `de | en` (host configurable in lobby)
 - `Room.excludedLetters`: host configurable letter blacklist
-- `Room.ownerId`: original room creator (can skip rounds even if not current host)
+- `Room.ownerId`: original room creator within the match
+- `Room.hostId`: player currently reading / controlling the round
 - `Room.currentRound`: active round payload
 - `Room.roundHistory`: completed rounds
 - `Room.usedCategoryLetterPairs`: uniqueness tracking for category/task/letter prompts
-- `RoomView.usedCategoryIds`: derived from `roundHistory`, sent to clients for duplicate-category detection
+- `RoomView.usedCategoryIds`: derived from `roundHistory`, sent to clients for duplicate detection
 
 ## Server Architecture (`server/src`)
 
@@ -42,7 +45,7 @@ Core state model highlights:
 
 - `models/room.ts`
   - in-memory room map
-  - session-to-room mapping for embedded auto-join
+  - `sessionId -> roomCode` mapping for platform auto-join
   - cleanup timers for idle/ended rooms
   - session-map cleanup when rooms are deleted
 - `models/player.ts`
@@ -54,7 +57,7 @@ Core state model highlights:
 - `phaseManager.ts`: phase transitions only
 - `roundManager.ts`: round lifecycle (start, reroll, reveal, finalize)
 - `scoreManager.ts`: point updates, leaderboard, winner calculation
-- `categoryManager.ts`: random category/task/letter prompt from SQLite
+- `categoryManager.ts`: random category/task/letter prompts from SQLite
 - `broadcastManager.ts`: per-player room sanitization + emits
 
 ### Socket Handlers
@@ -63,7 +66,7 @@ Core state model highlights:
 
 Responsibilities:
 
-- parse handshake auth (`sessionId`, `joinToken`, `playerId`)
+- validate `autoJoinRoom` / `resumePlayer` session claims
 - validate input and permissions (host / owner checks)
 - call managers and mutate room state
 - broadcast sanitized state
@@ -81,19 +84,20 @@ Responsibilities:
 
 ### Socket layer
 
-`composables/useSocket.ts` creates typed Socket.IO connection to `/g/blackout` and cleans up on unmount.
+`composables/useSocket.ts` creates the typed Socket.IO connection to `/g/blackout` and cleans up
+on unmount.
 
 ### UI composition
 
-`App.vue` is the phase router:
+`App.vue` is a platform-only phase router:
 
-- no room: landing screen
+- no room: connecting / retry state
 - `lobby`: setup and start
 - `playing`: gameplay (host reveal + winner selection)
 - `roundEnd`: short scoreboard
 - `ended`: final winner screen
 
-Panels (`Header`, `PlayersPanel`) remain visible when in a room.
+`PlayersPanel.vue` remains visible while in a room. There is no standalone landing or header flow.
 
 ## Socket.IO Event Flow
 
@@ -101,19 +105,15 @@ Panels (`Header`, `PlayersPanel`) remain visible when in a room.
 
 ```mermaid
 flowchart TD
-  A[Client connect /g/blackout] --> B[Namespace middleware stores auth]
-  B --> C{Join mode}
-  C -->|createRoom| D[Create room + host]
-  C -->|joinRoom| E[Validate code + add player]
-  C -->|autoJoinRoom| F[Lookup sessionId map]
-  F -->|mapped + player exists| G[Validate resumeToken then reconnect existing player]
-  F -->|mapped + new player| H[Add player to mapped room]
-  F -->|no mapping| I[Create mapped room with platform playerId as host id]
-  D --> J[broadcastRoom]
-  E --> J
-  G --> J
-  H --> J
-  I --> J
+  A[Platform launches match] --> B[Client connects to /g/blackout]
+  B --> C[autoJoinRoom with sessionId, playerId, name, isHost]
+  C --> D{Session mapping exists?}
+  D -->|no| E[Create room and map sessionId -> roomCode]
+  D -->|yes and player exists| F[Validate resumeToken and reconnect player]
+  D -->|yes and player missing| G[Add player to mapped room]
+  E --> H[broadcastRoom]
+  F --> H
+  G --> H
 ```
 
 ### Round gameplay flow
@@ -170,11 +170,13 @@ return {
 };
 ```
 
-## SQLite and Build Notes
+## SQLite and Runtime Notes
 
-- Runtime DB path is resolved via `__dirname` first, then CWD-relative candidates. `DB_PATH` env var overrides all.
+- Runtime DB path is resolved via `__dirname` first, then CWD-relative candidates. `DB_PATH` env
+  var overrides all.
 - DB schema lives in `server/src/db/schema.sql`.
 - Default content lives in CSV files under `server/src/db/data/`.
 - On startup, missing or empty tables are initialized from those CSV files.
 - The platform server (`apps/platform/server/`) runs the game on `/g/blackout`.
-- `node games/blackout/scripts/copy-db-assets.mjs` — copies schema + CSVs into dist so the next start re-seeds from the current CSVs.
+- `node games/blackout/scripts/copy-db-assets.mjs` copies schema + CSVs into dist so the next
+  start re-seeds from the current CSVs.

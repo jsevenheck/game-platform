@@ -2,7 +2,8 @@
 
 ## Overview
 
-Secret Signals is split into shared contracts, an authoritative Socket.IO server, and a Vue 3 client:
+Secret Signals is split into shared contracts, an authoritative Socket.IO server, and a
+platform-launched Vue 3 client:
 
 ```text
 core
@@ -18,24 +19,27 @@ Core design rules:
 - game flow moves through explicit room and turn phases
 - gameplay scales from 2 to 8 teams on the same 5x5 board
 - assassin resolution is configurable per room: `instant-loss` or `elimination`
+- room entry is always platform-owned
 
 ## Shared core (`core/src`)
 
 - `types.ts`: room, player, card, team, signal, log, and view models
 - `events.ts`: typed Socket.IO event contracts
-- `constants.ts`: board size, team colors, card distribution helpers, assassin modes, and validation limits
+- `constants.ts`: board size, team colors, card distribution helpers, assassin modes, and
+  validation limits
 
 ## Server (`server/src`)
 
 ### Models
 
-- `models/room.ts`: in-memory room storage and cleanup scheduling
+- `models/room.ts`: in-memory room storage, `sessionId -> roomCode` mapping, and cleanup scheduling
 - `models/player.ts`: player creation and socket-to-player lookup
 
 ### Managers
 
 - `managers/boardManager.ts`: creates the 5x5 board and per-team card distribution
-- `managers/turnManager.ts`: signal submission, guess outcomes, assassin handling, turn rotation, and win checks
+- `managers/turnManager.ts`: signal submission, guess outcomes, assassin handling, turn rotation,
+  and win checks
 - `managers/phaseManager.ts`: transitions between `lobby`, `playing`, and `ended`
 - `managers/broadcastManager.ts`: room projection and per-player sanitization
 - `data/words.ts`: shared bank of 800 curated German board words
@@ -46,7 +50,7 @@ Core design rules:
 
 Handler responsibilities:
 
-- validate inputs and permissions
+- validate `autoJoinRoom` / `resumePlayer`
 - enforce host-only, self-service lobby, and role-based actions
 - call managers for state transitions
 - broadcast sanitized room state after each mutation
@@ -65,7 +69,6 @@ Handler responsibilities:
 
 ### Components
 
-- `Landing.vue`: create or join a room
 - `Lobby.vue`: room view and host controls
 - `TeamSetup.vue`: host-managed match settings plus self-service team and role assignment
 - `GamePlay.vue`: active game layout, team roster rails, and reveal confirmation overlay
@@ -77,9 +80,12 @@ Handler responsibilities:
 
 ### Socket layer
 
-`composables/useSocket.ts` creates the typed Socket.IO connection to the Secret Signals namespace. `App.vue` restores stored sessions with `resumePlayer`, keeps the local session in sync, and exposes an explicit `leaveRoom` flow.
+`composables/useSocket.ts` creates the typed Socket.IO connection to the Secret Signals namespace.
+`App.vue` is platform-only: it auto-joins the match room, restores stored sessions with
+`resumePlayer`, and keeps the local session in sync with the platform-launched game lifecycle.
 
-If a player disconnects during an active match, they can either resume with the stored `resumeToken` or reclaim the same slot by joining the room again with the same player name.
+If a player disconnects during an active match, they reclaim the same slot through
+`autoJoinRoom` or `resumePlayer` with the stored `resumeToken`.
 
 ## State model
 
@@ -96,15 +102,19 @@ Turn phases inside `playing`:
 
 Typical flow:
 
-1. Host creates a room.
-2. Players join, the host sets match options, and each player chooses their own team and role.
-3. `startGame` validates connected players, rotates the opening team, and creates a new board plus team targets.
+1. The platform launches a match and all players auto-join the same room via `sessionId`.
+2. Players enter the lobby, the host sets match options, and each player chooses their own team and
+   role.
+3. `startGame` validates connected players, rotates the opening team, and creates a new board plus
+   team targets.
 4. The active Director gives a signal.
-5. The active Agents can mark multiple candidate cards for the whole room, then confirm a reveal locally from one of their own marks.
+5. The active Agents can mark multiple candidate cards for the whole room, then confirm a reveal
+   locally from one of their own marks.
 6. The active Agents reveal cards until they stop, miss, or exhaust the guess allowance.
 7. The host can also force-skip a stalled turn, including the Director thinking phase.
 8. Play rotates to the next active non-eliminated team.
-9. The game ends when a team finds all of its target cards, only one team remains, or the assassin resolves the room immediately in `instant-loss` mode.
+9. The game ends when a team finds all of its target cards, only one team remains, or the assassin
+   resolves the room immediately in `instant-loss` mode.
 
 Important room state fields:
 
@@ -126,5 +136,6 @@ Important room state fields:
 
 ## Platform Runtime
 
-The game server module registers on `/g/secret-signals` via the platform's game registry.
-The platform (`apps/platform/`) owns the full party lifecycle; Secret Signals is launched as an internal module.
+The game server module registers on `/g/secret-signals` via the platform game registry.
+The platform (`apps/platform/`) owns party creation, joining, game launch, replay, and return to
+lobby. Secret Signals only manages the in-match room state for the active platform session.

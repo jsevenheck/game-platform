@@ -2,6 +2,9 @@
 
 Namespace: `/g/secret-signals`
 
+Secret Signals is platform-only. Players enter through the platform match flow and the server uses
+`autoJoinRoom` plus `resumePlayer` for create/join/reconnect behavior.
+
 All callback-based client events return one of:
 
 - success: `{ ok: true, ... }`
@@ -17,48 +20,9 @@ Shared enums used below:
 
 ### Session and room lifecycle
 
-#### `createRoom`
-
-```ts
-createRoom(data: { name: string }, cb)
-```
-
-Response:
-
-```ts
-{
-  ok: true;
-  roomCode: string;
-  playerId: string;
-  resumeToken: string;
-}
-```
-
-#### `joinRoom`
-
-```ts
-joinRoom(data: { name: string; code: string }, cb)
-```
-
-Response:
-
-```ts
-{
-  ok: true;
-  playerId: string;
-  resumeToken: string;
-}
-```
-
-Behavior:
-
-- when the room is joinable normally, a new player slot is created
-- when a disconnected resumable slot with the same name already exists, the server reclaims that slot instead of creating a duplicate player
-- this reclaim path also works while a game is already in progress
-
 #### `autoJoinRoom`
 
-Platform embedding flow. Creates or rejoins a room keyed by `sessionId` (the platform matchKey).
+Creates or rejoins a room keyed by `sessionId` (the platform match key).
 
 ```ts
 autoJoinRoom(
@@ -86,9 +50,10 @@ Response:
 
 Notes:
 
+- Names must be 20 characters or fewer.
 - When `isHost: true`, the server transfers the host role to this player.
-- **First join** (no existing slot for `playerId`): `resumeToken` is not required.
-- **Reconnect** (slot already exists): `resumeToken` must be present and valid. Missing or wrong token returns `{ ok: false, error: 'Resume token required' }` or `'Invalid resume token'`.
+- On first join for a given `playerId`, `resumeToken` is not required.
+- When reclaiming an existing slot, `resumeToken` must be present and valid.
 
 #### `resumePlayer`
 
@@ -125,7 +90,8 @@ Clears the local session on success.
 Behavior:
 
 - in `lobby` and `ended`, the player is removed from the room immediately
-- in `playing`, the player is treated as a voluntary disconnect and their slot remains resumable until cleanup
+- in `playing`, the player is treated as a voluntary disconnect and their slot remains resumable
+  until cleanup
 
 ### Lobby setup
 
@@ -141,7 +107,8 @@ Notes:
 
 - changing team count updates the active team color set
 - players assigned to now-inactive team colors are cleared back to no team and no role
-- if the room moves from `2` teams to more than `2` teams while still using the default assassin mode, the server switches the room to `elimination`
+- if the room moves from `2` teams to more than `2` teams while still using the default assassin
+  mode, the server switches the room to `elimination`
 
 #### `setAssassinPenaltyMode`
 
@@ -173,7 +140,8 @@ Lobby only. Players choose their own role after joining a team.
 Rules:
 
 - each team must end up with exactly one Director and at least one Agent before the host can start
-- a player cannot choose `director` if another connected player on that team is already the Director
+- a player cannot choose `director` if another connected player on that team is already the
+  Director
 
 #### `startGame`
 
@@ -207,7 +175,8 @@ giveSignal(
 )
 ```
 
-Director only, during the `giving-signal` turn phase. The signal word must be a single word and may not match an unrevealed board word.
+Director only, during the `giving-signal` turn phase. The signal word must be a single word and
+may not match an unrevealed board word.
 
 #### `focusCard`
 
@@ -235,7 +204,8 @@ revealCard(
 )
 ```
 
-Agent only, during the `guessing` turn phase. Reveals the chosen board card and updates turn state, elimination state, and win conditions.
+Agent only, during the `guessing` turn phase. Reveals the chosen board card and updates turn
+state, elimination state, and win conditions.
 
 Client flow:
 
@@ -244,10 +214,13 @@ Client flow:
 
 Outcome details:
 
-- revealing your own team card keeps the turn alive until the guess limit is reached or the team ends the turn
-- revealing another team's card ends the turn immediately and counts toward that team's revealed progress
+- revealing your own team card keeps the turn alive until the guess limit is reached or the team
+  ends the turn
+- revealing another team's card ends the turn immediately and counts toward that team's revealed
+  progress
 - revealing a neutral card ends the turn immediately
-- revealing the assassin either ends the whole game (`instant-loss`) or eliminates the guessing team and continues (`elimination`)
+- revealing the assassin either ends the whole game (`instant-loss`) or eliminates the guessing
+  team and continues (`elimination`)
 
 #### `endTurn`
 
@@ -263,7 +236,8 @@ Agent only, during the `guessing` turn phase. Ends the current team's turn volun
 skipGuessRound(data: { roomCode: string; playerId: string }, cb)
 ```
 
-Host only, during an active turn. Forces the current team turn to end immediately and advances to the next active team.
+Host only, during an active turn. Forces the current team turn to end immediately and advances to
+the next active team.
 
 #### `restartGame`
 
