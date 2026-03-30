@@ -47,7 +47,7 @@ games/blackout/
 ├── server/src/       # Models, managers, Socket.IO handlers, SQLite setup
 ├── ui-vue/src/       # Vue app, components, store, composables
 ├── docs/             # Architecture and API docs
-├── __tests__/        # Jest unit tests
+├── __tests__/        # Vitest unit tests
 ├── e2e/              # Playwright E2E tests (via platform)
 └── scripts/          # DB import utilities
 ```
@@ -59,7 +59,7 @@ games/blackout/
 - Backend: Express 5, Socket.IO 4, better-sqlite3
 - Frontend: Vue 3, Pinia
 - Build: Vite, tsc
-- Testing: Jest, Playwright
+- Testing: Vitest, Playwright
 - Tooling: ESLint 9, Prettier
 
 ## Docs
