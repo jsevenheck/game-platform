@@ -1,8 +1,9 @@
 import type { Room } from '../core/src/types';
+import * as categoryManager from '../server/src/managers/categoryManager';
 
 // Mock the categoryManager since it requires SQLite
-jest.mock('../server/src/managers/categoryManager', () => ({
-  getUnusedPrompt: jest.fn(() => ({
+vi.mock('../server/src/managers/categoryManager', () => ({
+  getUnusedPrompt: vi.fn(() => ({
     category: { id: 1, name: 'An animal' },
     task: { id: 1, text: 'Starts with letter {letter}', requiresLetter: true },
     letter: 'A',
@@ -20,9 +21,7 @@ import {
   isLastRound,
 } from '../server/src/managers/roundManager';
 
-const { getUnusedPrompt: mockedGetUnusedPrompt } = jest.requireMock(
-  '../server/src/managers/categoryManager'
-) as { getUnusedPrompt: jest.Mock };
+const mockedGetUnusedPrompt = vi.mocked(categoryManager.getUnusedPrompt);
 
 function makeRoom(): Room {
   return {

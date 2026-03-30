@@ -5,11 +5,13 @@
     "module": "CommonJS",
     "moduleResolution": "node",
     "resolveJsonModule": true,
-    "types": ["node", "jest"]
+    "types": ["node", "vitest/globals"]
   },
   "include": [
-    "jest.config.cjs",
+    "vitest.config.ts",
+    "vitest.projects.ts",
     "playwright.config.ts",
+    "games/*/vitest.config.ts",
     "games/*/core/src/**/*",
     "games/*/server/src/**/*",
     "games/*/__tests__/**/*",

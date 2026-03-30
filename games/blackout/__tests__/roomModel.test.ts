@@ -1,9 +1,9 @@
-jest.mock('../server/src/managers/categoryManager', () => ({
-  getDefaultExcludedLetters: jest.fn(() => ['Q', 'X', 'Y']),
+vi.mock('../server/src/managers/categoryManager', () => ({
+  getDefaultExcludedLetters: vi.fn(() => ['Q', 'X', 'Y']),
 }));
 
-jest.mock('nanoid', () => ({
-  nanoid: jest.fn(() => 'mock-id'),
+vi.mock('nanoid', () => ({
+  nanoid: vi.fn(() => 'mock-id'),
 }));
 
 import {

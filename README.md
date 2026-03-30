@@ -14,7 +14,7 @@ A real-time multiplayer party game platform built as a single **pnpm workspace m
 
 - **Client:** Vue 3 + Pinia + Vue Router, bundled with Vite
 - **Server:** Express + Socket.IO (TypeScript, run via tsx)
-- **Testing:** Jest (unit), Playwright (E2E)
+- **Testing:** Vitest (unit), Playwright (E2E)
 - **Tooling:** pnpm workspaces, ESLint, Prettier
 
 ## Project Structure
@@ -37,7 +37,7 @@ games/{game}/                 ← internal source modules (not standalone)
   ui-vue/src/
     App.vue                   ← platform-only game root component
     PlatformAdapter.vue       ← platform wrapper (overlay for replay/return)
-  __tests__/                  ← Jest unit tests
+  __tests__/                  ← Vitest unit tests
   e2e/                        ← Playwright E2E specs
   docs/                       ← game-specific API & architecture docs
 ```
@@ -67,7 +67,7 @@ pnpm dev              # start dev server (Express + Vite HMR)
 pnpm build            # build client + server for production
 pnpm start            # run production build
 
-pnpm test             # run all unit tests (Jest, all 3 game projects)
+pnpm test             # run all unit tests (Vitest, all 3 game projects)
 pnpm test:blackout    # run Blackout tests only
 pnpm test:imposter    # run Imposter tests only
 pnpm test:secret-signals  # run Secret Signals tests only

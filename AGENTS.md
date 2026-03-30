@@ -39,7 +39,7 @@ Custom skills live in `.skills/`.
 ```bash
 pnpm install        # install all dependencies
 pnpm dev            # start platform (server + client)
-pnpm test           # run all unit tests (jest, all 3 games)
+pnpm test           # run all unit tests (vitest, all 3 games)
 pnpm lint           # eslint across all source
 pnpm format         # prettier across all source
 pnpm typecheck      # tsc via apps/platform

@@ -11,7 +11,7 @@ import {
   partyToView,
 } from '../server/party/partyStore';
 
-jest.mock('nanoid', () => {
+vi.mock('nanoid', () => {
   let counter = 0;
   return {
     nanoid: (size?: number) => `id-${size ?? 0}-${++counter}`,
@@ -33,7 +33,7 @@ describe('partyStore', () => {
       deleteParty(id);
     }
     createdPartyIds.length = 0;
-    jest.useRealTimers();
+    vi.useRealTimers();
   });
 
   it('creates a party with correct initial state', () => {
@@ -100,7 +100,7 @@ describe('partyStore', () => {
 
   describe('schedulePartyCleanup', () => {
     it('deletes party after timeout when all disconnected', () => {
-      jest.useFakeTimers();
+      vi.useFakeTimers();
       const { party } = createTestParty('Host', 'sock-gc');
       const partyId = party.partyId;
 
@@ -115,7 +115,7 @@ describe('partyStore', () => {
       expect(getParty(partyId)).toBeDefined();
 
       // Advance past the 30-minute timeout
-      jest.advanceTimersByTime(30 * 60 * 1000 + 1);
+      vi.advanceTimersByTime(30 * 60 * 1000 + 1);
 
       expect(getParty(partyId)).toBeUndefined();
       // Already cleaned, remove from tracking
@@ -123,7 +123,7 @@ describe('partyStore', () => {
     });
 
     it('does not delete party if someone reconnected', () => {
-      jest.useFakeTimers();
+      vi.useFakeTimers();
       const { party } = createTestParty('Host', 'sock-gc2');
       const partyId = party.partyId;
 
@@ -133,14 +133,14 @@ describe('partyStore', () => {
       // Simulate reconnect
       party.members.get('player-1')!.connected = true;
 
-      jest.advanceTimersByTime(30 * 60 * 1000 + 1);
+      vi.advanceTimersByTime(30 * 60 * 1000 + 1);
 
       // Party should still exist since member reconnected
       expect(getParty(partyId)).toBeDefined();
     });
 
     it('clearPartyCleanup cancels the scheduled deletion', () => {
-      jest.useFakeTimers();
+      vi.useFakeTimers();
       const { party } = createTestParty('Host', 'sock-gc3');
       const partyId = party.partyId;
 
@@ -148,7 +148,7 @@ describe('partyStore', () => {
       schedulePartyCleanup(partyId);
       clearPartyCleanup(partyId);
 
-      jest.advanceTimersByTime(30 * 60 * 1000 + 1);
+      vi.advanceTimersByTime(30 * 60 * 1000 + 1);
 
       expect(getParty(partyId)).toBeDefined();
     });

@@ -1,19 +1,21 @@
-jest.mock('../server/src/models/room', () => ({
-  createRoom: jest.fn(),
-  getRoom: jest.fn(),
-  setSessionToRoom: jest.fn(),
-  getSessionRoom: jest.fn(),
-  clearRoomCleanup: jest.fn(),
-  deleteRoom: jest.fn(),
+import type { Mock } from 'vitest';
+
+vi.mock('../server/src/models/room', () => ({
+  createRoom: vi.fn(),
+  getRoom: vi.fn(),
+  setSessionToRoom: vi.fn(),
+  getSessionRoom: vi.fn(),
+  clearRoomCleanup: vi.fn(),
+  deleteRoom: vi.fn(),
 }));
 
-jest.mock('../server/src/managers/broadcastManager', () => ({
-  broadcastRoom: jest.fn(),
-  sendRoomToPlayer: jest.fn(),
+vi.mock('../server/src/managers/broadcastManager', () => ({
+  broadcastRoom: vi.fn(),
+  sendRoomToPlayer: vi.fn(),
 }));
 
-jest.mock('nanoid', () => ({
-  nanoid: jest.fn(() => 'mock-id'),
+vi.mock('nanoid', () => ({
+  nanoid: vi.fn(() => 'mock-id'),
 }));
 
 import type { Room } from '../core/src/types';
@@ -70,8 +72,8 @@ function makeNamespace() {
       }
       return nsp;
     },
-    to: jest.fn(() => ({ emit: jest.fn() })),
-    sockets: new Map<string, { leave: jest.Mock; disconnect: jest.Mock }>(),
+    to: vi.fn(() => ({ emit: vi.fn() })),
+    sockets: new Map<string, { leave: Mock; disconnect: Mock }>(),
   };
 
   return {
@@ -91,8 +93,8 @@ function makeSocket(id: string, auth?: Record<string, string>) {
     id,
     data: {},
     handshake: { auth: auth ?? {} },
-    join: jest.fn(),
-    leave: jest.fn(),
+    join: vi.fn(),
+    leave: vi.fn(),
     on(event: string, handler: (...args: any[]) => void) {
       handlers[event] = handler;
       return this;
@@ -103,7 +105,7 @@ function makeSocket(id: string, auth?: Record<string, string>) {
 
 describe('socketHandlers embedded autoJoinRoom', () => {
   afterEach(() => {
-    jest.clearAllMocks();
+    vi.clearAllMocks();
     deleteSocketIndex('socket-old');
     deleteSocketIndex('socket-new');
     deleteSocketIndex('socket-host');
@@ -111,8 +113,8 @@ describe('socketHandlers embedded autoJoinRoom', () => {
 
   test('first autoJoinRoom creates a room using the hub player id as host id', () => {
     const room = makeRoom('ABCD', 'hub-1', 'socket-host');
-    (getSessionRoom as jest.Mock).mockReturnValue(undefined);
-    (createRoom as jest.Mock).mockImplementation(
+    vi.mocked(getSessionRoom).mockReturnValue(undefined);
+    vi.mocked(createRoom).mockImplementation(
       (_name: string, _socketId: string, hostPlayerId?: string) => ({
         room,
         hostId: hostPlayerId,
@@ -127,7 +129,7 @@ describe('socketHandlers embedded autoJoinRoom', () => {
     const socket = makeSocket('socket-host', { playerId: 'hub-1' });
     namespace.connect(socket);
 
-    const cb = jest.fn();
+    const cb = vi.fn();
     socket.handlers.autoJoinRoom({ sessionId: 'session-1', playerId: 'hub-1', name: 'Host' }, cb);
 
     expect(createRoom).toHaveBeenCalledWith('Host', 'socket-host', 'hub-1');
@@ -143,13 +145,13 @@ describe('socketHandlers embedded autoJoinRoom', () => {
 
   test('second autoJoinRoom with same session and hub player reconnects to the same slot', () => {
     const room = makeRoom('ABCD', 'hub-1', 'socket-old', 'Embedded Tester');
-    (getSessionRoom as jest.Mock).mockReturnValue('ABCD');
-    (getRoom as jest.Mock).mockReturnValue(room);
+    vi.mocked(getSessionRoom).mockReturnValue('ABCD');
+    vi.mocked(getRoom).mockReturnValue(room);
 
     const namespace = makeNamespace();
     namespace.nsp.sockets.set('socket-old', {
-      leave: jest.fn(),
-      disconnect: jest.fn(),
+      leave: vi.fn(),
+      disconnect: vi.fn(),
     });
     setSocketIndex('socket-old', room.code, 'hub-1');
 
@@ -159,7 +161,7 @@ describe('socketHandlers embedded autoJoinRoom', () => {
     const socket = makeSocket('socket-new', { playerId: 'hub-1' });
     namespace.connect(socket);
 
-    const cb = jest.fn();
+    const cb = vi.fn();
     socket.handlers.autoJoinRoom(
       {
         sessionId: 'session-1',
