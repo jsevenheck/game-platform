@@ -16,6 +16,12 @@ Games are **internal source modules** — they have no standalone server, client
 
 ---
 
+## Standalone Mode Status
+
+Standalone mode has been fully removed from the platform and all games. The only remaining `standalone` string occurrences are dead fallback path candidates inside `games/blackout/server/src/db/database.ts` (lines 10, 40, 110) and `games/blackout/scripts/import-db-csv.mjs` (line 133). These are unreachable in the current runtime — they exist only in a path-resolution candidate list that iterates until an existing directory is found, and no `dist/standalone-server` directory is ever created. No game has its own standalone server, build target, router, or UI entry point.
+
+---
+
 ## Step 1 — Scaffold the Directory Structure
 
 ```
@@ -362,7 +368,23 @@ Also update the `sharedAliasPlugin()` to handle the new game's `@shared` imports
 }
 ```
 
-### 5d. pnpm Workspace
+### 5d. Tailwind Source Scan
+
+Edit `apps/platform/src/styles/main.css` — add a `@source` directive so Tailwind generates all utility classes used in your game's Vue files:
+
+```css
+@source "../../../../games/quiz-rush/ui-vue/src/**/*.{vue,ts}";
+```
+
+Also add your game's accent color token inside `@theme`:
+
+```css
+--color-quiz-rush: #your-color;
+```
+
+This makes `bg-quiz-rush`, `text-quiz-rush`, `border-quiz-rush`, etc. available in your components. Use `!bg-quiz-rush` for important overrides where needed.
+
+### 5e. pnpm Workspace
 
 Add to `pnpm-workspace.yaml` if not already covered by a glob:
 
@@ -374,7 +396,46 @@ packages:
 
 ---
 
-## Step 6 — Add Tests
+## Step 6 — Design System
+
+Use the platform's design tokens and shared component classes. Do not define custom CSS variables outside your game's Vue components. Everything in `apps/platform/src/styles/main.css` is available globally.
+
+### Design Tokens
+
+| Category     | Token names                                                          |
+|--------------|----------------------------------------------------------------------|
+| Surfaces     | `canvas`, `shell`, `panel`, `elevated`                              |
+| Text         | `foreground`, `muted`, `muted-foreground`                           |
+| Borders      | `border`, `border-strong`, `ring`                                   |
+| Platform     | `accent` (orange `#f97316`)                                         |
+| Game accents | `blackout` (violet), `imposter` (crimson), `signals` (cyan)         |
+| Semantic     | `danger`, `success`, `warning` (+ `-muted` variants)               |
+
+Use `bg-canvas`, `text-foreground`, `border-border`, etc. directly in your templates.
+
+### Shared Component Classes
+
+| Class | Purpose |
+|---|---|
+| `ui-shell-header` | Top navigation bar |
+| `ui-panel` | Content panel |
+| `ui-overlay` | Full-screen overlay backdrop |
+| `ui-dialog` | Centered dialog box |
+| `ui-btn-primary` | Primary action button |
+| `ui-btn-secondary` | Secondary action button |
+| `ui-btn-ghost` | Ghost / tertiary button |
+| `ui-btn-danger` | Destructive action button |
+| `ui-input` | Text input field |
+| `ui-badge` | Status badge |
+| `ui-stepper-btn` | Numeric stepper button |
+| `ui-section-label` | Section heading label |
+| `ui-progress-track` / `ui-progress-fill` | Progress bar |
+
+These classes are defined in `@layer components` and are available in all game Vue files without any import.
+
+---
+
+## Step 8 — Add Tests
 
 ### Unit Tests
 
@@ -448,7 +509,7 @@ The Playwright config passes `E2E_TESTS=1` to the server automatically.
 
 ---
 
-## Step 7 — Add Documentation
+## Step 9 — Add Documentation
 
 Create `games/quiz-rush/docs/` with:
 
@@ -469,6 +530,7 @@ Create `games/quiz-rush/docs/` with:
 - [ ] `apps/platform/server/registry/index.ts` — game registered
 - [ ] `apps/platform/src/games/index.ts` — client module registered
 - [ ] `apps/platform/vite.config.ts` — UI alias + `@shared` plugin entry added
+- [ ] `apps/platform/src/styles/main.css` — `@source` directive + accent color token added
 - [ ] `vitest.config.ts` — test project added
 - [ ] `pnpm install` — no errors
 - [ ] `pnpm lint` — passes

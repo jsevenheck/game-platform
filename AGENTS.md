@@ -92,6 +92,10 @@ games/{game}/
     PlatformAdapter.vue <- wraps App.vue, injects platform props, adds replay / return overlay
 ```
 
+## Adding a new game
+
+See **[docs/adding-a-new-game.md](docs/adding-a-new-game.md)** for the full step-by-step guide: folder structure, server module contract, `PlatformAdapter.vue` pattern, all four platform registration points, design system usage, and the integration checklist.
+
 ## Integration contracts
 
 Every game exposes:

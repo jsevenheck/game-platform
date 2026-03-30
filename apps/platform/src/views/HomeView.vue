@@ -109,7 +109,7 @@ onBeforeUnmount(() => {
 </script>
 
 <template>
-  <div class="mx-auto max-w-[400px] px-4 pt-16">
+  <div class="mx-auto max-w-100 px-4 pt-16">
     <h1 class="mb-8 text-center text-3xl font-extrabold text-accent">Game Platform</h1>
 
     <div class="mb-6 flex gap-2">

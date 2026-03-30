@@ -110,7 +110,3 @@ See [docs/adding-a-new-game.md](docs/adding-a-new-game.md) for a step-by-step gu
 - [games/blackout/docs/](games/blackout/docs/) — Blackout API & architecture
 - [games/imposter/docs/](games/imposter/docs/) — Imposter API & architecture
 - [games/secret-signals/docs/](games/secret-signals/docs/) — Secret Signals API & architecture
-
-## License
-
-Private — not published.
