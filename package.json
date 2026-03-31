@@ -14,8 +14,8 @@
     "test:imposter": "vitest run --project imposter",
     "test:secret-signals": "vitest run --project secret-signals",
     "test:e2e": "playwright test",
-    "lint": "eslint . --max-warnings 0",
-    "lint:fix": "eslint . --fix",
+    "lint": "eslint . --cache --max-warnings 0",
+    "lint:fix": "eslint . --cache --fix",
     "format": "prettier --write .",
     "format:check": "prettier --check ."
   },
