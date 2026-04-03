@@ -15,6 +15,7 @@ import {
   getSessionRoom,
   clearRoomCleanup,
   deleteRoom,
+  scheduleRoomCleanup,
 } from './models/room';
 import { createPlayer, setSocketIndex, getSocketIndex, deleteSocketIndex } from './models/player';
 import {
@@ -430,9 +431,35 @@ export function registerBlackout(io: Server, namespace = '/g/blackout'): void {
       if (room) {
         const player = room.players[index.playerId];
         if (player) {
+          const wasHost = player.isHost;
           player.connected = false;
           player.socketId = null;
+
+          // Reassign host if the disconnected player was the host
+          if (wasHost) {
+            const remaining = Object.values(room.players);
+            const newHost =
+              remaining.find((p) => p.id !== index.playerId && p.connected) ??
+              remaining.find((p) => p.id !== index.playerId);
+
+            if (newHost) {
+              assignHost(room, newHost.id);
+              // Update reader if in a round
+              if (room.currentRound) {
+                room.currentRound.readerId = newHost.id;
+              }
+            } else {
+              room.hostId = null;
+            }
+          }
+
           broadcastRoom(nsp, room);
+
+          // Schedule cleanup if no players are connected
+          const allDisconnected = Object.values(room.players).every((p) => !p.connected);
+          if (allDisconnected) {
+            scheduleRoomCleanup(room.code, 5 * 60 * 1000); // 5 minutes idle timeout
+          }
         }
       }
       deleteSocketIndex(socket.id);

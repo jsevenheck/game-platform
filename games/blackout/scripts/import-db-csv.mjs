@@ -128,10 +128,7 @@ db.pragma('journal_mode = WAL');
 db.pragma('foreign_keys = ON');
 
 function readSqlFromProject(fileName) {
-  const candidates = [
-    path.join(process.cwd(), 'server', 'src', 'db', fileName),
-    path.join(process.cwd(), 'dist', 'standalone-server', 'server', 'src', 'db', fileName),
-  ];
+  const candidates = [path.join(process.cwd(), 'server', 'src', 'db', fileName)];
 
   for (const candidate of candidates) {
     if (existsSync(candidate)) {

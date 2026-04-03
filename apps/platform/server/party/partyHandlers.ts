@@ -306,6 +306,12 @@ export function registerPartyHandlers(io: Server): void {
           error: `Need at least ${game.definition.minPlayers} players`,
         });
       }
+      if (connected > game.definition.maxPlayers) {
+        return cb({
+          ok: false,
+          error: `Too many players (max ${game.definition.maxPlayers})`,
+        });
+      }
 
       const previousMatchKey = party.activeMatch.matchKey;
       const newMatchKey = nanoid(16);

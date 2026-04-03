@@ -54,7 +54,7 @@ const winners = computed(() => {
 
     <button
       v-if="store.isHost"
-      class="ui-btn-primary !bg-blackout hover:!bg-blackout-hover"
+      class="ui-btn-primary bg-blackout! hover:bg-blackout-hover!"
       @click="$emit('restart')"
     >
       Play Again

@@ -14,6 +14,7 @@ const socket = usePartySocket();
 const gameComponent = shallowRef<Component | null>(null);
 const loadError = ref('');
 const actionError = ref('');
+const showLeaveConfirm = ref(false);
 
 // The matchKey drives which match instance is rendered.
 // When it changes, Vue re-mounts the game adapter with the new match.
@@ -41,6 +42,10 @@ function onReturnToLobby(): void {
       console.error('[GameView] returnToLobby failed:', res.error);
     }
   });
+}
+
+function onLeaveGame(): void {
+  router.push(`/party/${props.inviteCode}`);
 }
 
 function handlePartyUpdate(view: Parameters<typeof store.applyPartyUpdate>[0]) {
@@ -166,6 +171,28 @@ onBeforeUnmount(() => {
 
 <template>
   <div class="min-h-dvh">
+    <!-- Leave game button -->
+    <button
+      class="ui-btn-ghost fixed left-3 top-3 z-50 px-2! py-1! text-sm"
+      @click="showLeaveConfirm = true"
+    >
+      ← Leave
+    </button>
+
+    <!-- Leave confirmation dialog -->
+    <Transition name="fade">
+      <div v-if="showLeaveConfirm" class="ui-overlay" style="z-index: 10000">
+        <div class="ui-dialog">
+          <h2 class="mb-2 text-lg font-bold">Leave Game?</h2>
+          <p class="mb-6 text-sm text-muted-foreground">You can rejoin from the party lobby.</p>
+          <div class="flex flex-col gap-3">
+            <button class="ui-btn-danger" @click="onLeaveGame">Leave</button>
+            <button class="ui-btn-secondary" @click="showLeaveConfirm = false">Cancel</button>
+          </div>
+        </div>
+      </div>
+    </Transition>
+
     <p v-if="loadError" class="p-8 text-center text-danger">{{ loadError }}</p>
 
     <p v-else-if="!gameComponent || !matchKey" class="p-8 text-center text-muted-foreground">

@@ -6,7 +6,7 @@ const store = useGameStore();
 
 <template>
   <aside
-    class="fixed right-4 top-16 w-40 rounded-[--radius-md] border border-border bg-shell p-3 md:static md:mx-auto md:w-full md:max-w-xs"
+    class="mx-auto mt-4 w-full max-w-xs rounded-[--radius-md] border border-border bg-shell p-3"
   >
     <h4 class="ui-section-label">Players</h4>
     <div

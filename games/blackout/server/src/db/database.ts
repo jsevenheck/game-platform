@@ -7,7 +7,6 @@ function resolveDefaultDbPath(): string {
     path.join(__dirname, 'blackout.sqlite'),
     path.join('server', 'src', 'db', 'blackout.sqlite'),
     path.join('games', 'blackout', 'server', 'src', 'db', 'blackout.sqlite'),
-    path.join('dist', 'standalone-server', 'server', 'src', 'db', 'blackout.sqlite'),
   ];
 
   for (const candidate of candidates) {
@@ -37,7 +36,6 @@ function readSqlFile(fileName: 'schema.sql'): string {
     path.join(__dirname, '..', 'src', 'db', fileName),
     path.join(process.cwd(), 'server', 'src', 'db', fileName),
     path.join(process.cwd(), 'games', 'blackout', 'server', 'src', 'db', fileName),
-    path.join(process.cwd(), 'dist', 'standalone-server', 'server', 'src', 'db', fileName),
   ];
 
   for (const candidate of candidates) {
@@ -107,7 +105,6 @@ function readCsvRows(fileName: string): Record<string, string>[] {
     path.join(__dirname, '..', 'src', 'db', 'data', fileName),
     path.join(process.cwd(), 'server', 'src', 'db', 'data', fileName),
     path.join(process.cwd(), 'games', 'blackout', 'server', 'src', 'db', 'data', fileName),
-    path.join(process.cwd(), 'dist', 'standalone-server', 'server', 'src', 'db', 'data', fileName),
   ];
 
   let csvContent: string | null = null;

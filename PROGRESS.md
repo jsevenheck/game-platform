@@ -1,6 +1,6 @@
 # Migration Progress
 
-## Latest Verification: 2026-03-29
+## Latest Verification: 2026-04-03
 
 - [x] Standalone create/join game flows removed from Blackout, Imposter, and Secret Signals
 - [x] Shared game socket contracts now expose only the platform-driven entry points (`autoJoinRoom`, `resumePlayer`, etc.)

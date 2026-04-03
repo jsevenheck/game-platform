@@ -46,6 +46,8 @@ export default defineConfig({
       { find: '@imposter-ui', replacement: resolve(GAMES_ROOT, 'imposter/ui-vue/src') },
       { find: '@secret-signals-ui', replacement: resolve(GAMES_ROOT, 'secret-signals/ui-vue/src') },
     ],
+    // Force a single copy of shared framework deps across platform + game code
+    dedupe: ['vue', 'pinia', 'vue-router'],
   },
   server: {
     port: 5173,
@@ -64,5 +66,12 @@ export default defineConfig({
   build: {
     outDir: 'dist/client',
     emptyOutDir: true,
+    rollupOptions: {
+      output: {
+        manualChunks: {
+          pinia: ['pinia'],
+        },
+      },
+    },
   },
 });

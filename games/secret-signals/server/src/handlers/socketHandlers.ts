@@ -539,7 +539,19 @@ export function registerGame(io: Server, namespace = `/g/${GAME_ID}`): void {
           player.connected = false;
           player.socketId = null;
           room.focusedCards = room.focusedCards.filter((marker) => marker.playerId !== player.id);
+
+          // Reassign host if the disconnected player was the host
+          if (player.isHost) {
+            reassignHost(room, player.id);
+          }
+
           broadcastRoom(nsp, room);
+
+          // Schedule cleanup if no players are connected
+          const anyConnected = Object.values(room.players).some((p) => p.connected);
+          if (!anyConnected) {
+            scheduleRoomCleanup(room.code);
+          }
         }
       }
       deleteSocketIndex(socket.id);
