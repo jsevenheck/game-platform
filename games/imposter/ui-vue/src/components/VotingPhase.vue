@@ -72,7 +72,7 @@ function getDescriptionText(playerId: string): string {
 
 <template>
   <div
-    class="flex flex-col items-center gap-6 px-4 py-8 min-h-dvh bg-gradient-to-br from-imposter-gradient-1 via-imposter-gradient-2 to-imposter-gradient-3"
+    class="flex flex-col items-center gap-6 px-4 py-8 min-h-dvh bg-linear-to-br from-imposter-gradient-1 via-imposter-gradient-2 to-imposter-gradient-3"
     :class="{ 'voting-phase': isVoting }"
   >
     <div
@@ -81,13 +81,13 @@ function getDescriptionText(playerId: string): string {
       Round {{ store.room?.roundNumber }}
     </div>
 
-    <div class="w-full max-w-[400px]">
+    <div class="w-full max-w-100">
       <h2 class="text-foreground text-lg mb-4 text-center">Descriptions</h2>
       <div class="flex flex-col gap-2">
         <div
           v-for="player in orderedPlayers"
           :key="player.id"
-          class="px-4 py-3 bg-white/[0.04] border border-white/[0.08] rounded-[--radius-lg] transition-all"
+          class="px-4 py-3 bg-white/4 border border-white/8 rounded-[--radius-lg] transition-all"
           :class="{ 'border-imposter/30! bg-imposter/5!': player.id === store.playerId }"
         >
           <div class="flex items-center gap-2 mb-1">
@@ -105,10 +105,10 @@ function getDescriptionText(playerId: string): string {
       </div>
     </div>
 
-    <div v-if="isDiscussion" class="w-full max-w-[400px]">
+    <div v-if="isDiscussion" class="w-full max-w-100">
       <h2 class="text-foreground text-lg mb-4 text-center">Discussion Time</h2>
       <div class="flex flex-col items-center gap-4">
-        <div class="relative w-[120px] h-[120px]">
+        <div class="relative w-30 h-30">
           <svg viewBox="0 0 100 100" class="w-full h-full -rotate-90">
             <circle
               cx="50"
@@ -143,14 +143,14 @@ function getDescriptionText(playerId: string): string {
       </div>
     </div>
 
-    <div v-if="isVoting" class="w-full max-w-[400px]">
+    <div v-if="isVoting" class="w-full max-w-100">
       <h2 class="text-foreground text-lg mb-4 text-center">Cast Your Vote</h2>
 
       <div v-if="!store.hasVoted" class="flex flex-col gap-2">
         <button
           v-for="player in otherPlayers"
           :key="player.id"
-          class="vote-btn flex items-center justify-between px-4 py-3.5 bg-white/[0.04] border-2 border-white/10 rounded-[--radius-lg] cursor-pointer text-foreground text-base transition-all hover:border-imposter/40 hover:bg-imposter/5"
+          class="vote-btn flex items-center justify-between px-4 py-3.5 bg-white/4 border-2 border-white/10 rounded-[--radius-lg] cursor-pointer text-foreground text-base transition-all hover:border-imposter/40 hover:bg-imposter/5"
           :class="{ 'border-imposter! bg-imposter/10!': selectedTarget === player.id }"
           @click="selectedTarget = player.id"
         >

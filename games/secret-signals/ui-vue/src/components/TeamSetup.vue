@@ -63,7 +63,7 @@ defineExpose({ isSetupValid });
 </script>
 
 <template>
-  <div class="w-full max-w-[600px]">
+  <div class="w-full max-w-150">
     <div v-if="store.isHost" class="flex items-center flex-wrap gap-2 mb-4 justify-center">
       <span class="text-muted text-sm font-semibold">Teams:</span>
       <button

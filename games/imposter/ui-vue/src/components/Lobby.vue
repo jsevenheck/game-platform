@@ -71,18 +71,18 @@ function handleSubmitWord() {
 
 <template>
   <div
-    class="lobby flex flex-col items-center gap-6 px-4 py-8 min-h-dvh bg-gradient-to-br from-imposter-gradient-1 via-imposter-gradient-2 to-imposter-gradient-3"
+    class="lobby flex flex-col items-center gap-6 px-4 py-8 min-h-dvh bg-linear-to-br from-imposter-gradient-1 via-imposter-gradient-2 to-imposter-gradient-3"
   >
     <div class="text-center">
       <h2 class="text-3xl font-black text-imposter">Imposter</h2>
     </div>
 
-    <div class="w-full max-w-[340px]">
+    <div class="w-full max-w-85">
       <h3 class="text-muted text-sm mb-3">Players ({{ connectedCount }})</h3>
       <div
         v-for="player in store.room?.players"
         :key="player.id"
-        class="flex items-center gap-2 px-3.5 py-2.5 bg-white/5 border border-white/[0.08] rounded-[--radius-md] mb-2 transition-all"
+        class="flex items-center gap-2 px-3.5 py-2.5 bg-white/5 border border-white/8 rounded-[--radius-md] mb-2 transition-all"
         :class="{ 'opacity-40': !player.connected }"
       >
         <span class="flex-1 text-foreground font-medium">{{ player.name }}</span>
@@ -102,8 +102,8 @@ function handleSubmitWord() {
     </div>
 
     <!-- Host controls -->
-    <div v-if="isHost" class="flex flex-col items-center gap-6 w-full max-w-[340px]">
-      <div class="w-full p-5 bg-white/[0.04] border border-white/[0.08] rounded-[--radius-lg]">
+    <div v-if="isHost" class="flex flex-col items-center gap-6 w-full max-w-85">
+      <div class="w-full p-5 bg-white/4 border border-white/8 rounded-[--radius-lg]">
         <h3 class="text-foreground text-base mb-4">Game Settings</h3>
 
         <div class="flex items-center justify-between mb-4">
@@ -121,7 +121,7 @@ function handleSubmitWord() {
             >
               -
             </button>
-            <span class="text-imposter text-2xl font-extrabold min-w-[2rem] text-center">{{
+            <span class="text-imposter text-2xl font-extrabold min-w-8 text-center">{{
               infiltratorCount
             }}</span>
             <button
@@ -148,7 +148,7 @@ function handleSubmitWord() {
             >
               -
             </button>
-            <span class="text-imposter text-2xl font-extrabold min-w-[3.5rem] text-center"
+            <span class="text-imposter text-2xl font-extrabold min-w-14 text-center"
               >{{ discussionDurationMs / 1000 }}s</span
             >
             <button
@@ -175,7 +175,7 @@ function handleSubmitWord() {
             >
               -
             </button>
-            <span class="text-imposter text-2xl font-extrabold min-w-[2rem] text-center">{{
+            <span class="text-imposter text-2xl font-extrabold min-w-8 text-center">{{
               targetScore
             }}</span>
             <button
@@ -230,7 +230,7 @@ function handleSubmitWord() {
     </div>
 
     <!-- Non-host: also allow word submission -->
-    <div v-else class="w-full max-w-[340px] flex flex-col gap-4">
+    <div v-else class="w-full max-w-85 flex flex-col gap-4">
       <div>
         <label class="text-muted text-sm font-medium block mb-2">Suggest a Word</label>
         <div class="flex gap-2">
