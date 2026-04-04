@@ -116,7 +116,7 @@ function handleSubmit() {
       </p>
       <button
         v-if="store.isHost && store.room?.currentDescriberId"
-        class="ui-btn-secondary mt-3 hover:!border-imposter hover:!text-imposter"
+        class="ui-btn-secondary mt-3 hover:border-imposter! hover:text-imposter!"
         @click="$emit('skipDescriptionTurn')"
       >
         Skip Turn
@@ -134,12 +134,12 @@ function handleSubmit() {
           type="text"
           :placeholder="store.myWord ? 'Your clue...' : 'Blend in...'"
           maxlength="30"
-          class="ui-input !bg-white/5 !border-white/10 focus:!border-imposter flex-1"
+          class="ui-input bg-white/5! border-white/10! focus:border-imposter! flex-1"
           @keyup.enter="handleSubmit"
         />
         <button
           id="btn-submit-description"
-          class="ui-btn-primary !bg-imposter hover:!bg-imposter-hover"
+          class="ui-btn-primary bg-imposter! hover:bg-imposter-hover!"
           @click="handleSubmit"
         >
           Submit
@@ -179,7 +179,7 @@ function handleSubmit() {
           :key="player.id"
           class="flex flex-col gap-0.5 px-3.5 py-3 rounded-[--radius-lg] bg-white/[0.03] border border-white/[0.06]"
           :class="{
-            '!border-imposter/35 !bg-imposter/[0.08]': player.id === store.room?.currentDescriberId,
+            'border-imposter/35! bg-imposter/8!': player.id === store.room?.currentDescriberId,
           }"
         >
           <span class="text-muted text-xs font-semibold">{{ player.name }}</span>
@@ -201,7 +201,7 @@ function handleSubmit() {
       <h3 class="text-foreground text-base mb-3">Clue Progress</h3>
       <div class="ui-progress-track">
         <div
-          class="ui-progress-fill !bg-imposter"
+          class="ui-progress-fill bg-imposter!"
           :style="{
             width: `${((store.room?.submittedDescriptionIds.length ?? 0) / (store.connectedPlayers.length || 1)) * 100}%`,
           }"

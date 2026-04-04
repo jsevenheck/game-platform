@@ -72,7 +72,7 @@ const winningLabel = computed(() => {
 
     <button
       v-if="isHost"
-      class="ui-btn-primary !bg-signals hover:!bg-signals-hover"
+      class="ui-btn-primary bg-signals! hover:bg-signals-hover!"
       @click="$emit('restart')"
     >
       Play Again

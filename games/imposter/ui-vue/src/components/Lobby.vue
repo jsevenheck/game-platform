@@ -74,9 +74,7 @@ function handleSubmitWord() {
     class="lobby flex flex-col items-center gap-6 px-4 py-8 min-h-dvh bg-gradient-to-br from-imposter-gradient-1 via-imposter-gradient-2 to-imposter-gradient-3"
   >
     <div class="text-center">
-      <p class="text-muted-foreground uppercase text-xs tracking-[0.15em]">Room Code</p>
-      <h2 class="text-5xl font-black tracking-[0.4em] text-imposter">{{ store.roomCode }}</h2>
-      <p class="text-muted-foreground text-sm">Share this code with your friends!</p>
+      <h2 class="text-3xl font-black text-imposter">Imposter</h2>
     </div>
 
     <div class="w-full max-w-[340px]">
@@ -117,7 +115,7 @@ function handleSubmitWord() {
           </label>
           <div class="flex items-center gap-3">
             <button
-              class="stepper-btn ui-stepper-btn hover:!border-imposter"
+              class="stepper-btn ui-stepper-btn hover:border-imposter!"
               :disabled="infiltratorCount <= 0"
               @click="handleConfigChange({ infiltratorCount: infiltratorCount - 1 })"
             >
@@ -127,7 +125,7 @@ function handleSubmitWord() {
               infiltratorCount
             }}</span>
             <button
-              class="stepper-btn ui-stepper-btn hover:!border-imposter"
+              class="stepper-btn ui-stepper-btn hover:border-imposter!"
               :disabled="infiltratorCount >= Math.max(connectedCount - 1, 1)"
               @click="handleConfigChange({ infiltratorCount: infiltratorCount + 1 })"
             >
@@ -140,7 +138,7 @@ function handleSubmitWord() {
           <label class="text-muted text-sm font-medium">Discussion Timer</label>
           <div class="flex items-center gap-3">
             <button
-              class="stepper-btn ui-stepper-btn hover:!border-imposter"
+              class="stepper-btn ui-stepper-btn hover:border-imposter!"
               :disabled="discussionDurationMs <= MIN_DISCUSSION_DURATION_MS"
               @click="
                 handleConfigChange({
@@ -154,7 +152,7 @@ function handleSubmitWord() {
               >{{ discussionDurationMs / 1000 }}s</span
             >
             <button
-              class="stepper-btn ui-stepper-btn hover:!border-imposter"
+              class="stepper-btn ui-stepper-btn hover:border-imposter!"
               :disabled="discussionDurationMs >= MAX_DISCUSSION_DURATION_MS"
               @click="
                 handleConfigChange({
@@ -171,7 +169,7 @@ function handleSubmitWord() {
           <label class="text-muted text-sm font-medium">Target Score</label>
           <div class="flex items-center gap-3">
             <button
-              class="stepper-btn ui-stepper-btn hover:!border-imposter"
+              class="stepper-btn ui-stepper-btn hover:border-imposter!"
               :disabled="targetScore <= MIN_TARGET_SCORE"
               @click="handleConfigChange({ targetScore: targetScore - 1 })"
             >
@@ -181,7 +179,7 @@ function handleSubmitWord() {
               targetScore
             }}</span>
             <button
-              class="stepper-btn ui-stepper-btn hover:!border-imposter"
+              class="stepper-btn ui-stepper-btn hover:border-imposter!"
               :disabled="targetScore >= MAX_TARGET_SCORE"
               @click="handleConfigChange({ targetScore: targetScore + 1 })"
             >
@@ -202,11 +200,11 @@ function handleSubmitWord() {
               type="text"
               placeholder="Enter a word..."
               maxlength="40"
-              class="ui-input !bg-white/5 !border-white/10 focus:!border-imposter flex-1 !text-sm"
+              class="ui-input bg-white/5! border-white/10! focus:border-imposter! flex-1 text-sm!"
               @keyup.enter="handleSubmitWord"
             />
             <button
-              class="ui-btn-primary !bg-imposter hover:!bg-imposter-hover !px-4 !py-2.5 !text-sm"
+              class="ui-btn-primary bg-imposter! hover:bg-imposter-hover! px-4! py-2.5! text-sm!"
               @click="handleSubmitWord"
             >
               Add
@@ -220,7 +218,7 @@ function handleSubmitWord() {
 
       <button
         id="btn-start-game"
-        class="ui-btn-primary !bg-imposter hover:!bg-imposter-hover w-full !py-4 !text-lg"
+        class="ui-btn-primary bg-imposter! hover:bg-imposter-hover! w-full py-4! text-lg!"
         :disabled="connectedCount < MIN_PLAYERS"
         @click="$emit('startGame')"
       >
@@ -241,11 +239,11 @@ function handleSubmitWord() {
             type="text"
             placeholder="Enter a word..."
             maxlength="40"
-            class="ui-input !bg-white/5 !border-white/10 focus:!border-imposter flex-1 !text-sm"
+            class="ui-input bg-white/5! border-white/10! focus:border-imposter! flex-1 text-sm!"
             @keyup.enter="handleSubmitWord"
           />
           <button
-            class="ui-btn-primary !bg-imposter hover:!bg-imposter-hover !px-4 !py-2.5 !text-sm"
+            class="ui-btn-primary bg-imposter! hover:bg-imposter-hover! px-4! py-2.5! text-sm!"
             @click="handleSubmitWord"
           >
             Add

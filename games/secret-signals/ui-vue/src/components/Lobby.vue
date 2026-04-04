@@ -65,7 +65,7 @@ const canStart = computed(() => {
 
     <div v-if="isHost" class="flex flex-col items-center gap-4">
       <button
-        class="ui-btn-primary !bg-signals hover:!bg-signals-hover !py-4 !px-12 !text-xl"
+        class="ui-btn-primary bg-signals! hover:bg-signals-hover! py-4! px-12! text-xl!"
         :disabled="!canStart"
         @click="$emit('start-game')"
       >

@@ -1,11 +1,11 @@
 # Migration Progress
 
-## Latest Verification: 2026-04-03
+## Latest Verification: 2026-04-04
 
 - [x] Standalone create/join game flows removed from Blackout, Imposter, and Secret Signals
 - [x] Shared game socket contracts now expose only the platform-driven entry points (`autoJoinRoom`, `resumePlayer`, etc.)
-- [x] `pnpm test` -> 122/122 pass
-- [x] `pnpm test:e2e` -> 16/16 pass
+- [x] `pnpm test` -> 123/123 pass
+- [x] `pnpm test:e2e` -> 16/16 pass (requires stopping any running dev server first)
 - [x] Platform HTTP route registration extracted to `apps/platform/server/httpRoutes.ts`
 - [x] Party lifecycle edge cases covered by new platform tests (`partyStore`, `partyHandlers`, `serverRoutes`)
 
@@ -295,6 +295,18 @@ Two findings from fifth Codex review.
 
 - [x] **1 (Mittel)** Secret Signals replay path fragile: on embedded re-mount (replay), the saved session was restored but stale `store.room` from the old game was not cleared (unlike Imposter which calls `store.reset()`). This caused `emitAutoJoinRoom` to be blocked by the `store.room` guard, and `handleSocketConnect` to attempt `resumePlayer` against the old `roomCode`. Fixed by adding `store.reset()` before `store.setSession(savedSession)` in the SS embedded mount path — the same load → reset → restore pattern already used in Imposter.
 - [x] **2 (Niedrig)** PROGRESS.md stale `customResolver` description (line 222) — replaced with accurate `sharedAliasPlugin()` description.
+
+---
+
+## Production Bug Fixes (fixes-1, 2026-04-04)
+
+### Status: Complete
+
+- [x] **Pinia bundling split in production build** — Rollup tree-shook `createPinia` into the main `index` chunk and `defineStore` into a separate lazy chunk. Both had their own `Symbol()` and `activePinia` module-level variables, so `inject(piniaSymbol)` returned null in game adapters → `TypeError: Cannot read properties of undefined (reading '_s')`. Fixed with `resolve.dedupe: ['vue','pinia','vue-router']` and `build.rollupOptions.output.manualChunks: { pinia: ['pinia'] }` in `apps/platform/vite.config.ts`.
+- [x] **PlatformAdapter overlay only shown to host** — Non-host players saw a black screen after game-end. Fixed in all 3 games: `v-if="gameEnded && isHost"` → `v-if="gameEnded"` with inner `v-if="isHost"` for action buttons; non-hosts see "Waiting for host to decide...".
+- [x] **Blackout component layout/syntax** — `PlayersPanel.vue`: removed `fixed right-4 top-16` (overlapped game content). `GameOver.vue`: `!bg-blackout` → `bg-blackout!` (Tailwind v4 important suffix syntax).
+- [x] **Remaining Tailwind v4 syntax** — `!bg-*` → `bg-*!` in Imposter (DescriptionPhase, Lobby, VotingPhase, GameOver) and Secret Signals (GameOver, Lobby, TeamSetup) + Blackout GameRound.
+- [x] **E2E server isolation** — `reuseExistingServer: true` (local dev default) caused `pnpm test:e2e` to reuse an existing dev server that lacked `E2E_TESTS=1`. Result: Imposter used the 90 s discussion timer (test timeout 60 s → 4 test failures) and Secret Signals picked a random starting team instead of Red (1 test failure). Fixed by setting `reuseExistingServer: false` in `playwright.config.ts` so a fresh server with `E2E_TESTS=1` is always started.
 
 ---
 

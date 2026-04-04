@@ -48,7 +48,9 @@ function onPhaseChange(phase: string) {
           <template v-if="isHost">
             <p class="mb-6 text-sm text-muted-foreground">What would you like to do?</p>
             <div class="flex flex-col gap-3">
-              <button class="btn-replay ui-btn-primary bg-blackout!" @click="onReplayGame?.()">Play Again</button>
+              <button class="btn-replay ui-btn-primary bg-blackout!" @click="onReplayGame?.()">
+                Play Again
+              </button>
               <button class="btn-lobby ui-btn-secondary" @click="onReturnToLobby?.()">
                 Back to Party
               </button>

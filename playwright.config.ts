@@ -33,7 +33,7 @@ export default defineConfig({
     {
       command: `${pnpmCommand} -C apps/platform dev:server`,
       port: 3000,
-      reuseExistingServer: !process.env.CI,
+      reuseExistingServer: false,
       env: { E2E_TESTS: '1' },
     },
     {

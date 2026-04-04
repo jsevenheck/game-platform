@@ -71,7 +71,7 @@ Tailwind CSS v4.2 with `@tailwindcss/vite` plugin. Single design-system entry po
 
 `ui-shell-header`, `ui-panel`, `ui-overlay`, `ui-dialog`, `ui-btn-primary`, `ui-btn-secondary`, `ui-btn-ghost`, `ui-btn-danger`, `ui-input`, `ui-badge`, `ui-stepper-btn`, `ui-section-label`, `ui-progress-track`, `ui-progress-fill`.
 
-Game-specific accent overrides use Tailwind's `!` important modifier: `!bg-blackout`, `!bg-imposter`, `!bg-signals`.
+Game-specific accent overrides use Tailwind's `!` important suffix: `bg-blackout!`, `bg-imposter!`, `bg-signals!`.
 
 ## Structure
 

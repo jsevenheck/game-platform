@@ -88,7 +88,7 @@ function getDescriptionText(playerId: string): string {
           v-for="player in orderedPlayers"
           :key="player.id"
           class="px-4 py-3 bg-white/[0.04] border border-white/[0.08] rounded-[--radius-lg] transition-all"
-          :class="{ '!border-imposter/30 !bg-imposter/5': player.id === store.playerId }"
+          :class="{ 'border-imposter/30! bg-imposter/5!': player.id === store.playerId }"
         >
           <div class="flex items-center gap-2 mb-1">
             <span class="text-muted text-xs font-semibold">{{ player.name }}</span>
@@ -103,9 +103,6 @@ function getDescriptionText(playerId: string): string {
           </p>
         </div>
       </div>
-      <p class="text-muted-foreground text-xs mt-3 text-center">
-        Clues are shown in the shared round order so everyone reads the same list.
-      </p>
     </div>
 
     <div v-if="isDiscussion" class="w-full max-w-[400px]">
@@ -154,7 +151,7 @@ function getDescriptionText(playerId: string): string {
           v-for="player in otherPlayers"
           :key="player.id"
           class="vote-btn flex items-center justify-between px-4 py-3.5 bg-white/[0.04] border-2 border-white/10 rounded-[--radius-lg] cursor-pointer text-foreground text-base transition-all hover:border-imposter/40 hover:bg-imposter/5"
-          :class="{ '!border-imposter !bg-imposter/10': selectedTarget === player.id }"
+          :class="{ 'border-imposter! bg-imposter/10!': selectedTarget === player.id }"
           @click="selectedTarget = player.id"
         >
           <span class="font-medium">{{ player.name }}</span>
@@ -164,7 +161,7 @@ function getDescriptionText(playerId: string): string {
         </button>
         <button
           id="btn-confirm-vote"
-          class="ui-btn-primary !bg-imposter hover:!bg-imposter-hover w-full !py-4 mt-3"
+          class="ui-btn-primary bg-imposter! hover:bg-imposter-hover! w-full py-4! mt-3"
           :disabled="!selectedTarget"
           @click="handleVote"
         >
@@ -185,7 +182,7 @@ function getDescriptionText(playerId: string): string {
         </p>
         <div class="ui-progress-track">
           <div
-            class="ui-progress-fill !bg-imposter"
+            class="ui-progress-fill bg-imposter!"
             :style="{
               width: `${((store.room?.submittedVoteIds.length ?? 0) / (store.connectedPlayers.length || 1)) * 100}%`,
             }"

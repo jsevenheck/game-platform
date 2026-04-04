@@ -70,7 +70,7 @@ defineExpose({ isSetupValid });
         v-for="n in teamCountOptions"
         :key="n"
         class="w-9 h-9 border-2 border-border-strong rounded-[--radius-sm] bg-panel text-foreground/80 font-bold cursor-pointer transition-all"
-        :class="{ '!border-signals !bg-signals !text-white': store.room?.teamCount === n }"
+        :class="{ 'border-signals! bg-signals! text-white!': store.room?.teamCount === n }"
         @click="$emit('set-team-count', n)"
       >
         {{ n }}
@@ -85,7 +85,7 @@ defineExpose({ isSetupValid });
         :data-mode="mode"
         class="px-3 py-1.5 border-2 border-border-strong rounded-full bg-panel text-foreground/80 text-xs font-bold transition-all"
         :class="{
-          '!border-signals !bg-signals !text-white': store.room?.assassinPenaltyMode === mode,
+          'border-signals! bg-signals! text-white!': store.room?.assassinPenaltyMode === mode,
           'cursor-pointer': store.isHost,
         }"
         :disabled="!store.isHost"
@@ -132,7 +132,7 @@ defineExpose({ isSetupValid });
         <button
           data-self-role="director"
           class="min-w-24 px-3 py-1.5 border-2 border-border-strong rounded-full bg-panel text-foreground/95 text-xs font-bold cursor-pointer transition-all hover:brightness-110"
-          :class="{ '!border-signals !bg-signals !text-white': currentPlayer?.role === 'director' }"
+          :class="{ 'border-signals! bg-signals! text-white!': currentPlayer?.role === 'director' }"
           :disabled="isDirectorUnavailable(currentPlayerTeam)"
           @click="pickRole('director')"
         >
@@ -141,7 +141,7 @@ defineExpose({ isSetupValid });
         <button
           data-self-role="agent"
           class="min-w-24 px-3 py-1.5 border-2 border-border-strong rounded-full bg-panel text-foreground/95 text-xs font-bold cursor-pointer transition-all hover:brightness-110"
-          :class="{ '!border-signals !bg-signals !text-white': currentPlayer?.role === 'agent' }"
+          :class="{ 'border-signals! bg-signals! text-white!': currentPlayer?.role === 'agent' }"
           @click="pickRole('agent')"
         >
           Agent
@@ -167,7 +167,7 @@ defineExpose({ isSetupValid });
         {{ player.name }}
         <span
           v-if="player.isHost"
-          class="ui-badge bg-signals text-white !text-[0.6rem] !px-1.5 !py-0.5 !rounded-sm"
+          class="ui-badge bg-signals text-white text-[0.6rem]! px-1.5! py-0.5! rounded-sm!"
           >H</span
         >
       </div>

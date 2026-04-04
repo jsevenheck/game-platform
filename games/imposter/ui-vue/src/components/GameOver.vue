@@ -63,7 +63,7 @@ const singleWinner = computed(() =>
         :key="player.id"
         class="flex items-center gap-3 px-3.5 py-2.5 bg-white/[0.04] border border-white/[0.08] rounded-[--radius-md] mb-2"
         :class="{
-          '!border-imposter/40 !bg-imposter/[0.08]': player.score === topScore,
+          'border-imposter/40! bg-imposter/8!': player.score === topScore,
         }"
       >
         <span class="text-muted-foreground font-bold min-w-8">#{{ index + 1 }}</span>
@@ -80,8 +80,8 @@ const singleWinner = computed(() =>
         :key="index"
         class="flex items-center gap-3 px-3 py-2 bg-white/[0.03] border border-white/[0.06] rounded-[--radius-sm] mb-1.5"
         :class="{
-          'border-l-[3px] !border-l-success': round.winner === 'civilians',
-          'border-l-[3px] !border-l-danger': round.winner !== 'civilians',
+          'border-l-[3px] border-l-success!': round.winner === 'civilians',
+          'border-l-[3px] border-l-danger!': round.winner !== 'civilians',
         }"
       >
         <span class="text-muted-foreground text-xs font-bold min-w-8">R{{ index + 1 }}</span>
@@ -97,7 +97,7 @@ const singleWinner = computed(() =>
 
     <button
       v-if="isHost"
-      class="ui-btn-primary !bg-imposter hover:!bg-imposter-hover !py-4 !px-10 !text-lg"
+      class="ui-btn-primary bg-imposter! hover:bg-imposter-hover! py-4! px-10! text-lg!"
       @click="$emit('restart')"
     >
       Play Again
