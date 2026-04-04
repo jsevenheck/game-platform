@@ -6,11 +6,11 @@ This guide walks through every step required to integrate a new game into the pl
 
 A game consists of three parts:
 
-| Layer      | Location                      | Purpose                                             |
-| ---------- | ----------------------------- | --------------------------------------------------- |
-| **Core**   | `games/quiz-rush/core/src/`   | Shared types, constants, event definitions          |
-| **Server** | `games/quiz-rush/server/src/` | Socket.IO game logic (runs on the platform server)  |
-| **UI**     | `games/quiz-rush/ui-vue/src/` | Vue 3 components for the platform runtime only      |
+| Layer      | Location                      | Purpose                                            |
+| ---------- | ----------------------------- | -------------------------------------------------- |
+| **Core**   | `games/quiz-rush/core/src/`   | Shared types, constants, event definitions         |
+| **Server** | `games/quiz-rush/server/src/` | Socket.IO game logic (runs on the platform server) |
+| **UI**     | `games/quiz-rush/ui-vue/src/` | Vue 3 components for the platform runtime only     |
 
 Games are **internal source modules** — they have no standalone server, client, or build step. The platform imports them directly.
 
@@ -419,34 +419,34 @@ Use the platform's design tokens and shared component classes. Do not define cus
 
 ### Design Tokens
 
-| Category     | Token names                                                          |
-|--------------|----------------------------------------------------------------------|
-| Surfaces     | `canvas`, `shell`, `panel`, `elevated`                              |
-| Text         | `foreground`, `muted`, `muted-foreground`                           |
-| Borders      | `border`, `border-strong`, `ring`                                   |
-| Platform     | `accent` (orange `#f97316`)                                         |
-| Game accents | `blackout` (violet), `imposter` (crimson), `signals` (cyan)         |
-| Semantic     | `danger`, `success`, `warning` (+ `-muted` variants)               |
+| Category     | Token names                                                 |
+| ------------ | ----------------------------------------------------------- |
+| Surfaces     | `canvas`, `shell`, `panel`, `elevated`                      |
+| Text         | `foreground`, `muted`, `muted-foreground`                   |
+| Borders      | `border`, `border-strong`, `ring`                           |
+| Platform     | `accent` (orange `#f97316`)                                 |
+| Game accents | `blackout` (violet), `imposter` (crimson), `signals` (cyan) |
+| Semantic     | `danger`, `success`, `warning` (+ `-muted` variants)        |
 
 Use `bg-canvas`, `text-foreground`, `border-border`, etc. directly in your templates.
 
 ### Shared Component Classes
 
-| Class | Purpose |
-|---|---|
-| `ui-shell-header` | Top navigation bar |
-| `ui-panel` | Content panel |
-| `ui-overlay` | Full-screen overlay backdrop |
-| `ui-dialog` | Centered dialog box |
-| `ui-btn-primary` | Primary action button |
-| `ui-btn-secondary` | Secondary action button |
-| `ui-btn-ghost` | Ghost / tertiary button |
-| `ui-btn-danger` | Destructive action button |
-| `ui-input` | Text input field |
-| `ui-badge` | Status badge |
-| `ui-stepper-btn` | Numeric stepper button |
-| `ui-section-label` | Section heading label |
-| `ui-progress-track` / `ui-progress-fill` | Progress bar |
+| Class                                    | Purpose                      |
+| ---------------------------------------- | ---------------------------- |
+| `ui-shell-header`                        | Top navigation bar           |
+| `ui-panel`                               | Content panel                |
+| `ui-overlay`                             | Full-screen overlay backdrop |
+| `ui-dialog`                              | Centered dialog box          |
+| `ui-btn-primary`                         | Primary action button        |
+| `ui-btn-secondary`                       | Secondary action button      |
+| `ui-btn-ghost`                           | Ghost / tertiary button      |
+| `ui-btn-danger`                          | Destructive action button    |
+| `ui-input`                               | Text input field             |
+| `ui-badge`                               | Status badge                 |
+| `ui-stepper-btn`                         | Numeric stepper button       |
+| `ui-section-label`                       | Section heading label        |
+| `ui-progress-track` / `ui-progress-fill` | Progress bar                 |
 
 These classes are defined in `@layer components` and are available in all game Vue files without any import.
 

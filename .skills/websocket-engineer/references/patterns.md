@@ -16,7 +16,7 @@ io.on('connection', (socket) => {
     // Notify others in room
     socket.to(roomId).emit('user-joined', {
       userId: socket.id,
-      timestamp: Date.now()
+      timestamp: Date.now(),
     });
   });
 
@@ -31,7 +31,7 @@ io.on('connection', (socket) => {
     io.to(roomId).emit('message', {
       userId: socket.id,
       text,
-      timestamp: Date.now()
+      timestamp: Date.now(),
     });
   });
 
@@ -181,17 +181,21 @@ class PresenceManager {
 
     // If first connection, mark user as online
     if (socketCount === 1) {
-      await redisClient.hset('presence', userId, JSON.stringify({
-        status: 'online',
-        lastSeen: Date.now()
-      }));
+      await redisClient.hset(
+        'presence',
+        userId,
+        JSON.stringify({
+          status: 'online',
+          lastSeen: Date.now(),
+        })
+      );
 
       // Notify friends
       const friends = await this.getUserFriends(userId);
-      friends.forEach(friendId => {
+      friends.forEach((friendId) => {
         io.to(`user:${friendId}`).emit('presence', {
           userId,
-          status: 'online'
+          status: 'online',
         });
       });
     }
@@ -209,17 +213,21 @@ class PresenceManager {
 
     // If no more connections, mark offline
     if (socketCount === 0) {
-      await redisClient.hset('presence', userId, JSON.stringify({
-        status: 'offline',
-        lastSeen: Date.now()
-      }));
+      await redisClient.hset(
+        'presence',
+        userId,
+        JSON.stringify({
+          status: 'offline',
+          lastSeen: Date.now(),
+        })
+      );
 
       const friends = await this.getUserFriends(userId);
-      friends.forEach(friendId => {
+      friends.forEach((friendId) => {
         io.to(`user:${friendId}`).emit('presence', {
           userId,
           status: 'offline',
-          lastSeen: Date.now()
+          lastSeen: Date.now(),
         });
       });
     }
@@ -234,12 +242,12 @@ class PresenceManager {
 
   async getBulkPresence(userIds) {
     const pipeline = redisClient.pipeline();
-    userIds.forEach(id => pipeline.hget('presence', id));
+    userIds.forEach((id) => pipeline.hget('presence', id));
 
     const results = await pipeline.exec();
     return userIds.map((id, i) => ({
       userId: id,
-      ...JSON.parse(results[i][1] || '{"status":"offline"}')
+      ...JSON.parse(results[i][1] || '{"status":"offline"}'),
     }));
   }
 }
@@ -285,8 +293,9 @@ io.on('connection', (socket) => {
     // Mark user as disconnected
     setTimeout(() => {
       const userSockets = io.sockets.sockets;
-      const hasOtherConnection = Array.from(userSockets.values())
-        .some(s => s.handshake.auth.userId === userId);
+      const hasOtherConnection = Array.from(userSockets.values()).some(
+        (s) => s.handshake.auth.userId === userId
+      );
 
       if (!hasOtherConnection) {
         // User fully disconnected, queue new messages
@@ -343,10 +352,7 @@ class MessageBus extends EventEmitter {
 
   publish(roomId, event, payload) {
     // Publish to Redis (distributed across servers)
-    this.redis.publish(
-      `room:${roomId}`,
-      JSON.stringify({ event, payload })
-    );
+    this.redis.publish(`room:${roomId}`, JSON.stringify({ event, payload }));
   }
 }
 
@@ -359,7 +365,7 @@ io.on('connection', (socket) => {
     messageBus.publish(roomId, 'message', {
       userId: socket.id,
       text,
-      timestamp: Date.now()
+      timestamp: Date.now(),
     });
   });
 });
@@ -374,7 +380,7 @@ io.on('connection', (socket) => {
 
   const originalEmit = socket.emit.bind(socket);
 
-  socket.emit = function(event, ...args) {
+  socket.emit = function (event, ...args) {
     bufferSize++;
 
     if (bufferSize > MAX_BUFFER_SIZE) {

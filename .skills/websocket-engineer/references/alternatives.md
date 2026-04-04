@@ -2,14 +2,14 @@
 
 ## Technology Comparison
 
-| Feature | WebSocket | SSE | Long Polling | HTTP/2 Push | WebRTC |
-|---------|-----------|-----|--------------|-------------|--------|
-| Bidirectional | Yes | No | Yes | No | Yes |
-| Real-time | Yes | Yes | Near | Yes | Yes |
-| Browser Support | Excellent | Good | Universal | Good | Good |
-| Proxy Issues | Some | Rare | Rare | Some | Some |
-| Overhead | Low | Low | High | Medium | Medium |
-| Use Case | Chat, games | Feeds, updates | Legacy | Assets | Audio/video |
+| Feature         | WebSocket   | SSE            | Long Polling | HTTP/2 Push | WebRTC      |
+| --------------- | ----------- | -------------- | ------------ | ----------- | ----------- |
+| Bidirectional   | Yes         | No             | Yes          | No          | Yes         |
+| Real-time       | Yes         | Yes            | Near         | Yes         | Yes         |
+| Browser Support | Excellent   | Good           | Universal    | Good        | Good        |
+| Proxy Issues    | Some        | Rare           | Rare         | Some        | Some        |
+| Overhead        | Low         | Low            | High         | Medium      | Medium      |
+| Use Case        | Chat, games | Feeds, updates | Legacy       | Assets      | Audio/video |
 
 ## Server-Sent Events (SSE)
 
@@ -41,7 +41,7 @@ app.get('/events', (req, res) => {
   const intervalId = setInterval(() => {
     const data = {
       timestamp: Date.now(),
-      value: Math.random()
+      value: Math.random(),
     };
 
     res.write(`data: ${JSON.stringify(data)}\n\n`);
@@ -103,7 +103,7 @@ class SSEManager {
   broadcast(event, data) {
     const message = `event: ${event}\ndata: ${JSON.stringify(data)}\n\n`;
 
-    this.clients.forEach(client => {
+    this.clients.forEach((client) => {
       client.write(message);
     });
   }
@@ -127,7 +127,7 @@ app.get('/events', (req, res) => {
 setInterval(() => {
   sseManager.broadcast('update', {
     timestamp: Date.now(),
-    activeClients: sseManager.clients.size
+    activeClients: sseManager.clients.size,
   });
 }, 10000);
 
@@ -200,10 +200,9 @@ const clientId = Math.random().toString(36);
 
 async function poll() {
   try {
-    const response = await fetch(
-      `http://localhost:3000/poll?clientId=${clientId}`,
-      { signal: AbortSignal.timeout(35000) }
-    );
+    const response = await fetch(`http://localhost:3000/poll?clientId=${clientId}`, {
+      signal: AbortSignal.timeout(35000),
+    });
 
     const data = await response.json();
 
@@ -234,7 +233,7 @@ const fs = require('fs');
 
 const server = http2.createSecureServer({
   key: fs.readFileSync('server.key'),
-  cert: fs.readFileSync('server.crt')
+  cert: fs.readFileSync('server.crt'),
 });
 
 server.on('stream', (stream, headers) => {
@@ -302,7 +301,7 @@ server.listen(3000);
 const io = require('socket.io')(3000, {
   transports: ['websocket', 'polling'], // Try WebSocket first
   upgrade: true,
-  allowUpgrades: true
+  allowUpgrades: true,
 });
 
 io.on('connection', (socket) => {
@@ -367,7 +366,7 @@ io.on('connection', (socket) => {
 
 ```javascript
 // SSE provides read-only, add WebSocket for writes
-app.get('/events', sseHandler);  // Keep for reads
+app.get('/events', sseHandler); // Keep for reads
 
 io.on('connection', (socket) => {
   socket.on('action', (data) => {

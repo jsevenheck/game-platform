@@ -24,25 +24,25 @@ npm i -D vitest
 
 ```ts
 // vitest.config.ts
-import { defineConfig } from 'vitest/config'
+import { defineConfig } from 'vitest/config';
 
 export default defineConfig({
   test: {
     globals: true,
-    environment: 'node',  // or 'jsdom' for DOM tests
+    environment: 'node', // or 'jsdom' for DOM tests
   },
-})
+});
 ```
 
 ```ts
 // example.test.ts
-import { describe, expect, it, vi } from 'vitest'
+import { describe, expect, it, vi } from 'vitest';
 
 describe('math', () => {
   it('adds numbers', () => {
-    expect(1 + 1).toBe(2)
-  })
-})
+    expect(1 + 1).toBe(2);
+  });
+});
 ```
 
 ## Reference Files

@@ -22,20 +22,20 @@ games/secret-signals/ <- internal platform module
 
 Custom skills live in `.skills/`.
 
-| Skill                    | Trigger description                                                                                          |
-| ------------------------ | ------------------------------------------------------------------------------------------------------------ |
-| `find-skills`            | Discover and install agent skills when the user asks for capabilities, tooling, or "is there a skill for X?" |
-| `frontend-design`        | Build distinctive, production-grade frontend UI with strong visual direction and polished implementation     |
-| `playwright-cli`         | Browser automation via `playwright-cli` for navigation, interaction, screenshots, and debugging              |
-| `pnpm`                   | pnpm-specific commands, workspace config, catalogs, overrides, and patches                                   |
-| `tailwind-design-system` | Tailwind CSS v4 design systems, tokens, shared component patterns, and responsive styling                    |
-| `ui-ux-pro-max`          | UI/UX design intelligence for styles, palettes, typography, accessibility, and frontend direction            |
-| `vite`                   | Vite build tool configuration, plugin API, SSR, and Vite 8 Rolldown migration                                |
-| `vue-best-practices`     | Vue 3 Composition API, reactive components, SSR, TypeScript patterns, and Pinia/Vue Router integration       |
-| `pinia`                  | Pinia official Vue state management library — stores, state/getters/actions, store patterns, plugins, SSR          |
-| `vitest`                 | Vitest testing framework — config, test suites, mocking with vi.fn/vi.mock, coverage, parallel runs               |
-| `vue-pinia-best-practices` | Pinia best practices, common gotchas (no active Pinia, reactivity loss), and state management patterns           |
-| `websocket-engineer`     | Real-time WebSocket and Socket.IO architecture for bidirectional messaging, room management, presence, and scaling |
+| Skill                      | Trigger description                                                                                                |
+| -------------------------- | ------------------------------------------------------------------------------------------------------------------ |
+| `find-skills`              | Discover and install agent skills when the user asks for capabilities, tooling, or "is there a skill for X?"       |
+| `frontend-design`          | Build distinctive, production-grade frontend UI with strong visual direction and polished implementation           |
+| `playwright-cli`           | Browser automation via `playwright-cli` for navigation, interaction, screenshots, and debugging                    |
+| `pnpm`                     | pnpm-specific commands, workspace config, catalogs, overrides, and patches                                         |
+| `tailwind-design-system`   | Tailwind CSS v4 design systems, tokens, shared component patterns, and responsive styling                          |
+| `ui-ux-pro-max`            | UI/UX design intelligence for styles, palettes, typography, accessibility, and frontend direction                  |
+| `vite`                     | Vite build tool configuration, plugin API, SSR, and Vite 8 Rolldown migration                                      |
+| `vue-best-practices`       | Vue 3 Composition API, reactive components, SSR, TypeScript patterns, and Pinia/Vue Router integration             |
+| `pinia`                    | Pinia official Vue state management library — stores, state/getters/actions, store patterns, plugins, SSR          |
+| `vitest`                   | Vitest testing framework — config, test suites, mocking with vi.fn/vi.mock, coverage, parallel runs                |
+| `vue-pinia-best-practices` | Pinia best practices, common gotchas (no active Pinia, reactivity loss), and state management patterns             |
+| `websocket-engineer`       | Real-time WebSocket and Socket.IO architecture for bidirectional messaging, room management, presence, and scaling |
 
 ## Commands (always run from workspace root)
 

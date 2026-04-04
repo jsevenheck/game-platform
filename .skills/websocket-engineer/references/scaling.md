@@ -32,13 +32,13 @@ const { createClient } = require('redis');
 
 const httpServer = createServer();
 const io = new Server(httpServer, {
-  cors: { origin: '*' }
+  cors: { origin: '*' },
 });
 
 // Redis pub/sub client setup
 const pubClient = createClient({
   host: 'localhost',
-  port: 6379
+  port: 6379,
 });
 const subClient = pubClient.duplicate();
 
@@ -61,11 +61,13 @@ const { createAdapter } = require('@socket.io/redis-streams-adapter');
 const redisClient = createClient({ url: 'redis://localhost:6379' });
 
 redisClient.connect().then(() => {
-  io.adapter(createAdapter(redisClient, {
-    streamName: 'socket.io-stream',
-    maxLen: 10000, // Keep last 10k messages
-    readCount: 100 // Process 100 messages at a time
-  }));
+  io.adapter(
+    createAdapter(redisClient, {
+      streamName: 'socket.io-stream',
+      maxLen: 10000, // Keep last 10k messages
+      readCount: 100, // Process 100 messages at a time
+    })
+  );
 });
 ```
 
@@ -132,10 +134,7 @@ backend websocket_backend
 // Server-side: Set affinity cookie
 io.engine.on('connection', (rawSocket) => {
   const serverID = process.env.SERVER_ID || 'server1';
-  rawSocket.request.res.setHeader(
-    'Set-Cookie',
-    `io=${serverID}; Path=/; HttpOnly; SameSite=Lax`
-  );
+  rawSocket.request.res.setHeader('Set-Cookie', `io=${serverID}; Path=/; HttpOnly; SameSite=Lax`);
 });
 ```
 
@@ -178,7 +177,7 @@ io.on('connection', async (socket) => {
     socketId: socket.id,
     serverId: process.env.SERVER_ID,
     connectedAt: Date.now(),
-    status: 'online'
+    status: 'online',
   });
 
   socket.on('disconnect', async () => {
@@ -194,7 +193,7 @@ async function sendToUser(userId, event, data) {
   if (serverId === process.env.SERVER_ID) {
     // User is on this server
     const sockets = await io.in(`user:${userId}`).fetchSockets();
-    sockets.forEach(socket => socket.emit(event, data));
+    sockets.forEach((socket) => socket.emit(event, data));
   } else {
     // User is on another server - use Redis to route
     io.to(`user:${userId}`).emit(event, data);
@@ -234,19 +233,19 @@ spec:
   minReplicas: 3
   maxReplicas: 20
   metrics:
-  - type: Resource
-    resource:
-      name: cpu
-      target:
-        type: Utilization
-        averageUtilization: 70
-  - type: Pods
-    pods:
-      metric:
-        name: websocket_connections
-      target:
-        type: AverageValue
-        averageValue: "40000" # Scale when avg > 40k connections/pod
+    - type: Resource
+      resource:
+        name: cpu
+        target:
+          type: Utilization
+          averageUtilization: 70
+    - type: Pods
+      pods:
+        metric:
+          name: websocket_connections
+        target:
+          type: AverageValue
+          averageValue: '40000' # Scale when avg > 40k connections/pod
 ```
 
 ## Graceful Shutdown
@@ -306,7 +305,8 @@ if (cluster.isMaster) {
 ```javascript
 const uWS = require('uWebSockets.js');
 
-const app = uWS.App()
+const app = uWS
+  .App()
   .ws('/*', {
     compression: uWS.SHARED_COMPRESSOR,
     maxPayloadLength: 16 * 1024,
@@ -323,7 +323,7 @@ const app = uWS.App()
 
     close: (ws, code, message) => {
       console.log('Client disconnected');
-    }
+    },
   })
   .listen(9001, (token) => {
     if (token) {
