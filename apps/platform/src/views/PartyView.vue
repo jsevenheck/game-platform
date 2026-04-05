@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref, onMounted, onBeforeUnmount } from 'vue';
+import { ref, computed, onMounted, onBeforeUnmount } from 'vue';
 import { useRouter } from 'vue-router';
 import { usePartyStore } from '../stores/party';
 import { usePartySocket } from '../composables/usePartySocket';
@@ -12,6 +12,14 @@ const socket = usePartySocket();
 
 const error = ref('');
 const launching = ref(false);
+
+const gameInProgress = computed(
+  () => store.party?.status === 'in-match' && !!store.party?.activeMatch
+);
+const activeGameName = computed(() => {
+  const gameId = store.party?.activeMatch?.gameId;
+  return clientGameRegistry.find((g) => g.definition.id === gameId)?.definition.name ?? gameId;
+});
 
 function handleSelectGame(gameId: string) {
   if (!store.isHost || !store.playerId) return;
@@ -29,6 +37,13 @@ function handleLaunch() {
   });
 }
 
+function handleEndGame() {
+  if (!store.isHost || !store.playerId) return;
+  socket.emit('returnToLobby', { playerId: store.playerId }, (res) => {
+    if (!res.ok) error.value = res.error;
+  });
+}
+
 function handleLeave() {
   if (!store.playerId) return;
   socket.emit('leaveParty', { playerId: store.playerId });
@@ -37,11 +52,20 @@ function handleLeave() {
 }
 
 function handlePartyUpdate(view: Parameters<typeof store.applyPartyUpdate>[0]) {
+  const wasInMatch = store.party?.status === 'in-match';
   store.applyPartyUpdate(view);
 
-  // Navigate to game when match starts
-  if (view.status === 'in-match' && view.activeMatch) {
+  // Auto-navigate only on fresh launch (lobby/launching → in-match).
+  // If the player was already in-match (voluntarily left the game view),
+  // don't force them back — they can rejoin via the banner.
+  if (!wasInMatch && view.status === 'in-match' && view.activeMatch) {
     router.push(`/party/${props.inviteCode}/game/${view.activeMatch.gameId}`);
+  }
+
+  // Players in lobby view won't navigate through GameView, so we ACK here
+  // to let the server finalize the lobby transition without waiting 10 s.
+  if (view.status === 'returning' && store.playerId) {
+    socket.emit('ackReturnedToLobby', { playerId: store.playerId });
   }
 }
 
@@ -119,6 +143,26 @@ onBeforeUnmount(() => {
     </header>
 
     <main class="mx-auto flex max-w-140 flex-col gap-8 p-4 pt-6">
+      <!-- Rejoin banner when a game is running -->
+      <section
+        v-if="gameInProgress"
+        class="flex flex-col items-center gap-4 rounded-[--radius-md] border border-accent bg-accent-muted p-6 text-center"
+      >
+        <p class="text-sm font-medium text-muted-foreground">Game in progress</p>
+        <p class="text-lg font-bold text-foreground">{{ activeGameName }}</p>
+        <button
+          class="ui-btn-primary px-8 text-base"
+          @click="
+            router.push(`/party/${props.inviteCode}/game/${store.party!.activeMatch!.gameId}`)
+          "
+        >
+          Rejoin Game
+        </button>
+        <button v-if="store.isHost" class="ui-btn-danger px-6 text-sm" @click="handleEndGame">
+          End Game
+        </button>
+      </section>
+
       <section>
         <h2 class="ui-section-label">Players ({{ store.connectedMembers.length }})</h2>
         <ul class="flex flex-col gap-1.5">
@@ -139,7 +183,7 @@ onBeforeUnmount(() => {
         </ul>
       </section>
 
-      <section v-if="store.isHost">
+      <section v-if="store.isHost && !gameInProgress">
         <h2 class="ui-section-label">Select a Game</h2>
         <div class="grid grid-cols-[repeat(auto-fill,minmax(150px,1fr))] gap-3">
           <button
@@ -161,7 +205,10 @@ onBeforeUnmount(() => {
         </div>
       </section>
 
-      <section v-else-if="store.party?.selectedGameId" class="text-center text-muted">
+      <section
+        v-else-if="!gameInProgress && store.party?.selectedGameId"
+        class="text-center text-muted"
+      >
         <p class="mb-2 text-base">
           Game selected:
           <strong class="text-foreground">{{
@@ -175,7 +222,7 @@ onBeforeUnmount(() => {
       <p v-if="error" class="text-sm text-danger">{{ error }}</p>
 
       <button
-        v-if="store.isHost"
+        v-if="store.isHost && !gameInProgress"
         class="ui-btn-primary text-lg"
         :disabled="!store.party?.selectedGameId || launching"
         @click="handleLaunch"

@@ -6,19 +6,13 @@ This guide walks through every step required to integrate a new game into the pl
 
 A game consists of three parts:
 
-| Layer      | Location                      | Purpose                                             |
-| ---------- | ----------------------------- | --------------------------------------------------- |
-| **Core**   | `games/quiz-rush/core/src/`   | Shared types, constants, event definitions          |
-| **Server** | `games/quiz-rush/server/src/` | Socket.IO game logic (runs on the platform server)  |
-| **UI**     | `games/quiz-rush/ui-vue/src/` | Vue 3 components for the platform runtime only      |
+| Layer      | Location                      | Purpose                                            |
+| ---------- | ----------------------------- | -------------------------------------------------- |
+| **Core**   | `games/quiz-rush/core/src/`   | Shared types, constants, event definitions         |
+| **Server** | `games/quiz-rush/server/src/` | Socket.IO game logic (runs on the platform server) |
+| **UI**     | `games/quiz-rush/ui-vue/src/` | Vue 3 components for the platform runtime only     |
 
 Games are **internal source modules** — they have no standalone server, client, or build step. The platform imports them directly.
-
----
-
-## Standalone Mode Status
-
-Standalone mode has been fully removed from the platform and all games. The only remaining `standalone` string occurrences are dead fallback path candidates inside `games/blackout/server/src/db/database.ts` (lines 10, 40, 110) and `games/blackout/scripts/import-db-csv.mjs` (line 133). These are unreachable in the current runtime — they exist only in a path-resolution candidate list that iterates until an existing directory is found, and no `dist/standalone-server` directory is ever created. No game has its own standalone server, build target, router, or UI entry point.
 
 ---
 
@@ -262,7 +256,7 @@ onUnmounted(() => {
 
 ### `ui-vue/src/PlatformAdapter.vue`
 
-Wraps `App.vue` and adds the platform overlay (replay / return to lobby):
+Wraps `App.vue` and adds the platform overlay (replay / return to lobby). Also accepts `actionError` to display errors from platform actions:
 
 ```vue
 <script setup lang="ts">
@@ -277,6 +271,7 @@ const props = defineProps<{
   isHost?: boolean;
   onReplayGame?: () => void;
   onReturnToLobby?: () => void;
+  actionError?: string;  // Optional: error from platform replay/lobby actions
 }>();
 
 const gamePhase = ref('');
@@ -290,20 +285,26 @@ function onPhaseChange(phase: string) {
 <template>
   <div class="platform-game-wrapper">
     <GameApp
-      :namespace="props.namespace"
-      :session-id="props.matchKey"
-      :player-name="props.playerName"
-      :player-id="props.playerId"
-      :is-host="props.isHost"
+      :ws-namespace="namespace"
+      :session-id="matchKey"
+      :player-name="playerName"
+      :player-id="playerId"
+      :is-host="isHost"
       @phase-change="onPhaseChange"
     />
     <div v-if="gameEnded && isHost" class="platform-overlay">
       <button class="btn-replay" @click="onReplayGame?.()">Play Again</button>
       <button class="btn-lobby" @click="onReturnToLobby?.()">Back to Party</button>
+      <p v-if="actionError" class="mt-3 text-center text-sm text-danger">{{ actionError }}</p>
+    </div>
+    <div v-else-if="gameEnded" class="platform-overlay">
+      <p class="text-sm text-muted-foreground">Waiting for host to decide...</p>
     </div>
   </div>
 </template>
 ```
+
+> **Important:** The prop names differ between `PlatformAdapter` (uses `wsNamespace`, `matchKey`) and the game `App.vue` (uses `wsNamespace`, `sessionId`). The adapter is responsible for mapping these correctly.
 
 ---
 
@@ -349,7 +350,9 @@ export const clientGameRegistry: PlatformGameModule[] = [
 
 ### 5c. Vite Alias
 
-Edit `apps/platform/vite.config.ts` — add the UI alias:
+Edit `apps/platform/vite.config.ts` — two changes:
+
+**Add the UI alias:**
 
 ```ts
 resolve: {
@@ -360,13 +363,38 @@ resolve: {
 },
 ```
 
-Also update the `sharedAliasPlugin()` to handle the new game's `@shared` imports:
+**Wire `@shared/*` resolution into `sharedAliasPlugin()`:**
 
 ```ts
-} else if (normalized.includes('/games/quiz-rush/')) {
-  baseDir = resolve(GAMES_ROOT, 'quiz-rush/core/src');
+function sharedAliasPlugin(): Plugin {
+  return {
+    name: 'shared-alias',
+    async resolveId(source, importer) {
+      if (!source.startsWith('@shared')) return null;
+      if (!importer) return null;
+      const normalized = importer.replace(/\\\\/g, '/');
+      const subpath = source.replace(/^@shared\/?/, '');
+      let baseDir: string | undefined;
+      if (normalized.includes('/games/blackout/')) {
+        baseDir = resolve(GAMES_ROOT, 'blackout/core/src');
+      } else if (normalized.includes('/games/imposter/')) {
+        baseDir = resolve(GAMES_ROOT, 'imposter/core/src');
+      } else if (normalized.includes('/games/secret-signals/')) {
+        baseDir = resolve(GAMES_ROOT, 'secret-signals/core/src');
+      } else if (normalized.includes('/games/quiz-rush/')) {
+        baseDir = resolve(GAMES_ROOT, 'quiz-rush/core/src'); // ← add this branch
+      }
+      if (!baseDir) return null;
+      const resolved = await this.resolve('./' + subpath, resolve(baseDir, '_placeholder.ts'), {
+        skipSelf: true,
+      });
+      return resolved;
+    },
+  };
 }
 ```
+
+> **Note:** `sharedAliasPlugin()` is **hardcoded** — every new game must add its own `else if` branch.
 
 ### 5d. Tailwind Source Scan
 
@@ -376,23 +404,19 @@ Edit `apps/platform/src/styles/main.css` — add a `@source` directive so Tailwi
 @source "../../../../games/quiz-rush/ui-vue/src/**/*.{vue,ts}";
 ```
 
+> The platform's `main.css` already has a global scan covering all games (`@source "../../../../games/*/ui-vue/src/**/*.{vue,ts}";`), so a per-game source is optional. Still recommended to keep the generated CSS more focused.
+
 Also add your game's accent color token inside `@theme`:
 
 ```css
 --color-quiz-rush: #your-color;
 ```
 
-This makes `bg-quiz-rush`, `text-quiz-rush`, `border-quiz-rush`, etc. available in your components. Use `!bg-quiz-rush` for important overrides where needed.
+This makes `bg-quiz-rush`, `text-quiz-rush`, `border-quiz-rush`, etc. available. Use `!bg-quiz-rush` for important overrides.
 
 ### 5e. pnpm Workspace
 
-Add to `pnpm-workspace.yaml` if not already covered by a glob:
-
-```yaml
-packages:
-  - 'apps/*'
-  - 'games/*'
-```
+The workspace is already configured via the glob `'games/*'` in `pnpm-workspace.yaml`, so no changes are needed.
 
 ---
 
@@ -402,36 +426,45 @@ Use the platform's design tokens and shared component classes. Do not define cus
 
 ### Design Tokens
 
-| Category     | Token names                                                          |
-|--------------|----------------------------------------------------------------------|
-| Surfaces     | `canvas`, `shell`, `panel`, `elevated`                              |
-| Text         | `foreground`, `muted`, `muted-foreground`                           |
-| Borders      | `border`, `border-strong`, `ring`                                   |
-| Platform     | `accent` (orange `#f97316`)                                         |
-| Game accents | `blackout` (violet), `imposter` (crimson), `signals` (cyan)         |
-| Semantic     | `danger`, `success`, `warning` (+ `-muted` variants)               |
+| Category     | Token names                                                 |
+| ------------ | ----------------------------------------------------------- |
+| Surfaces     | `canvas`, `shell`, `panel`, `elevated`                      |
+| Text         | `foreground`, `muted`, `muted-foreground`                   |
+| Borders      | `border`, `border-strong`, `ring`                           |
+| Platform     | `accent` (orange `#f97316`)                                 |
+| Game accents | `blackout` (violet), `imposter` (crimson), `signals` (cyan) |
+| Semantic     | `danger`, `success`, `warning` (+ `-muted` variants)        |
 
 Use `bg-canvas`, `text-foreground`, `border-border`, etc. directly in your templates.
 
 ### Shared Component Classes
 
-| Class | Purpose |
-|---|---|
-| `ui-shell-header` | Top navigation bar |
-| `ui-panel` | Content panel |
-| `ui-overlay` | Full-screen overlay backdrop |
-| `ui-dialog` | Centered dialog box |
-| `ui-btn-primary` | Primary action button |
-| `ui-btn-secondary` | Secondary action button |
-| `ui-btn-ghost` | Ghost / tertiary button |
-| `ui-btn-danger` | Destructive action button |
-| `ui-input` | Text input field |
-| `ui-badge` | Status badge |
-| `ui-stepper-btn` | Numeric stepper button |
-| `ui-section-label` | Section heading label |
-| `ui-progress-track` / `ui-progress-fill` | Progress bar |
+| Class                                    | Purpose                      |
+| ---------------------------------------- | ---------------------------- |
+| `ui-shell-header`                        | Top navigation bar           |
+| `ui-panel`                               | Content panel                |
+| `ui-overlay`                             | Full-screen overlay backdrop |
+| `ui-dialog`                              | Centered dialog box          |
+| `ui-btn-primary`                         | Primary action button        |
+| `ui-btn-secondary`                       | Secondary action button      |
+| `ui-btn-ghost`                           | Ghost / tertiary button      |
+| `ui-btn-danger`                          | Destructive action button    |
+| `ui-input`                               | Text input field             |
+| `ui-badge`                               | Status badge                 |
+| `ui-stepper-btn`                         | Numeric stepper button       |
+| `ui-section-label`                       | Section heading label        |
+| `ui-progress-track` / `ui-progress-fill` | Progress bar                 |
 
 These classes are defined in `@layer components` and are available in all game Vue files without any import.
+
+---
+
+## Step 7 — Add Documentation
+
+Create `games/quiz-rush/docs/` with:
+
+- **`api.md`** — Socket.IO events, payloads, and server responses.
+- **`architecture.md`** — Game phases, state machine, and design decisions.
 
 ---
 
@@ -439,10 +472,10 @@ These classes are defined in `@layer components` and are available in all game V
 
 ### Unit Tests
 
-Create `games/quiz-rush/__tests__/` with Vitest test files. Register the project in `vitest.config.ts`:
+Create `games/quiz-rush/__tests__/` with Vitest test files. Register the project in `vitest.projects.ts`:
 
 ```ts
-{
+export const quizRushProject = {
   resolve: {
     alias: [{ find: '@shared', replacement: resolve(GAMES_ROOT, 'quiz-rush/core/src') }],
   },
@@ -453,7 +486,16 @@ Create `games/quiz-rush/__tests__/` with Vitest test files. Register the project
     globals: true,
     clearMocks: true,
   },
-},
+};
+
+// Add to allProjects:
+export const allProjects = [
+  platformProject,
+  blackoutProject,
+  imposterProject,
+  secretSignalsProject,
+  quizRushProject, // ← add this
+];
 ```
 
 ### E2E Tests
@@ -509,15 +551,6 @@ The Playwright config passes `E2E_TESTS=1` to the server automatically.
 
 ---
 
-## Step 9 — Add Documentation
-
-Create `games/quiz-rush/docs/` with:
-
-- **`api.md`** — Socket.IO events, payloads, and server responses.
-- **`architecture.md`** — Game phases, state machine, and design decisions.
-
----
-
 ## Checklist
 
 - [ ] `games/quiz-rush/` directory structure created
@@ -531,7 +564,7 @@ Create `games/quiz-rush/docs/` with:
 - [ ] `apps/platform/src/games/index.ts` — client module registered
 - [ ] `apps/platform/vite.config.ts` — UI alias + `@shared` plugin entry added
 - [ ] `apps/platform/src/styles/main.css` — `@source` directive + accent color token added
-- [ ] `vitest.config.ts` — test project added
+- [ ] `vitest.projects.ts` — test project added
 - [ ] `pnpm install` — no errors
 - [ ] `pnpm lint` — passes
 - [ ] `pnpm typecheck` — passes

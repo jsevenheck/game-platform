@@ -62,7 +62,7 @@ function handleSubmit() {
 
 <template>
   <div
-    class="description-phase flex flex-col items-center gap-6 px-4 py-8 min-h-dvh bg-gradient-to-br from-imposter-gradient-1 via-imposter-gradient-2 to-imposter-gradient-3"
+    class="description-phase flex flex-col items-center gap-6 px-4 py-8 min-h-dvh bg-linear-to-br from-imposter-gradient-1 via-imposter-gradient-2 to-imposter-gradient-3"
   >
     <div
       class="round-badge bg-imposter-muted text-imposter px-4 py-1.5 rounded-full text-sm font-bold tracking-wide uppercase border border-imposter/30"
@@ -72,7 +72,7 @@ function handleSubmit() {
 
     <!-- Word reveal -->
     <div
-      class="w-full max-w-[360px] p-5 bg-white/[0.04] border border-white/[0.08] rounded-[--radius-xl] text-center"
+      class="w-full max-w-90 p-5 bg-white/4 border border-white/8 rounded-[--radius-xl] text-center"
     >
       <template v-if="store.myWord">
         <p class="text-muted-foreground text-sm uppercase tracking-[0.15em] mb-2">
@@ -98,9 +98,7 @@ function handleSubmit() {
     </div>
 
     <!-- Turn card -->
-    <div
-      class="w-full max-w-[360px] p-5 bg-white/[0.04] border border-white/[0.08] rounded-[--radius-xl]"
-    >
+    <div class="w-full max-w-90 p-5 bg-white/4 border border-white/8 rounded-[--radius-xl]">
       <p class="text-muted-foreground text-sm uppercase tracking-[0.15em] mb-2">Current Turn</p>
       <h2 class="text-foreground text-xl font-bold mb-1">
         {{ currentDescriber?.name ?? 'Waiting...' }}
@@ -116,7 +114,7 @@ function handleSubmit() {
       </p>
       <button
         v-if="store.isHost && store.room?.currentDescriberId"
-        class="ui-btn-secondary mt-3 hover:!border-imposter hover:!text-imposter"
+        class="ui-btn-secondary mt-3 hover:border-imposter! hover:text-imposter!"
         @click="$emit('skipDescriptionTurn')"
       >
         Skip Turn
@@ -124,7 +122,7 @@ function handleSubmit() {
     </div>
 
     <!-- Description input -->
-    <div v-if="isMyTurn" class="w-full max-w-[360px]">
+    <div v-if="isMyTurn" class="w-full max-w-90">
       <label class="text-muted text-sm block mb-2">
         {{ store.myWord ? 'Describe the word (be subtle!)' : 'Write a convincing description' }}
       </label>
@@ -134,12 +132,12 @@ function handleSubmit() {
           type="text"
           :placeholder="store.myWord ? 'Your clue...' : 'Blend in...'"
           maxlength="30"
-          class="ui-input !bg-white/5 !border-white/10 focus:!border-imposter flex-1"
+          class="ui-input bg-white/5! border-white/10! focus:border-imposter! flex-1"
           @keyup.enter="handleSubmit"
         />
         <button
           id="btn-submit-description"
-          class="ui-btn-primary !bg-imposter hover:!bg-imposter-hover"
+          class="ui-btn-primary bg-imposter! hover:bg-imposter-hover!"
           @click="handleSubmit"
         >
           Submit
@@ -157,7 +155,7 @@ function handleSubmit() {
     <!-- Submitted notice -->
     <div
       v-else-if="store.hasSubmittedDescription"
-      class="w-full max-w-[360px] p-5 bg-white/[0.04] border border-white/[0.08] rounded-[--radius-xl] text-center"
+      class="w-full max-w-90 p-5 bg-white/4 border border-white/8 rounded-[--radius-xl] text-center"
     >
       <p class="text-success font-semibold">
         {{
@@ -169,17 +167,15 @@ function handleSubmit() {
     </div>
 
     <!-- Clue board -->
-    <div
-      class="w-full max-w-[360px] p-5 bg-white/[0.04] border border-white/[0.08] rounded-[--radius-xl]"
-    >
+    <div class="w-full max-w-90 p-5 bg-white/4 border border-white/8 rounded-[--radius-xl]">
       <h3 class="text-foreground text-base mb-3">Clues in Order</h3>
       <div class="flex flex-col gap-2">
         <div
           v-for="player in orderedPlayers"
           :key="player.id"
-          class="flex flex-col gap-0.5 px-3.5 py-3 rounded-[--radius-lg] bg-white/[0.03] border border-white/[0.06]"
+          class="flex flex-col gap-0.5 px-3.5 py-3 rounded-[--radius-lg] bg-white/3 border border-white/6"
           :class="{
-            '!border-imposter/35 !bg-imposter/[0.08]': player.id === store.room?.currentDescriberId,
+            'border-imposter/35! bg-imposter/8!': player.id === store.room?.currentDescriberId,
           }"
         >
           <span class="text-muted text-xs font-semibold">{{ player.name }}</span>
@@ -195,13 +191,11 @@ function handleSubmit() {
     </div>
 
     <!-- Progress -->
-    <div
-      class="w-full max-w-[360px] p-5 bg-white/[0.04] border border-white/[0.08] rounded-[--radius-xl]"
-    >
+    <div class="w-full max-w-90 p-5 bg-white/4 border border-white/8 rounded-[--radius-xl]">
       <h3 class="text-foreground text-base mb-3">Clue Progress</h3>
       <div class="ui-progress-track">
         <div
-          class="ui-progress-fill !bg-imposter"
+          class="ui-progress-fill bg-imposter!"
           :style="{
             width: `${((store.room?.submittedDescriptionIds.length ?? 0) / (store.connectedPlayers.length || 1)) * 100}%`,
           }"

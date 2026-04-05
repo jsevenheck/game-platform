@@ -48,11 +48,11 @@ Sec-WebSocket-Accept: HSmrc0sMlYUkAGmm5OPpG2HaGWk=
 ```javascript
 const OPCODES = {
   CONTINUATION: 0x0, // Continuation frame
-  TEXT: 0x1,         // Text frame
-  BINARY: 0x2,       // Binary frame
-  CLOSE: 0x8,        // Connection close
-  PING: 0x9,         // Heartbeat ping
-  PONG: 0xA          // Heartbeat pong
+  TEXT: 0x1, // Text frame
+  BINARY: 0x2, // Binary frame
+  CLOSE: 0x8, // Connection close
+  PING: 0x9, // Heartbeat ping
+  PONG: 0xa, // Heartbeat pong
 };
 ```
 
@@ -107,7 +107,7 @@ const CLOSE_CODES = {
   1009: 'Message Too Big',
   1010: 'Mandatory Extension',
   1011: 'Internal Server Error',
-  1015: 'TLS Handshake Fail'
+  1015: 'TLS Handshake Fail',
 };
 
 // Proper close handling
@@ -120,7 +120,7 @@ ws.close(1000, 'Normal closure');
 // Set max payload size (default 100MB)
 const wss = new WebSocket.Server({
   port: 8080,
-  maxPayload: 1024 * 1024 // 1MB
+  maxPayload: 1024 * 1024, // 1MB
 });
 
 // Handle too large messages
@@ -140,17 +140,17 @@ const wss = new WebSocket.Server({
     zlibDeflateOptions: {
       chunkSize: 1024,
       memLevel: 7,
-      level: 3
+      level: 3,
     },
     zlibInflateOptions: {
-      chunkSize: 10 * 1024
+      chunkSize: 10 * 1024,
     },
     clientNoContextTakeover: true,
     serverNoContextTakeover: true,
     serverMaxWindowBits: 10,
     concurrencyLimit: 10,
-    threshold: 1024 // Only compress messages > 1KB
-  }
+    threshold: 1024, // Only compress messages > 1KB
+  },
 });
 ```
 
@@ -182,14 +182,14 @@ socket.onmessage = (event) => {
 
 ## Protocol Comparison
 
-| Feature | WebSocket | Socket.IO |
-|---------|-----------|-----------|
-| Protocol | Native WS | WS + fallbacks |
-| Handshake | HTTP Upgrade | Engine.IO handshake |
-| Reconnection | Manual | Automatic |
-| Broadcasting | Manual | Built-in |
-| Rooms | Manual | Built-in |
-| Acknowledgments | Manual | Built-in |
-| Binary | Native | Converted |
-| Overhead | Minimal | Higher |
-| Fallback | None | Long polling, SSE |
+| Feature         | WebSocket    | Socket.IO           |
+| --------------- | ------------ | ------------------- |
+| Protocol        | Native WS    | WS + fallbacks      |
+| Handshake       | HTTP Upgrade | Engine.IO handshake |
+| Reconnection    | Manual       | Automatic           |
+| Broadcasting    | Manual       | Built-in            |
+| Rooms           | Manual       | Built-in            |
+| Acknowledgments | Manual       | Built-in            |
+| Binary          | Native       | Converted           |
+| Overhead        | Minimal      | Higher              |
+| Fallback        | None         | Long polling, SSE   |

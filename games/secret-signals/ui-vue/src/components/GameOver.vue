@@ -27,7 +27,7 @@ const winningLabel = computed(() => {
     <h1 class="text-4xl font-black text-foreground">Game Over!</h1>
 
     <div v-if="store.room?.winningTeams.length" class="text-center">
-      <p class="text-muted uppercase text-sm tracking-[0.1em]">
+      <p class="text-muted uppercase text-sm tracking-widest">
         {{ store.room.winningTeams.length === 1 ? 'Winner' : 'Winners' }}
       </p>
       <h2
@@ -44,7 +44,7 @@ const winningLabel = computed(() => {
       </h2>
     </div>
 
-    <div class="w-full max-w-[720px]">
+    <div class="w-full max-w-180">
       <h3 class="text-muted text-center mb-4">Final Board</h3>
       <GameBoard />
     </div>
@@ -72,7 +72,7 @@ const winningLabel = computed(() => {
 
     <button
       v-if="isHost"
-      class="ui-btn-primary !bg-signals hover:!bg-signals-hover"
+      class="ui-btn-primary bg-signals! hover:bg-signals-hover!"
       @click="$emit('restart')"
     >
       Play Again

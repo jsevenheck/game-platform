@@ -235,7 +235,11 @@ export function resolveVotes(room: Room): void {
   }
 
   const votedOutIds = Object.keys(tally).filter((id) => tally[id] === maxVotes);
-  const caughtInfiltrators = votedOutIds.filter((id) => room.infiltratorIds.includes(id));
+
+  // Imposter is only caught if they are the sole player with the most votes.
+  // Ties (imposter shares max votes with non-infiltrators) count as "not caught".
+  const caughtInfiltrators =
+    votedOutIds.length === 1 ? votedOutIds.filter((id) => room.infiltratorIds.includes(id)) : [];
   room.revealedInfiltrators = caughtInfiltrators;
 
   if (caughtInfiltrators.length > 0 && room.infiltratorIds.length > 0) {

@@ -22,17 +22,20 @@ games/secret-signals/ <- internal platform module
 
 Custom skills live in `.skills/`.
 
-| Skill                    | Trigger description                                                                                          |
-| ------------------------ | ------------------------------------------------------------------------------------------------------------ |
-| `find-skills`            | Discover and install agent skills when the user asks for capabilities, tooling, or "is there a skill for X?" |
-| `frontend-design`        | Build distinctive, production-grade frontend UI with strong visual direction and polished implementation     |
-| `playwright-cli`         | Browser automation via `playwright-cli` for navigation, interaction, screenshots, and debugging              |
-| `pnpm`                   | pnpm-specific commands, workspace config, catalogs, overrides, and patches                                   |
-| `tailwind-design-system` | Tailwind CSS v4 design systems, tokens, shared component patterns, and responsive styling                    |
-| `ui-ux-pro-max`          | UI/UX design intelligence for styles, palettes, typography, accessibility, and frontend direction            |
-| `vite`                   | Vite build tool configuration, plugin API, SSR, and Vite 8 Rolldown migration                                |
-| `vue-best-practices`     | Vue 3 Composition API, reactive components, SSR, TypeScript patterns, and Pinia/Vue Router integration       |
-| `websocket-engineer`     | Real-time WebSocket and Socket.IO architecture for bidirectional messaging, room management, presence, and scaling |
+| Skill                      | Trigger description                                                                                                |
+| -------------------------- | ------------------------------------------------------------------------------------------------------------------ |
+| `find-skills`              | Discover and install agent skills when the user asks for capabilities, tooling, or "is there a skill for X?"       |
+| `frontend-design`          | Build distinctive, production-grade frontend UI with strong visual direction and polished implementation           |
+| `playwright-cli`           | Browser automation via `playwright-cli` for navigation, interaction, screenshots, and debugging                    |
+| `pnpm`                     | pnpm-specific commands, workspace config, catalogs, overrides, and patches                                         |
+| `tailwind-design-system`   | Tailwind CSS v4 design systems, tokens, shared component patterns, and responsive styling                          |
+| `ui-ux-pro-max`            | UI/UX design intelligence for styles, palettes, typography, accessibility, and frontend direction                  |
+| `vite`                     | Vite build tool configuration, plugin API, SSR, and Vite 8 Rolldown migration                                      |
+| `vue-best-practices`       | Vue 3 Composition API, reactive components, SSR, TypeScript patterns, and Pinia/Vue Router integration             |
+| `pinia`                    | Pinia official Vue state management library — stores, state/getters/actions, store patterns, plugins, SSR          |
+| `vitest`                   | Vitest testing framework — config, test suites, mocking with vi.fn/vi.mock, coverage, parallel runs                |
+| `vue-pinia-best-practices` | Pinia best practices, common gotchas (no active Pinia, reactivity loss), and state management patterns             |
+| `websocket-engineer`       | Real-time WebSocket and Socket.IO architecture for bidirectional messaging, room management, presence, and scaling |
 
 ## Commands (always run from workspace root)
 
@@ -68,7 +71,7 @@ Tailwind CSS v4.2 with `@tailwindcss/vite` plugin. Single design-system entry po
 
 `ui-shell-header`, `ui-panel`, `ui-overlay`, `ui-dialog`, `ui-btn-primary`, `ui-btn-secondary`, `ui-btn-ghost`, `ui-btn-danger`, `ui-input`, `ui-badge`, `ui-stepper-btn`, `ui-section-label`, `ui-progress-track`, `ui-progress-fill`.
 
-Game-specific accent overrides use Tailwind's `!` important modifier: `!bg-blackout`, `!bg-imposter`, `!bg-signals`.
+Game-specific accent overrides use Tailwind's `!` important suffix: `bg-blackout!`, `bg-imposter!`, `bg-signals!`.
 
 ## Structure
 
@@ -104,16 +107,35 @@ Every game exposes:
 - `cleanupMatch(matchKey)` - tears down a room by matchKey
 - `autoJoinRoom` socket event - creates or rejoins a room for a given sessionId/matchKey
 
-`PlatformGameProps` passed to each `PlatformAdapter.vue`:
+### PlatformGameProps
+
+These props are passed to each `PlatformAdapter.vue`:
 
 ```ts
 {
-  matchKey: string;
-  playerId: string;
-  playerName: string;
-  namespace: string;
-  isHost?: boolean;
+  matchKey: string;      // Unique match identifier (used as sessionId for autoJoinRoom)
+  playerId: string;      // Platform-assigned player ID
+  playerName: string;    // Player's display name
+  namespace: string;     // Socket.IO namespace (e.g., `/g/secret-signals`)
+  isHost?: boolean;      // Whether this player is the party host
   onReplayGame?: () => void;
   onReturnToLobby?: () => void;
+  actionError?: string;  // Error message from platform actions (replay/lobby)
 }
+```
+
+### App.vue Props (HubIntegrationProps)
+
+The game's `App.vue` receives props mapped from `PlatformAdapter.vue`. The prop names differ:
+
+```ts
+{
+  sessionId: string;     // maps to PlatformGameProps.matchKey
+  playerId: string;
+  playerName: string;
+  wsNamespace: string;  // maps to PlatformGameProps.namespace
+  isHost?: boolean;
+  // plus optional: apiBaseUrl, joinToken
+}
+```
 ```

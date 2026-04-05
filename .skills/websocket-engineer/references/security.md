@@ -68,25 +68,23 @@ io.use((socket, next) => {
   }
 
   // Parse cookies
-  cookieParser(process.env.COOKIE_SECRET)(
-    socket.request,
-    {},
-    () => {
-      const sessionId = socket.request.signedCookies.sessionId;
+  cookieParser(process.env.COOKIE_SECRET)(socket.request, {}, () => {
+    const sessionId = socket.request.signedCookies.sessionId;
 
-      if (!sessionId) {
-        return next(new Error('No session'));
-      }
+    if (!sessionId) {
+      return next(new Error('No session'));
+    }
 
-      // Verify session in Redis/DB
-      verifySession(sessionId).then(user => {
+    // Verify session in Redis/DB
+    verifySession(sessionId)
+      .then((user) => {
         socket.userId = user.id;
         next();
-      }).catch(err => {
+      })
+      .catch((err) => {
         next(new Error('Invalid session'));
       });
-    }
-  );
+  });
 });
 ```
 
@@ -127,7 +125,7 @@ io.on('connection', (socket) => {
     io.to(roomId).emit('message', {
       userId: socket.userId,
       text,
-      timestamp: Date.now()
+      timestamp: Date.now(),
     });
   });
 });
@@ -140,14 +138,14 @@ const ADMIN_EVENTS = ['kick-user', 'ban-user', 'delete-message'];
 
 io.use((socket, next) => {
   // Attach role to socket after auth
-  getUserRole(socket.userId).then(role => {
+  getUserRole(socket.userId).then((role) => {
     socket.role = role;
     next();
   });
 });
 
 io.on('connection', (socket) => {
-  ADMIN_EVENTS.forEach(event => {
+  ADMIN_EVENTS.forEach((event) => {
     socket.on(event, async (data) => {
       if (socket.role !== 'admin') {
         socket.emit('error', { message: 'Admin access required' });
@@ -180,9 +178,7 @@ class SocketRateLimiter {
     const userRequests = this.requests.get(socketId) || [];
 
     // Remove expired requests
-    const validRequests = userRequests.filter(
-      time => now - time < this.windowMs
-    );
+    const validRequests = userRequests.filter((time) => now - time < this.windowMs);
 
     if (validRequests.length >= this.maxRequests) {
       return false; // Rate limit exceeded
@@ -226,7 +222,7 @@ const redis = new Redis();
 async function checkRateLimit(userId, maxRequests = 100, windowSec = 60) {
   const key = `rate_limit:${userId}`;
   const now = Date.now();
-  const windowStart = now - (windowSec * 1000);
+  const windowStart = now - windowSec * 1000;
 
   const pipeline = redis.pipeline();
 
@@ -270,8 +266,8 @@ const io = require('socket.io')(3000, {
     origin: ['https://example.com', 'https://app.example.com'],
     methods: ['GET', 'POST'],
     credentials: true,
-    allowedHeaders: ['Authorization']
-  }
+    allowedHeaders: ['Authorization'],
+  },
 });
 
 // Dynamic CORS
@@ -288,7 +284,7 @@ const Joi = require('joi');
 const messageSchema = Joi.object({
   roomId: Joi.string().uuid().required(),
   text: Joi.string().min(1).max(1000).required(),
-  attachments: Joi.array().items(Joi.string().uri()).max(5).optional()
+  attachments: Joi.array().items(Joi.string().uri()).max(5).optional(),
 });
 
 io.on('connection', (socket) => {
@@ -299,7 +295,7 @@ io.on('connection', (socket) => {
     if (error) {
       socket.emit('error', {
         message: 'Invalid message format',
-        details: error.details
+        details: error.details,
       });
       return;
     }
@@ -308,7 +304,7 @@ io.on('connection', (socket) => {
     io.to(value.roomId).emit('message', {
       userId: socket.userId,
       ...value,
-      timestamp: Date.now()
+      timestamp: Date.now(),
     });
   });
 });
@@ -323,7 +319,7 @@ function sanitizeMessage(text) {
   return sanitizeHtml(text, {
     allowedTags: [], // Strip all HTML
     allowedAttributes: {},
-    disallowedTagsMode: 'escape'
+    disallowedTagsMode: 'escape',
   });
 }
 
@@ -331,7 +327,7 @@ io.on('connection', (socket) => {
   socket.on('message', (data) => {
     const sanitized = {
       ...data,
-      text: sanitizeMessage(data.text)
+      text: sanitizeMessage(data.text),
     };
 
     io.to(data.roomId).emit('message', sanitized);
@@ -348,8 +344,8 @@ const connectionLimits = new Map();
 const MAX_CONNECTIONS_PER_IP = 10;
 
 io.engine.on('connection', (rawSocket) => {
-  const ip = rawSocket.request.headers['x-forwarded-for'] ||
-              rawSocket.request.connection.remoteAddress;
+  const ip =
+    rawSocket.request.headers['x-forwarded-for'] || rawSocket.request.connection.remoteAddress;
 
   const currentConnections = connectionLimits.get(ip) || 0;
 
@@ -377,7 +373,7 @@ io.engine.on('connection', (rawSocket) => {
 const io = require('socket.io')(3000, {
   maxHttpBufferSize: 1e6, // 1MB max message size
   pingTimeout: 60000,
-  pingInterval: 25000
+  pingInterval: 25000,
 });
 
 io.on('connection', (socket) => {
@@ -404,13 +400,16 @@ io.on('connection', (socket) => {
     sessionId,
     userId: socket.userId,
     createdAt: Date.now(),
-    lastActivity: Date.now()
+    lastActivity: Date.now(),
   });
 
   // Timeout inactive sessions
-  const timeout = setTimeout(() => {
-    socket.disconnect(true);
-  }, 30 * 60 * 1000); // 30 minutes
+  const timeout = setTimeout(
+    () => {
+      socket.disconnect(true);
+    },
+    30 * 60 * 1000
+  ); // 30 minutes
 
   socket.on('message', () => {
     const session = sessions.get(socket.id);
@@ -439,9 +438,7 @@ const winston = require('winston');
 const logger = winston.createLogger({
   level: 'info',
   format: winston.format.json(),
-  transports: [
-    new winston.transports.File({ filename: 'websocket-audit.log' })
-  ]
+  transports: [new winston.transports.File({ filename: 'websocket-audit.log' })],
 });
 
 io.on('connection', (socket) => {
@@ -449,7 +446,7 @@ io.on('connection', (socket) => {
     socketId: socket.id,
     userId: socket.userId,
     ip: socket.handshake.address,
-    timestamp: Date.now()
+    timestamp: Date.now(),
   });
 
   socket.on('message', (data) => {
@@ -458,7 +455,7 @@ io.on('connection', (socket) => {
       userId: socket.userId,
       roomId: data.roomId,
       messageLength: data.text.length,
-      timestamp: Date.now()
+      timestamp: Date.now(),
     });
   });
 
@@ -467,7 +464,7 @@ io.on('connection', (socket) => {
       socketId: socket.id,
       userId: socket.userId,
       reason,
-      timestamp: Date.now()
+      timestamp: Date.now(),
     });
   });
 });

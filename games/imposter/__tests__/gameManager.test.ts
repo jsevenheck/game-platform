@@ -377,6 +377,28 @@ describe('gameManager', () => {
       expect(room.lastRoundResult?.winner).toBe('infiltrators');
       expect(room.players[infiltratorId]?.score).toBe(2);
     });
+
+    test('tie vote does not catch infiltrator', () => {
+      const room = makeRoom(3);
+      startRound(room);
+      room.phase = 'voting';
+
+      const ids = Object.keys(room.players);
+      const infiltratorId = room.infiltratorIds[0]!;
+      const _civilians = ids.filter((id) => id !== infiltratorId);
+
+      // Each player votes for a different person → 3-way tie (1 vote each)
+      submitVote(room, ids[0]!, ids[1]!);
+      submitVote(room, ids[1]!, ids[2]!);
+      submitVote(room, ids[2]!, ids[0]!);
+
+      resolveVotes(room);
+
+      // Infiltrator should NOT be caught in a tie
+      expect(room.revealedInfiltrators).toEqual([]);
+      expect(room.waitingForGuess).toBe(false);
+      expect(room.lastRoundResult?.winner).toBe('infiltrators');
+    });
   });
 
   describe('handleInfiltratorGuess', () => {

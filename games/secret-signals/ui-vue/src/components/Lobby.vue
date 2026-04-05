@@ -33,12 +33,6 @@ const canStart = computed(() => {
 
 <template>
   <div class="lobby flex flex-col items-center gap-8 px-4 py-8">
-    <div class="text-center">
-      <p class="ui-section-label">Room Code</p>
-      <h2 class="text-5xl font-black tracking-[0.4em] text-signals">{{ store.roomCode }}</h2>
-      <p class="text-muted-foreground text-sm">Share this code with your friends!</p>
-    </div>
-
     <div class="w-full max-w-[320px]">
       <h3 class="text-muted mb-3">Players ({{ connectedCount }})</h3>
       <div
@@ -65,7 +59,7 @@ const canStart = computed(() => {
 
     <div v-if="isHost" class="flex flex-col items-center gap-4">
       <button
-        class="ui-btn-primary !bg-signals hover:!bg-signals-hover !py-4 !px-12 !text-xl"
+        class="ui-btn-primary bg-signals! hover:bg-signals-hover! py-4! px-12! text-xl!"
         :disabled="!canStart"
         @click="$emit('start-game')"
       >

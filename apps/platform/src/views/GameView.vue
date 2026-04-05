@@ -14,6 +14,7 @@ const socket = usePartySocket();
 const gameComponent = shallowRef<Component | null>(null);
 const loadError = ref('');
 const actionError = ref('');
+const showLeaveConfirm = ref(false);
 
 // The matchKey drives which match instance is rendered.
 // When it changes, Vue re-mounts the game adapter with the new match.
@@ -43,6 +44,10 @@ function onReturnToLobby(): void {
   });
 }
 
+function onLeaveGame(): void {
+  router.push(`/party/${props.inviteCode}`);
+}
+
 function handlePartyUpdate(view: Parameters<typeof store.applyPartyUpdate>[0]) {
   store.applyPartyUpdate(view);
 
@@ -55,18 +60,30 @@ function handlePartyUpdate(view: Parameters<typeof store.applyPartyUpdate>[0]) {
   }
 }
 
-async function loadGameComponent(): Promise<void> {
+async function loadGameComponent(retries = 2): Promise<void> {
   const game = getClientGame(props.gameId);
   if (!game) {
     loadError.value = `Unknown game: ${props.gameId}`;
     return;
   }
-  try {
-    const mod = await game.loadClient();
-    gameComponent.value = mod.default;
-  } catch (e) {
-    loadError.value = `Failed to load game: ${String(e)}`;
+
+  let lastError: unknown;
+  for (let i = 0; i <= retries; i++) {
+    try {
+      const mod = await game.loadClient();
+      gameComponent.value = mod.default;
+      loadError.value = '';
+      return;
+    } catch (e) {
+      lastError = e;
+      console.warn(`[GameView] load attempt ${i + 1} failed:`, e);
+      if (i < retries) {
+        await new Promise((r) => setTimeout(r, 500 * (i + 1)));
+      }
+    }
   }
+
+  loadError.value = `Failed to load game: ${String(lastError)}`;
 }
 
 // Lightweight re-bind used on every reconnect after the component is mounted.
@@ -166,6 +183,32 @@ onBeforeUnmount(() => {
 
 <template>
   <div class="min-h-dvh">
+    <!-- Leave button via Teleport to body so it's always above everything -->
+    <Teleport to="body">
+      <div class="fixed top-3 left-3 z-[100]">
+        <button
+          class="ui-btn-ghost bg-shell/90 backdrop-blur px-2! py-1! text-sm shadow-md"
+          @click="showLeaveConfirm = true"
+        >
+          ← Leave
+        </button>
+      </div>
+    </Teleport>
+
+    <!-- Leave confirmation dialog -->
+    <Transition name="fade">
+      <div v-if="showLeaveConfirm" class="ui-overlay !z-[200]">
+        <div class="ui-dialog">
+          <h2 class="mb-2 text-lg font-bold">Leave Game?</h2>
+          <p class="mb-6 text-sm text-muted-foreground">You can rejoin from the party lobby.</p>
+          <div class="flex flex-col gap-3">
+            <button class="ui-btn-danger" @click="onLeaveGame">Leave</button>
+            <button class="ui-btn-secondary" @click="showLeaveConfirm = false">Cancel</button>
+          </div>
+        </div>
+      </div>
+    </Transition>
+
     <p v-if="loadError" class="p-8 text-center text-danger">{{ loadError }}</p>
 
     <p v-else-if="!gameComponent || !matchKey" class="p-8 text-center text-muted-foreground">

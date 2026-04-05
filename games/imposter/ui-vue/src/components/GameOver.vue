@@ -31,10 +31,10 @@ const singleWinner = computed(() =>
 
 <template>
   <div
-    class="game-over flex flex-col items-center gap-6 px-4 py-8 min-h-dvh bg-gradient-to-br from-imposter-gradient-1 via-imposter-gradient-2 to-imposter-gradient-3"
+    class="game-over flex flex-col items-center gap-6 px-4 py-8 min-h-dvh bg-linear-to-br from-imposter-gradient-1 via-imposter-gradient-2 to-imposter-gradient-3"
   >
     <h1
-      class="text-4xl font-black bg-gradient-to-br from-imposter via-danger to-pink-500 bg-clip-text text-transparent"
+      class="text-4xl font-black bg-linear-to-br from-imposter via-danger to-pink-500 bg-clip-text text-transparent"
     >
       Game Over!
     </h1>
@@ -56,14 +56,14 @@ const singleWinner = computed(() =>
       </p>
     </div>
 
-    <div class="final-scores w-full max-w-[340px]">
+    <div class="final-scores w-full max-w-85">
       <h3 class="text-muted text-center text-sm mb-3">Final Scores</h3>
       <div
         v-for="(player, index) in sortedPlayers"
         :key="player.id"
-        class="flex items-center gap-3 px-3.5 py-2.5 bg-white/[0.04] border border-white/[0.08] rounded-[--radius-md] mb-2"
+        class="flex items-center gap-3 px-3.5 py-2.5 bg-white/4 border border-white/8 rounded-[--radius-md] mb-2"
         :class="{
-          '!border-imposter/40 !bg-imposter/[0.08]': player.score === topScore,
+          'border-imposter/40! bg-imposter/8!': player.score === topScore,
         }"
       >
         <span class="text-muted-foreground font-bold min-w-8">#{{ index + 1 }}</span>
@@ -73,15 +73,15 @@ const singleWinner = computed(() =>
     </div>
 
     <!-- Round history -->
-    <div v-if="store.room?.roundHistory.length" class="w-full max-w-[340px]">
+    <div v-if="store.room?.roundHistory.length" class="w-full max-w-85">
       <h3 class="text-muted text-center text-sm mb-3">Round History</h3>
       <div
         v-for="(round, index) in store.room.roundHistory"
         :key="index"
-        class="flex items-center gap-3 px-3 py-2 bg-white/[0.03] border border-white/[0.06] rounded-[--radius-sm] mb-1.5"
+        class="flex items-center gap-3 px-3 py-2 bg-white/3 border border-white/6 rounded-[--radius-sm] mb-1.5"
         :class="{
-          'border-l-[3px] !border-l-success': round.winner === 'civilians',
-          'border-l-[3px] !border-l-danger': round.winner !== 'civilians',
+          'border-l-[3px] border-l-success!': round.winner === 'civilians',
+          'border-l-[3px] border-l-danger!': round.winner !== 'civilians',
         }"
       >
         <span class="text-muted-foreground text-xs font-bold min-w-8">R{{ index + 1 }}</span>
@@ -97,7 +97,7 @@ const singleWinner = computed(() =>
 
     <button
       v-if="isHost"
-      class="ui-btn-primary !bg-imposter hover:!bg-imposter-hover !py-4 !px-10 !text-lg"
+      class="ui-btn-primary bg-imposter! hover:bg-imposter-hover! py-4! px-10! text-lg!"
       @click="$emit('restart')"
     >
       Play Again
