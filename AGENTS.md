@@ -107,16 +107,35 @@ Every game exposes:
 - `cleanupMatch(matchKey)` - tears down a room by matchKey
 - `autoJoinRoom` socket event - creates or rejoins a room for a given sessionId/matchKey
 
-`PlatformGameProps` passed to each `PlatformAdapter.vue`:
+### PlatformGameProps
+
+These props are passed to each `PlatformAdapter.vue`:
 
 ```ts
 {
-  matchKey: string;
-  playerId: string;
-  playerName: string;
-  namespace: string;
-  isHost?: boolean;
+  matchKey: string;      // Unique match identifier (used as sessionId for autoJoinRoom)
+  playerId: string;      // Platform-assigned player ID
+  playerName: string;    // Player's display name
+  namespace: string;     // Socket.IO namespace (e.g., `/g/secret-signals`)
+  isHost?: boolean;      // Whether this player is the party host
   onReplayGame?: () => void;
   onReturnToLobby?: () => void;
+  actionError?: string;  // Error message from platform actions (replay/lobby)
 }
+```
+
+### App.vue Props (HubIntegrationProps)
+
+The game's `App.vue` receives props mapped from `PlatformAdapter.vue`. The prop names differ:
+
+```ts
+{
+  sessionId: string;     // maps to PlatformGameProps.matchKey
+  playerId: string;
+  playerName: string;
+  wsNamespace: string;  // maps to PlatformGameProps.namespace
+  isHost?: boolean;
+  // plus optional: apiBaseUrl, joinToken
+}
+```
 ```

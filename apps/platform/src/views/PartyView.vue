@@ -37,6 +37,13 @@ function handleLaunch() {
   });
 }
 
+function handleEndGame() {
+  if (!store.isHost || !store.playerId) return;
+  socket.emit('returnToLobby', { playerId: store.playerId }, (res) => {
+    if (!res.ok) error.value = res.error;
+  });
+}
+
 function handleLeave() {
   if (!store.playerId) return;
   socket.emit('leaveParty', { playerId: store.playerId });
@@ -53,6 +60,12 @@ function handlePartyUpdate(view: Parameters<typeof store.applyPartyUpdate>[0]) {
   // don't force them back — they can rejoin via the banner.
   if (!wasInMatch && view.status === 'in-match' && view.activeMatch) {
     router.push(`/party/${props.inviteCode}/game/${view.activeMatch.gameId}`);
+  }
+
+  // Players in lobby view won't navigate through GameView, so we ACK here
+  // to let the server finalize the lobby transition without waiting 10 s.
+  if (view.status === 'returning' && store.playerId) {
+    socket.emit('ackReturnedToLobby', { playerId: store.playerId });
   }
 }
 
@@ -144,6 +157,9 @@ onBeforeUnmount(() => {
           "
         >
           Rejoin Game
+        </button>
+        <button v-if="store.isHost" class="ui-btn-danger px-6 text-sm" @click="handleEndGame">
+          End Game
         </button>
       </section>
 

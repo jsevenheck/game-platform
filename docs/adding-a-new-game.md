@@ -256,7 +256,7 @@ onUnmounted(() => {
 
 ### `ui-vue/src/PlatformAdapter.vue`
 
-Wraps `App.vue` and adds the platform overlay (replay / return to lobby):
+Wraps `App.vue` and adds the platform overlay (replay / return to lobby). Also accepts `actionError` to display errors from platform actions:
 
 ```vue
 <script setup lang="ts">
@@ -271,6 +271,7 @@ const props = defineProps<{
   isHost?: boolean;
   onReplayGame?: () => void;
   onReturnToLobby?: () => void;
+  actionError?: string;  // Optional: error from platform replay/lobby actions
 }>();
 
 const gamePhase = ref('');
@@ -284,20 +285,26 @@ function onPhaseChange(phase: string) {
 <template>
   <div class="platform-game-wrapper">
     <GameApp
-      :namespace="props.namespace"
-      :session-id="props.matchKey"
-      :player-name="props.playerName"
-      :player-id="props.playerId"
-      :is-host="props.isHost"
+      :ws-namespace="namespace"
+      :session-id="matchKey"
+      :player-name="playerName"
+      :player-id="playerId"
+      :is-host="isHost"
       @phase-change="onPhaseChange"
     />
     <div v-if="gameEnded && isHost" class="platform-overlay">
       <button class="btn-replay" @click="onReplayGame?.()">Play Again</button>
       <button class="btn-lobby" @click="onReturnToLobby?.()">Back to Party</button>
+      <p v-if="actionError" class="mt-3 text-center text-sm text-danger">{{ actionError }}</p>
+    </div>
+    <div v-else-if="gameEnded" class="platform-overlay">
+      <p class="text-sm text-muted-foreground">Waiting for host to decide...</p>
     </div>
   </div>
 </template>
 ```
+
+> **Important:** The prop names differ between `PlatformAdapter` (uses `wsNamespace`, `matchKey`) and the game `App.vue` (uses `wsNamespace`, `sessionId`). The adapter is responsible for mapping these correctly.
 
 ---
 
