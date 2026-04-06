@@ -1,12 +1,18 @@
 import express from 'express';
 import { createServer } from 'http';
 import { Server } from 'socket.io';
+import { requestLogger } from './logging/requestLogger';
+import { createComponentLogger, registerProcessLogging } from './logging/logger';
 import { registerPartyHandlers } from './party/partyHandlers';
 import { gameRegistry } from './registry/index';
 import { registerHttpRoutes } from './httpRoutes';
 
 const app = express();
 const httpServer = createServer(app);
+const serverLogger = createComponentLogger('platform-server');
+
+registerProcessLogging(serverLogger);
+app.use(requestLogger);
 
 const io = new Server(httpServer, {
   cors: {
@@ -15,24 +21,36 @@ const io = new Server(httpServer, {
   },
 });
 
-// ─── Register game namespaces ─────────────────────────────────────────────────
-
 for (const [gameId, game] of gameRegistry) {
   const namespacePath = `/g/${gameId}`;
   game.registerServer(io, namespacePath);
-  console.log(`[platform] Registered game: ${game.definition.name} on ${namespacePath}`);
+  serverLogger.info(
+    {
+      gameId,
+      gameName: game.definition.name,
+      namespacePath,
+    },
+    'registered game namespace'
+  );
 }
 
-// ─── Register party namespace ─────────────────────────────────────────────────
-
 registerPartyHandlers(io);
-console.log('[platform] Party handlers registered on /party');
+serverLogger.info({ namespace: '/party' }, 'registered party namespace');
 
 registerHttpRoutes(app);
 
-// ─── Start ────────────────────────────────────────────────────────────────────
+httpServer.on('error', (error) => {
+  serverLogger.fatal({ err: error }, 'http server error');
+  setImmediate(() => process.exit(1));
+});
 
 const PORT = Number(process.env.PORT ?? 3000);
 httpServer.listen(PORT, () => {
-  console.log(`[platform] Server running on http://localhost:${PORT}`);
+  serverLogger.info(
+    {
+      port: PORT,
+      url: `http://localhost:${PORT}`,
+    },
+    'server listening'
+  );
 });

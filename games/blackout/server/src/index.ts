@@ -1,4 +1,5 @@
 import type { Server } from 'socket.io';
+import { createComponentLogger } from '../../../../apps/platform/server/logging/logger';
 import { registerBlackout } from './socketHandlers';
 import { getSessionRoom, deleteRoom } from './models/room';
 
@@ -21,6 +22,8 @@ export const definition: GameDefinition = {
   maxPlayers: 20,
 };
 
+const gameLogger = createComponentLogger('game-server', { gameId: definition.id });
+
 export function register(io: Server, namespace = `/g/${definition.id}`): void {
   return registerBlackout(io, namespace);
 }
@@ -29,7 +32,11 @@ export function cleanupMatch(matchKey: string): void {
   const roomCode = getSessionRoom(matchKey);
   if (roomCode) {
     deleteRoom(roomCode);
+    gameLogger.info({ matchKey, roomCode }, 'cleaned up match');
+    return;
   }
+
+  gameLogger.debug({ matchKey }, 'cleanup requested for unknown match');
 }
 
 export const handler: GameHandler = { definition, register };

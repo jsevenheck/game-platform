@@ -1,55 +1,56 @@
 # Game Platform
 
-A real-time multiplayer party game platform built as a single **pnpm workspace monorepo**. One platform app hosts multiple integrated games — players create a party, invite friends, pick a game, and play together via the browser.
+A real-time multiplayer party game platform built as a single **pnpm workspace monorepo**. One platform app hosts multiple integrated games: players create a party, invite friends, pick a game, and play together in the browser.
 
 ## Games
 
-| Game               | Description                                                                      | Players |
-| ------------------ | -------------------------------------------------------------------------------- | ------- |
-| **Blackout**       | Category-based trivia with a rotating host who reveals prompts and picks winners | 3–20    |
-| **Imposter**       | Social deduction — one player is the infiltrator; describe, discuss, and vote    | 3–16    |
-| **Secret Signals** | Team-based word association — directors give clues, agents guess cards           | 4–24    |
+| Game | Description | Players |
+| --- | --- | --- |
+| **Blackout** | Category-based trivia with a rotating host who reveals prompts and picks winners | 3-20 |
+| **Imposter** | Social deduction where one player is the infiltrator; describe, discuss, and vote | 3-16 |
+| **Secret Signals** | Team-based word association where directors give clues and agents guess cards | 4-24 |
 
 ## Tech Stack
 
 - **Client:** Vue 3 + Pinia + Vue Router, bundled with Vite
-- **Server:** Express + Socket.IO (TypeScript, run via tsx)
+- **Server:** Express + Socket.IO + Pino logging (TypeScript, run via tsx)
 - **Testing:** Vitest (unit), Playwright (E2E)
 - **Tooling:** pnpm workspaces, ESLint, Prettier
 
 ## Project Structure
 
-```
-apps/platform/               ← the only deployable app
+```text
+apps/platform/               <- the only deployable app
   server/
-    index.ts                  ← Express + Socket.IO entry point
-    party/                    ← party lifecycle (create, join, launch, return)
-    registry/                 ← game server module registry
+    index.ts                 <- Express + Socket.IO entry point
+    logging/                 <- shared Pino helpers for HTTP + Socket.IO logging
+    party/                   <- party lifecycle (create, join, launch, return)
+    registry/                <- game server module registry
   src/
-    router/                   ← Vue Router (/, /party/:code, /party/:code/game/:gameId)
-    stores/                   ← Pinia party store
-    views/                    ← HomeView, PartyView, GameView
-    games/                    ← client-side game registry (dynamic imports)
+    router/                  <- Vue Router (/, /party/:code, /party/:code/game/:gameId)
+    stores/                  <- Pinia party store
+    views/                   <- HomeView, PartyView, GameView
+    games/                   <- client-side game registry (dynamic imports)
 
-games/{game}/                 ← internal source modules (not standalone)
-  core/src/                   ← shared types, constants, event definitions
-  server/src/                 ← Socket.IO game server (namespace /g/{game})
+games/{game}/                <- internal source modules (not standalone)
+  core/src/                  <- shared types, constants, event definitions
+  server/src/                <- Socket.IO game server (namespace /g/{game})
   ui-vue/src/
-    App.vue                   ← platform-only game root component
-    PlatformAdapter.vue       ← platform wrapper (overlay for replay/return)
-  __tests__/                  ← Vitest unit tests
-  e2e/                        ← Playwright E2E specs
-  docs/                       ← game-specific API & architecture docs
+    App.vue                  <- platform-only game root component
+    PlatformAdapter.vue      <- platform wrapper (overlay for replay/return)
+  __tests__/                 <- Vitest unit tests
+  e2e/                       <- Playwright E2E specs
+  docs/                      <- game-specific API and architecture docs
 ```
 
 ## Getting Started
 
 ### Prerequisites
 
-- **Node.js** ≥ 22.22
-- **pnpm** ≥ 10
+- **Node.js** >= 22.22
+- **pnpm** >= 10
 
-### Install & Run
+### Install and Run
 
 ```bash
 pnpm install          # install all dependencies
@@ -58,55 +59,78 @@ pnpm dev              # start platform (server on :3000 + client on :5173)
 
 Open `http://localhost:5173` in your browser. Create a party, share the invite code, and launch a game.
 
+## Logging
+
+The platform server uses structured Pino logging.
+
+- **HTTP:** Express requests are logged through `pino-http` and include an `X-Request-Id` response header.
+- **Socket.IO:** platform and game namespaces use shared child loggers with room, player, and match context.
+- **Output:** development prefers pretty logs when `pino-pretty` is available; production defaults to JSON on `stdout`.
+
+Supported environment variables:
+
+```bash
+LOG_LEVEL=debug         # default: debug in dev, warn in test, info in production
+LOG_PRETTY=true         # default: true in dev, false in test/production
+LOG_SOCKET_EVENTS=false # set true to enable catch-all Socket.IO event debug logs
+```
+
+Notes:
+
+- `/health` and successful static asset requests are intentionally not logged by default.
+- Secrets such as `resumeToken`, `joinToken`, `token`, `authorization`, and `cookie` are redacted from log output.
+- Game server modules should reuse the shared helpers in `apps/platform/server/logging/` instead of adding per-game logging stacks.
+
 ## Commands
 
 All commands run from the workspace root:
 
 ```bash
-pnpm dev              # start dev server (Express + Vite HMR)
-pnpm build            # build client + server for production
-pnpm start            # run production build
+pnpm dev                  # start dev server (Express + Vite HMR)
+pnpm build                # build client + server for production
+pnpm start                # run production build
 
-pnpm test             # run all unit tests (Vitest, all 3 game projects)
-pnpm test:blackout    # run Blackout tests only
-pnpm test:imposter    # run Imposter tests only
+pnpm test                 # run all unit tests (Vitest, all 3 game projects)
+pnpm test:blackout        # run Blackout tests only
+pnpm test:imposter        # run Imposter tests only
 pnpm test:secret-signals  # run Secret Signals tests only
-pnpm test:e2e         # run Playwright E2E tests (starts server automatically)
+pnpm test:e2e             # run Playwright E2E tests (starts server automatically)
 
-pnpm lint             # ESLint across all source (zero warnings)
-pnpm lint:fix         # auto-fix lint issues
-pnpm format           # Prettier across all source
-pnpm format:check     # check formatting without writing
-pnpm typecheck        # TypeScript check (vue-tsc + tsc)
+pnpm lint                 # ESLint across all source (zero warnings)
+pnpm lint:fix             # auto-fix lint issues
+pnpm format               # Prettier across all source
+pnpm format:check         # check formatting without writing
+pnpm typecheck            # TypeScript check (vue-tsc + tsc)
 ```
 
 ## Architecture
 
 ### Platform Flow
 
-```
-Create Party → Join Party → Select Game → Launch Game → Play → Replay / Return to Lobby
+```text
+Create Party -> Join Party -> Select Game -> Launch Game -> Play -> Replay / Return to Lobby
 ```
 
 1. **Party lifecycle** is owned entirely by the platform (`/party` Socket.IO namespace).
 2. When the host launches a game, the platform creates a unique `matchKey` and broadcasts it.
 3. All clients navigate to `/party/:code/game/:gameId` and auto-join the game's Socket.IO namespace (`/g/{gameId}`).
 4. Each game receives the `matchKey` as `sessionId` in its `autoJoinRoom` event and manages its own room state.
-5. After a match ends, the host can **replay** (new matchKey, same game) or **return to lobby**.
+5. After a match ends, the host can **replay** (new `matchKey`, same game) or **return to lobby**.
 
 ### Game Integration
 
-Games are internal source modules — they have no standalone server or client. The platform imports them directly:
+Games are internal source modules. They have no standalone server or client. The platform imports them directly:
 
-- **Server side:** Each game exports `register(io, namespacePath)` and `cleanupMatch(matchKey)`.
-- **Client side:** Each game's `PlatformAdapter.vue` is loaded dynamically via Vite aliases.
-- **Shared code:** The `@shared/*` alias resolves to each game's `core/src/` directory based on the importing file's location (context-sensitive Vite plugin).
+- **Server side:** each game exports `register(io, namespacePath)` and `cleanupMatch(matchKey)`.
+- **Client side:** each game's `PlatformAdapter.vue` is loaded dynamically via Vite aliases.
+- **Shared code:** the `@shared/*` alias resolves to each game's `core/src/` directory based on the importing file's location (context-sensitive Vite plugin).
+- **Logging:** game server modules should use the shared logger helpers from `apps/platform/server/logging/`.
 
-See [docs/adding-a-new-game.md](docs/adding-a-new-game.md) for a step-by-step guide.
+See [docs/adding-a-new-game.md](docs/adding-a-new-game.md) for the full integration guide.
 
 ## Documentation
 
-- [docs/adding-a-new-game.md](docs/adding-a-new-game.md) — How to add a new game to the platform
-- [games/blackout/docs/](games/blackout/docs/) — Blackout API & architecture
-- [games/imposter/docs/](games/imposter/docs/) — Imposter API & architecture
-- [games/secret-signals/docs/](games/secret-signals/docs/) — Secret Signals API & architecture
+- [docs/adding-a-new-game.md](docs/adding-a-new-game.md) - how to add a new game to the platform
+- [games/blackout/docs/](games/blackout/docs/) - Blackout API and architecture
+- [games/imposter/docs/](games/imposter/docs/) - Imposter API and architecture
+- [games/secret-signals/docs/](games/secret-signals/docs/) - Secret Signals API and architecture

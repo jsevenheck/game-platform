@@ -1,6 +1,11 @@
 import type { Server, Socket, Namespace } from 'socket.io';
 import type { ClientToServerEvents, ServerToClientEvents } from '../../core/src/events';
 import type { Language, Room } from '../../core/src/types';
+import { createComponentLogger } from '../../../../apps/platform/server/logging/logger';
+import {
+  attachSocketEventDebugLogging,
+  createSocketLogger,
+} from '../../../../apps/platform/server/logging/socketLogger';
 import {
   MIN_PLAYERS,
   MIN_ROUNDS,
@@ -127,6 +132,7 @@ function bindPlayerToSocket(
 
 export function registerBlackout(io: Server, namespace = '/g/blackout'): void {
   const nsp = io.of(namespace);
+  const gameLogger = createComponentLogger('game-server', { gameId: 'blackout', namespace });
 
   nsp.use((socket, next) => {
     const auth = socket.handshake.auth || {};
@@ -145,6 +151,7 @@ export function registerBlackout(io: Server, namespace = '/g/blackout'): void {
     if (isLastRound(room)) {
       transitionToEnded(room);
       broadcastRoom(nsp, room);
+      gameLogger.info({ roomCode }, 'room reached final round');
       return;
     }
 
@@ -166,6 +173,11 @@ export function registerBlackout(io: Server, namespace = '/g/blackout'): void {
   }
 
   nsp.on('connection', (socket: BlackoutSocket) => {
+    const socketLogger = createSocketLogger(gameLogger, socket);
+
+    attachSocketEventDebugLogging(socket, socketLogger);
+    socketLogger.debug('game client connected');
+
     socket.on('autoJoinRoom', (data, cb) => {
       const sessionId = data.sessionId?.trim();
       const name = data.name?.trim();
@@ -204,6 +216,15 @@ export function registerBlackout(io: Server, namespace = '/g/blackout'): void {
             existingRoom.ownerId = reconnectPlayerId;
           }
           broadcastRoom(nsp, existingRoom);
+          socketLogger.info(
+            {
+              roomCode: existingRoom.code,
+              playerId: player.id,
+              sessionId,
+              resumed: true,
+            },
+            'player rejoined blackout room'
+          );
           return cb({
             ok: true,
             roomCode: existingRoom.code,
@@ -234,6 +255,16 @@ export function registerBlackout(io: Server, namespace = '/g/blackout'): void {
         }
         broadcastRoom(nsp, existingRoom);
 
+        socketLogger.info(
+          {
+            roomCode: existingRoom.code,
+            playerId: player.id,
+            sessionId,
+            resumed: false,
+          },
+          'player joined existing blackout room'
+        );
+
         return cb({
           ok: true,
           roomCode: existingRoom.code,
@@ -252,6 +283,15 @@ export function registerBlackout(io: Server, namespace = '/g/blackout'): void {
       clearRoomCleanup(room.code);
       socket.join(room.code);
       broadcastRoom(nsp, room);
+
+      socketLogger.info(
+        {
+          roomCode: room.code,
+          playerId: hostId,
+          sessionId,
+        },
+        'created blackout room'
+      );
 
       cb({ ok: true, roomCode: room.code, playerId: hostId, resumeToken });
     });
@@ -272,6 +312,13 @@ export function registerBlackout(io: Server, namespace = '/g/blackout'): void {
 
       bindPlayerToSocket(nsp, socket, room, player.id);
       broadcastRoom(nsp, room);
+      socketLogger.info(
+        {
+          roomCode: room.code,
+          playerId: player.id,
+        },
+        'resumed blackout player'
+      );
       cb({ ok: true });
     });
 
@@ -310,10 +357,19 @@ export function registerBlackout(io: Server, namespace = '/g/blackout'): void {
 
       if (Object.keys(room.players).length === 0) {
         deleteRoom(data.roomCode);
+        socketLogger.info({ roomCode: data.roomCode }, 'deleted empty blackout room after leave');
         return;
       }
 
       broadcastRoom(nsp, room);
+      socketLogger.info(
+        {
+          roomCode: room.code,
+          playerId: player.id,
+          remainingPlayers: Object.keys(room.players).length,
+        },
+        'player left blackout room'
+      );
     });
 
     socket.on('updateMaxRounds', (data) => {
@@ -358,6 +414,14 @@ export function registerBlackout(io: Server, namespace = '/g/blackout'): void {
       const readerId = room.hostId ?? getRandomReader(room);
       startNewRound(room, readerId);
       broadcastRoom(nsp, room);
+      socketLogger.info(
+        {
+          roomCode: room.code,
+          hostPlayerId: room.hostId,
+          connectedPlayers: connectedPlayers.length,
+        },
+        'started blackout game'
+      );
       cb({ ok: true });
     });
 
@@ -423,9 +487,12 @@ export function registerBlackout(io: Server, namespace = '/g/blackout'): void {
       sendRoomToPlayer(nsp, room, socketIdx.playerId);
     });
 
-    socket.on('disconnect', () => {
+    socket.on('disconnect', (reason) => {
       const index = getSocketIndex(socket.id);
-      if (!index) return;
+      if (!index) {
+        socketLogger.debug({ reason }, 'blackout client disconnected before room binding');
+        return;
+      }
 
       const room = getRoom(index.roomCode);
       if (room) {
@@ -459,10 +526,19 @@ export function registerBlackout(io: Server, namespace = '/g/blackout'): void {
           const allDisconnected = Object.values(room.players).every((p) => !p.connected);
           if (allDisconnected) {
             scheduleRoomCleanup(room.code, 5 * 60 * 1000); // 5 minutes idle timeout
+            gameLogger.info({ roomCode: room.code }, 'scheduled blackout room cleanup');
           }
         }
       }
       deleteSocketIndex(socket.id);
+      socketLogger.info(
+        {
+          reason,
+          roomCode: index.roomCode,
+          playerId: index.playerId,
+        },
+        'blackout client disconnected'
+      );
     });
   });
 }

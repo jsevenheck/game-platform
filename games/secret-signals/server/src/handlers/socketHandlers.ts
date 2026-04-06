@@ -1,6 +1,11 @@
 import type { Server, Socket } from 'socket.io';
 import type { ClientToServerEvents, ServerToClientEvents } from '../../../core/src/events';
 import type { Card, LogEntry, PlayerRole, Room } from '../../../core/src/types';
+import { createComponentLogger } from '../../../../../apps/platform/server/logging/logger';
+import {
+  attachSocketEventDebugLogging,
+  createSocketLogger,
+} from '../../../../../apps/platform/server/logging/socketLogger';
 import {
   ASSASSIN_PENALTY_MODES,
   BOARD_SIZE,
@@ -48,6 +53,7 @@ function verifyPlayer(socket: GameSocket, roomCode: string, playerId: string): b
 
 export function registerGame(io: Server, namespace = `/g/${GAME_ID}`): void {
   const nsp = io.of(namespace);
+  const gameLogger = createComponentLogger('game-server', { gameId: GAME_ID, namespace });
 
   nsp.use((socket, next) => {
     const auth = socket.handshake.auth || {};
@@ -57,6 +63,11 @@ export function registerGame(io: Server, namespace = `/g/${GAME_ID}`): void {
   });
 
   nsp.on('connection', (socket: GameSocket) => {
+    const socketLogger = createSocketLogger(gameLogger, socket);
+
+    attachSocketEventDebugLogging(socket, socketLogger);
+    socketLogger.debug('game client connected');
+
     socket.on('autoJoinRoom', (data, cb) => {
       const sessionId = data.sessionId?.trim();
       const normalizedName = (data.name ?? '').trim();
@@ -82,6 +93,14 @@ export function registerGame(io: Server, namespace = `/g/${GAME_ID}`): void {
         setSessionToRoom(sessionId, room.code);
         socket.join(room.code);
         broadcastRoom(nsp, room);
+        socketLogger.info(
+          {
+            roomCode: room.code,
+            playerId: hostId,
+            sessionId,
+          },
+          'created secret-signals room'
+        );
         return cb({ ok: true, roomCode: room.code, playerId: hostId, resumeToken });
       }
 
@@ -112,6 +131,15 @@ export function registerGame(io: Server, namespace = `/g/${GAME_ID}`): void {
           clearRoomCleanup(mappedRoom.code);
           socket.join(mappedRoom.code);
           broadcastRoom(nsp, mappedRoom);
+          socketLogger.info(
+            {
+              roomCode: mappedRoom.code,
+              playerId: existingPlayer.id,
+              sessionId,
+              resumed: true,
+            },
+            'player rejoined secret-signals room'
+          );
           return cb({
             ok: true,
             roomCode: mappedRoom.code,
@@ -146,6 +174,15 @@ export function registerGame(io: Server, namespace = `/g/${GAME_ID}`): void {
       clearRoomCleanup(mappedRoom.code);
       socket.join(mappedRoom.code);
       broadcastRoom(nsp, mappedRoom);
+      socketLogger.info(
+        {
+          roomCode: mappedRoom.code,
+          playerId: player.id,
+          sessionId,
+          resumed: false,
+        },
+        'player joined existing secret-signals room'
+      );
       cb({
         ok: true,
         roomCode: mappedRoom.code,
@@ -173,6 +210,13 @@ export function registerGame(io: Server, namespace = `/g/${GAME_ID}`): void {
 
       socket.join(room.code);
       broadcastRoom(nsp, room);
+      socketLogger.info(
+        {
+          roomCode: room.code,
+          playerId: player.id,
+        },
+        'resumed secret-signals player'
+      );
       cb({ ok: true });
     });
 
@@ -217,11 +261,20 @@ export function registerGame(io: Server, namespace = `/g/${GAME_ID}`): void {
       if (Object.keys(room.players).length === 0) {
         clearRoomCleanup(room.code);
         deleteRoom(room.code);
+        socketLogger.info({ roomCode: room.code }, 'deleted empty secret-signals room after leave');
         return cb({ ok: true });
       }
 
       reassignHost(room, player.id);
       broadcastRoom(nsp, room);
+      socketLogger.info(
+        {
+          roomCode: room.code,
+          playerId: player.id,
+          remainingPlayers: Object.keys(room.players).length,
+        },
+        'player left secret-signals room'
+      );
       cb({ ok: true });
     });
 
@@ -407,6 +460,15 @@ export function registerGame(io: Server, namespace = `/g/${GAME_ID}`): void {
 
       transitionToPlaying(room);
       broadcastRoom(nsp, room);
+      socketLogger.info(
+        {
+          roomCode: room.code,
+          hostPlayerId: room.hostId,
+          connectedPlayers: connected.length,
+          teamCount: room.teamCount,
+        },
+        'started secret-signals game'
+      );
       cb({ ok: true });
     });
 
@@ -528,9 +590,12 @@ export function registerGame(io: Server, namespace = `/g/${GAME_ID}`): void {
       cb({ ok: true });
     });
 
-    socket.on('disconnect', () => {
+    socket.on('disconnect', (reason) => {
       const index = getSocketIndex(socket.id);
-      if (!index) return;
+      if (!index) {
+        socketLogger.debug({ reason }, 'secret-signals client disconnected before room binding');
+        return;
+      }
 
       const room = getRoom(index.roomCode);
       if (room) {
@@ -551,10 +616,19 @@ export function registerGame(io: Server, namespace = `/g/${GAME_ID}`): void {
           const anyConnected = Object.values(room.players).some((p) => p.connected);
           if (!anyConnected) {
             scheduleRoomCleanup(room.code);
+            gameLogger.info({ roomCode: room.code }, 'scheduled secret-signals room cleanup');
           }
         }
       }
       deleteSocketIndex(socket.id);
+      socketLogger.info(
+        {
+          reason,
+          roomCode: index.roomCode,
+          playerId: index.playerId,
+        },
+        'secret-signals client disconnected'
+      );
     });
   });
 }
