@@ -6,6 +6,7 @@ import { createComponentLogger, registerProcessLogging } from './logging/logger'
 import { registerPartyHandlers } from './party/partyHandlers';
 import { gameRegistry } from './registry/index';
 import { registerHttpRoutes } from './httpRoutes';
+import { getMetricsRegistry, initializeMetrics, setActiveConnections } from './metrics/collectors';
 
 const app = express();
 const httpServer = createServer(app);
@@ -21,6 +22,8 @@ const io = new Server(httpServer, {
   },
 });
 
+initializeMetrics();
+
 for (const [gameId, game] of gameRegistry) {
   const namespacePath = `/g/${gameId}`;
   game.registerServer(io, namespacePath);
@@ -34,10 +37,18 @@ for (const [gameId, game] of gameRegistry) {
   );
 }
 
+io.engine.on('connection', () => {
+  setActiveConnections(io.engine.clientsCount);
+});
+
+io.engine.on('close', () => {
+  setActiveConnections(io.engine.clientsCount);
+});
+
 registerPartyHandlers(io);
 serverLogger.info({ namespace: '/party' }, 'registered party namespace');
 
-registerHttpRoutes(app);
+registerHttpRoutes(app, getMetricsRegistry());
 
 httpServer.on('error', (error) => {
   serverLogger.fatal({ err: error }, 'http server error');

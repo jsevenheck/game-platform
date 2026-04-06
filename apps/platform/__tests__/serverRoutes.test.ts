@@ -1,5 +1,6 @@
 import express from 'express';
 import { createServer } from 'http';
+import { Registry } from 'prom-client';
 import { registerHttpRoutes } from '../server/httpRoutes';
 
 /**
@@ -9,7 +10,7 @@ import { registerHttpRoutes } from '../server/httpRoutes';
 describe('server route ordering', () => {
   it('/health responds with JSON before the SPA catch-all', async () => {
     const app = express();
-    registerHttpRoutes(app, process.cwd());
+    registerHttpRoutes(app, new Registry(), process.cwd());
 
     const server = createServer(app);
 

@@ -138,6 +138,34 @@ export function clearMatchTimeout(partyId: string): void {
   }
 }
 
+export interface PartyStoreSnapshot {
+  totalParties: number;
+  connectedMembers: number;
+  inMatchParties: number;
+}
+
+export function getPartySnapshot(): PartyStoreSnapshot {
+  let connectedMembers = 0;
+  let inMatchParties = 0;
+
+  for (const party of parties.values()) {
+    if (party.status === 'in-match') {
+      inMatchParties += 1;
+    }
+
+    for (const member of party.members.values()) {
+      if (member.connected) {
+        connectedMembers += 1;
+      }
+    }
+  }
+
+  return {
+    totalParties: parties.size,
+    connectedMembers,
+    inMatchParties,
+  };
+}
 export function partyToView(party: PartySession) {
   return {
     partyId: party.partyId,
