@@ -9,6 +9,7 @@ import {
   attachSocketEventDebugLogging,
   createSocketLogger,
 } from '../../../../apps/platform/server/logging/socketLogger';
+import { startSocketHandlerInstrumentation } from '../../../../apps/platform/server/observability/socketHandlerMetrics';
 import {
   MIN_PLAYERS,
   MIN_ROUNDS,
@@ -183,61 +184,104 @@ export function registerBlackout(io: Server, namespace = '/g/blackout'): void {
     socketLogger.debug('game client connected');
 
     socket.on('autoJoinRoom', (data, cb) => {
-      const sessionId = data.sessionId?.trim();
-      const name = data.name?.trim();
-      const wantsHost = data.isHost === true;
-      const stablePlayerId =
-        normalizeStablePlayerId(data.playerId) ?? normalizeStablePlayerId(socket.data.playerId);
+      const instrumentation = startSocketHandlerInstrumentation(namespace, 'autoJoinRoom');
+      const respond = instrumentation.wrapCallback(cb);
+      try {
+        const sessionId = data.sessionId?.trim();
+        const name = data.name?.trim();
+        const wantsHost = data.isHost === true;
+        const stablePlayerId =
+          normalizeStablePlayerId(data.playerId) ?? normalizeStablePlayerId(socket.data.playerId);
 
-      if (!sessionId || !name) {
-        return cb({ ok: false, error: 'Missing session info' });
-      }
+        if (!sessionId || !name) {
+          return respond({ ok: false, error: 'Missing session info' });
+        }
 
-      // Check if session already mapped to a room
-      const roomCode = getSessionRoom(sessionId);
-      const existingRoom = roomCode ? getRoom(roomCode) : undefined;
-      if (existingRoom) {
-        const indexedPlayerId =
-          getSocketIndex(socket.id)?.roomCode === existingRoom.code
-            ? getSocketIndex(socket.id)?.playerId
-            : undefined;
-        const reconnectPlayerId = stablePlayerId ?? indexedPlayerId;
+        // Check if session already mapped to a room
+        const roomCode = getSessionRoom(sessionId);
+        const existingRoom = roomCode ? getRoom(roomCode) : undefined;
+        if (existingRoom) {
+          const indexedPlayerId =
+            getSocketIndex(socket.id)?.roomCode === existingRoom.code
+              ? getSocketIndex(socket.id)?.playerId
+              : undefined;
+          const reconnectPlayerId = stablePlayerId ?? indexedPlayerId;
 
-        if (reconnectPlayerId && existingRoom.players[reconnectPlayerId]) {
-          const player = existingRoom.players[reconnectPlayerId];
-          // Require the server-issued resumeToken to prevent slot hijacking via public playerId.
-          if (data.resumeToken && player.resumeToken !== data.resumeToken) {
-            socketLogger.warn(
-              { roomCode: existingRoom.code, playerId: player.id, sessionId },
-              'autoJoinRoom rejected: invalid blackout resume token'
+          if (reconnectPlayerId && existingRoom.players[reconnectPlayerId]) {
+            const player = existingRoom.players[reconnectPlayerId];
+            // Require the server-issued resumeToken to prevent slot hijacking via public playerId.
+            if (data.resumeToken && player.resumeToken !== data.resumeToken) {
+              socketLogger.warn(
+                { roomCode: existingRoom.code, playerId: player.id, sessionId },
+                'autoJoinRoom rejected: invalid blackout resume token'
+              );
+              return respond({ ok: false, error: 'Invalid resume token' });
+            }
+            if (!data.resumeToken && player.resumeToken) {
+              socketLogger.warn(
+                { roomCode: existingRoom.code, playerId: player.id, sessionId },
+                'autoJoinRoom rejected: blackout resume token required'
+              );
+              return respond({ ok: false, error: 'Resume token required' });
+            }
+            bindPlayerToSocket(nsp, socket, existingRoom, reconnectPlayerId);
+            if (wantsHost && existingRoom.hostId !== reconnectPlayerId) {
+              assignHost(existingRoom, reconnectPlayerId);
+            }
+            if (wantsHost) {
+              existingRoom.ownerId = reconnectPlayerId;
+            }
+            broadcastRoom(nsp, existingRoom);
+            socketLogger.info(
+              {
+                roomCode: existingRoom.code,
+                playerId: player.id,
+                sessionId,
+                resumed: true,
+              },
+              'player rejoined blackout room'
             );
-            return cb({ ok: false, error: 'Invalid resume token' });
+            return respond({
+              ok: true,
+              roomCode: existingRoom.code,
+              playerId: player.id,
+              resumeToken: player.resumeToken,
+            });
           }
-          if (!data.resumeToken && player.resumeToken) {
-            socketLogger.warn(
-              { roomCode: existingRoom.code, playerId: player.id, sessionId },
-              'autoJoinRoom rejected: blackout resume token required'
-            );
-            return cb({ ok: false, error: 'Resume token required' });
+
+          const nameExists = Object.values(existingRoom.players).some(
+            (player) =>
+              player.id !== stablePlayerId && player.name.toLowerCase() === name.toLowerCase()
+          );
+          if (nameExists) {
+            return respond({ ok: false, error: 'Name already taken' });
           }
-          bindPlayerToSocket(nsp, socket, existingRoom, reconnectPlayerId);
-          if (wantsHost && existingRoom.hostId !== reconnectPlayerId) {
-            assignHost(existingRoom, reconnectPlayerId);
+
+          if (existingRoom.phase !== 'lobby') {
+            return respond({ ok: false, error: 'Game already started' });
           }
+
+          const player = createPlayer(name, false, stablePlayerId ?? undefined);
+          player.socketId = socket.id;
+          existingRoom.players[player.id] = player;
+          bindPlayerToSocket(nsp, socket, existingRoom, player.id);
           if (wantsHost) {
-            existingRoom.ownerId = reconnectPlayerId;
+            assignHost(existingRoom, player.id);
+            existingRoom.ownerId = player.id;
           }
           broadcastRoom(nsp, existingRoom);
+
           socketLogger.info(
             {
               roomCode: existingRoom.code,
               playerId: player.id,
               sessionId,
-              resumed: true,
+              resumed: false,
             },
-            'player rejoined blackout room'
+            'player joined existing blackout room'
           );
-          return cb({
+
+          return respond({
             ok: true,
             roomCode: existingRoom.code,
             playerId: player.id,
@@ -245,147 +289,132 @@ export function registerBlackout(io: Server, namespace = '/g/blackout'): void {
           });
         }
 
-        const nameExists = Object.values(existingRoom.players).some(
-          (player) =>
-            player.id !== stablePlayerId && player.name.toLowerCase() === name.toLowerCase()
+        // Create a new room for this session
+        const { room, hostId, resumeToken } = createRoom(
+          name,
+          socket.id,
+          stablePlayerId ?? undefined
         );
-        if (nameExists) {
-          return cb({ ok: false, error: 'Name already taken' });
-        }
-
-        if (existingRoom.phase !== 'lobby') {
-          return cb({ ok: false, error: 'Game already started' });
-        }
-
-        const player = createPlayer(name, false, stablePlayerId ?? undefined);
-        player.socketId = socket.id;
-        existingRoom.players[player.id] = player;
-        bindPlayerToSocket(nsp, socket, existingRoom, player.id);
-        if (wantsHost) {
-          assignHost(existingRoom, player.id);
-          existingRoom.ownerId = player.id;
-        }
-        broadcastRoom(nsp, existingRoom);
+        setSessionToRoom(sessionId, room.code);
+        clearRoomCleanup(room.code);
+        socket.join(room.code);
+        broadcastRoom(nsp, room);
 
         socketLogger.info(
           {
-            roomCode: existingRoom.code,
-            playerId: player.id,
+            roomCode: room.code,
+            playerId: hostId,
             sessionId,
-            resumed: false,
           },
-          'player joined existing blackout room'
+          'created blackout room'
         );
 
-        return cb({
-          ok: true,
-          roomCode: existingRoom.code,
-          playerId: player.id,
-          resumeToken: player.resumeToken,
-        });
+        respond({ ok: true, roomCode: room.code, playerId: hostId, resumeToken });
+      } catch (err) {
+        instrumentation.finishError();
+        throw err;
       }
-
-      // Create a new room for this session
-      const { room, hostId, resumeToken } = createRoom(
-        name,
-        socket.id,
-        stablePlayerId ?? undefined
-      );
-      setSessionToRoom(sessionId, room.code);
-      clearRoomCleanup(room.code);
-      socket.join(room.code);
-      broadcastRoom(nsp, room);
-
-      socketLogger.info(
-        {
-          roomCode: room.code,
-          playerId: hostId,
-          sessionId,
-        },
-        'created blackout room'
-      );
-
-      cb({ ok: true, roomCode: room.code, playerId: hostId, resumeToken });
     });
 
     socket.on('resumePlayer', (data, cb) => {
-      const room = getRoom(data.roomCode);
-      if (!room) {
-        return cb({ ok: false, error: 'Room not found' });
-      }
+      const instrumentation = startSocketHandlerInstrumentation(namespace, 'resumePlayer');
+      const respond = instrumentation.wrapCallback(cb);
+      try {
+        const room = getRoom(data.roomCode);
+        if (!room) {
+          return respond({ ok: false, error: 'Room not found' });
+        }
 
-      const player = room.players[data.playerId];
-      if (!player) {
-        return cb({ ok: false, error: 'Player not found' });
-      }
-      if (player.resumeToken !== data.resumeToken) {
-        socketLogger.warn(
-          { roomCode: room.code, playerId: data.playerId },
-          'resumePlayer rejected: invalid blackout resume token'
+        const player = room.players[data.playerId];
+        if (!player) {
+          return respond({ ok: false, error: 'Player not found' });
+        }
+        if (player.resumeToken !== data.resumeToken) {
+          socketLogger.warn(
+            { roomCode: room.code, playerId: data.playerId },
+            'resumePlayer rejected: invalid blackout resume token'
+          );
+          return respond({ ok: false, error: 'Invalid resume token' });
+        }
+
+        bindPlayerToSocket(nsp, socket, room, player.id);
+        broadcastRoom(nsp, room);
+        socketLogger.info(
+          {
+            roomCode: room.code,
+            playerId: player.id,
+          },
+          'resumed blackout player'
         );
-        return cb({ ok: false, error: 'Invalid resume token' });
+        respond({ ok: true });
+      } catch (err) {
+        instrumentation.finishError();
+        throw err;
       }
-
-      bindPlayerToSocket(nsp, socket, room, player.id);
-      broadcastRoom(nsp, room);
-      socketLogger.info(
-        {
-          roomCode: room.code,
-          playerId: player.id,
-        },
-        'resumed blackout player'
-      );
-      cb({ ok: true });
     });
 
     socket.on('leaveRoom', (data) => {
-      const room = getRoom(data.roomCode);
-      if (!room) return;
-
-      const socketIdx = getSocketIndex(socket.id);
-      const player = socketIdx ? room.players[socketIdx.playerId] : undefined;
-      if (!player) return;
-
-      delete room.players[player.id];
-      deleteSocketIndex(socket.id);
-
-      if (room.ownerId === player.id) {
-        const remainingForOwner = Object.values(room.players);
-        room.ownerId = remainingForOwner.length > 0 ? remainingForOwner[0].id : null;
-      }
-
-      // If host left, assign new host
-      if (room.hostId === player.id) {
-        const remaining = Object.values(room.players);
-        const newHost = remaining[0];
-        if (newHost) {
-          newHost.isHost = true;
-          room.hostId = newHost.id;
-          if (room.currentRound) {
-            room.currentRound.readerId = newHost.id;
-          }
-        } else {
-          room.hostId = null;
+      const instrumentation = startSocketHandlerInstrumentation(namespace, 'leaveRoom');
+      try {
+        const room = getRoom(data.roomCode);
+        if (!room) {
+          instrumentation.finishError();
+          return;
         }
+
+        const socketIdx = getSocketIndex(socket.id);
+        const player = socketIdx ? room.players[socketIdx.playerId] : undefined;
+        if (!player) {
+          instrumentation.finishError();
+          return;
+        }
+
+        delete room.players[player.id];
+        deleteSocketIndex(socket.id);
+
+        if (room.ownerId === player.id) {
+          const remainingForOwner = Object.values(room.players);
+          room.ownerId = remainingForOwner.length > 0 ? remainingForOwner[0].id : null;
+        }
+
+        // If host left, assign new host
+        if (room.hostId === player.id) {
+          const remaining = Object.values(room.players);
+          const newHost = remaining[0];
+          if (newHost) {
+            newHost.isHost = true;
+            room.hostId = newHost.id;
+            if (room.currentRound) {
+              room.currentRound.readerId = newHost.id;
+            }
+          } else {
+            room.hostId = null;
+          }
+        }
+
+        socket.leave(data.roomCode);
+
+        if (Object.keys(room.players).length === 0) {
+          deleteRoom(data.roomCode);
+          socketLogger.info({ roomCode: data.roomCode }, 'deleted empty blackout room after leave');
+          instrumentation.finishSuccess();
+          return;
+        }
+
+        broadcastRoom(nsp, room);
+        socketLogger.info(
+          {
+            roomCode: room.code,
+            playerId: player.id,
+            remainingPlayers: Object.keys(room.players).length,
+          },
+          'player left blackout room'
+        );
+        instrumentation.finishSuccess();
+      } catch (err) {
+        instrumentation.finishError();
+        throw err;
       }
-
-      socket.leave(data.roomCode);
-
-      if (Object.keys(room.players).length === 0) {
-        deleteRoom(data.roomCode);
-        socketLogger.info({ roomCode: data.roomCode }, 'deleted empty blackout room after leave');
-        return;
-      }
-
-      broadcastRoom(nsp, room);
-      socketLogger.info(
-        {
-          roomCode: room.code,
-          playerId: player.id,
-          remainingPlayers: Object.keys(room.players).length,
-        },
-        'player left blackout room'
-      );
     });
 
     socket.on('updateMaxRounds', (data) => {
@@ -412,37 +441,44 @@ export function registerBlackout(io: Server, namespace = '/g/blackout'): void {
     });
 
     socket.on('startGame', (data, cb) => {
-      const room = getRoom(data.roomCode);
-      if (!room) return cb({ ok: false, error: 'Room not found' });
-      if (!verifyPlayer(socket, data.roomCode, room.hostId ?? '')) {
-        socketLogger.warn(
-          { roomCode: data.roomCode, playerId: data.playerId },
-          'startGame rejected: actor is not blackout host'
+      const instrumentation = startSocketHandlerInstrumentation(namespace, 'startGame');
+      const respond = instrumentation.wrapCallback(cb);
+      try {
+        const room = getRoom(data.roomCode);
+        if (!room) return respond({ ok: false, error: 'Room not found' });
+        if (!verifyPlayer(socket, data.roomCode, room.hostId ?? '')) {
+          socketLogger.warn(
+            { roomCode: data.roomCode, playerId: data.playerId },
+            'startGame rejected: actor is not blackout host'
+          );
+          return respond({ ok: false, error: 'Only host can start' });
+        }
+        if (room.phase !== 'lobby') {
+          return respond({ ok: false, error: 'Game already started' });
+        }
+
+        const connectedPlayers = Object.values(room.players).filter((p) => p.connected);
+        if (connectedPlayers.length < MIN_PLAYERS) {
+          return respond({ ok: false, error: `Need at least ${MIN_PLAYERS} players` });
+        }
+
+        transitionToPlaying(room);
+        const readerId = room.hostId ?? getRandomReader(room);
+        startNewRound(room, readerId);
+        broadcastRoom(nsp, room);
+        socketLogger.info(
+          {
+            roomCode: room.code,
+            hostPlayerId: room.hostId,
+            connectedPlayers: connectedPlayers.length,
+          },
+          'started blackout game'
         );
-        return cb({ ok: false, error: 'Only host can start' });
+        respond({ ok: true });
+      } catch (err) {
+        instrumentation.finishError();
+        throw err;
       }
-      if (room.phase !== 'lobby') {
-        return cb({ ok: false, error: 'Game already started' });
-      }
-
-      const connectedPlayers = Object.values(room.players).filter((p) => p.connected);
-      if (connectedPlayers.length < MIN_PLAYERS) {
-        return cb({ ok: false, error: `Need at least ${MIN_PLAYERS} players` });
-      }
-
-      transitionToPlaying(room);
-      const readerId = room.hostId ?? getRandomReader(room);
-      startNewRound(room, readerId);
-      broadcastRoom(nsp, room);
-      socketLogger.info(
-        {
-          roomCode: room.code,
-          hostPlayerId: room.hostId,
-          connectedPlayers: connectedPlayers.length,
-        },
-        'started blackout game'
-      );
-      cb({ ok: true });
     });
 
     socket.on('revealCategory', (data) => {
@@ -521,57 +557,65 @@ export function registerBlackout(io: Server, namespace = '/g/blackout'): void {
     });
 
     socket.on('disconnect', (reason) => {
-      const index = getSocketIndex(socket.id);
-      if (!index) {
-        socketLogger.debug({ reason }, 'blackout client disconnected before room binding');
-        return;
-      }
+      const instrumentation = startSocketHandlerInstrumentation(namespace, 'disconnect');
+      try {
+        const index = getSocketIndex(socket.id);
+        if (!index) {
+          socketLogger.debug({ reason }, 'blackout client disconnected before room binding');
+          instrumentation.finishSuccess();
+          return;
+        }
 
-      const room = getRoom(index.roomCode);
-      if (room) {
-        const player = room.players[index.playerId];
-        if (player) {
-          const wasHost = player.isHost;
-          player.connected = false;
-          player.socketId = null;
+        const room = getRoom(index.roomCode);
+        if (room) {
+          const player = room.players[index.playerId];
+          if (player) {
+            const wasHost = player.isHost;
+            player.connected = false;
+            player.socketId = null;
 
-          // Reassign host if the disconnected player was the host
-          if (wasHost) {
-            const remaining = Object.values(room.players);
-            const newHost =
-              remaining.find((p) => p.id !== index.playerId && p.connected) ??
-              remaining.find((p) => p.id !== index.playerId);
+            // Reassign host if the disconnected player was the host
+            if (wasHost) {
+              const remaining = Object.values(room.players);
+              const newHost =
+                remaining.find((p) => p.id !== index.playerId && p.connected) ??
+                remaining.find((p) => p.id !== index.playerId);
 
-            if (newHost) {
-              assignHost(room, newHost.id);
-              // Update reader if in a round
-              if (room.currentRound) {
-                room.currentRound.readerId = newHost.id;
+              if (newHost) {
+                assignHost(room, newHost.id);
+                // Update reader if in a round
+                if (room.currentRound) {
+                  room.currentRound.readerId = newHost.id;
+                }
+              } else {
+                room.hostId = null;
               }
-            } else {
-              room.hostId = null;
+            }
+
+            broadcastRoom(nsp, room);
+
+            // Schedule cleanup if no players are connected
+            const allDisconnected = Object.values(room.players).every((p) => !p.connected);
+            if (allDisconnected) {
+              scheduleRoomCleanup(room.code, 5 * 60 * 1000); // 5 minutes idle timeout
+              gameLogger.info({ roomCode: room.code }, 'scheduled blackout room cleanup');
             }
           }
-
-          broadcastRoom(nsp, room);
-
-          // Schedule cleanup if no players are connected
-          const allDisconnected = Object.values(room.players).every((p) => !p.connected);
-          if (allDisconnected) {
-            scheduleRoomCleanup(room.code, 5 * 60 * 1000); // 5 minutes idle timeout
-            gameLogger.info({ roomCode: room.code }, 'scheduled blackout room cleanup');
-          }
         }
+        deleteSocketIndex(socket.id);
+        socketLogger.info(
+          {
+            reason,
+            roomCode: index.roomCode,
+            playerId: index.playerId,
+          },
+          'blackout client disconnected'
+        );
+        instrumentation.finishSuccess();
+      } catch (err) {
+        instrumentation.finishError();
+        throw err;
       }
-      deleteSocketIndex(socket.id);
-      socketLogger.info(
-        {
-          reason,
-          roomCode: index.roomCode,
-          playerId: index.playerId,
-        },
-        'blackout client disconnected'
-      );
     });
   });
 }
