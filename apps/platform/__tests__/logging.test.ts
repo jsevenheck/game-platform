@@ -4,7 +4,11 @@ import {
   resolvePrettyTransportTarget,
   type LoggingConfig,
 } from '../server/logging/logger';
-import { createSocketLogger, summarizeSocketArg } from '../server/logging/socketLogger';
+import {
+  attachSocketEventDebugLogging,
+  createSocketLogger,
+  summarizeSocketArg,
+} from '../server/logging/socketLogger';
 
 describe('server logging helpers', () => {
   it('defaults to non-pretty logging during tests and info logging in production', () => {
@@ -69,5 +73,34 @@ describe('server logging helpers', () => {
         throw new Error('missing');
       })
     ).toBeUndefined();
+  });
+
+  it('attaches socket debug logging only when explicitly enabled', () => {
+    const onAny = vi.fn<(handler: (event: string, ...args: unknown[]) => void) => void>();
+    const debug = vi.fn();
+
+    attachSocketEventDebugLogging({ id: 'socket-1', onAny }, { debug } as never, false);
+    expect(onAny).not.toHaveBeenCalled();
+
+    attachSocketEventDebugLogging({ id: 'socket-1', onAny }, { debug } as never, true);
+    expect(onAny).toHaveBeenCalledTimes(1);
+
+    const handler = onAny.mock.calls[0]?.[0];
+    expect(handler).toBeTypeOf('function');
+
+    handler?.('startGame', { roomCode: 'ABCD', resumeToken: 'secret', playerId: 'p1' }, 'signal');
+    expect(debug).toHaveBeenCalledWith(
+      {
+        event: 'startGame',
+        argSummary: [
+          {
+            type: 'object',
+            keys: ['playerId', 'resumeToken', 'roomCode'],
+          },
+          { type: 'string', length: 6 },
+        ],
+      },
+      'socket event'
+    );
   });
 });

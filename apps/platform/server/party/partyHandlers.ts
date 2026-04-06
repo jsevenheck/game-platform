@@ -15,7 +15,7 @@ import {
   clearMatchTimeout,
 } from './partyStore';
 import type { PartySession } from './types';
-import { createComponentLogger, toLoggableError } from '../logging/logger';
+import { createComponentLogger, readLoggingConfig, toLoggableError } from '../logging/logger';
 import { attachSocketEventDebugLogging, createSocketLogger } from '../logging/socketLogger';
 import { getGame } from '../registry/index';
 
@@ -89,6 +89,7 @@ function connectedMemberCount(party: PartySession): number {
 export function registerPartyHandlers(io: Server): void {
   const nsp = io.of('/party');
   const partyLogger = createComponentLogger('party', { namespace: '/party' });
+  const socketEventDebugEnabled = readLoggingConfig().socketEvents;
 
   function triggerMatchTimeout(party: PartySession): void {
     if (party.status !== 'in-match' || !party.activeMatch) return;
@@ -116,7 +117,7 @@ export function registerPartyHandlers(io: Server): void {
   nsp.on('connection', (socket: PartySocket) => {
     const socketLogger = createSocketLogger(partyLogger, socket);
 
-    attachSocketEventDebugLogging(socket, socketLogger);
+    attachSocketEventDebugLogging(socket, socketLogger, socketEventDebugEnabled);
     socketLogger.debug('party client connected');
 
     socket.on('createParty', (data, cb) => {
@@ -151,6 +152,7 @@ export function registerPartyHandlers(io: Server): void {
 
       const party = getPartyByInviteCode(inviteCode);
       if (!party) {
+        socketLogger.warn({ inviteCode }, 'joinParty rejected: party not found');
         return cb({ ok: false, error: 'Party not found' });
       }
       if (party.status !== 'lobby') {
@@ -199,6 +201,7 @@ export function registerPartyHandlers(io: Server): void {
 
       const party = getPartyByInviteCode(inviteCode);
       if (!party) {
+        socketLogger.warn({ inviteCode, playerId }, 'resumeParty rejected: party not found');
         return cb({ ok: false, error: 'Party not found' });
       }
 
@@ -208,6 +211,14 @@ export function registerPartyHandlers(io: Server): void {
       }
 
       if (member.resumeToken !== data.resumeToken) {
+        socketLogger.warn(
+          {
+            partyId: party.partyId,
+            inviteCode: party.inviteCode,
+            playerId,
+          },
+          'resumeParty rejected: invalid resume token'
+        );
         return cb({ ok: false, error: 'Invalid resume token' });
       }
 
@@ -312,6 +323,15 @@ export function registerPartyHandlers(io: Server): void {
       if (!party) return cb({ ok: false, error: 'Not in a party' });
       const actor = Array.from(party.members.values()).find((m) => m.socketId === socket.id);
       if (!actor || actor.playerId !== party.hostPlayerId) {
+        socketLogger.warn(
+          {
+            partyId: party.partyId,
+            inviteCode: party.inviteCode,
+            playerId: actor?.playerId ?? data.playerId,
+            gameId: data.gameId,
+          },
+          'selectGame rejected: actor is not party host'
+        );
         return cb({ ok: false, error: 'Only the host can select a game' });
       }
       if (!getGame(data.gameId)) {
@@ -336,6 +356,14 @@ export function registerPartyHandlers(io: Server): void {
       if (!party) return cb({ ok: false, error: 'Not in a party' });
       const actor = Array.from(party.members.values()).find((m) => m.socketId === socket.id);
       if (!actor || actor.playerId !== party.hostPlayerId) {
+        socketLogger.warn(
+          {
+            partyId: party.partyId,
+            inviteCode: party.inviteCode,
+            playerId: actor?.playerId ?? data.playerId,
+          },
+          'launchGame rejected: actor is not party host'
+        );
         return cb({ ok: false, error: 'Only the host can launch a game' });
       }
       if (!party.selectedGameId) {
@@ -394,6 +422,15 @@ export function registerPartyHandlers(io: Server): void {
       if (!party) return cb({ ok: false, error: 'Not in a party' });
       const actor = Array.from(party.members.values()).find((m) => m.socketId === socket.id);
       if (!actor || actor.playerId !== party.hostPlayerId) {
+        socketLogger.warn(
+          {
+            partyId: party.partyId,
+            inviteCode: party.inviteCode,
+            playerId: actor?.playerId ?? data.playerId,
+            gameId: party.activeMatch?.gameId,
+          },
+          'replayGame rejected: actor is not party host'
+        );
         return cb({ ok: false, error: 'Only the host can replay' });
       }
       if (party.status !== 'in-match' || !party.activeMatch) {
@@ -479,6 +516,16 @@ export function registerPartyHandlers(io: Server): void {
       if (!party) return cb({ ok: false, error: 'Not in a party' });
       const actor = Array.from(party.members.values()).find((m) => m.socketId === socket.id);
       if (!actor || actor.playerId !== party.hostPlayerId) {
+        socketLogger.warn(
+          {
+            partyId: party.partyId,
+            inviteCode: party.inviteCode,
+            playerId: actor?.playerId ?? data.playerId,
+            gameId: party.activeMatch?.gameId,
+            matchKey: party.activeMatch?.matchKey,
+          },
+          'returnToLobby rejected: actor is not party host'
+        );
         return cb({ ok: false, error: 'Only the host can return to lobby' });
       }
       if (!party.activeMatch) {

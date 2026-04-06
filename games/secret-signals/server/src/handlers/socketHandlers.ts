@@ -1,7 +1,10 @@
 import type { Server, Socket } from 'socket.io';
 import type { ClientToServerEvents, ServerToClientEvents } from '../../../core/src/events';
 import type { Card, LogEntry, PlayerRole, Room } from '../../../core/src/types';
-import { createComponentLogger } from '../../../../../apps/platform/server/logging/logger';
+import {
+  createComponentLogger,
+  readLoggingConfig,
+} from '../../../../../apps/platform/server/logging/logger';
 import {
   attachSocketEventDebugLogging,
   createSocketLogger,
@@ -54,6 +57,7 @@ function verifyPlayer(socket: GameSocket, roomCode: string, playerId: string): b
 export function registerGame(io: Server, namespace = `/g/${GAME_ID}`): void {
   const nsp = io.of(namespace);
   const gameLogger = createComponentLogger('game-server', { gameId: GAME_ID, namespace });
+  const socketEventDebugEnabled = readLoggingConfig().socketEvents;
 
   nsp.use((socket, next) => {
     const auth = socket.handshake.auth || {};
@@ -65,7 +69,7 @@ export function registerGame(io: Server, namespace = `/g/${GAME_ID}`): void {
   nsp.on('connection', (socket: GameSocket) => {
     const socketLogger = createSocketLogger(gameLogger, socket);
 
-    attachSocketEventDebugLogging(socket, socketLogger);
+    attachSocketEventDebugLogging(socket, socketLogger, socketEventDebugEnabled);
     socketLogger.debug('game client connected');
 
     socket.on('autoJoinRoom', (data, cb) => {
@@ -109,9 +113,17 @@ export function registerGame(io: Server, namespace = `/g/${GAME_ID}`): void {
         if (existingPlayer) {
           // Require the server-issued resumeToken to prevent slot hijacking via public playerId.
           if (data.resumeToken && existingPlayer.resumeToken !== data.resumeToken) {
+            socketLogger.warn(
+              { roomCode: mappedRoom.code, playerId: existingPlayer.id, sessionId },
+              'autoJoinRoom rejected: invalid secret-signals resume token'
+            );
             return cb({ ok: false, error: 'Invalid resume token' });
           }
           if (!data.resumeToken && existingPlayer.resumeToken) {
+            socketLogger.warn(
+              { roomCode: mappedRoom.code, playerId: existingPlayer.id, sessionId },
+              'autoJoinRoom rejected: secret-signals resume token required'
+            );
             return cb({ ok: false, error: 'Resume token required' });
           }
 
@@ -198,6 +210,10 @@ export function registerGame(io: Server, namespace = `/g/${GAME_ID}`): void {
       const player = room.players[data.playerId];
       if (!player) return cb({ ok: false, error: 'Player not found' });
       if (player.resumeToken !== data.resumeToken) {
+        socketLogger.warn(
+          { roomCode: room.code, playerId: data.playerId },
+          'resumePlayer rejected: invalid secret-signals resume token'
+        );
         return cb({ ok: false, error: 'Invalid resume token' });
       }
 
@@ -443,8 +459,13 @@ export function registerGame(io: Server, namespace = `/g/${GAME_ID}`): void {
     socket.on('startGame', (data, cb) => {
       const room = getRoom(data.roomCode);
       if (!room) return cb({ ok: false, error: 'Room not found' });
-      if (!verifyPlayer(socket, data.roomCode, room.hostId ?? ''))
+      if (!verifyPlayer(socket, data.roomCode, room.hostId ?? '')) {
+        socketLogger.warn(
+          { roomCode: data.roomCode, playerId: data.playerId },
+          'startGame rejected: actor is not secret-signals host'
+        );
         return cb({ ok: false, error: 'Only host can start' });
+      }
       if (room.phase !== 'lobby') return cb({ ok: false, error: 'Game already started' });
 
       const minimumPlayers = getMinimumPlayersForTeamCount(room.teamCount);
@@ -582,11 +603,23 @@ export function registerGame(io: Server, namespace = `/g/${GAME_ID}`): void {
     socket.on('restartGame', (data, cb) => {
       const room = getRoom(data.roomCode);
       if (!room) return cb({ ok: false, error: 'Room not found' });
-      if (!verifyPlayer(socket, data.roomCode, room.hostId ?? ''))
+      if (!verifyPlayer(socket, data.roomCode, room.hostId ?? '')) {
+        socketLogger.warn(
+          { roomCode: data.roomCode, playerId: data.playerId },
+          'restartGame rejected: actor is not secret-signals host'
+        );
         return cb({ ok: false, error: 'Only host can restart' });
+      }
 
       transitionToLobby(room);
       broadcastRoom(nsp, room);
+      socketLogger.info(
+        {
+          roomCode: room.code,
+          hostPlayerId: room.hostId,
+        },
+        'restarted secret-signals game'
+      );
       cb({ ok: true });
     });
 

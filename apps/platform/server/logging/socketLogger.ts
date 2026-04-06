@@ -68,8 +68,12 @@ export function summarizeSocketArg(value: unknown): unknown {
   }
 }
 
-export function attachSocketEventDebugLogging(socket: SocketLike, logger: Logger): void {
-  if (!readLoggingConfig().socketEvents) return;
+export function attachSocketEventDebugLogging(
+  socket: SocketLike,
+  logger: Logger,
+  enabled = readLoggingConfig().socketEvents
+): void {
+  if (!enabled) return;
   if (typeof socket.onAny !== 'function') return;
 
   socket.onAny((event, ...args) => {
