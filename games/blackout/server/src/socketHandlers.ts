@@ -10,6 +10,11 @@ import {
   createSocketLogger,
 } from '../../../../apps/platform/server/logging/socketLogger';
 import {
+  recordSocketEventEnd,
+  recordSocketEventStart,
+  setNamespaceConnectionCount,
+} from '../../../../apps/platform/server/metrics/metrics';
+import {
   MIN_PLAYERS,
   MIN_ROUNDS,
   MAX_ROUNDS,
@@ -134,8 +139,9 @@ function bindPlayerToSocket(
 }
 
 export function registerBlackout(io: Server, namespace = '/g/blackout'): void {
+  const gameId = 'blackout';
   const nsp = io.of(namespace);
-  const gameLogger = createComponentLogger('game-server', { gameId: 'blackout', namespace });
+  const gameLogger = createComponentLogger('game-server', { gameId, namespace });
   const socketEventDebugEnabled = readLoggingConfig().socketEvents;
 
   nsp.use((socket, next) => {
@@ -181,6 +187,10 @@ export function registerBlackout(io: Server, namespace = '/g/blackout'): void {
 
     attachSocketEventDebugLogging(socket, socketLogger, socketEventDebugEnabled);
     socketLogger.debug('game client connected');
+    setNamespaceConnectionCount({ namespace, gameId }, nsp.sockets.size);
+    recordSocketEventEnd(recordSocketEventStart({ namespace, event: 'connection', gameId }), {
+      result: 'ok',
+    });
 
     socket.on('autoJoinRoom', (data, cb) => {
       const sessionId = data.sessionId?.trim();
@@ -521,6 +531,11 @@ export function registerBlackout(io: Server, namespace = '/g/blackout'): void {
     });
 
     socket.on('disconnect', (reason) => {
+      setNamespaceConnectionCount({ namespace, gameId }, nsp.sockets.size);
+      recordSocketEventEnd(recordSocketEventStart({ namespace, event: 'disconnect', gameId }), {
+        result: 'ok',
+        reason,
+      });
       const index = getSocketIndex(socket.id);
       if (!index) {
         socketLogger.debug({ reason }, 'blackout client disconnected before room binding');
