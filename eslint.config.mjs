@@ -47,6 +47,21 @@ export default tseslint.config(
 
   // Server files — Node.js environment
   {
+    files: [
+      'apps/platform/vite.config.ts',
+      'vitest.config.ts',
+      'vitest.projects.ts',
+      'playwright.config.ts',
+    ],
+    languageOptions: {
+      parserOptions: {
+        projectService: false,
+        tsconfigRootDir: import.meta.dirname,
+      },
+    },
+  },
+
+  {
     files: ['games/*/server/**/*.ts', 'apps/platform/server/**/*.ts', 'games/*/scripts/**/*.mjs'],
     languageOptions: {
       globals: {

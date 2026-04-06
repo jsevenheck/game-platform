@@ -17,6 +17,7 @@ games/secret-signals/ <- internal platform module
 - The platform owns the full party lifecycle: create -> join -> launch game -> replay / return to lobby.
 - `matchKey` is the unique identifier per match, passed as `sessionId` to each game's `autoJoinRoom` handler.
 - `@shared/*` in game UI code resolves to `games/{game}/core/src/` via Vite's context-sensitive alias (see `apps/platform/vite.config.ts`) and per-game `ui-vue/tsconfig.json`.
+- Shared server logging lives in `apps/platform/server/logging/`; game modules should reuse those helpers instead of adding their own logger stack.
 
 ## Skills
 
@@ -79,6 +80,7 @@ Game-specific accent overrides use Tailwind's `!` important suffix: `bg-blackout
 apps/platform/
   server/
     index.ts          <- Express + Socket.IO entry
+    logging/          <- shared Pino helpers for root, HTTP, and Socket.IO logging
     party/            <- party domain (types, store, handlers)
     registry/         <- game server module registry
   src/
@@ -98,6 +100,14 @@ games/{game}/
 ## Adding a new game
 
 See **[docs/adding-a-new-game.md](docs/adding-a-new-game.md)** for the full step-by-step guide: folder structure, server module contract, `PlatformAdapter.vue` pattern, all four platform registration points, design system usage, and the integration checklist.
+
+## Logging
+
+- Server logging is centralized in `apps/platform/server/logging/`.
+- Reuse `createComponentLogger()` for namespace or component loggers and `createSocketLogger()` / `attachSocketEventDebugLogging()` for Socket.IO handlers.
+- Keep logs structured and lifecycle-focused: create, join, resume, start, end, cleanup, and failures.
+- Never log secrets or hidden game state such as `resumeToken`, `joinToken`, auth headers, private cards, hidden words, or raw payload dumps.
+- Environment flags: `LOG_LEVEL`, `LOG_PRETTY`, `LOG_SOCKET_EVENTS`.
 
 ## Integration contracts
 

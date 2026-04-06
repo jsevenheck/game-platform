@@ -1,3 +1,4 @@
+import type { Logger } from 'pino';
 import type { Server, Socket } from 'socket.io';
 import { nanoid } from 'nanoid';
 import {
@@ -14,6 +15,8 @@ import {
   clearMatchTimeout,
 } from './partyStore';
 import type { PartySession } from './types';
+import { createComponentLogger, readLoggingConfig, toLoggableError } from '../logging/logger';
+import { attachSocketEventDebugLogging, createSocketLogger } from '../logging/socketLogger';
 import { getGame } from '../registry/index';
 
 interface PartyClientToServerEvents {
@@ -85,6 +88,8 @@ function connectedMemberCount(party: PartySession): number {
 
 export function registerPartyHandlers(io: Server): void {
   const nsp = io.of('/party');
+  const partyLogger = createComponentLogger('party', { namespace: '/party' });
+  const socketEventDebugEnabled = readLoggingConfig().socketEvents;
 
   function triggerMatchTimeout(party: PartySession): void {
     if (party.status !== 'in-match' || !party.activeMatch) return;
@@ -97,10 +102,24 @@ export function registerPartyHandlers(io: Server): void {
     broadcastParty(io, party);
 
     const game = getGame(matchToClean.gameId);
-    scheduleReturnCleanup(io, party, matchToClean.matchKey, game?.cleanupMatch);
+    partyLogger.warn(
+      {
+        partyId: party.partyId,
+        inviteCode: party.inviteCode,
+        gameId: matchToClean.gameId,
+        matchKey: matchToClean.matchKey,
+      },
+      'match timed out; returning party to lobby'
+    );
+    scheduleReturnCleanup(io, party, matchToClean.matchKey, game?.cleanupMatch, partyLogger);
   }
 
   nsp.on('connection', (socket: PartySocket) => {
+    const socketLogger = createSocketLogger(partyLogger, socket);
+
+    attachSocketEventDebugLogging(socket, socketLogger, socketEventDebugEnabled);
+    socketLogger.debug('party client connected');
+
     socket.on('createParty', (data, cb) => {
       const name = data.playerName?.trim();
       if (!name || name.length > 20) {
@@ -110,6 +129,16 @@ export function registerPartyHandlers(io: Server): void {
       const playerId = nanoid(8);
       const { party, hostResumeToken } = createParty(playerId, name, socket.id);
       socket.join(party.partyId);
+
+      socketLogger.info(
+        {
+          partyId: party.partyId,
+          inviteCode: party.inviteCode,
+          playerId,
+          playerName: name,
+        },
+        'party created'
+      );
 
       cb({ ok: true, partyView: partyToView(party), playerId, resumeToken: hostResumeToken });
     });
@@ -123,6 +152,7 @@ export function registerPartyHandlers(io: Server): void {
 
       const party = getPartyByInviteCode(inviteCode);
       if (!party) {
+        socketLogger.warn({ inviteCode }, 'joinParty rejected: party not found');
         return cb({ ok: false, error: 'Party not found' });
       }
       if (party.status !== 'lobby') {
@@ -151,6 +181,17 @@ export function registerPartyHandlers(io: Server): void {
       socket.join(party.partyId);
       broadcastParty(io, party);
 
+      socketLogger.info(
+        {
+          partyId: party.partyId,
+          inviteCode: party.inviteCode,
+          playerId,
+          playerName: name,
+          memberCount: party.members.size,
+        },
+        'player joined party'
+      );
+
       cb({ ok: true, partyView: partyToView(party), playerId, resumeToken: memberResumeToken });
     });
 
@@ -160,6 +201,7 @@ export function registerPartyHandlers(io: Server): void {
 
       const party = getPartyByInviteCode(inviteCode);
       if (!party) {
+        socketLogger.warn({ inviteCode, playerId }, 'resumeParty rejected: party not found');
         return cb({ ok: false, error: 'Party not found' });
       }
 
@@ -168,12 +210,18 @@ export function registerPartyHandlers(io: Server): void {
         return cb({ ok: false, error: 'Player not in party' });
       }
 
-      // Verify server-issued resume token — prevents session hijacking via public playerId.
       if (member.resumeToken !== data.resumeToken) {
+        socketLogger.warn(
+          {
+            partyId: party.partyId,
+            inviteCode: party.inviteCode,
+            playerId,
+          },
+          'resumeParty rejected: invalid resume token'
+        );
         return cb({ ok: false, error: 'Invalid resume token' });
       }
 
-      // Update socket binding
       if (member.socketId) {
         unregisterSocket(member.socketId);
       }
@@ -183,6 +231,15 @@ export function registerPartyHandlers(io: Server): void {
       clearPartyCleanup(party.partyId);
       socket.join(party.partyId);
       broadcastParty(io, party);
+
+      socketLogger.info(
+        {
+          partyId: party.partyId,
+          inviteCode: party.inviteCode,
+          playerId,
+        },
+        'player resumed party session'
+      );
 
       cb({ ok: true, partyView: partyToView(party) });
     });
@@ -198,27 +255,67 @@ export function registerPartyHandlers(io: Server): void {
       unregisterSocket(socket.id);
       socket.leave(party.partyId);
 
-      // Transfer host if needed
       if (party.hostPlayerId === data.playerId) {
         const nextMember = Array.from(party.members.values()).find((m) => m.connected);
         if (nextMember) {
           party.hostPlayerId = nextMember.playerId;
+          socketLogger.info(
+            {
+              partyId: party.partyId,
+              inviteCode: party.inviteCode,
+              previousHostPlayerId: data.playerId,
+              nextHostPlayerId: nextMember.playerId,
+            },
+            'transferred host after leave'
+          );
         } else {
           deleteParty(party.partyId);
+          socketLogger.info(
+            {
+              partyId: party.partyId,
+              inviteCode: party.inviteCode,
+              playerId: data.playerId,
+            },
+            'deleted party after last host left'
+          );
           return;
         }
       }
 
       if (party.members.size === 0) {
         deleteParty(party.partyId);
+        socketLogger.info(
+          {
+            partyId: party.partyId,
+            inviteCode: party.inviteCode,
+            playerId: data.playerId,
+          },
+          'deleted empty party after leave'
+        );
         return;
       }
 
       if (connectedMemberCount(party) === 0) {
         schedulePartyCleanup(party.partyId);
+        partyLogger.info(
+          {
+            partyId: party.partyId,
+            inviteCode: party.inviteCode,
+          },
+          'scheduled party cleanup after all players left'
+        );
       }
 
       broadcastParty(io, party);
+      socketLogger.info(
+        {
+          partyId: party.partyId,
+          inviteCode: party.inviteCode,
+          playerId: data.playerId,
+          remainingMembers: party.members.size,
+        },
+        'player left party'
+      );
     });
 
     socket.on('selectGame', (data, cb) => {
@@ -226,6 +323,15 @@ export function registerPartyHandlers(io: Server): void {
       if (!party) return cb({ ok: false, error: 'Not in a party' });
       const actor = Array.from(party.members.values()).find((m) => m.socketId === socket.id);
       if (!actor || actor.playerId !== party.hostPlayerId) {
+        socketLogger.warn(
+          {
+            partyId: party.partyId,
+            inviteCode: party.inviteCode,
+            playerId: actor?.playerId ?? data.playerId,
+            gameId: data.gameId,
+          },
+          'selectGame rejected: actor is not party host'
+        );
         return cb({ ok: false, error: 'Only the host can select a game' });
       }
       if (!getGame(data.gameId)) {
@@ -234,6 +340,14 @@ export function registerPartyHandlers(io: Server): void {
 
       party.selectedGameId = data.gameId;
       broadcastParty(io, party);
+      socketLogger.info(
+        {
+          partyId: party.partyId,
+          inviteCode: party.inviteCode,
+          gameId: data.gameId,
+        },
+        'host selected game'
+      );
       cb({ ok: true });
     });
 
@@ -242,6 +356,14 @@ export function registerPartyHandlers(io: Server): void {
       if (!party) return cb({ ok: false, error: 'Not in a party' });
       const actor = Array.from(party.members.values()).find((m) => m.socketId === socket.id);
       if (!actor || actor.playerId !== party.hostPlayerId) {
+        socketLogger.warn(
+          {
+            partyId: party.partyId,
+            inviteCode: party.inviteCode,
+            playerId: actor?.playerId ?? data.playerId,
+          },
+          'launchGame rejected: actor is not party host'
+        );
         return cb({ ok: false, error: 'Only the host can launch a game' });
       }
       if (!party.selectedGameId) {
@@ -282,6 +404,16 @@ export function registerPartyHandlers(io: Server): void {
       scheduleMatchTimeout(party.partyId, () => triggerMatchTimeout(party));
 
       broadcastParty(io, party);
+      socketLogger.info(
+        {
+          partyId: party.partyId,
+          inviteCode: party.inviteCode,
+          gameId: party.selectedGameId,
+          matchKey,
+          connectedPlayers: connected,
+        },
+        'host launched match'
+      );
       cb({ ok: true });
     });
 
@@ -290,6 +422,15 @@ export function registerPartyHandlers(io: Server): void {
       if (!party) return cb({ ok: false, error: 'Not in a party' });
       const actor = Array.from(party.members.values()).find((m) => m.socketId === socket.id);
       if (!actor || actor.playerId !== party.hostPlayerId) {
+        socketLogger.warn(
+          {
+            partyId: party.partyId,
+            inviteCode: party.inviteCode,
+            playerId: actor?.playerId ?? data.playerId,
+            gameId: party.activeMatch?.gameId,
+          },
+          'replayGame rejected: actor is not party host'
+        );
         return cb({ ok: false, error: 'Only the host can replay' });
       }
       if (party.status !== 'in-match' || !party.activeMatch) {
@@ -314,32 +455,59 @@ export function registerPartyHandlers(io: Server): void {
       }
 
       const previousMatchKey = party.activeMatch.matchKey;
+      const currentGameId = party.activeMatch.gameId;
       const newMatchKey = nanoid(16);
 
       party.pendingCleanupMatchKey = previousMatchKey;
       party.activeMatch = {
-        gameId: party.activeMatch.gameId,
+        gameId: currentGameId,
         matchKey: newMatchKey,
         namespace: party.activeMatch.namespace,
         startedAt: Date.now(),
       };
-      // status stays 'in-match'
       scheduleMatchTimeout(party.partyId, () => triggerMatchTimeout(party));
 
       broadcastParty(io, party);
 
-      // Cleanup the old match after a brief delay to allow all clients to transition
       setTimeout(() => {
         try {
           game.cleanupMatch(previousMatchKey);
+          partyLogger.info(
+            {
+              partyId: party.partyId,
+              inviteCode: party.inviteCode,
+              gameId: currentGameId,
+              matchKey: previousMatchKey,
+            },
+            'cleaned up replayed match'
+          );
         } catch (err) {
-          console.warn(`[party] cleanupMatch failed for matchKey=${previousMatchKey}:`, err);
+          partyLogger.warn(
+            {
+              partyId: party.partyId,
+              inviteCode: party.inviteCode,
+              matchKey: previousMatchKey,
+              err: toLoggableError(err),
+            },
+            'cleanupMatch failed after replay'
+          );
         }
         if (party.pendingCleanupMatchKey === previousMatchKey) {
           party.pendingCleanupMatchKey = null;
         }
       }, 5000);
 
+      socketLogger.info(
+        {
+          partyId: party.partyId,
+          inviteCode: party.inviteCode,
+          gameId: currentGameId,
+          previousMatchKey,
+          newMatchKey,
+          connectedPlayers: connected,
+        },
+        'host replayed match'
+      );
       cb({ ok: true });
     });
 
@@ -348,6 +516,16 @@ export function registerPartyHandlers(io: Server): void {
       if (!party) return cb({ ok: false, error: 'Not in a party' });
       const actor = Array.from(party.members.values()).find((m) => m.socketId === socket.id);
       if (!actor || actor.playerId !== party.hostPlayerId) {
+        socketLogger.warn(
+          {
+            partyId: party.partyId,
+            inviteCode: party.inviteCode,
+            playerId: actor?.playerId ?? data.playerId,
+            gameId: party.activeMatch?.gameId,
+            matchKey: party.activeMatch?.matchKey,
+          },
+          'returnToLobby rejected: actor is not party host'
+        );
         return cb({ ok: false, error: 'Only the host can return to lobby' });
       }
       if (!party.activeMatch) {
@@ -363,9 +541,17 @@ export function registerPartyHandlers(io: Server): void {
       broadcastParty(io, party);
       cb({ ok: true });
 
-      // If all members already connected acknowledge promptly, transition to lobby
       const game = getGame(matchToClean.gameId);
-      scheduleReturnCleanup(io, party, matchToClean.matchKey, game?.cleanupMatch);
+      socketLogger.info(
+        {
+          partyId: party.partyId,
+          inviteCode: party.inviteCode,
+          gameId: matchToClean.gameId,
+          matchKey: matchToClean.matchKey,
+        },
+        'host requested return to lobby'
+      );
+      scheduleReturnCleanup(io, party, matchToClean.matchKey, game?.cleanupMatch, partyLogger);
     });
 
     socket.on('ackReturnedToLobby', (data) => {
@@ -386,12 +572,23 @@ export function registerPartyHandlers(io: Server): void {
         party.status = 'lobby';
         party.returnAcks = new Set();
         broadcastParty(io, party);
+        socketLogger.info(
+          {
+            partyId: party.partyId,
+            inviteCode: party.inviteCode,
+            acknowledgedPlayers: connected.length,
+          },
+          'all connected players acknowledged lobby return'
+        );
       }
     });
 
-    socket.on('disconnect', () => {
+    socket.on('disconnect', (reason) => {
       const party = getPartyBySocket(socket.id);
-      if (!party) return;
+      if (!party) {
+        socketLogger.debug({ reason }, 'party client disconnected before party binding');
+        return;
+      }
 
       unregisterSocket(socket.id);
 
@@ -401,7 +598,6 @@ export function registerPartyHandlers(io: Server): void {
         member.socketId = null;
       }
 
-      // Transfer host if the disconnected member was the host
       if (member && party.hostPlayerId === member.playerId) {
         const nextConnected = Array.from(party.members.values()).find((m) => m.connected);
         if (nextConnected) {
@@ -409,13 +605,29 @@ export function registerPartyHandlers(io: Server): void {
         }
       }
 
-      // Schedule cleanup if nobody is connected any more
       const anyConnected = Array.from(party.members.values()).some((m) => m.connected);
       if (!anyConnected) {
         schedulePartyCleanup(party.partyId);
+        partyLogger.info(
+          {
+            partyId: party.partyId,
+            inviteCode: party.inviteCode,
+          },
+          'scheduled party cleanup after last disconnect'
+        );
       }
 
       broadcastParty(io, party);
+      socketLogger.info(
+        {
+          reason,
+          partyId: party.partyId,
+          inviteCode: party.inviteCode,
+          playerId: member?.playerId,
+          hostPlayerId: party.hostPlayerId,
+        },
+        'party client disconnected'
+      );
     });
   });
 }
@@ -424,20 +636,44 @@ function scheduleReturnCleanup(
   io: Server,
   party: PartySession,
   matchKey: string,
-  cleanupFn?: (key: string) => void
+  cleanupFn: ((key: string) => void) | undefined,
+  logger: Logger
 ): void {
-  // Wait for acks or a timeout before finalizing lobby status and cleaning up
   setTimeout(() => {
     if (party.status === 'returning') {
       party.status = 'lobby';
       party.returnAcks = new Set();
       broadcastParty(io, party);
+      logger.info(
+        {
+          partyId: party.partyId,
+          inviteCode: party.inviteCode,
+          matchKey,
+        },
+        'return-to-lobby timeout completed'
+      );
     }
     if (cleanupFn) {
       try {
         cleanupFn(matchKey);
+        logger.info(
+          {
+            partyId: party.partyId,
+            inviteCode: party.inviteCode,
+            matchKey,
+          },
+          'cleaned up finished match'
+        );
       } catch (err) {
-        console.warn(`[party] cleanupMatch failed for matchKey=${matchKey}:`, err);
+        logger.warn(
+          {
+            partyId: party.partyId,
+            inviteCode: party.inviteCode,
+            matchKey,
+            err: toLoggableError(err),
+          },
+          'cleanupMatch failed while returning to lobby'
+        );
       }
     }
   }, 10000);

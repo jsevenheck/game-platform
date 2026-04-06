@@ -1,6 +1,9 @@
 import Database, { type Database as DatabaseType } from 'better-sqlite3';
 import { existsSync, mkdirSync, readFileSync } from 'fs';
 import path from 'path';
+import { createComponentLogger } from '../../../../../apps/platform/server/logging/logger';
+
+const dbLogger = createComponentLogger('blackout-db');
 
 function resolveDefaultDbPath(): string {
   const candidates = [
@@ -238,6 +241,7 @@ function needsSchemaReset(): boolean {
 }
 
 if (needsSchemaReset()) {
+  dbLogger.warn({ dbPath }, 'resetting blackout database schema');
   db.exec(`
     DROP TABLE IF EXISTS categories;
     DROP TABLE IF EXISTS tasks;
@@ -264,5 +268,26 @@ seedDefaultsFromCsv({
   tasks: counts.tasksCount === 0,
   letters: counts.lettersCount === 0,
 });
+
+const finalCounts = db
+  .prepare(
+    `
+      SELECT
+        (SELECT COUNT(*) FROM categories) AS categoriesCount,
+        (SELECT COUNT(*) FROM tasks) AS tasksCount,
+        (SELECT COUNT(*) FROM default_excluded_letters) AS lettersCount
+    `
+  )
+  .get() as { categoriesCount: number; tasksCount: number; lettersCount: number };
+
+dbLogger.info(
+  {
+    dbPath,
+    categoriesCount: finalCounts.categoriesCount,
+    tasksCount: finalCounts.tasksCount,
+    lettersCount: finalCounts.lettersCount,
+  },
+  'blackout database ready'
+);
 
 export default db;

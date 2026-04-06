@@ -146,6 +146,11 @@ Every game server module must export three things:
 
 ```ts
 import type { Server } from 'socket.io';
+import { createComponentLogger } from '../../../../apps/platform/server/logging/logger';
+import {
+  attachSocketEventDebugLogging,
+  createSocketLogger,
+} from '../../../../apps/platform/server/logging/socketLogger';
 import { MIN_PLAYERS, MAX_PLAYERS } from '../../core/src/constants';
 
 export const definition = {
@@ -155,10 +160,15 @@ export const definition = {
   maxPlayers: MAX_PLAYERS,
 };
 
+const gameLogger = createComponentLogger('game-server', { gameId: definition.id });
+
 export function register(io: Server, namespace = `/g/${definition.id}`): void {
   const nsp = io.of(namespace);
 
   nsp.on('connection', (socket) => {
+    const socketLogger = createSocketLogger(gameLogger, socket, { namespace });
+    attachSocketEventDebugLogging(socket, socketLogger);
+
     socket.on('autoJoinRoom', (data, cb) => {
       // Create or rejoin a room using data.sessionId as the room key.
       // Handle data.isHost to transfer host status from the platform.
@@ -172,6 +182,7 @@ export function register(io: Server, namespace = `/g/${definition.id}`): void {
 export function cleanupMatch(matchKey: string): void {
   // Tear down the room identified by matchKey.
   // Called by the platform when a match ends or the party returns to lobby.
+  gameLogger.info({ matchKey }, 'cleaned up match');
 }
 ```
 
@@ -189,6 +200,17 @@ This is the critical integration point. The handler must:
 
 - Remove the room/session mapped to the given matchKey.
 - Clean up any active timers, intervals, or scheduled tasks for that room.
+
+### Server Logging
+
+Reuse the platform logger helpers from `apps/platform/server/logging/` instead of adding a game-local logging dependency.
+
+- Use `createComponentLogger('game-server', { gameId: definition.id })` for the namespace or module logger.
+- Use `createSocketLogger(gameLogger, socket)` per connection so `socketId`, `sessionId`, and `playerId` are attached when available.
+- Call `attachSocketEventDebugLogging(socket, socketLogger)` once per connection. It only emits catch-all event summaries when `LOG_SOCKET_EVENTS=true`.
+- The platform logging behavior is controlled with `LOG_LEVEL`, `LOG_PRETTY`, and `LOG_SOCKET_EVENTS`.
+- Log lifecycle events such as room creation, join/resume, host transfer, start/end, cleanup, and unexpected failures.
+- Do not log secrets or hidden game data. Never include `resumeToken`, `joinToken`, auth headers, private hands/cards/words, or raw payload dumps in normal logs.
 
 ---
 
@@ -465,6 +487,7 @@ Create `games/quiz-rush/docs/` with:
 
 - **`api.md`** — Socket.IO events, payloads, and server responses.
 - **`architecture.md`** — Game phases, state machine, and design decisions.
+- Include a short operational note in one of those docs that lists the important lifecycle logs and the private fields that must never appear in logs.
 
 ---
 
@@ -557,6 +580,8 @@ The Playwright config passes `E2E_TESTS=1` to the server automatically.
 - [ ] `core/src/` — types, constants, events defined
 - [ ] `server/src/index.ts` — exports `definition`, `register()`, `cleanupMatch()`
 - [ ] `server/src/` — `autoJoinRoom` handler respects `sessionId`, `playerId`, `isHost`
+- [ ] `server/src/` — shared logger helpers from `apps/platform/server/logging/` are used
+- [ ] `server/src/` — lifecycle logs exist for join/resume/start/end/cleanup without secrets or raw payload dumps
 - [ ] `ui-vue/src/App.vue` — connects to namespace, emits `phase-change`
 - [ ] `ui-vue/src/PlatformAdapter.vue` — wraps App.vue with platform overlay
 - [ ] `ui-vue/tsconfig.json` — paths include `@shared/*`
