@@ -25,43 +25,35 @@ Metric names use the `platform_` prefix and Prometheus naming conventions (`_tot
 
 ### Socket and connection health
 
-| Metric                              | Type    | Labels                            | Description                                                                      |
-| ----------------------------------- | ------- | --------------------------------- | -------------------------------------------------------------------------------- |
-| `platform_socket_connections_open`  | Gauge   | `namespace`                       | Current open Socket.IO connections by namespace (`/party`, `/g/blackout`, etc.). |
-| `platform_socket_connections_total` | Counter | `namespace`                       | Total accepted socket connections.                                               |
-| `platform_socket_disconnects_total` | Counter | `namespace`, `reason`             | Total disconnects grouped by reason (`transport close`, `ping timeout`, etc.).   |
-| `platform_socket_errors_total`      | Counter | `namespace`, `error_code`         | Count of socket-level errors emitted by platform handlers.                       |
-| `platform_socket_events_total`      | Counter | `namespace`, `event`, `direction` | Socket event throughput (`in` / `out`) for core platform events.                 |
+| Metric                                          | Type      | Labels                                              | Description                                                                            |
+| ----------------------------------------------- | --------- | --------------------------------------------------- | -------------------------------------------------------------------------------------- |
+| `platform_socket_connections_open`              | Gauge     | `namespace`, `game_id`                              | Current open Socket.IO connections by namespace (`/party`, `/g/blackout`, etc.).        |
+| `platform_engine_connections`                   | Gauge     | _none_                                              | Current number of active Socket.IO engine connections (all namespaces combined).        |
+| `platform_socket_events_total`                  | Counter   | `namespace`, `event`, `game_id`, `result`, `reason` | Total handled socket events with outcome labels.                                       |
+| `platform_event_latency_seconds`                | Histogram | `namespace`, `event`, `game_id`, `result`, `reason` | End-to-end latency for key party/game events.                                          |
+| `platform_socket_handler_total`                 | Counter   | `namespace`, `event`, `result`                      | Total socket handler invocations (per-handler instrumentation).                        |
+| `platform_socket_handler_duration_seconds`      | Histogram | `namespace`, `event`, `result`                      | Socket handler execution duration in seconds.                                          |
 
 ### Party lifecycle
 
-| Metric                                 | Type    | Labels              | Description                                                                                       |
-| -------------------------------------- | ------- | ------------------- | ------------------------------------------------------------------------------------------------- |
-| `platform_parties_active`              | Gauge   | _none_              | Current number of active parties in memory.                                                       |
-| `platform_party_created_total`         | Counter | _none_              | Parties created since process start.                                                              |
-| `platform_party_join_attempts_total`   | Counter | `result`            | Join attempts (`ok`, `rejected_not_found`, `rejected_in_match`, `rejected_duplicate_name`, etc.). |
-| `platform_party_resumes_total`         | Counter | `result`            | Resume attempts (`ok`, `rejected`, `expired`).                                                    |
-| `platform_party_launch_total`          | Counter | `game_id`, `result` | Match launch attempts by selected game.                                                           |
-| `platform_party_return_to_lobby_total` | Counter | `game_id`, `result` | Return-to-lobby actions and outcomes.                                                             |
-| `platform_party_cleanup_total`         | Counter | `reason`            | Party cleanup executions (`idle_timeout`, `empty_leave`, `manual`, `process_shutdown`).           |
+| Metric                              | Type    | Labels                      | Description                                                                                                                                                |
+| ----------------------------------- | ------- | --------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `platform_parties_active`           | Gauge   | _none_                      | Current number of active parties in memory.                                                                                                                |
+| `platform_party_members_connected`  | Gauge   | _none_                      | Current number of connected party members.                                                                                                                 |
+| `platform_party_lifecycle_total`    | Counter | `event`, `result`, `reason` | Unified party lifecycle counter. `event` values include `createParty`, `joinParty`, `resumeParty`, `launchGame`, `returnToLobby`, `selectGame`, and others. |
 
 ### Match/game lifecycle
 
-| Metric                           | Type      | Labels                      | Description                                                              |
-| -------------------------------- | --------- | --------------------------- | ------------------------------------------------------------------------ |
-| `platform_match_active`          | Gauge     | `game_id`                   | Active matches by game.                                                  |
-| `platform_match_started_total`   | Counter   | `game_id`                   | Matches started by game.                                                 |
-| `platform_match_ended_total`     | Counter   | `game_id`, `end_reason`     | Match completions by reason (`host_return`, `timeout`, `abandon`, etc.). |
-| `platform_room_cleanup_total`    | Counter   | `game_id`, `reason`         | Game room cleanup operations triggered from platform workflows.          |
-| `platform_event_latency_seconds` | Histogram | `game_id`, `event`, `phase` | End-to-end latency for key party/game events.                            |
+| Metric                              | Type  | Labels    | Description                                      |
+| ----------------------------------- | ----- | --------- | ------------------------------------------------ |
+| `platform_match_active`             | Gauge | `game_id` | Current number of active game rooms by game.     |
+| `platform_room_players_connected`   | Gauge | `game_id` | Current connected room players by game.          |
 
-### HTTP and scrape health
+### Scrape health
 
-| Metric                                   | Type      | Labels                            | Description                                                            |
-| ---------------------------------------- | --------- | --------------------------------- | ---------------------------------------------------------------------- |
-| `platform_http_requests_total`           | Counter   | `route`, `method`, `status_class` | HTTP request volume for platform routes (`/health`, `/metrics`, etc.). |
-| `platform_http_request_duration_seconds` | Histogram | `route`, `method`                 | HTTP request duration.                                                 |
-| `platform_metrics_scrape_total`          | Counter   | `result`                          | Optional self-observation for scrape handler (`ok`, `error`).          |
+| Metric                          | Type    | Labels   | Description                                                   |
+| ------------------------------- | ------- | -------- | ------------------------------------------------------------- |
+| `platform_metrics_scrape_total` | Counter | `result` | Self-observation counter for the `/metrics` handler (`ok`, `error`). |
 
 ## Label cardinality rules
 
@@ -95,21 +87,27 @@ Never use these as metric labels:
 ## Example metric lines
 
 ```txt
-# HELP platform_parties_active Current number of active parties in memory.
+# HELP platform_parties_active Current number of active parties in this server process.
 # TYPE platform_parties_active gauge
 platform_parties_active 42
 
-# HELP platform_socket_errors_total Count of socket-level errors emitted by platform handlers.
-# TYPE platform_socket_errors_total counter
-platform_socket_errors_total{namespace="/party",error_code="emit_failed"} 19
+# HELP platform_socket_events_total Total number of handled socket events.
+# TYPE platform_socket_events_total counter
+platform_socket_events_total{namespace="/g/imposter",event="autoJoinRoom",game_id="imposter",result="ok"} 923
 
 # HELP platform_event_latency_seconds End-to-end latency for key party/game events.
 # TYPE platform_event_latency_seconds histogram
-platform_event_latency_seconds_bucket{game_id="imposter",event="auto_join_room",phase="server",le="0.1"} 923
-platform_event_latency_seconds_bucket{game_id="imposter",event="auto_join_room",phase="server",le="0.25"} 1331
-platform_event_latency_seconds_bucket{game_id="imposter",event="auto_join_room",phase="server",le="0.5"} 1498
-platform_event_latency_seconds_sum{game_id="imposter",event="auto_join_room",phase="server"} 242.6
-platform_event_latency_seconds_count{game_id="imposter",event="auto_join_room",phase="server"} 1502
+platform_event_latency_seconds_bucket{namespace="/g/imposter",event="autoJoinRoom",game_id="imposter",result="ok",le="0.1"} 923
+platform_event_latency_seconds_bucket{namespace="/g/imposter",event="autoJoinRoom",game_id="imposter",result="ok",le="0.25"} 1331
+platform_event_latency_seconds_bucket{namespace="/g/imposter",event="autoJoinRoom",game_id="imposter",result="ok",le="0.5"} 1498
+platform_event_latency_seconds_sum{namespace="/g/imposter",event="autoJoinRoom",game_id="imposter",result="ok"} 242.6
+platform_event_latency_seconds_count{namespace="/g/imposter",event="autoJoinRoom",game_id="imposter",result="ok"} 1502
+
+# HELP platform_party_lifecycle_total Total party lifecycle transitions and actions.
+# TYPE platform_party_lifecycle_total counter
+platform_party_lifecycle_total{event="createParty",result="ok"} 150
+platform_party_lifecycle_total{event="joinParty",result="ok"} 430
+platform_party_lifecycle_total{event="joinParty",result="error",reason="party_not_found"} 12
 ```
 
 ## Prometheus scrape config example
@@ -141,33 +139,31 @@ Below are seed Prometheus alert definitions. Adjust thresholds after baseline da
 groups:
   - name: game-platform-alerts
     rules:
-      - alert: PlatformHighSocketErrorRatio
+      - alert: PlatformHighSocketEventErrorRatio
         expr: |
           (
-            sum(rate(platform_socket_errors_total[5m]))
+            sum(rate(platform_socket_events_total{result="error"}[5m]))
             /
-            clamp_min(sum(rate(platform_socket_events_total{direction="in"}[5m])), 1)
+            clamp_min(sum(rate(platform_socket_events_total[5m])), 1)
           ) > 0.03
         for: 10m
         labels:
           severity: warning
           service: game-platform
         annotations:
-          summary: 'High socket error ratio'
-          description: 'Socket error ratio > 3% for 10m. Investigate party/game namespace health.'
+          summary: 'High socket event error ratio'
+          description: 'Socket event error ratio > 3% for 10m. Investigate party/game namespace health.'
 
-      - alert: PlatformSuddenConnectionDrops
+      - alert: PlatformSuddenConnectionDrop
         expr: |
-          sum(rate(platform_socket_disconnects_total[5m]))
-          >
-          (2.5 * sum(rate(platform_socket_disconnects_total[30m])))
+          delta(platform_engine_connections[5m]) < -20
         for: 5m
         labels:
           severity: warning
           service: game-platform
         annotations:
-          summary: 'Sudden spike in connection drops'
-          description: 'Disconnect rate is significantly above 30m baseline. Check transport/network instability.'
+          summary: 'Sudden drop in engine connections'
+          description: 'Engine connection count dropped significantly. Check transport/network instability.'
 
       - alert: PlatformZeroActivePartiesDuringExpectedTraffic
         expr: |
@@ -185,19 +181,19 @@ groups:
           summary: 'Zero active parties during expected traffic window'
           description: 'No active parties during weekday peak window (16:00-23:00 UTC).'
 
-      - alert: PlatformHighRoomCleanupChurn
+      - alert: PlatformHighHandlerLatency
         expr: |
-          sum(rate(platform_room_cleanup_total[15m]))
-          /
-          clamp_min(sum(rate(platform_match_started_total[15m])), 1)
-          > 1.2
-        for: 15m
+          histogram_quantile(
+            0.95,
+            sum by (le, namespace, event) (rate(platform_socket_handler_duration_seconds_bucket[5m]))
+          ) > 1.0
+        for: 10m
         labels:
           severity: warning
           service: game-platform
         annotations:
-          summary: 'Unusually high room cleanup churn'
-          description: 'Room cleanup-to-match-start ratio is high, indicating unstable session lifecycle.'
+          summary: 'High p95 socket handler latency'
+          description: 'Socket handler p95 latency is above 1s for 10m. Investigate slow event handlers.'
 ```
 
 ## Grafana dashboard seed queries
@@ -209,31 +205,31 @@ Use these as starter panels for an operational dashboard.
 1. **Party creates (5m rate)**
 
 ```promql
-sum(rate(platform_party_created_total[5m]))
+sum(rate(platform_party_lifecycle_total{event="createParty",result="ok"}[5m]))
 ```
 
 2. **Join success ratio**
 
 ```promql
-sum(rate(platform_party_join_attempts_total{result="ok"}[5m]))
+sum(rate(platform_party_lifecycle_total{event="joinParty",result="ok"}[5m]))
 /
-clamp_min(sum(rate(platform_party_join_attempts_total[5m])), 1)
+clamp_min(sum(rate(platform_party_lifecycle_total{event="joinParty"}[5m])), 1)
 ```
 
-3. **Launch success ratio by game**
+3. **Game launch success ratio by event**
 
 ```promql
-sum by (game_id) (rate(platform_party_launch_total{result="ok"}[5m]))
+sum by (event) (rate(platform_party_lifecycle_total{event="launchGame",result="ok"}[5m]))
 /
-clamp_min(sum by (game_id) (rate(platform_party_launch_total[5m])), 1)
+clamp_min(sum by (event) (rate(platform_party_lifecycle_total{event="launchGame"}[5m])), 1)
 ```
 
 4. **Return-to-lobby success ratio**
 
 ```promql
-sum(rate(platform_party_return_to_lobby_total{result="ok"}[5m]))
+sum(rate(platform_party_lifecycle_total{event="returnToLobby",result="ok"}[5m]))
 /
-clamp_min(sum(rate(platform_party_return_to_lobby_total[5m])), 1)
+clamp_min(sum(rate(platform_party_lifecycle_total{event="returnToLobby"}[5m])), 1)
 ```
 
 5. **Active parties (current)**
