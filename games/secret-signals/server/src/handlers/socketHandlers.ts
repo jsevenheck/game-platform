@@ -9,6 +9,7 @@ import {
   attachSocketEventDebugLogging,
   createSocketLogger,
 } from '../../../../../apps/platform/server/logging/socketLogger';
+import { startSocketHandlerInstrumentation } from '../../../../../apps/platform/server/observability/socketHandlerMetrics';
 import {
   recordSocketEventEnd,
   recordSocketEventStart,
@@ -85,167 +86,185 @@ export function registerGame(io: Server, namespace = `/g/${GAME_ID}`): void {
     );
 
     socket.on('autoJoinRoom', (data, cb) => {
-      const sessionId = data.sessionId?.trim();
-      const normalizedName = (data.name ?? '').trim();
-      const name = normalizedName.slice(0, MAX_PLAYER_NAME_LENGTH);
-      const hubPlayerId = data.playerId?.trim();
+      const instrumentation = startSocketHandlerInstrumentation(namespace, 'autoJoinRoom');
+      const respond = instrumentation.wrapCallback(cb);
+      try {
+        const sessionId = data.sessionId?.trim();
+        const normalizedName = (data.name ?? '').trim();
+        const name = normalizedName.slice(0, MAX_PLAYER_NAME_LENGTH);
+        const hubPlayerId = data.playerId?.trim();
 
-      if (!sessionId || !normalizedName) {
-        return cb({ ok: false, error: 'Missing session info' });
-      }
+        if (!sessionId || !normalizedName) {
+          return respond({ ok: false, error: 'Missing session info' });
+        }
 
-      if (normalizedName.length > MAX_PLAYER_NAME_LENGTH) {
-        return cb({
-          ok: false,
-          error: `Name must be ${MAX_PLAYER_NAME_LENGTH} characters or fewer`,
+        if (normalizedName.length > MAX_PLAYER_NAME_LENGTH) {
+          return respond({
+            ok: false,
+            error: `Name must be ${MAX_PLAYER_NAME_LENGTH} characters or fewer`,
+          });
+        }
+
+        const mappedRoomCode = getSessionRoom(sessionId);
+        const mappedRoom = mappedRoomCode ? getRoom(mappedRoomCode) : undefined;
+
+        if (!mappedRoom) {
+          const { room, hostId, resumeToken } = createRoom(
+            name,
+            socket.id,
+            hubPlayerId || undefined
+          );
+          setSessionToRoom(sessionId, room.code);
+          socket.join(room.code);
+          broadcastRoom(nsp, room);
+          socketLogger.info(
+            {
+              roomCode: room.code,
+              playerId: hostId,
+              sessionId,
+            },
+            'created secret-signals room'
+          );
+          return respond({ ok: true, roomCode: room.code, playerId: hostId, resumeToken });
+        }
+
+        if (hubPlayerId) {
+          const existingPlayer = mappedRoom.players[hubPlayerId];
+          if (existingPlayer) {
+            // Require the server-issued resumeToken to prevent slot hijacking via public playerId.
+            if (data.resumeToken && existingPlayer.resumeToken !== data.resumeToken) {
+              socketLogger.warn(
+                { roomCode: mappedRoom.code, playerId: existingPlayer.id, sessionId },
+                'autoJoinRoom rejected: invalid secret-signals resume token'
+              );
+              return respond({ ok: false, error: 'Invalid resume token' });
+            }
+            if (!data.resumeToken && existingPlayer.resumeToken) {
+              socketLogger.warn(
+                { roomCode: mappedRoom.code, playerId: existingPlayer.id, sessionId },
+                'autoJoinRoom rejected: secret-signals resume token required'
+              );
+              return respond({ ok: false, error: 'Resume token required' });
+            }
+
+            if (existingPlayer.socketId && existingPlayer.socketId !== socket.id) {
+              deleteSocketIndex(existingPlayer.socketId);
+            }
+            existingPlayer.socketId = socket.id;
+            existingPlayer.connected = true;
+            if (existingPlayer.isHost || data.isHost) {
+              for (const p of Object.values(mappedRoom.players)) {
+                p.isHost = false;
+              }
+              existingPlayer.isHost = true;
+              mappedRoom.hostId = existingPlayer.id;
+            }
+            setSocketIndex(socket.id, mappedRoom.code, existingPlayer.id);
+            clearRoomCleanup(mappedRoom.code);
+            socket.join(mappedRoom.code);
+            broadcastRoom(nsp, mappedRoom);
+            socketLogger.info(
+              {
+                roomCode: mappedRoom.code,
+                playerId: existingPlayer.id,
+                sessionId,
+                resumed: true,
+              },
+              'player rejoined secret-signals room'
+            );
+            return respond({
+              ok: true,
+              roomCode: mappedRoom.code,
+              playerId: existingPlayer.id,
+              resumeToken: existingPlayer.resumeToken,
+            });
+          }
+        }
+
+        if (mappedRoom.phase !== 'lobby') {
+          return respond({ ok: false, error: 'Game already started' });
+        }
+
+        const nameExists = Object.values(mappedRoom.players).some(
+          (player) => player.name.toLowerCase() === name.toLowerCase()
+        );
+        if (nameExists) {
+          return respond({ ok: false, error: 'Name already taken' });
+        }
+
+        const player = createPlayer(name, false, hubPlayerId || undefined);
+        player.socketId = socket.id;
+        mappedRoom.players[player.id] = player;
+        if (data.isHost) {
+          for (const p of Object.values(mappedRoom.players)) {
+            p.isHost = false;
+          }
+          player.isHost = true;
+          mappedRoom.hostId = player.id;
+        }
+        setSocketIndex(socket.id, mappedRoom.code, player.id);
+        clearRoomCleanup(mappedRoom.code);
+        socket.join(mappedRoom.code);
+        broadcastRoom(nsp, mappedRoom);
+        socketLogger.info(
+          {
+            roomCode: mappedRoom.code,
+            playerId: player.id,
+            sessionId,
+            resumed: false,
+          },
+          'player joined existing secret-signals room'
+        );
+        respond({
+          ok: true,
+          roomCode: mappedRoom.code,
+          playerId: player.id,
+          resumeToken: player.resumeToken,
         });
+      } catch (err) {
+        instrumentation.finishError();
+        throw err;
       }
+    });
 
-      const mappedRoomCode = getSessionRoom(sessionId);
-      const mappedRoom = mappedRoomCode ? getRoom(mappedRoomCode) : undefined;
+    socket.on('resumePlayer', (data, cb) => {
+      const instrumentation = startSocketHandlerInstrumentation(namespace, 'resumePlayer');
+      const respond = instrumentation.wrapCallback(cb);
+      try {
+        const room = getRoom(data.roomCode);
+        if (!room) return respond({ ok: false, error: 'Room not found' });
 
-      if (!mappedRoom) {
-        const { room, hostId, resumeToken } = createRoom(name, socket.id, hubPlayerId || undefined);
-        setSessionToRoom(sessionId, room.code);
+        const player = room.players[data.playerId];
+        if (!player) return respond({ ok: false, error: 'Player not found' });
+        if (player.resumeToken !== data.resumeToken) {
+          socketLogger.warn(
+            { roomCode: room.code, playerId: data.playerId },
+            'resumePlayer rejected: invalid secret-signals resume token'
+          );
+          return respond({ ok: false, error: 'Invalid resume token' });
+        }
+
+        if (player.socketId) deleteSocketIndex(player.socketId);
+
+        player.socketId = socket.id;
+        player.connected = true;
+        setSocketIndex(socket.id, room.code, player.id);
+        clearRoomCleanup(room.code);
+
         socket.join(room.code);
         broadcastRoom(nsp, room);
         socketLogger.info(
           {
             roomCode: room.code,
-            playerId: hostId,
-            sessionId,
+            playerId: player.id,
           },
-          'created secret-signals room'
+          'resumed secret-signals player'
         );
-        return cb({ ok: true, roomCode: room.code, playerId: hostId, resumeToken });
+        respond({ ok: true });
+      } catch (err) {
+        instrumentation.finishError();
+        throw err;
       }
-
-      if (hubPlayerId) {
-        const existingPlayer = mappedRoom.players[hubPlayerId];
-        if (existingPlayer) {
-          // Require the server-issued resumeToken to prevent slot hijacking via public playerId.
-          if (data.resumeToken && existingPlayer.resumeToken !== data.resumeToken) {
-            socketLogger.warn(
-              { roomCode: mappedRoom.code, playerId: existingPlayer.id, sessionId },
-              'autoJoinRoom rejected: invalid secret-signals resume token'
-            );
-            return cb({ ok: false, error: 'Invalid resume token' });
-          }
-          if (!data.resumeToken && existingPlayer.resumeToken) {
-            socketLogger.warn(
-              { roomCode: mappedRoom.code, playerId: existingPlayer.id, sessionId },
-              'autoJoinRoom rejected: secret-signals resume token required'
-            );
-            return cb({ ok: false, error: 'Resume token required' });
-          }
-
-          if (existingPlayer.socketId && existingPlayer.socketId !== socket.id) {
-            deleteSocketIndex(existingPlayer.socketId);
-          }
-          existingPlayer.socketId = socket.id;
-          existingPlayer.connected = true;
-          if (existingPlayer.isHost || data.isHost) {
-            for (const p of Object.values(mappedRoom.players)) {
-              p.isHost = false;
-            }
-            existingPlayer.isHost = true;
-            mappedRoom.hostId = existingPlayer.id;
-          }
-          setSocketIndex(socket.id, mappedRoom.code, existingPlayer.id);
-          clearRoomCleanup(mappedRoom.code);
-          socket.join(mappedRoom.code);
-          broadcastRoom(nsp, mappedRoom);
-          socketLogger.info(
-            {
-              roomCode: mappedRoom.code,
-              playerId: existingPlayer.id,
-              sessionId,
-              resumed: true,
-            },
-            'player rejoined secret-signals room'
-          );
-          return cb({
-            ok: true,
-            roomCode: mappedRoom.code,
-            playerId: existingPlayer.id,
-            resumeToken: existingPlayer.resumeToken,
-          });
-        }
-      }
-
-      if (mappedRoom.phase !== 'lobby') {
-        return cb({ ok: false, error: 'Game already started' });
-      }
-
-      const nameExists = Object.values(mappedRoom.players).some(
-        (player) => player.name.toLowerCase() === name.toLowerCase()
-      );
-      if (nameExists) {
-        return cb({ ok: false, error: 'Name already taken' });
-      }
-
-      const player = createPlayer(name, false, hubPlayerId || undefined);
-      player.socketId = socket.id;
-      mappedRoom.players[player.id] = player;
-      if (data.isHost) {
-        for (const p of Object.values(mappedRoom.players)) {
-          p.isHost = false;
-        }
-        player.isHost = true;
-        mappedRoom.hostId = player.id;
-      }
-      setSocketIndex(socket.id, mappedRoom.code, player.id);
-      clearRoomCleanup(mappedRoom.code);
-      socket.join(mappedRoom.code);
-      broadcastRoom(nsp, mappedRoom);
-      socketLogger.info(
-        {
-          roomCode: mappedRoom.code,
-          playerId: player.id,
-          sessionId,
-          resumed: false,
-        },
-        'player joined existing secret-signals room'
-      );
-      cb({
-        ok: true,
-        roomCode: mappedRoom.code,
-        playerId: player.id,
-        resumeToken: player.resumeToken,
-      });
-    });
-
-    socket.on('resumePlayer', (data, cb) => {
-      const room = getRoom(data.roomCode);
-      if (!room) return cb({ ok: false, error: 'Room not found' });
-
-      const player = room.players[data.playerId];
-      if (!player) return cb({ ok: false, error: 'Player not found' });
-      if (player.resumeToken !== data.resumeToken) {
-        socketLogger.warn(
-          { roomCode: room.code, playerId: data.playerId },
-          'resumePlayer rejected: invalid secret-signals resume token'
-        );
-        return cb({ ok: false, error: 'Invalid resume token' });
-      }
-
-      if (player.socketId) deleteSocketIndex(player.socketId);
-
-      player.socketId = socket.id;
-      player.connected = true;
-      setSocketIndex(socket.id, room.code, player.id);
-      clearRoomCleanup(room.code);
-
-      socket.join(room.code);
-      broadcastRoom(nsp, room);
-      socketLogger.info(
-        {
-          roomCode: room.code,
-          playerId: player.id,
-        },
-        'resumed secret-signals player'
-      );
-      cb({ ok: true });
     });
 
     socket.on('requestState', (data) => {
@@ -257,53 +276,63 @@ export function registerGame(io: Server, namespace = `/g/${GAME_ID}`): void {
     });
 
     socket.on('leaveRoom', (data, cb) => {
-      const room = getRoom(data.roomCode);
-      if (!room) return cb({ ok: false, error: 'Room not found' });
+      const instrumentation = startSocketHandlerInstrumentation(namespace, 'leaveRoom');
+      const respond = instrumentation.wrapCallback(cb);
+      try {
+        const room = getRoom(data.roomCode);
+        if (!room) return respond({ ok: false, error: 'Room not found' });
 
-      const player = room.players[data.playerId];
-      if (!player) return cb({ ok: false, error: 'Player not found' });
-      if (player.socketId !== socket.id) return cb({ ok: false, error: 'Unauthorized' });
+        const player = room.players[data.playerId];
+        if (!player) return respond({ ok: false, error: 'Player not found' });
+        if (player.socketId !== socket.id) return respond({ ok: false, error: 'Unauthorized' });
 
-      socket.leave(data.roomCode);
-      deleteSocketIndex(socket.id);
+        socket.leave(data.roomCode);
+        deleteSocketIndex(socket.id);
 
-      if (room.phase === 'playing') {
-        player.connected = false;
-        player.socketId = null;
-        if (player.isHost) {
-          reassignHost(room, player.id);
+        if (room.phase === 'playing') {
+          player.connected = false;
+          player.socketId = null;
+          if (player.isHost) {
+            reassignHost(room, player.id);
+          }
+          room.focusedCards = room.focusedCards.filter((marker) => marker.playerId !== player.id);
+
+          const anyConnected = Object.values(room.players).some((candidate) => candidate.connected);
+          if (!anyConnected) {
+            scheduleRoomCleanup(room.code);
+          }
+
+          broadcastRoom(nsp, room);
+          return respond({ ok: true });
         }
-        room.focusedCards = room.focusedCards.filter((marker) => marker.playerId !== player.id);
 
-        const anyConnected = Object.values(room.players).some((candidate) => candidate.connected);
-        if (!anyConnected) {
-          scheduleRoomCleanup(room.code);
+        removePlayerFromRoom(room, player.id);
+
+        if (Object.keys(room.players).length === 0) {
+          clearRoomCleanup(room.code);
+          deleteRoom(room.code);
+          socketLogger.info(
+            { roomCode: room.code },
+            'deleted empty secret-signals room after leave'
+          );
+          return respond({ ok: true });
         }
 
+        reassignHost(room, player.id);
         broadcastRoom(nsp, room);
-        return cb({ ok: true });
+        socketLogger.info(
+          {
+            roomCode: room.code,
+            playerId: player.id,
+            remainingPlayers: Object.keys(room.players).length,
+          },
+          'player left secret-signals room'
+        );
+        respond({ ok: true });
+      } catch (err) {
+        instrumentation.finishError();
+        throw err;
       }
-
-      removePlayerFromRoom(room, player.id);
-
-      if (Object.keys(room.players).length === 0) {
-        clearRoomCleanup(room.code);
-        deleteRoom(room.code);
-        socketLogger.info({ roomCode: room.code }, 'deleted empty secret-signals room after leave');
-        return cb({ ok: true });
-      }
-
-      reassignHost(room, player.id);
-      broadcastRoom(nsp, room);
-      socketLogger.info(
-        {
-          roomCode: room.code,
-          playerId: player.id,
-          remainingPlayers: Object.keys(room.players).length,
-        },
-        'player left secret-signals room'
-      );
-      cb({ ok: true });
     });
 
     socket.on('setTeamCount', (data, cb) => {
@@ -469,40 +498,47 @@ export function registerGame(io: Server, namespace = `/g/${GAME_ID}`): void {
     });
 
     socket.on('startGame', (data, cb) => {
-      const room = getRoom(data.roomCode);
-      if (!room) return cb({ ok: false, error: 'Room not found' });
-      if (!verifyPlayer(socket, data.roomCode, room.hostId ?? '')) {
-        socketLogger.warn(
-          { roomCode: data.roomCode, playerId: data.playerId },
-          'startGame rejected: actor is not secret-signals host'
+      const instrumentation = startSocketHandlerInstrumentation(namespace, 'startGame');
+      const respond = instrumentation.wrapCallback(cb);
+      try {
+        const room = getRoom(data.roomCode);
+        if (!room) return respond({ ok: false, error: 'Room not found' });
+        if (!verifyPlayer(socket, data.roomCode, room.hostId ?? '')) {
+          socketLogger.warn(
+            { roomCode: data.roomCode, playerId: data.playerId },
+            'startGame rejected: actor is not secret-signals host'
+          );
+          return respond({ ok: false, error: 'Only host can start' });
+        }
+        if (room.phase !== 'lobby') return respond({ ok: false, error: 'Game already started' });
+
+        const minimumPlayers = getMinimumPlayersForTeamCount(room.teamCount);
+        const connected = Object.values(room.players).filter((player) => player.connected);
+        if (connected.length < minimumPlayers) {
+          return respond({ ok: false, error: `Need at least ${minimumPlayers} players` });
+        }
+
+        const validation = validateTeamSetup(room);
+        if (!validation.valid) {
+          return respond({ ok: false, error: validation.error! });
+        }
+
+        transitionToPlaying(room);
+        broadcastRoom(nsp, room);
+        socketLogger.info(
+          {
+            roomCode: room.code,
+            hostPlayerId: room.hostId,
+            connectedPlayers: connected.length,
+            teamCount: room.teamCount,
+          },
+          'started secret-signals game'
         );
-        return cb({ ok: false, error: 'Only host can start' });
+        respond({ ok: true });
+      } catch (err) {
+        instrumentation.finishError();
+        throw err;
       }
-      if (room.phase !== 'lobby') return cb({ ok: false, error: 'Game already started' });
-
-      const minimumPlayers = getMinimumPlayersForTeamCount(room.teamCount);
-      const connected = Object.values(room.players).filter((player) => player.connected);
-      if (connected.length < minimumPlayers) {
-        return cb({ ok: false, error: `Need at least ${minimumPlayers} players` });
-      }
-
-      const validation = validateTeamSetup(room);
-      if (!validation.valid) {
-        return cb({ ok: false, error: validation.error! });
-      }
-
-      transitionToPlaying(room);
-      broadcastRoom(nsp, room);
-      socketLogger.info(
-        {
-          roomCode: room.code,
-          hostPlayerId: room.hostId,
-          connectedPlayers: connected.length,
-          teamCount: room.teamCount,
-        },
-        'started secret-signals game'
-      );
-      cb({ ok: true });
     });
 
     socket.on('giveSignal', (data, cb) => {
@@ -637,51 +673,52 @@ export function registerGame(io: Server, namespace = `/g/${GAME_ID}`): void {
 
     socket.on('disconnect', (reason) => {
       setNamespaceConnectionCount({ namespace, gameId: GAME_ID }, nsp.sockets.size);
-      recordSocketEventEnd(
-        recordSocketEventStart({ namespace, event: 'disconnect', gameId: GAME_ID }),
-        {
-          result: 'ok',
-          reason,
+      const instrumentation = startSocketHandlerInstrumentation(namespace, 'disconnect');
+      try {
+        const index = getSocketIndex(socket.id);
+        if (!index) {
+          socketLogger.debug({ reason }, 'secret-signals client disconnected before room binding');
+          instrumentation.finishSuccess();
+          return;
         }
-      );
-      const index = getSocketIndex(socket.id);
-      if (!index) {
-        socketLogger.debug({ reason }, 'secret-signals client disconnected before room binding');
-        return;
-      }
 
-      const room = getRoom(index.roomCode);
-      if (room) {
-        const player = room.players[index.playerId];
-        if (player) {
-          player.connected = false;
-          player.socketId = null;
-          room.focusedCards = room.focusedCards.filter((marker) => marker.playerId !== player.id);
+        const room = getRoom(index.roomCode);
+        if (room) {
+          const player = room.players[index.playerId];
+          if (player) {
+            player.connected = false;
+            player.socketId = null;
+            room.focusedCards = room.focusedCards.filter((marker) => marker.playerId !== player.id);
 
-          // Reassign host if the disconnected player was the host
-          if (player.isHost) {
-            reassignHost(room, player.id);
-          }
+            // Reassign host if the disconnected player was the host
+            if (player.isHost) {
+              reassignHost(room, player.id);
+            }
 
-          broadcastRoom(nsp, room);
+            broadcastRoom(nsp, room);
 
-          // Schedule cleanup if no players are connected
-          const anyConnected = Object.values(room.players).some((p) => p.connected);
-          if (!anyConnected) {
-            scheduleRoomCleanup(room.code);
-            gameLogger.info({ roomCode: room.code }, 'scheduled secret-signals room cleanup');
+            // Schedule cleanup if no players are connected
+            const anyConnected = Object.values(room.players).some((p) => p.connected);
+            if (!anyConnected) {
+              scheduleRoomCleanup(room.code);
+              gameLogger.info({ roomCode: room.code }, 'scheduled secret-signals room cleanup');
+            }
           }
         }
+        deleteSocketIndex(socket.id);
+        socketLogger.info(
+          {
+            reason,
+            roomCode: index.roomCode,
+            playerId: index.playerId,
+          },
+          'secret-signals client disconnected'
+        );
+        instrumentation.finishSuccess();
+      } catch (err) {
+        instrumentation.finishError();
+        throw err;
       }
-      deleteSocketIndex(socket.id);
-      socketLogger.info(
-        {
-          reason,
-          roomCode: index.roomCode,
-          playerId: index.playerId,
-        },
-        'secret-signals client disconnected'
-      );
     });
   });
 }
