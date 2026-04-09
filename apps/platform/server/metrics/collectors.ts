@@ -12,7 +12,7 @@ import { getRoomSnapshot as getSecretSignalsRoomSnapshot } from '../../../../gam
  */
 
 const partiesActiveGauge = new Gauge({
-  name: 'gp_parties_active',
+  name: 'platform_parties_active',
   help: 'Current number of active parties in this server process.',
   registers: [metricsRegistry],
   collect() {
@@ -21,7 +21,7 @@ const partiesActiveGauge = new Gauge({
 });
 
 const partyMembersConnectedGauge = new Gauge({
-  name: 'gp_party_members_connected',
+  name: 'platform_party_members_connected',
   help: 'Current number of connected party members in this server process.',
   registers: [metricsRegistry],
   collect() {
@@ -30,9 +30,9 @@ const partyMembersConnectedGauge = new Gauge({
 });
 
 const roomsActiveGauge = new Gauge({
-  name: 'gp_rooms_active',
+  name: 'platform_match_active',
   help: 'Current number of active rooms by game in this server process.',
-  labelNames: ['gameId'],
+  labelNames: ['game_id'],
   registers: [metricsRegistry],
   collect() {
     this.labels('blackout').set(getBlackoutRoomSnapshot().roomCount);
@@ -42,9 +42,9 @@ const roomsActiveGauge = new Gauge({
 });
 
 const roomPlayersConnectedGauge = new Gauge({
-  name: 'gp_room_players_connected',
+  name: 'platform_room_players_connected',
   help: 'Current number of connected room players by game in this server process.',
-  labelNames: ['gameId'],
+  labelNames: ['game_id'],
   registers: [metricsRegistry],
   collect() {
     this.labels('blackout').set(getBlackoutRoomSnapshot().connectedPlayers);
@@ -54,7 +54,7 @@ const roomPlayersConnectedGauge = new Gauge({
 });
 
 const activeConnectionsGauge = new Gauge({
-  name: 'gp_active_connections',
+  name: 'platform_engine_connections',
   help: 'Current number of active Socket.IO engine connections in this server process.',
   registers: [metricsRegistry],
 });

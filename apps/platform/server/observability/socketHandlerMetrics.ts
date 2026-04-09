@@ -1,59 +1,22 @@
+import { Counter, Histogram } from 'prom-client';
+import { metricsRegistry } from '../metrics/registry';
+
 export type SocketHandlerResult = 'ok' | 'error';
 
-interface SocketHandlerLabels {
-  namespace: string;
-  event: string;
-  result: SocketHandlerResult;
-}
+const socketHandlerTotal = new Counter({
+  name: 'platform_socket_handler_total',
+  help: 'Total socket handler invocations.',
+  labelNames: ['namespace', 'event', 'result'] as const,
+  registers: [metricsRegistry],
+});
 
-const SOCKET_HANDLER_DURATION_BUCKETS_SECONDS = [
-  0.001, 0.005, 0.01, 0.025, 0.05, 0.1, 0.25, 0.5, 1, 2, 5,
-] as const;
-
-const socketHandlerTotals = new Map<string, number>();
-
-interface HistogramSeries {
-  count: number;
-  sum: number;
-  buckets: number[];
-}
-
-const socketHandlerDurationSeconds = new Map<string, HistogramSeries>();
-
-function labelsKey(labels: SocketHandlerLabels): string {
-  return `${labels.namespace}|${labels.event}|${labels.result}`;
-}
-
-function incSocketHandlerTotal(labels: SocketHandlerLabels): void {
-  const key = labelsKey(labels);
-  const current = socketHandlerTotals.get(key) ?? 0;
-  socketHandlerTotals.set(key, current + 1);
-}
-
-function observeSocketHandlerDuration(labels: SocketHandlerLabels, seconds: number): void {
-  const key = labelsKey(labels);
-  const series = socketHandlerDurationSeconds.get(key) ?? {
-    count: 0,
-    sum: 0,
-    buckets: new Array(SOCKET_HANDLER_DURATION_BUCKETS_SECONDS.length).fill(0),
-  };
-
-  series.count += 1;
-  series.sum += seconds;
-
-  for (const [index, upperBound] of SOCKET_HANDLER_DURATION_BUCKETS_SECONDS.entries()) {
-    if (seconds <= upperBound) {
-      series.buckets[index] += 1;
-    }
-  }
-
-  socketHandlerDurationSeconds.set(key, series);
-}
-
-function recordSocketHandler(labels: SocketHandlerLabels, seconds: number): void {
-  incSocketHandlerTotal(labels);
-  observeSocketHandlerDuration(labels, seconds);
-}
+const socketHandlerDuration = new Histogram({
+  name: 'platform_socket_handler_duration_seconds',
+  help: 'Socket handler execution duration in seconds.',
+  labelNames: ['namespace', 'event', 'result'] as const,
+  buckets: [0.001, 0.005, 0.01, 0.025, 0.05, 0.1, 0.25, 0.5, 1, 2, 5],
+  registers: [metricsRegistry],
+});
 
 export interface SocketHandlerInstrumentation {
   finish: (result: SocketHandlerResult) => void;
@@ -76,7 +39,9 @@ export function startSocketHandlerInstrumentation(
     finished = true;
 
     const durationSeconds = Number(process.hrtime.bigint() - startedAt) / 1_000_000_000;
-    recordSocketHandler({ namespace, event, result }, durationSeconds);
+    const labels = { namespace, event, result };
+    socketHandlerTotal.inc(labels);
+    socketHandlerDuration.observe(labels, durationSeconds);
   };
 
   return {
