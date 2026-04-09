@@ -1,4 +1,5 @@
-import { Gauge, Registry } from 'prom-client';
+import { Gauge } from 'prom-client';
+import { metricsRegistry } from './registry';
 import { getPartySnapshot } from '../party/partyStore';
 import { getRoomSnapshot as getBlackoutRoomSnapshot } from '../../../../games/blackout/server/src/models/room';
 import { getRoomSnapshot as getImposterRoomSnapshot } from '../../../../games/imposter/server/src/models/room';
@@ -7,13 +8,13 @@ import { getRoomSnapshot as getSecretSignalsRoomSnapshot } from '../../../../gam
 /**
  * Metrics in this file are process-local in-memory gauges.
  * In horizontally scaled environments, each process reports its own local values.
+ * Gauges are registered on the shared metricsRegistry from registry.ts.
  */
-const registry = new Registry();
 
 const partiesActiveGauge = new Gauge({
   name: 'gp_parties_active',
   help: 'Current number of active parties in this server process.',
-  registers: [registry],
+  registers: [metricsRegistry],
   collect() {
     this.set(getPartySnapshot().totalParties);
   },
@@ -22,7 +23,7 @@ const partiesActiveGauge = new Gauge({
 const partyMembersConnectedGauge = new Gauge({
   name: 'gp_party_members_connected',
   help: 'Current number of connected party members in this server process.',
-  registers: [registry],
+  registers: [metricsRegistry],
   collect() {
     this.set(getPartySnapshot().connectedMembers);
   },
@@ -32,7 +33,7 @@ const roomsActiveGauge = new Gauge({
   name: 'gp_rooms_active',
   help: 'Current number of active rooms by game in this server process.',
   labelNames: ['gameId'],
-  registers: [registry],
+  registers: [metricsRegistry],
   collect() {
     this.labels('blackout').set(getBlackoutRoomSnapshot().roomCount);
     this.labels('imposter').set(getImposterRoomSnapshot().roomCount);
@@ -44,7 +45,7 @@ const roomPlayersConnectedGauge = new Gauge({
   name: 'gp_room_players_connected',
   help: 'Current number of connected room players by game in this server process.',
   labelNames: ['gameId'],
-  registers: [registry],
+  registers: [metricsRegistry],
   collect() {
     this.labels('blackout').set(getBlackoutRoomSnapshot().connectedPlayers);
     this.labels('imposter').set(getImposterRoomSnapshot().connectedPlayers);
@@ -55,15 +56,11 @@ const roomPlayersConnectedGauge = new Gauge({
 const activeConnectionsGauge = new Gauge({
   name: 'gp_active_connections',
   help: 'Current number of active Socket.IO engine connections in this server process.',
-  registers: [registry],
+  registers: [metricsRegistry],
 });
 
 export function setActiveConnections(count: number): void {
   activeConnectionsGauge.set(count);
-}
-
-export function getMetricsRegistry(): Registry {
-  return registry;
 }
 
 export function initializeMetrics(): void {

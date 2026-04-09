@@ -17,6 +17,7 @@ import {
 import type { PartySession } from './types';
 import { createComponentLogger, readLoggingConfig, toLoggableError } from '../logging/logger';
 import { attachSocketEventDebugLogging, createSocketLogger } from '../logging/socketLogger';
+import { incrementPartyLifecycle } from '../metrics/metrics';
 import { getGame } from '../registry/index';
 
 interface PartyClientToServerEvents {
@@ -123,6 +124,7 @@ export function registerPartyHandlers(io: Server): void {
     socket.on('createParty', (data, cb) => {
       const name = data.playerName?.trim();
       if (!name || name.length > 20) {
+        incrementPartyLifecycle({ event: 'createParty', result: 'error', reason: 'invalid_name' });
         return cb({ ok: false, error: 'Invalid player name' });
       }
 
@@ -139,6 +141,7 @@ export function registerPartyHandlers(io: Server): void {
         },
         'party created'
       );
+      incrementPartyLifecycle({ event: 'createParty', result: 'ok' });
 
       cb({ ok: true, partyView: partyToView(party), playerId, resumeToken: hostResumeToken });
     });
@@ -147,15 +150,18 @@ export function registerPartyHandlers(io: Server): void {
       const name = data.playerName?.trim();
       const inviteCode = data.inviteCode?.trim().toUpperCase();
       if (!name || name.length > 20) {
+        incrementPartyLifecycle({ event: 'joinParty', result: 'error', reason: 'invalid_name' });
         return cb({ ok: false, error: 'Invalid player name' });
       }
 
       const party = getPartyByInviteCode(inviteCode);
       if (!party) {
         socketLogger.warn({ inviteCode }, 'joinParty rejected: party not found');
+        incrementPartyLifecycle({ event: 'joinParty', result: 'error', reason: 'party_not_found' });
         return cb({ ok: false, error: 'Party not found' });
       }
       if (party.status !== 'lobby') {
+        incrementPartyLifecycle({ event: 'joinParty', result: 'error', reason: 'party_not_lobby' });
         return cb({ ok: false, error: 'Party is already in a match' });
       }
 
@@ -163,6 +169,7 @@ export function registerPartyHandlers(io: Server): void {
         (m) => m.name.toLowerCase() === name.toLowerCase()
       );
       if (nameExists) {
+        incrementPartyLifecycle({ event: 'joinParty', result: 'error', reason: 'name_taken' });
         return cb({ ok: false, error: 'Name already taken' });
       }
 
@@ -191,6 +198,7 @@ export function registerPartyHandlers(io: Server): void {
         },
         'player joined party'
       );
+      incrementPartyLifecycle({ event: 'joinParty', result: 'ok' });
 
       cb({ ok: true, partyView: partyToView(party), playerId, resumeToken: memberResumeToken });
     });
@@ -202,11 +210,21 @@ export function registerPartyHandlers(io: Server): void {
       const party = getPartyByInviteCode(inviteCode);
       if (!party) {
         socketLogger.warn({ inviteCode, playerId }, 'resumeParty rejected: party not found');
+        incrementPartyLifecycle({
+          event: 'resumeParty',
+          result: 'error',
+          reason: 'party_not_found',
+        });
         return cb({ ok: false, error: 'Party not found' });
       }
 
       const member = party.members.get(playerId);
       if (!member) {
+        incrementPartyLifecycle({
+          event: 'resumeParty',
+          result: 'error',
+          reason: 'member_not_found',
+        });
         return cb({ ok: false, error: 'Player not in party' });
       }
 
@@ -219,6 +237,7 @@ export function registerPartyHandlers(io: Server): void {
           },
           'resumeParty rejected: invalid resume token'
         );
+        incrementPartyLifecycle({ event: 'resumeParty', result: 'error', reason: 'invalid_token' });
         return cb({ ok: false, error: 'Invalid resume token' });
       }
 
@@ -240,6 +259,7 @@ export function registerPartyHandlers(io: Server): void {
         },
         'player resumed party session'
       );
+      incrementPartyLifecycle({ event: 'resumeParty', result: 'ok' });
 
       cb({ ok: true, partyView: partyToView(party) });
     });
@@ -252,6 +272,7 @@ export function registerPartyHandlers(io: Server): void {
       if (!member || member.socketId !== socket.id) return;
 
       party.members.delete(data.playerId);
+      incrementPartyLifecycle({ event: 'leaveParty', result: 'ok' });
       unregisterSocket(socket.id);
       socket.leave(party.partyId);
 
