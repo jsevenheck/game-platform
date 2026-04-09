@@ -6,6 +6,7 @@ import { createComponentLogger, registerProcessLogging } from './logging/logger'
 import { registerPartyHandlers } from './party/partyHandlers';
 import { gameRegistry } from './registry/index';
 import { registerHttpRoutes } from './httpRoutes';
+import { registerMetricsRoutes } from './metrics/httpMetrics';
 
 const app = express();
 const httpServer = createServer(app);
@@ -13,6 +14,7 @@ const serverLogger = createComponentLogger('platform-server');
 
 registerProcessLogging(serverLogger);
 app.use(requestLogger);
+registerMetricsRoutes(app);
 
 const io = new Server(httpServer, {
   cors: {

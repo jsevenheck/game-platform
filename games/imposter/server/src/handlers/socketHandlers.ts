@@ -10,6 +10,11 @@ import {
   createSocketLogger,
 } from '../../../../../apps/platform/server/logging/socketLogger';
 import { startSocketHandlerInstrumentation } from '../../../../../apps/platform/server/observability/socketHandlerMetrics';
+import {
+  recordSocketEventEnd,
+  recordSocketEventStart,
+  setNamespaceConnectionCount,
+} from '../../../../../apps/platform/server/metrics/metrics';
 import { MIN_PLAYERS } from '../../../core/src/constants';
 import { GUESS_TIMEOUT_MS } from '../config/constants';
 import {
@@ -148,6 +153,13 @@ export function registerGame(io: Server, namespace = `/g/${GAME_ID}`): void {
 
     attachSocketEventDebugLogging(socket, socketLogger, socketEventDebugEnabled);
     socketLogger.debug('game client connected');
+    setNamespaceConnectionCount({ namespace, gameId: GAME_ID }, nsp.sockets.size);
+    recordSocketEventEnd(
+      recordSocketEventStart({ namespace, event: 'connection', gameId: GAME_ID }),
+      {
+        result: 'ok',
+      }
+    );
 
     socket.on('autoJoinRoom', (data, cb) => {
       const instrumentation = startSocketHandlerInstrumentation(namespace, 'autoJoinRoom');
@@ -757,6 +769,7 @@ export function registerGame(io: Server, namespace = `/g/${GAME_ID}`): void {
     });
 
     socket.on('disconnect', (reason) => {
+      setNamespaceConnectionCount({ namespace, gameId: GAME_ID }, nsp.sockets.size);
       const instrumentation = startSocketHandlerInstrumentation(namespace, 'disconnect');
       try {
         const index = getSocketIndex(socket.id);
