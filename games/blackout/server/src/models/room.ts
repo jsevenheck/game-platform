@@ -71,6 +71,28 @@ export function getAllRooms(): Map<string, Room> {
   return rooms;
 }
 
+export interface RoomStoreSnapshot {
+  roomCount: number;
+  connectedPlayers: number;
+}
+
+export function getRoomSnapshot(): RoomStoreSnapshot {
+  let connectedPlayers = 0;
+
+  for (const room of rooms.values()) {
+    for (const player of Object.values(room.players)) {
+      if (player.connected) {
+        connectedPlayers += 1;
+      }
+    }
+  }
+
+  return {
+    roomCount: rooms.size,
+    connectedPlayers,
+  };
+}
+
 export function setSessionToRoom(sessionId: string, roomCode: string): void {
   sessionToRoom.set(sessionId, roomCode);
 }

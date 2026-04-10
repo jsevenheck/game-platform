@@ -9,6 +9,12 @@ import {
   attachSocketEventDebugLogging,
   createSocketLogger,
 } from '../../../../../apps/platform/server/logging/socketLogger';
+import { startSocketHandlerInstrumentation } from '../../../../../apps/platform/server/observability/socketHandlerMetrics';
+import {
+  recordSocketEventEnd,
+  recordSocketEventStart,
+  setNamespaceConnectionCount,
+} from '../../../../../apps/platform/server/metrics/metrics';
 import { MIN_PLAYERS } from '../../../core/src/constants';
 import { GUESS_TIMEOUT_MS } from '../config/constants';
 import {
@@ -147,234 +153,266 @@ export function registerGame(io: Server, namespace = `/g/${GAME_ID}`): void {
 
     attachSocketEventDebugLogging(socket, socketLogger, socketEventDebugEnabled);
     socketLogger.debug('game client connected');
+    setNamespaceConnectionCount({ namespace, gameId: GAME_ID }, nsp.sockets.size);
+    recordSocketEventEnd(
+      recordSocketEventStart({ namespace, event: 'connection', gameId: GAME_ID }),
+      {
+        result: 'ok',
+      }
+    );
 
     socket.on('autoJoinRoom', (data, cb) => {
-      const sessionId = data.sessionId?.trim();
-      const normalizedName = (data.name ?? '').trim();
-      const name = normalizedName.slice(0, MAX_PLAYER_NAME_LENGTH);
-      const hubPlayerId = data.playerId?.trim();
+      const instrumentation = startSocketHandlerInstrumentation(namespace, 'autoJoinRoom');
+      const respond = instrumentation.wrapCallback(cb);
+      try {
+        const sessionId = data.sessionId?.trim();
+        const normalizedName = (data.name ?? '').trim();
+        const name = normalizedName.slice(0, MAX_PLAYER_NAME_LENGTH);
+        const hubPlayerId = data.playerId?.trim();
 
-      if (!sessionId || !normalizedName) {
-        return cb({ ok: false, error: 'Missing session info' });
-      }
+        if (!sessionId || !normalizedName) {
+          return respond({ ok: false, error: 'Missing session info' });
+        }
 
-      if (normalizedName.length > MAX_PLAYER_NAME_LENGTH) {
-        return cb({
-          ok: false,
-          error: `Name must be ${MAX_PLAYER_NAME_LENGTH} characters or fewer`,
+        if (normalizedName.length > MAX_PLAYER_NAME_LENGTH) {
+          return respond({
+            ok: false,
+            error: `Name must be ${MAX_PLAYER_NAME_LENGTH} characters or fewer`,
+          });
+        }
+
+        const mappedRoomCode = getSessionRoom(sessionId);
+        const mappedRoom = mappedRoomCode ? getRoom(mappedRoomCode) : undefined;
+
+        if (!mappedRoom) {
+          const { room, hostId, resumeToken } = createRoom(
+            name,
+            socket.id,
+            hubPlayerId || undefined
+          );
+          setSessionToRoom(sessionId, room.code);
+          socket.join(room.code);
+          broadcastRoom(nsp, room);
+          socketLogger.info(
+            {
+              roomCode: room.code,
+              playerId: hostId,
+              sessionId,
+            },
+            'created imposter room'
+          );
+          return respond({ ok: true, roomCode: room.code, playerId: hostId, resumeToken });
+        }
+
+        if (hubPlayerId) {
+          const existingPlayer = mappedRoom.players[hubPlayerId];
+          if (existingPlayer) {
+            // Require the server-issued resumeToken to prevent slot hijacking via public playerId.
+            if (data.resumeToken && existingPlayer.resumeToken !== data.resumeToken) {
+              socketLogger.warn(
+                { roomCode: mappedRoom.code, playerId: existingPlayer.id, sessionId },
+                'autoJoinRoom rejected: invalid imposter resume token'
+              );
+              return respond({ ok: false, error: 'Invalid resume token' });
+            }
+            if (!data.resumeToken && existingPlayer.resumeToken) {
+              socketLogger.warn(
+                { roomCode: mappedRoom.code, playerId: existingPlayer.id, sessionId },
+                'autoJoinRoom rejected: imposter resume token required'
+              );
+              return respond({ ok: false, error: 'Resume token required' });
+            }
+
+            if (existingPlayer.socketId && existingPlayer.socketId !== socket.id) {
+              deleteSocketIndex(existingPlayer.socketId);
+            }
+
+            existingPlayer.socketId = socket.id;
+            existingPlayer.connected = true;
+            if (existingPlayer.id === mappedRoom.ownerId || data.isHost) {
+              setHost(mappedRoom, existingPlayer.id);
+            } else if (existingPlayer.isHost && mappedRoom.hostId === null) {
+              setHost(mappedRoom, existingPlayer.id);
+            }
+            setSocketIndex(socket.id, mappedRoom.code, existingPlayer.id);
+            clearRoomCleanup(mappedRoom.code);
+
+            socket.join(mappedRoom.code);
+            broadcastRoom(nsp, mappedRoom);
+            socketLogger.info(
+              {
+                roomCode: mappedRoom.code,
+                playerId: existingPlayer.id,
+                sessionId,
+                resumed: true,
+              },
+              'player rejoined imposter room'
+            );
+            return respond({
+              ok: true,
+              roomCode: mappedRoom.code,
+              playerId: existingPlayer.id,
+              resumeToken: existingPlayer.resumeToken,
+            });
+          }
+        }
+
+        if (mappedRoom.phase !== 'lobby') {
+          return respond({ ok: false, error: 'Game already started' });
+        }
+
+        const nameExists = Object.values(mappedRoom.players).some(
+          (player) => player.name.toLowerCase() === name.toLowerCase()
+        );
+        if (nameExists) {
+          return respond({ ok: false, error: 'Name already taken' });
+        }
+
+        const player = createPlayer(name, false, hubPlayerId || undefined);
+        player.socketId = socket.id;
+        mappedRoom.players[player.id] = player;
+        if (data.isHost) {
+          setHost(mappedRoom, player.id);
+        }
+        setSocketIndex(socket.id, mappedRoom.code, player.id);
+        clearRoomCleanup(mappedRoom.code);
+
+        socket.join(mappedRoom.code);
+        broadcastRoom(nsp, mappedRoom);
+        socketLogger.info(
+          {
+            roomCode: mappedRoom.code,
+            playerId: player.id,
+            sessionId,
+            resumed: false,
+          },
+          'player joined existing imposter room'
+        );
+        respond({
+          ok: true,
+          roomCode: mappedRoom.code,
+          playerId: player.id,
+          resumeToken: player.resumeToken,
         });
+      } catch (err) {
+        instrumentation.finishError();
+        throw err;
       }
+    });
 
-      const mappedRoomCode = getSessionRoom(sessionId);
-      const mappedRoom = mappedRoomCode ? getRoom(mappedRoomCode) : undefined;
+    socket.on('resumePlayer', (data, cb) => {
+      const instrumentation = startSocketHandlerInstrumentation(namespace, 'resumePlayer');
+      const respond = instrumentation.wrapCallback(cb);
+      try {
+        const room = getRoom(data.roomCode);
+        if (!room) return respond({ ok: false, error: 'Room not found' });
 
-      if (!mappedRoom) {
-        const { room, hostId, resumeToken } = createRoom(name, socket.id, hubPlayerId || undefined);
-        setSessionToRoom(sessionId, room.code);
+        const player = room.players[data.playerId];
+        if (!player) return respond({ ok: false, error: 'Player not found' });
+        if (player.resumeToken !== data.resumeToken) {
+          socketLogger.warn(
+            { roomCode: room.code, playerId: data.playerId },
+            'resumePlayer rejected: invalid imposter resume token'
+          );
+          return respond({ ok: false, error: 'Invalid resume token' });
+        }
+
+        if (player.socketId) deleteSocketIndex(player.socketId);
+
+        player.socketId = socket.id;
+        player.connected = true;
+        if (player.id === room.ownerId) {
+          setHost(room, player.id);
+        } else if (player.isHost && room.hostId === null) {
+          setHost(room, player.id);
+        }
+        setSocketIndex(socket.id, room.code, player.id);
+        clearRoomCleanup(room.code);
+
         socket.join(room.code);
         broadcastRoom(nsp, room);
         socketLogger.info(
           {
             roomCode: room.code,
-            playerId: hostId,
-            sessionId,
+            playerId: player.id,
           },
-          'created imposter room'
+          'resumed imposter player'
         );
-        return cb({ ok: true, roomCode: room.code, playerId: hostId, resumeToken });
+        respond({ ok: true });
+      } catch (err) {
+        instrumentation.finishError();
+        throw err;
       }
-
-      if (hubPlayerId) {
-        const existingPlayer = mappedRoom.players[hubPlayerId];
-        if (existingPlayer) {
-          // Require the server-issued resumeToken to prevent slot hijacking via public playerId.
-          if (data.resumeToken && existingPlayer.resumeToken !== data.resumeToken) {
-            socketLogger.warn(
-              { roomCode: mappedRoom.code, playerId: existingPlayer.id, sessionId },
-              'autoJoinRoom rejected: invalid imposter resume token'
-            );
-            return cb({ ok: false, error: 'Invalid resume token' });
-          }
-          if (!data.resumeToken && existingPlayer.resumeToken) {
-            socketLogger.warn(
-              { roomCode: mappedRoom.code, playerId: existingPlayer.id, sessionId },
-              'autoJoinRoom rejected: imposter resume token required'
-            );
-            return cb({ ok: false, error: 'Resume token required' });
-          }
-
-          if (existingPlayer.socketId && existingPlayer.socketId !== socket.id) {
-            deleteSocketIndex(existingPlayer.socketId);
-          }
-
-          existingPlayer.socketId = socket.id;
-          existingPlayer.connected = true;
-          if (existingPlayer.id === mappedRoom.ownerId || data.isHost) {
-            setHost(mappedRoom, existingPlayer.id);
-          } else if (existingPlayer.isHost && mappedRoom.hostId === null) {
-            setHost(mappedRoom, existingPlayer.id);
-          }
-          setSocketIndex(socket.id, mappedRoom.code, existingPlayer.id);
-          clearRoomCleanup(mappedRoom.code);
-
-          socket.join(mappedRoom.code);
-          broadcastRoom(nsp, mappedRoom);
-          socketLogger.info(
-            {
-              roomCode: mappedRoom.code,
-              playerId: existingPlayer.id,
-              sessionId,
-              resumed: true,
-            },
-            'player rejoined imposter room'
-          );
-          return cb({
-            ok: true,
-            roomCode: mappedRoom.code,
-            playerId: existingPlayer.id,
-            resumeToken: existingPlayer.resumeToken,
-          });
-        }
-      }
-
-      if (mappedRoom.phase !== 'lobby') {
-        return cb({ ok: false, error: 'Game already started' });
-      }
-
-      const nameExists = Object.values(mappedRoom.players).some(
-        (player) => player.name.toLowerCase() === name.toLowerCase()
-      );
-      if (nameExists) {
-        return cb({ ok: false, error: 'Name already taken' });
-      }
-
-      const player = createPlayer(name, false, hubPlayerId || undefined);
-      player.socketId = socket.id;
-      mappedRoom.players[player.id] = player;
-      if (data.isHost) {
-        setHost(mappedRoom, player.id);
-      }
-      setSocketIndex(socket.id, mappedRoom.code, player.id);
-      clearRoomCleanup(mappedRoom.code);
-
-      socket.join(mappedRoom.code);
-      broadcastRoom(nsp, mappedRoom);
-      socketLogger.info(
-        {
-          roomCode: mappedRoom.code,
-          playerId: player.id,
-          sessionId,
-          resumed: false,
-        },
-        'player joined existing imposter room'
-      );
-      cb({
-        ok: true,
-        roomCode: mappedRoom.code,
-        playerId: player.id,
-        resumeToken: player.resumeToken,
-      });
-    });
-
-    socket.on('resumePlayer', (data, cb) => {
-      const room = getRoom(data.roomCode);
-      if (!room) return cb({ ok: false, error: 'Room not found' });
-
-      const player = room.players[data.playerId];
-      if (!player) return cb({ ok: false, error: 'Player not found' });
-      if (player.resumeToken !== data.resumeToken) {
-        socketLogger.warn(
-          { roomCode: room.code, playerId: data.playerId },
-          'resumePlayer rejected: invalid imposter resume token'
-        );
-        return cb({ ok: false, error: 'Invalid resume token' });
-      }
-
-      if (player.socketId) deleteSocketIndex(player.socketId);
-
-      player.socketId = socket.id;
-      player.connected = true;
-      if (player.id === room.ownerId) {
-        setHost(room, player.id);
-      } else if (player.isHost && room.hostId === null) {
-        setHost(room, player.id);
-      }
-      setSocketIndex(socket.id, room.code, player.id);
-      clearRoomCleanup(room.code);
-
-      socket.join(room.code);
-      broadcastRoom(nsp, room);
-      socketLogger.info(
-        {
-          roomCode: room.code,
-          playerId: player.id,
-        },
-        'resumed imposter player'
-      );
-      cb({ ok: true });
     });
 
     socket.on('leaveRoom', (data, cb) => {
-      if (!verifyPlayer(socket, data.roomCode, data.playerId)) {
-        return cb({ ok: false, error: 'Unauthorized' });
-      }
+      const instrumentation = startSocketHandlerInstrumentation(namespace, 'leaveRoom');
+      const respond = instrumentation.wrapCallback(cb);
+      try {
+        if (!verifyPlayer(socket, data.roomCode, data.playerId)) {
+          return respond({ ok: false, error: 'Unauthorized' });
+        }
 
-      const room = getRoom(data.roomCode);
-      if (!room) {
-        return cb({ ok: false, error: 'Room not found' });
-      }
+        const room = getRoom(data.roomCode);
+        if (!room) {
+          return respond({ ok: false, error: 'Room not found' });
+        }
 
-      const player = room.players[data.playerId];
-      if (!player) {
-        return cb({ ok: false, error: 'Player not found' });
-      }
+        const player = room.players[data.playerId];
+        if (!player) {
+          return respond({ ok: false, error: 'Player not found' });
+        }
 
-      socket.leave(data.roomCode);
-      deleteSocketIndex(socket.id);
+        socket.leave(data.roomCode);
+        deleteSocketIndex(socket.id);
 
-      if (room.phase !== 'lobby' && room.phase !== 'ended') {
-        handleVoluntaryDisconnect(room, data.playerId);
+        if (room.phase !== 'lobby' && room.phase !== 'ended') {
+          handleVoluntaryDisconnect(room, data.playerId);
 
-        const anyConnected = Object.values(room.players).some((candidate) => candidate.connected);
-        if (!anyConnected) {
-          scheduleRoomCleanup(room.code);
+          const anyConnected = Object.values(room.players).some((candidate) => candidate.connected);
+          if (!anyConnected) {
+            scheduleRoomCleanup(room.code);
+          }
+
+          broadcastRoom(nsp, room);
+          return respond({ ok: true });
+        }
+
+        removePlayerFromRoom(room, data.playerId);
+
+        if (Object.keys(room.players).length === 0) {
+          clearDiscussionTimer(room.code);
+          clearGuessTimer(room.code);
+          deleteRoom(room.code);
+          socketLogger.info({ roomCode: room.code }, 'deleted empty imposter room after leave');
+          return respond({ ok: true });
+        }
+
+        if (room.ownerId === data.playerId) {
+          room.ownerId =
+            room.hostId && room.players[room.hostId]
+              ? room.hostId
+              : Object.values(room.players)[0]!.id;
+        }
+
+        if (room.hostId === data.playerId || !room.hostId || !room.players[room.hostId]) {
+          setHost(room, room.ownerId);
         }
 
         broadcastRoom(nsp, room);
-        return cb({ ok: true });
+        socketLogger.info(
+          {
+            roomCode: room.code,
+            playerId: data.playerId,
+            remainingPlayers: Object.keys(room.players).length,
+          },
+          'player left imposter room'
+        );
+        respond({ ok: true });
+      } catch (err) {
+        instrumentation.finishError();
+        throw err;
       }
-
-      removePlayerFromRoom(room, data.playerId);
-
-      if (Object.keys(room.players).length === 0) {
-        clearDiscussionTimer(room.code);
-        clearGuessTimer(room.code);
-        deleteRoom(room.code);
-        socketLogger.info({ roomCode: room.code }, 'deleted empty imposter room after leave');
-        return cb({ ok: true });
-      }
-
-      if (room.ownerId === data.playerId) {
-        room.ownerId =
-          room.hostId && room.players[room.hostId]
-            ? room.hostId
-            : Object.values(room.players)[0]!.id;
-      }
-
-      if (room.hostId === data.playerId || !room.hostId || !room.players[room.hostId]) {
-        setHost(room, room.ownerId);
-      }
-
-      broadcastRoom(nsp, room);
-      socketLogger.info(
-        {
-          roomCode: room.code,
-          playerId: data.playerId,
-          remainingPlayers: Object.keys(room.players).length,
-        },
-        'player left imposter room'
-      );
-      cb({ ok: true });
     });
 
     socket.on('kickPlayer', (data, cb) => {
@@ -494,40 +532,47 @@ export function registerGame(io: Server, namespace = `/g/${GAME_ID}`): void {
     });
 
     socket.on('startGame', (data, cb) => {
-      if (!verifyPlayer(socket, data.roomCode, data.playerId)) {
-        return cb({ ok: false, error: 'Unauthorized' });
-      }
-      const room = getRoom(data.roomCode);
-      if (!room) return cb({ ok: false, error: 'Room not found' });
-      if (room.hostId !== data.playerId) {
-        socketLogger.warn(
-          { roomCode: room.code, playerId: data.playerId },
-          'startGame rejected: actor is not imposter host'
+      const instrumentation = startSocketHandlerInstrumentation(namespace, 'startGame');
+      const respond = instrumentation.wrapCallback(cb);
+      try {
+        if (!verifyPlayer(socket, data.roomCode, data.playerId)) {
+          return respond({ ok: false, error: 'Unauthorized' });
+        }
+        const room = getRoom(data.roomCode);
+        if (!room) return respond({ ok: false, error: 'Room not found' });
+        if (room.hostId !== data.playerId) {
+          socketLogger.warn(
+            { roomCode: room.code, playerId: data.playerId },
+            'startGame rejected: actor is not imposter host'
+          );
+          return respond({ ok: false, error: 'Only host can start' });
+        }
+        if (room.phase !== 'lobby') return respond({ ok: false, error: 'Game already started' });
+
+        const connected = Object.values(room.players).filter((player) => player.connected);
+        if (connected.length < MIN_PLAYERS) {
+          return respond({ ok: false, error: `Need at least ${MIN_PLAYERS} players` });
+        }
+
+        if (room.infiltratorCount >= connected.length) {
+          return respond({ ok: false, error: 'Infiltrator count must be less than player count' });
+        }
+
+        startRound(room);
+        broadcastRoom(nsp, room);
+        socketLogger.info(
+          {
+            roomCode: room.code,
+            hostPlayerId: data.playerId,
+            connectedPlayers: connected.length,
+          },
+          'started imposter game'
         );
-        return cb({ ok: false, error: 'Only host can start' });
+        respond({ ok: true });
+      } catch (err) {
+        instrumentation.finishError();
+        throw err;
       }
-      if (room.phase !== 'lobby') return cb({ ok: false, error: 'Game already started' });
-
-      const connected = Object.values(room.players).filter((player) => player.connected);
-      if (connected.length < MIN_PLAYERS) {
-        return cb({ ok: false, error: `Need at least ${MIN_PLAYERS} players` });
-      }
-
-      if (room.infiltratorCount >= connected.length) {
-        return cb({ ok: false, error: 'Infiltrator count must be less than player count' });
-      }
-
-      startRound(room);
-      broadcastRoom(nsp, room);
-      socketLogger.info(
-        {
-          roomCode: room.code,
-          hostPlayerId: data.playerId,
-          connectedPlayers: connected.length,
-        },
-        'started imposter game'
-      );
-      cb({ ok: true });
     });
 
     socket.on('submitDescription', (data, cb) => {
@@ -724,36 +769,47 @@ export function registerGame(io: Server, namespace = `/g/${GAME_ID}`): void {
     });
 
     socket.on('disconnect', (reason) => {
-      const index = getSocketIndex(socket.id);
-      if (!index) {
-        socketLogger.debug({ reason }, 'imposter client disconnected before room binding');
-        return;
-      }
-
-      const room = getRoom(index.roomCode);
-      if (room) {
-        const player = room.players[index.playerId];
-        if (player) {
-          handleVoluntaryDisconnect(room, player.id);
-
-          const anyConnected = Object.values(room.players).some((candidate) => candidate.connected);
-          if (!anyConnected) {
-            scheduleRoomCleanup(room.code);
-            gameLogger.info({ roomCode: room.code }, 'scheduled imposter room cleanup');
-          }
-
-          broadcastRoom(nsp, room);
+      setNamespaceConnectionCount({ namespace, gameId: GAME_ID }, nsp.sockets.size);
+      const instrumentation = startSocketHandlerInstrumentation(namespace, 'disconnect');
+      try {
+        const index = getSocketIndex(socket.id);
+        if (!index) {
+          socketLogger.debug({ reason }, 'imposter client disconnected before room binding');
+          instrumentation.finishSuccess();
+          return;
         }
+
+        const room = getRoom(index.roomCode);
+        if (room) {
+          const player = room.players[index.playerId];
+          if (player) {
+            handleVoluntaryDisconnect(room, player.id);
+
+            const anyConnected = Object.values(room.players).some(
+              (candidate) => candidate.connected
+            );
+            if (!anyConnected) {
+              scheduleRoomCleanup(room.code);
+              gameLogger.info({ roomCode: room.code }, 'scheduled imposter room cleanup');
+            }
+
+            broadcastRoom(nsp, room);
+          }
+        }
+        deleteSocketIndex(socket.id);
+        socketLogger.info(
+          {
+            reason,
+            roomCode: index.roomCode,
+            playerId: index.playerId,
+          },
+          'imposter client disconnected'
+        );
+        instrumentation.finishSuccess();
+      } catch (err) {
+        instrumentation.finishError();
+        throw err;
       }
-      deleteSocketIndex(socket.id);
-      socketLogger.info(
-        {
-          reason,
-          roomCode: index.roomCode,
-          playerId: index.playerId,
-        },
-        'imposter client disconnected'
-      );
     });
   });
 }
