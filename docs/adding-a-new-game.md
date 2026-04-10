@@ -293,7 +293,7 @@ const props = defineProps<{
   isHost?: boolean;
   onReplayGame?: () => void;
   onReturnToLobby?: () => void;
-  actionError?: string;  // Optional: error from platform replay/lobby actions
+  actionError?: string; // Optional: error from platform replay/lobby actions
 }>();
 
 const gamePhase = ref('');

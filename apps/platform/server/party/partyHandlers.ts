@@ -128,7 +128,11 @@ export function registerPartyHandlers(io: Server): void {
       try {
         const name = data.playerName?.trim();
         if (!name || name.length > 20) {
-          incrementPartyLifecycle({ event: 'createParty', result: 'error', reason: 'invalid_name' });
+          incrementPartyLifecycle({
+            event: 'createParty',
+            result: 'error',
+            reason: 'invalid_name',
+          });
           return respond({ ok: false, error: 'Invalid player name' });
         }
 
@@ -173,11 +177,19 @@ export function registerPartyHandlers(io: Server): void {
         const party = getPartyByInviteCode(inviteCode);
         if (!party) {
           socketLogger.warn({ inviteCode }, 'joinParty rejected: party not found');
-          incrementPartyLifecycle({ event: 'joinParty', result: 'error', reason: 'party_not_found' });
+          incrementPartyLifecycle({
+            event: 'joinParty',
+            result: 'error',
+            reason: 'party_not_found',
+          });
           return respond({ ok: false, error: 'Party not found' });
         }
         if (party.status !== 'lobby') {
-          incrementPartyLifecycle({ event: 'joinParty', result: 'error', reason: 'party_not_lobby' });
+          incrementPartyLifecycle({
+            event: 'joinParty',
+            result: 'error',
+            reason: 'party_not_lobby',
+          });
           return respond({ ok: false, error: 'Party is already in a match' });
         }
 
@@ -265,7 +277,11 @@ export function registerPartyHandlers(io: Server): void {
             },
             'resumeParty rejected: invalid resume token'
           );
-          incrementPartyLifecycle({ event: 'resumeParty', result: 'error', reason: 'invalid_token' });
+          incrementPartyLifecycle({
+            event: 'resumeParty',
+            result: 'error',
+            reason: 'invalid_token',
+          });
           return respond({ ok: false, error: 'Invalid resume token' });
         }
 

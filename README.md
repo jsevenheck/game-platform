@@ -4,11 +4,11 @@ A real-time multiplayer party game platform built as a single **pnpm workspace m
 
 ## Games
 
-| Game | Description | Players |
-| --- | --- | --- |
-| **Blackout** | Category-based trivia with a rotating host who reveals prompts and picks winners | 3-20 |
-| **Imposter** | Social deduction where one player is the infiltrator; describe, discuss, and vote | 3-16 |
-| **Secret Signals** | Team-based word association where directors give clues and agents guess cards | 4-24 |
+| Game               | Description                                                                       | Players |
+| ------------------ | --------------------------------------------------------------------------------- | ------- |
+| **Blackout**       | Category-based trivia with a rotating host who reveals prompts and picks winners  | 3-20    |
+| **Imposter**       | Social deduction where one player is the infiltrator; describe, discuss, and vote | 3-16    |
+| **Secret Signals** | Team-based word association where directors give clues and agents guess cards     | 4-24    |
 
 ## Tech Stack
 
