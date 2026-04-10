@@ -1,5 +1,5 @@
 import type { IncomingMessage, ServerResponse } from 'http';
-import type pino from 'pino';
+import type { LevelWithSilent } from 'pino';
 import pinoHttp, { type HttpLogger } from 'pino-http';
 import { createComponentLogger, createRequestId } from './logger';
 
@@ -22,7 +22,7 @@ export function resolveHttpLogLevel(
   req: Pick<IncomingMessage, 'url'>,
   res: Pick<ServerResponse, 'statusCode'>,
   error?: Error
-): pino.LevelWithSilent {
+): LevelWithSilent {
   if (shouldIgnoreHttpRequest(req)) return 'silent';
   if (error || res.statusCode >= 500) return 'error';
   if (res.statusCode >= 400) return 'warn';
