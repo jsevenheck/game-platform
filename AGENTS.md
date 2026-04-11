@@ -21,11 +21,10 @@ games/secret-signals/ <- internal platform module
 
 ## Skills
 
-Custom skills live in `.skills/`.
+Custom skills live in `.agents/skills/`.
 
 | Skill                      | Trigger description                                                                                                |
 | -------------------------- | ------------------------------------------------------------------------------------------------------------------ |
-| `find-skills`              | Discover and install agent skills when the user asks for capabilities, tooling, or "is there a skill for X?"       |
 | `frontend-design`          | Build distinctive, production-grade frontend UI with strong visual direction and polished implementation           |
 | `playwright-cli`           | Browser automation via `playwright-cli` for navigation, interaction, screenshots, and debugging                    |
 | `pnpm`                     | pnpm-specific commands, workspace config, catalogs, overrides, and patches                                         |

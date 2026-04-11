@@ -22,6 +22,7 @@ export default tseslint.config(
       '**/playwright-report/**',
       '**/game-export/**',
       '**/*.cjs',
+      '.pi/**',
     ],
   },
 
