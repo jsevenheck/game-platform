@@ -1,4 +1,5 @@
 import {
+  buildLoggerOptions,
   createRootLogger,
   readLoggingConfig,
   resolvePrettyTransportTarget,
@@ -65,6 +66,30 @@ describe('server logging helpers', () => {
         keys: ['playerId', 'resumeToken', 'roomCode'],
       }
     );
+  });
+
+  it('redacts inviteCode only in production logger config', () => {
+    const devOptions = buildLoggerOptions({
+      production: false,
+      level: 'debug',
+      pretty: false,
+      socketEvents: false,
+    });
+    const prodOptions = buildLoggerOptions({
+      production: true,
+      level: 'info',
+      pretty: false,
+      socketEvents: false,
+    });
+
+    const devPaths =
+      devOptions.redact && !Array.isArray(devOptions.redact) ? devOptions.redact.paths : [];
+    const prodPaths =
+      prodOptions.redact && !Array.isArray(prodOptions.redact) ? prodOptions.redact.paths : [];
+
+    expect(devPaths).not.toContain('inviteCode');
+    expect(prodPaths).toContain('inviteCode');
+    expect(prodPaths).toContain('*.inviteCode');
   });
 
   it('falls back cleanly when pino-pretty is unavailable', () => {

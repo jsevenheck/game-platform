@@ -16,6 +16,7 @@
     "games/*/server/src/**/*",
     "games/*/__tests__/**/*",
     "games/*/e2e/**/*",
+    "apps/platform/e2e/**/*",
     "apps/platform/server/**/*"
   ],
   "exclude": ["node_modules", "apps/platform/src", "games/*/ui-vue"]

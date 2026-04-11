@@ -62,6 +62,103 @@ test.describe('Blackout via Platform', () => {
     await ctx3.close();
   });
 
+  test('host resumes the active blackout match after reloading the tab', async ({ browser }) => {
+    const ctx1 = await browser.newContext();
+    const ctx2 = await browser.newContext();
+    const ctx3 = await browser.newContext();
+    const page1 = await ctx1.newPage();
+    const page2 = await ctx2.newPage();
+    const page3 = await ctx3.newPage();
+
+    const inviteCode = await createParty(page1, 'Alice');
+    await joinParty(page2, 'Bob', inviteCode);
+    await joinParty(page3, 'Carol', inviteCode);
+
+    await launchGame(page1, 'Blackout');
+    await page2.waitForURL(/\/game\/blackout/, { timeout: 15_000 });
+    await page3.waitForURL(/\/game\/blackout/, { timeout: 15_000 });
+
+    await page1.getByRole('button', { name: 'Start Game' }).click();
+    await page1.waitForSelector('.game-round', { timeout: 10_000 });
+    await expect(page1.getByText('Alice')).toBeVisible({ timeout: 10_000 });
+
+    await page1.reload();
+    await page1.waitForURL(/\/game\/blackout/, { timeout: 10_000 });
+    await page1.waitForSelector('.game-round', { timeout: 10_000 });
+    await expect(page1.getByText('Alice')).toBeVisible({ timeout: 10_000 });
+
+    await ctx1.close();
+    await ctx2.close();
+    await ctx3.close();
+  });
+
+  test('player resumes the active blackout match after reloading the tab', async ({ browser }) => {
+    const ctx1 = await browser.newContext();
+    const ctx2 = await browser.newContext();
+    const ctx3 = await browser.newContext();
+    const page1 = await ctx1.newPage();
+    const page2 = await ctx2.newPage();
+    const page3 = await ctx3.newPage();
+
+    const inviteCode = await createParty(page1, 'Alice');
+    await joinParty(page2, 'Bob', inviteCode);
+    await joinParty(page3, 'Carol', inviteCode);
+
+    await launchGame(page1, 'Blackout');
+    await page2.waitForURL(/\/game\/blackout/, { timeout: 15_000 });
+    await page3.waitForURL(/\/game\/blackout/, { timeout: 15_000 });
+
+    await page1.getByRole('button', { name: 'Start Game' }).click();
+    await page1.waitForSelector('.game-round', { timeout: 10_000 });
+    await page2.waitForSelector('.game-round', { timeout: 10_000 });
+
+    await page2.reload();
+    await page2.waitForURL(/\/game\/blackout/, { timeout: 10_000 });
+    await page2.waitForSelector('.game-round', { timeout: 10_000 });
+    await expect(page2.getByText('Waiting for the host to reveal...')).toBeVisible({
+      timeout: 10_000,
+    });
+
+    await ctx1.close();
+    await ctx2.close();
+    await ctx3.close();
+  });
+
+  test('player can reload the active blackout match multiple times and still resume', async ({
+    browser,
+  }) => {
+    const ctx1 = await browser.newContext();
+    const ctx2 = await browser.newContext();
+    const ctx3 = await browser.newContext();
+    const page1 = await ctx1.newPage();
+    const page2 = await ctx2.newPage();
+    const page3 = await ctx3.newPage();
+
+    const inviteCode = await createParty(page1, 'Alice');
+    await joinParty(page2, 'Bob', inviteCode);
+    await joinParty(page3, 'Carol', inviteCode);
+
+    await launchGame(page1, 'Blackout');
+    await page2.waitForURL(/\/game\/blackout/, { timeout: 15_000 });
+    await page3.waitForURL(/\/game\/blackout/, { timeout: 15_000 });
+
+    await page1.getByRole('button', { name: 'Start Game' }).click();
+    await page2.waitForSelector('.game-round', { timeout: 10_000 });
+
+    for (let i = 0; i < 2; i++) {
+      await page2.reload();
+      await page2.waitForURL(/\/game\/blackout/, { timeout: 10_000 });
+      await page2.waitForSelector('.game-round', { timeout: 10_000 });
+      await expect(page2.getByText('Waiting for the host to reveal...')).toBeVisible({
+        timeout: 10_000,
+      });
+    }
+
+    await ctx1.close();
+    await ctx2.close();
+    await ctx3.close();
+  });
+
   test('player can return to party lobby via platform overlay after game ends', async ({
     browser,
   }) => {

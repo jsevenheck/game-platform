@@ -119,5 +119,20 @@ export default tseslint.config(
       '@typescript-eslint/no-non-null-assertion': 'off',
       '@typescript-eslint/no-require-imports': 'off',
     },
+  },
+
+  // Platform Playwright specs live under the app package, but ESLint's
+  // project service does not consistently pick up that nested tsconfig.
+  // These tests do not rely on type-aware lint rules, so parse them without
+  // the project service to avoid false "file not found by the project service"
+  // failures.
+  {
+    files: ['apps/platform/e2e/**/*.ts'],
+    languageOptions: {
+      parserOptions: {
+        projectService: false,
+        tsconfigRootDir: import.meta.dirname,
+      },
+    },
   }
 );

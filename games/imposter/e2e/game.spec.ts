@@ -275,6 +275,40 @@ test.describe('Imposter via Platform', () => {
     await ctx3.close();
   });
 
+  test('host resumes the active imposter match after reloading the tab', async ({ browser }) => {
+    const { ctxs, pages } = await setupThreePlayers(browser);
+    const [hostPage] = pages as [Page, Page, Page];
+
+    await Promise.all(
+      pages.map((p) => p.waitForSelector('.description-phase', { timeout: 10_000 }))
+    );
+    await expect(hostPage.locator('.round-badge')).toContainText('Round 1');
+
+    await hostPage.reload();
+    await hostPage.waitForURL(/\/game\/imposter/, { timeout: 10_000 });
+    await hostPage.waitForSelector('.description-phase', { timeout: 10_000 });
+    await expect(hostPage.locator('.round-badge')).toContainText('Round 1');
+
+    await Promise.all(ctxs.map((c) => c.close()));
+  });
+
+  test('player resumes the active imposter match after reloading the tab', async ({ browser }) => {
+    const { ctxs, pages } = await setupThreePlayers(browser);
+    const [, player2Page] = pages as [Page, Page, Page];
+
+    await Promise.all(
+      pages.map((p) => p.waitForSelector('.description-phase', { timeout: 10_000 }))
+    );
+    await expect(player2Page.locator('.round-badge')).toContainText('Round 1');
+
+    await player2Page.reload();
+    await player2Page.waitForURL(/\/game\/imposter/, { timeout: 10_000 });
+    await player2Page.waitForSelector('.description-phase', { timeout: 10_000 });
+    await expect(player2Page.locator('.round-badge')).toContainText('Round 1');
+
+    await Promise.all(ctxs.map((c) => c.close()));
+  });
+
   test('host can replay the game via platform overlay', async ({ browser }) => {
     const { ctxs, pages } = await setupThreePlayers(browser);
     const [hostPage] = pages as [Page, Page, Page];

@@ -21,6 +21,9 @@ async function importSocketHandlerMetrics() {
 async function importHttpMetrics() {
   return await import('../server/metrics/httpMetrics');
 }
+async function importSocketNamespaceMetrics() {
+  return await import('../server/observability/socketNamespaceMetrics');
+}
 
 beforeEach(() => {
   testRegistry = new Registry();
@@ -101,6 +104,32 @@ describe('metrics/metrics – prom-client backed counters and histograms', () =>
   });
 });
 
+describe('observability/socketNamespaceMetrics – prom-client backed', () => {
+  it('records connection and disconnect metrics with namespace socket counts', async () => {
+    const { recordNamespaceConnection, recordNamespaceDisconnect } =
+      await importSocketNamespaceMetrics();
+
+    const nsp = {
+      sockets: new Map([
+        ['s1', {}],
+        ['s2', {}],
+      ]),
+    };
+    recordNamespaceConnection({ namespace: '/g/blackout', gameId: 'blackout' }, nsp);
+
+    nsp.sockets.delete('s2');
+    recordNamespaceDisconnect({ namespace: '/g/blackout', gameId: 'blackout' }, nsp);
+
+    const output = await testRegistry.metrics();
+    expect(output).toContain('platform_socket_connections_open');
+    expect(output).toContain('namespace="/g/blackout"');
+    expect(output).toContain('game_id="blackout"');
+    expect(output).toContain('platform_socket_events_total');
+    expect(output).toContain('event="connection"');
+    expect(output).toContain('event="disconnect"');
+  });
+});
+
 describe('observability/socketHandlerMetrics – prom-client backed', () => {
   it('finishSuccess records counter and histogram on the registry', async () => {
     const { startSocketHandlerInstrumentation } = await importSocketHandlerMetrics();
@@ -112,6 +141,43 @@ describe('observability/socketHandlerMetrics – prom-client backed', () => {
     expect(output).toContain('platform_socket_handler_total');
     expect(output).toContain('platform_socket_handler_duration_seconds');
     expect(output).toContain('result="ok"');
+  });
+
+  it('records namespace-level socket events too when gameId instrumentation is provided', async () => {
+    const { startSocketHandlerInstrumentation } = await importSocketHandlerMetrics();
+
+    const instrumentation = startSocketHandlerInstrumentation(
+      '/g/blackout',
+      'autoJoinRoom',
+      'blackout'
+    );
+    instrumentation.finishSuccess();
+
+    const output = await testRegistry.metrics();
+    expect(output).toContain('platform_socket_events_total');
+    expect(output).toContain('namespace="/g/blackout"');
+    expect(output).toContain('event="autoJoinRoom"');
+    expect(output).toContain('game_id="blackout"');
+    expect(output).toContain('result="ok"');
+  });
+
+  it('records rejected namespace-level socket events when gameId instrumentation is provided', async () => {
+    const { startSocketHandlerInstrumentation } = await importSocketHandlerMetrics();
+
+    const instrumentation = startSocketHandlerInstrumentation(
+      '/g/blackout',
+      'startGame',
+      'blackout'
+    );
+    const callback = vi.fn();
+    const wrapped = instrumentation.wrapCallback(callback);
+    wrapped({ ok: false, error: 'Need at least 3 players' });
+
+    const output = await testRegistry.metrics();
+    expect(output).toContain('platform_socket_events_total');
+    expect(output).toContain('event="startGame"');
+    expect(output).toContain('game_id="blackout"');
+    expect(output).toContain('result="rejected"');
   });
 
   it('wrapCallback records rejected when result.ok is false', async () => {
