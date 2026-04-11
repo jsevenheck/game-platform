@@ -209,6 +209,39 @@ test.describe('Secret Signals via Platform', () => {
     await bobReconnect.close();
   });
 
+  test('host resumes the active secret-signals match after reloading the tab', async ({
+    browser,
+  }) => {
+    const { ctxs, pages } = await setupFourPlayers(browser);
+    const [host] = pages as [Page, Page, Page, Page];
+
+    await expect(host.locator('.turn-indicator')).toContainText('Red Team', { timeout: 10_000 });
+    await expect(host.getByPlaceholder('Clue word')).toBeVisible({ timeout: 10_000 });
+
+    await host.reload();
+    await host.waitForURL(/\/game\/secret-signals/, { timeout: 10_000 });
+    await expect(host.locator('.turn-indicator')).toContainText('Red Team', { timeout: 10_000 });
+    await expect(host.getByPlaceholder('Clue word')).toBeVisible({ timeout: 10_000 });
+
+    await Promise.all(ctxs.map((c) => c.close()));
+  });
+
+  test('player resumes the active secret-signals match after reloading the tab', async ({
+    browser,
+  }) => {
+    const { ctxs, pages } = await setupFourPlayers(browser);
+    const [, bob] = pages as [Page, Page, Page, Page];
+
+    await expect(bob.locator('.turn-indicator')).toContainText('Red Team', { timeout: 10_000 });
+
+    await bob.reload();
+    await bob.waitForURL(/\/game\/secret-signals/, { timeout: 10_000 });
+    await expect(bob.locator('.turn-indicator')).toContainText('Red Team', { timeout: 10_000 });
+    await expect(bob.locator('.gameplay-content')).toBeVisible({ timeout: 10_000 });
+
+    await Promise.all(ctxs.map((c) => c.close()));
+  });
+
   test('host returns to party lobby via platform overlay after match ends', async ({ browser }) => {
     const { ctxs, pages, inviteCode } = await setupFourPlayers(browser);
     const [host] = pages as [Page, Page, Page, Page];

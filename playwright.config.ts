@@ -40,6 +40,7 @@ export default defineConfig({
       command: `${pnpmCommand} -C apps/platform dev:client`,
       port: 5173,
       reuseExistingServer: !process.env.CI,
+      stderr: 'ignore',
     },
   ],
 });

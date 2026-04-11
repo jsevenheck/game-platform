@@ -17,25 +17,26 @@ games/secret-signals/ <- internal platform module
 - The platform owns the full party lifecycle: create -> join -> launch game -> replay / return to lobby.
 - `matchKey` is the unique identifier per match, passed as `sessionId` to each game's `autoJoinRoom` handler.
 - `@shared/*` in game UI code resolves to `games/{game}/core/src/` via Vite's context-sensitive alias (see `apps/platform/vite.config.ts`) and per-game `ui-vue/tsconfig.json`.
+- Shared server logging lives in `apps/platform/server/logging/`; game modules should reuse those helpers instead of adding their own logger stack.
 
 ## Skills
 
-Custom skills live in `.skills/`.
+Custom skills live in `.agents/skills/`.
 
 | Skill                      | Trigger description                                                                                                |
 | -------------------------- | ------------------------------------------------------------------------------------------------------------------ |
-| `find-skills`              | Discover and install agent skills when the user asks for capabilities, tooling, or "is there a skill for X?"       |
-| `frontend-design`          | Build distinctive, production-grade frontend UI with strong visual direction and polished implementation           |
-| `playwright-cli`           | Browser automation via `playwright-cli` for navigation, interaction, screenshots, and debugging                    |
-| `pnpm`                     | pnpm-specific commands, workspace config, catalogs, overrides, and patches                                         |
-| `tailwind-design-system`   | Tailwind CSS v4 design systems, tokens, shared component patterns, and responsive styling                          |
-| `ui-ux-pro-max`            | UI/UX design intelligence for styles, palettes, typography, accessibility, and frontend direction                  |
-| `vite`                     | Vite build tool configuration, plugin API, SSR, and Vite 8 Rolldown migration                                      |
-| `vue-best-practices`       | Vue 3 Composition API, reactive components, SSR, TypeScript patterns, and Pinia/Vue Router integration             |
-| `pinia`                    | Pinia official Vue state management library — stores, state/getters/actions, store patterns, plugins, SSR          |
-| `vitest`                   | Vitest testing framework — config, test suites, mocking with vi.fn/vi.mock, coverage, parallel runs                |
-| `vue-pinia-best-practices` | Pinia best practices, common gotchas (no active Pinia, reactivity loss), and state management patterns             |
-| `websocket-engineer`       | Real-time WebSocket and Socket.IO architecture for bidirectional messaging, room management, presence, and scaling |
+| `frontend-design`          | Build distinctive, production-grade frontend UI with strong visual direction and polished implementation                                                                                                                         |
+| `pinia`                    | Pinia official Vue state management library — stores, state/getters/actions, store patterns, plugins, SSR                                                                                                                        |
+| `playwright-best-practices` | Playwright testing best practices for E2E/component/API testing, flaky test fixes, CI, auth, accessibility, multi-user flows, WebSockets, performance, security, and advanced browser scenarios                           |
+| `playwright-cli`           | Browser automation via `playwright-cli` for navigation, interaction, screenshots, and debugging                                                                                                                                  |
+| `pnpm`                     | pnpm-specific commands, workspace config, catalogs, overrides, and patches                                                                                                                                                       |
+| `tailwind-design-system`   | Tailwind CSS v4 design systems, tokens, shared component patterns, and responsive styling                                                                                                                                        |
+| `ui-ux-pro-max`            | UI/UX design intelligence for styles, palettes, typography, accessibility, and frontend direction                                                                                                                                |
+| `vite`                     | Vite build tool configuration, plugin API, SSR, and Vite 8 Rolldown migration                                                                                                                                                    |
+| `vitest`                   | Vitest testing framework — config, test suites, mocking with vi.fn/vi.mock, coverage, parallel runs                                                                                                                              |
+| `vue-best-practices`       | Vue 3 Composition API, reactive components, SSR, TypeScript patterns, and Pinia/Vue Router integration                                                                                                                           |
+| `vue-pinia-best-practices` | Pinia best practices, common gotchas (no active Pinia, reactivity loss), and state management patterns                                                                                                                           |
+| `websocket-engineer`       | Real-time WebSocket and Socket.IO architecture for bidirectional messaging, room management, presence, and scaling                                                                                                               |
 
 ## Commands (always run from workspace root)
 
@@ -79,6 +80,7 @@ Game-specific accent overrides use Tailwind's `!` important suffix: `bg-blackout
 apps/platform/
   server/
     index.ts          <- Express + Socket.IO entry
+    logging/          <- shared Pino helpers for root, HTTP, and Socket.IO logging
     party/            <- party domain (types, store, handlers)
     registry/         <- game server module registry
   src/
@@ -98,6 +100,22 @@ games/{game}/
 ## Adding a new game
 
 See **[docs/adding-a-new-game.md](docs/adding-a-new-game.md)** for the full step-by-step guide: folder structure, server module contract, `PlatformAdapter.vue` pattern, all four platform registration points, design system usage, and the integration checklist.
+
+## Logging
+
+- Server logging is centralized in `apps/platform/server/logging/`.
+- Reuse `createComponentLogger()` for namespace or component loggers and `createSocketLogger()` / `attachSocketEventDebugLogging()` for Socket.IO handlers.
+- Keep logs structured and lifecycle-focused: create, join, resume, start, end, cleanup, and failures.
+- Never log secrets or hidden game state such as `resumeToken`, `joinToken`, auth headers, private cards, hidden words, or raw payload dumps.
+- Sensitive join data like `inviteCode` is redacted by the shared logger config and should not be relied on in log output.
+- Environment flags: `LOG_LEVEL`, `LOG_PRETTY`, `LOG_SOCKET_EVENTS`.
+
+## Metrics
+
+- Prometheus metrics live under `apps/platform/server/metrics/` and namespace/socket observability helpers under `apps/platform/server/observability/`.
+- `/metrics` is enabled by default outside production and disabled by default in production unless `METRICS_ENABLED=true` is set.
+- Protect production scrapes with `METRICS_AUTH_TOKEN` or internal-only network policy.
+- Keep metric labels low-cardinality; never add `inviteCode`, `partyId`, `matchKey`, `playerId`, `playerName`, socket IDs, or raw payload fields as labels.
 
 ## Integration contracts
 

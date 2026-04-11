@@ -30,3 +30,7 @@ npm-debug.log*
 .vscode
 .idea
 *.DS_Store
+
+.agents/
+.claude/
+.pi/

@@ -22,6 +22,7 @@ export default tseslint.config(
       '**/playwright-report/**',
       '**/game-export/**',
       '**/*.cjs',
+      '.pi/**',
     ],
   },
 
@@ -30,9 +31,7 @@ export default tseslint.config(
     files: ['**/*.ts', '**/*.tsx'],
     languageOptions: {
       parserOptions: {
-        projectService: {
-          allowDefaultProject: ['apps/platform/vite.config.ts'],
-        },
+        projectService: true,
         tsconfigRootDir: import.meta.dirname,
       },
     },
@@ -46,6 +45,21 @@ export default tseslint.config(
   },
 
   // Server files — Node.js environment
+  {
+    files: [
+      'apps/platform/vite.config.ts',
+      'vitest.config.ts',
+      'vitest.projects.ts',
+      'playwright.config.ts',
+    ],
+    languageOptions: {
+      parserOptions: {
+        projectService: false,
+        tsconfigRootDir: import.meta.dirname,
+      },
+    },
+  },
+
   {
     files: ['games/*/server/**/*.ts', 'apps/platform/server/**/*.ts', 'games/*/scripts/**/*.mjs'],
     languageOptions: {
@@ -104,6 +118,21 @@ export default tseslint.config(
       '@typescript-eslint/no-explicit-any': 'off',
       '@typescript-eslint/no-non-null-assertion': 'off',
       '@typescript-eslint/no-require-imports': 'off',
+    },
+  },
+
+  // Platform Playwright specs live under the app package, but ESLint's
+  // project service does not consistently pick up that nested tsconfig.
+  // These tests do not rely on type-aware lint rules, so parse them without
+  // the project service to avoid false "file not found by the project service"
+  // failures.
+  {
+    files: ['apps/platform/e2e/**/*.ts'],
+    languageOptions: {
+      parserOptions: {
+        projectService: false,
+        tsconfigRootDir: import.meta.dirname,
+      },
     },
   }
 );
