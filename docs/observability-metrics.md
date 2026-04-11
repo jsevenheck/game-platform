@@ -8,9 +8,11 @@ This document defines the platform Prometheus metrics contract for the HTTP `/me
 
 - **Path:** `GET /metrics`
 - **Format:** Prometheus text exposition format (`text/plain; version=0.0.4`)
-- **Auth:** Keep internal-only (cluster network, ingress allowlist, or service mesh policy).
+- **Default exposure:** enabled outside production, disabled by default in production
+- **Config:** `METRICS_ENABLED`, `METRICS_AUTH_TOKEN`
+- **Auth:** keep internal-only and/or require `METRICS_AUTH_TOKEN` via `Authorization: Bearer <token>` or `x-metrics-token: <token>`.
 - **Timeout target:** p95 under 250ms.
-- **Availability target:** endpoint should be available whenever `/health` is available.
+- **Availability target:** endpoint should be available whenever `/health` is available, unless intentionally disabled by config.
 
 ### Endpoint expectations
 
@@ -18,6 +20,8 @@ This document defines the platform Prometheus metrics contract for the HTTP `/me
 - Scrapes should be safe to run every 15s.
 - Endpoint must never include secrets or user payload fields.
 - Label values must use normalized IDs (for example `game_id=\"blackout\"`) rather than user-controlled strings.
+- Unauthorized scrapes must return `401` with `WWW-Authenticate: Bearer` when token protection is enabled.
+- Disabled metrics endpoints should return `404`.
 
 ## Metric catalog
 
@@ -29,10 +33,10 @@ Metric names use the `platform_` prefix and Prometheus naming conventions (`_tot
 | ----------------------------------------------- | --------- | --------------------------------------------------- | -------------------------------------------------------------------------------------- |
 | `platform_socket_connections_open`              | Gauge     | `namespace`, `game_id`                              | Current open Socket.IO connections by namespace (`/party`, `/g/blackout`, etc.).        |
 | `platform_engine_connections`                   | Gauge     | _none_                                              | Current number of active Socket.IO engine connections (all namespaces combined).        |
-| `platform_socket_events_total`                  | Counter   | `namespace`, `event`, `game_id`, `result`, `reason` | Total handled socket events with outcome labels.                                       |
-| `platform_event_latency_seconds`                | Histogram | `namespace`, `event`, `game_id`, `result`, `reason` | End-to-end latency for key party/game events.                                          |
-| `platform_socket_handler_total`                 | Counter   | `namespace`, `event`, `result`                      | Total socket handler invocations (per-handler instrumentation).                        |
-| `platform_socket_handler_duration_seconds`      | Histogram | `namespace`, `event`, `result`                      | Socket handler execution duration in seconds.                                          |
+| `platform_socket_events_total`                  | Counter   | `namespace`, `event`, `game_id`, `result`, `reason` | Total explicitly recorded namespace-level socket events with outcome labels.           |
+| `platform_event_latency_seconds`                | Histogram | `namespace`, `event`, `game_id`, `result`, `reason` | Latency for explicitly recorded namespace-level socket events.                         |
+| `platform_socket_handler_total`                 | Counter   | `namespace`, `event`, `result`                      | Total socket handler invocations by outcome (`ok`, `rejected`, `failed`).             |
+| `platform_socket_handler_duration_seconds`      | Histogram | `namespace`, `event`, `result`                      | Socket handler execution duration in seconds by outcome.                               |
 
 ### Party lifecycle
 
@@ -53,7 +57,7 @@ Metric names use the `platform_` prefix and Prometheus naming conventions (`_tot
 
 | Metric                          | Type    | Labels   | Description                                                   |
 | ------------------------------- | ------- | -------- | ------------------------------------------------------------- |
-| `platform_metrics_scrape_total` | Counter | `result` | Self-observation counter for the `/metrics` handler (`ok`, `error`). |
+| `platform_metrics_scrape_total` | Counter | `result` | Self-observation counter for the `/metrics` handler (`ok`, `unauthorized`, `error`). |
 
 ## Label cardinality rules
 
@@ -63,7 +67,7 @@ Use these rules to avoid high-cardinality metrics that degrade Prometheus and Gr
 
 - `game_id`: one of `blackout`, `imposter`, `secret-signals`
 - `namespace`: `/party`, `/g/blackout`, `/g/imposter`, `/g/secret-signals`
-- `result`: bounded enums (`ok`, `error`, `rejected_*`)
+- `result`: bounded enums such as `ok`, `rejected`, `failed`, `unauthorized`
 - `reason` / `end_reason`: bounded enums controlled by server code
 - `status_class`: `2xx`, `3xx`, `4xx`, `5xx`
 - `event`: only a curated allowlist of platform/game lifecycle event names
@@ -91,23 +95,23 @@ Never use these as metric labels:
 # TYPE platform_parties_active gauge
 platform_parties_active 42
 
-# HELP platform_socket_events_total Total number of handled socket events.
+# HELP platform_socket_events_total Total number of explicitly recorded namespace-level socket events.
 # TYPE platform_socket_events_total counter
-platform_socket_events_total{namespace="/g/imposter",event="autoJoinRoom",game_id="imposter",result="ok"} 923
+platform_socket_events_total{namespace="/g/imposter",event="connection",game_id="imposter",result="ok"} 923
 
-# HELP platform_event_latency_seconds End-to-end latency for key party/game events.
+# HELP platform_event_latency_seconds Latency for explicitly recorded namespace-level socket events.
 # TYPE platform_event_latency_seconds histogram
-platform_event_latency_seconds_bucket{namespace="/g/imposter",event="autoJoinRoom",game_id="imposter",result="ok",le="0.1"} 923
-platform_event_latency_seconds_bucket{namespace="/g/imposter",event="autoJoinRoom",game_id="imposter",result="ok",le="0.25"} 1331
-platform_event_latency_seconds_bucket{namespace="/g/imposter",event="autoJoinRoom",game_id="imposter",result="ok",le="0.5"} 1498
-platform_event_latency_seconds_sum{namespace="/g/imposter",event="autoJoinRoom",game_id="imposter",result="ok"} 242.6
-platform_event_latency_seconds_count{namespace="/g/imposter",event="autoJoinRoom",game_id="imposter",result="ok"} 1502
+platform_event_latency_seconds_bucket{namespace="/g/imposter",event="connection",game_id="imposter",result="ok",le="0.1"} 923
+platform_event_latency_seconds_bucket{namespace="/g/imposter",event="connection",game_id="imposter",result="ok",le="0.25"} 1331
+platform_event_latency_seconds_bucket{namespace="/g/imposter",event="connection",game_id="imposter",result="ok",le="0.5"} 1498
+platform_event_latency_seconds_sum{namespace="/g/imposter",event="connection",game_id="imposter",result="ok"} 242.6
+platform_event_latency_seconds_count{namespace="/g/imposter",event="connection",game_id="imposter",result="ok"} 1502
 
-# HELP platform_party_lifecycle_total Total party lifecycle transitions and actions.
+# HELP platform_party_lifecycle_total Total party lifecycle transitions and actions by outcome.
 # TYPE platform_party_lifecycle_total counter
 platform_party_lifecycle_total{event="createParty",result="ok"} 150
 platform_party_lifecycle_total{event="joinParty",result="ok"} 430
-platform_party_lifecycle_total{event="joinParty",result="error",reason="party_not_found"} 12
+platform_party_lifecycle_total{event="joinParty",result="rejected",reason="party_not_found"} 12
 ```
 
 ## Prometheus scrape config example
@@ -121,6 +125,9 @@ scrape_configs:
     metrics_path: /metrics
     scrape_interval: 15s
     scrape_timeout: 10s
+    authorization:
+      type: Bearer
+      credentials: ${METRICS_AUTH_TOKEN}
     static_configs:
       - targets:
           - platform:3000
@@ -139,20 +146,20 @@ Below are seed Prometheus alert definitions. Adjust thresholds after baseline da
 groups:
   - name: game-platform-alerts
     rules:
-      - alert: PlatformHighSocketEventErrorRatio
+      - alert: PlatformHighSocketHandlerFailureRatio
         expr: |
           (
-            sum(rate(platform_socket_events_total{result="error"}[5m]))
+            sum(rate(platform_socket_handler_total{result="failed"}[5m]))
             /
-            clamp_min(sum(rate(platform_socket_events_total[5m])), 1)
+            clamp_min(sum(rate(platform_socket_handler_total[5m])), 1)
           ) > 0.03
         for: 10m
         labels:
           severity: warning
           service: game-platform
         annotations:
-          summary: 'High socket event error ratio'
-          description: 'Socket event error ratio > 3% for 10m. Investigate party/game namespace health.'
+          summary: 'High socket handler failure ratio'
+          description: 'Socket handler failure ratio > 3% for 10m. Investigate party/game namespace health.'
 
       - alert: PlatformSuddenConnectionDrop
         expr: |
@@ -280,6 +287,7 @@ sum by (game_id) (
 ## Rollout checklist
 
 - Add `/metrics` route and instrumentation wiring in `apps/platform/server`.
+- Decide production exposure strategy (`METRICS_ENABLED`, `METRICS_AUTH_TOKEN`, internal-only ingress).
 - Validate metric output shape in local and staging environments.
 - Create recording rules for expensive dashboard expressions if query load grows.
 - Tune alert thresholds after at least 7 days of baseline traffic.

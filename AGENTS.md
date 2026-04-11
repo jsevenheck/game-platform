@@ -25,17 +25,18 @@ Custom skills live in `.agents/skills/`.
 
 | Skill                      | Trigger description                                                                                                |
 | -------------------------- | ------------------------------------------------------------------------------------------------------------------ |
-| `frontend-design`          | Build distinctive, production-grade frontend UI with strong visual direction and polished implementation           |
-| `playwright-cli`           | Browser automation via `playwright-cli` for navigation, interaction, screenshots, and debugging                    |
-| `pnpm`                     | pnpm-specific commands, workspace config, catalogs, overrides, and patches                                         |
-| `tailwind-design-system`   | Tailwind CSS v4 design systems, tokens, shared component patterns, and responsive styling                          |
-| `ui-ux-pro-max`            | UI/UX design intelligence for styles, palettes, typography, accessibility, and frontend direction                  |
-| `vite`                     | Vite build tool configuration, plugin API, SSR, and Vite 8 Rolldown migration                                      |
-| `vue-best-practices`       | Vue 3 Composition API, reactive components, SSR, TypeScript patterns, and Pinia/Vue Router integration             |
-| `pinia`                    | Pinia official Vue state management library — stores, state/getters/actions, store patterns, plugins, SSR          |
-| `vitest`                   | Vitest testing framework — config, test suites, mocking with vi.fn/vi.mock, coverage, parallel runs                |
-| `vue-pinia-best-practices` | Pinia best practices, common gotchas (no active Pinia, reactivity loss), and state management patterns             |
-| `websocket-engineer`       | Real-time WebSocket and Socket.IO architecture for bidirectional messaging, room management, presence, and scaling |
+| `frontend-design`          | Build distinctive, production-grade frontend UI with strong visual direction and polished implementation                                                                                                                         |
+| `pinia`                    | Pinia official Vue state management library — stores, state/getters/actions, store patterns, plugins, SSR                                                                                                                        |
+| `playwright-best-practices` | Playwright testing best practices for E2E/component/API testing, flaky test fixes, CI, auth, accessibility, multi-user flows, WebSockets, performance, security, and advanced browser scenarios                           |
+| `playwright-cli`           | Browser automation via `playwright-cli` for navigation, interaction, screenshots, and debugging                                                                                                                                  |
+| `pnpm`                     | pnpm-specific commands, workspace config, catalogs, overrides, and patches                                                                                                                                                       |
+| `tailwind-design-system`   | Tailwind CSS v4 design systems, tokens, shared component patterns, and responsive styling                                                                                                                                        |
+| `ui-ux-pro-max`            | UI/UX design intelligence for styles, palettes, typography, accessibility, and frontend direction                                                                                                                                |
+| `vite`                     | Vite build tool configuration, plugin API, SSR, and Vite 8 Rolldown migration                                                                                                                                                    |
+| `vitest`                   | Vitest testing framework — config, test suites, mocking with vi.fn/vi.mock, coverage, parallel runs                                                                                                                              |
+| `vue-best-practices`       | Vue 3 Composition API, reactive components, SSR, TypeScript patterns, and Pinia/Vue Router integration                                                                                                                           |
+| `vue-pinia-best-practices` | Pinia best practices, common gotchas (no active Pinia, reactivity loss), and state management patterns                                                                                                                           |
+| `websocket-engineer`       | Real-time WebSocket and Socket.IO architecture for bidirectional messaging, room management, presence, and scaling                                                                                                               |
 
 ## Commands (always run from workspace root)
 
@@ -106,7 +107,15 @@ See **[docs/adding-a-new-game.md](docs/adding-a-new-game.md)** for the full step
 - Reuse `createComponentLogger()` for namespace or component loggers and `createSocketLogger()` / `attachSocketEventDebugLogging()` for Socket.IO handlers.
 - Keep logs structured and lifecycle-focused: create, join, resume, start, end, cleanup, and failures.
 - Never log secrets or hidden game state such as `resumeToken`, `joinToken`, auth headers, private cards, hidden words, or raw payload dumps.
+- Sensitive join data like `inviteCode` is redacted by the shared logger config and should not be relied on in log output.
 - Environment flags: `LOG_LEVEL`, `LOG_PRETTY`, `LOG_SOCKET_EVENTS`.
+
+## Metrics
+
+- Prometheus metrics live under `apps/platform/server/metrics/` and namespace/socket observability helpers under `apps/platform/server/observability/`.
+- `/metrics` is enabled by default outside production and disabled by default in production unless `METRICS_ENABLED=true` is set.
+- Protect production scrapes with `METRICS_AUTH_TOKEN` or internal-only network policy.
+- Keep metric labels low-cardinality; never add `inviteCode`, `partyId`, `matchKey`, `playerId`, `playerName`, socket IDs, or raw payload fields as labels.
 
 ## Integration contracts
 

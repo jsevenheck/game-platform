@@ -1,10 +1,10 @@
 # Migration Progress
 
-## Latest Verification: 2026-04-04
+## Latest Verification: 2026-04-11
 
 - [x] Standalone create/join game flows removed from Blackout, Imposter, and Secret Signals
 - [x] Shared game socket contracts now expose only the platform-driven entry points (`autoJoinRoom`, `resumePlayer`, etc.)
-- [x] `pnpm test` -> 123/123 pass
+- [x] `pnpm test` -> 141/141 pass
 - [x] `pnpm test:e2e` -> 16/16 pass (requires stopping any running dev server first)
 - [x] Platform HTTP route registration extracted to `apps/platform/server/httpRoutes.ts`
 - [x] Party lifecycle edge cases covered by new platform tests (`partyStore`, `partyHandlers`, `serverRoutes`)

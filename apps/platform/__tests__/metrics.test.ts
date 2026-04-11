@@ -24,6 +24,9 @@ async function importHttpMetrics() {
 
 beforeEach(() => {
   testRegistry = new Registry();
+  delete process.env.METRICS_ENABLED;
+  delete process.env.METRICS_AUTH_TOKEN;
+  delete process.env.NODE_ENV;
   vi.resetModules();
 });
 
@@ -62,7 +65,7 @@ describe('metrics/metrics – prom-client backed counters and histograms', () =>
   it('incrementPartyLifecycle increments the lifecycle counter', async () => {
     const { incrementPartyLifecycle } = await importMetrics();
 
-    incrementPartyLifecycle({ event: 'joinParty', result: 'error', reason: 'name_taken' });
+    incrementPartyLifecycle({ event: 'joinParty', result: 'rejected', reason: 'name_taken' });
 
     const output = await testRegistry.metrics();
     expect(output).toContain('platform_party_lifecycle_total');
@@ -111,7 +114,7 @@ describe('observability/socketHandlerMetrics – prom-client backed', () => {
     expect(output).toContain('result="ok"');
   });
 
-  it('wrapCallback records error when result.ok is false', async () => {
+  it('wrapCallback records rejected when result.ok is false', async () => {
     const { startSocketHandlerInstrumentation } = await importSocketHandlerMetrics();
 
     const instrumentation = startSocketHandlerInstrumentation('/party', 'joinParty');
@@ -122,7 +125,7 @@ describe('observability/socketHandlerMetrics – prom-client backed', () => {
     expect(callback).toHaveBeenCalledWith({ ok: false, error: 'not found' });
 
     const output = await testRegistry.metrics();
-    expect(output).toContain('result="error"');
+    expect(output).toContain('result="rejected"');
   });
 
   it('only records once even if finish is called multiple times', async () => {
@@ -145,27 +148,97 @@ describe('observability/socketHandlerMetrics – prom-client backed', () => {
 });
 
 describe('metrics/httpMetrics – /metrics endpoint', () => {
-  it('serves Prometheus text format and increments scrape counter on success', async () => {
-    const { registerMetricsRoutes } = await importHttpMetrics();
-
-    // Minimal Express mock
-    let registeredHandler: (req: unknown, res: unknown, next: unknown) => void;
+  function createExpressAppMock() {
+    let registeredHandler: (req: any, res: any, next: any) => void;
     const app = {
       get: vi.fn((path: string, handler: typeof registeredHandler) => {
         if (path === '/metrics') registeredHandler = handler;
       }),
     };
+
+    return {
+      app,
+      getHandler: () => registeredHandler,
+    };
+  }
+
+  function createResponseMock() {
+    const res = {
+      set: vi.fn(),
+      status: vi.fn(function (this: any) {
+        return this;
+      }),
+      send: vi.fn(),
+      end: vi.fn(),
+    };
+
+    return res;
+  }
+
+  it('serves Prometheus text format and increments scrape counter on success', async () => {
+    const { registerMetricsRoutes } = await importHttpMetrics();
+    const { app, getHandler } = createExpressAppMock();
     registerMetricsRoutes(app as never);
 
-    const res = { set: vi.fn(), send: vi.fn() };
+    const res = createResponseMock();
     const next = vi.fn();
 
-    await registeredHandler!({}, res, next);
+    await getHandler()!({ headers: {}, get: vi.fn() }, res, next);
 
     expect(res.set).toHaveBeenCalledWith('Content-Type', expect.stringContaining('text/'));
     expect(next).not.toHaveBeenCalled();
 
     const body: string = res.send.mock.calls[0][0];
     expect(body).toContain('platform_metrics_scrape_total');
+  });
+
+  it('returns 404 when metrics are disabled', async () => {
+    process.env.METRICS_ENABLED = 'false';
+
+    const { registerMetricsRoutes } = await importHttpMetrics();
+    const { app, getHandler } = createExpressAppMock();
+    registerMetricsRoutes(app as never);
+
+    const res = createResponseMock();
+    await getHandler()!({ headers: {}, get: vi.fn() }, res, vi.fn());
+
+    expect(res.status).toHaveBeenCalledWith(404);
+    expect(res.end).toHaveBeenCalled();
+  });
+
+  it('requires an auth token when configured', async () => {
+    process.env.METRICS_AUTH_TOKEN = 'secret-token';
+
+    const { registerMetricsRoutes } = await importHttpMetrics();
+    const { app, getHandler } = createExpressAppMock();
+    registerMetricsRoutes(app as never);
+
+    const res = createResponseMock();
+    await getHandler()!({ headers: {}, get: vi.fn(() => undefined) }, res, vi.fn());
+
+    expect(res.set).toHaveBeenCalledWith('WWW-Authenticate', 'Bearer');
+    expect(res.status).toHaveBeenCalledWith(401);
+    expect(res.send).toHaveBeenCalledWith('Unauthorized');
+  });
+
+  it('accepts a bearer token when configured', async () => {
+    process.env.METRICS_AUTH_TOKEN = 'secret-token';
+
+    const { registerMetricsRoutes } = await importHttpMetrics();
+    const { app, getHandler } = createExpressAppMock();
+    registerMetricsRoutes(app as never);
+
+    const req = {
+      headers: { authorization: 'Bearer secret-token' },
+      get: vi.fn((name: string) => (name === 'authorization' ? 'Bearer secret-token' : undefined)),
+    };
+    const res = createResponseMock();
+    const next = vi.fn();
+
+    await getHandler()!(req, res, next);
+
+    expect(res.status).not.toHaveBeenCalledWith(401);
+    expect(res.set).toHaveBeenCalledWith('Content-Type', expect.stringContaining('text/'));
+    expect(next).not.toHaveBeenCalled();
   });
 });

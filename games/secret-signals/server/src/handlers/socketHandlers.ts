@@ -11,10 +11,9 @@ import {
 } from '../../../../../apps/platform/server/logging/socketLogger';
 import { startSocketHandlerInstrumentation } from '../../../../../apps/platform/server/observability/socketHandlerMetrics';
 import {
-  recordSocketEventEnd,
-  recordSocketEventStart,
-  setNamespaceConnectionCount,
-} from '../../../../../apps/platform/server/metrics/metrics';
+  recordNamespaceConnection,
+  recordNamespaceDisconnect,
+} from '../../../../../apps/platform/server/observability/socketNamespaceMetrics';
 import {
   ASSASSIN_PENALTY_MODES,
   BOARD_SIZE,
@@ -77,16 +76,10 @@ export function registerGame(io: Server, namespace = `/g/${GAME_ID}`): void {
 
     attachSocketEventDebugLogging(socket, socketLogger, socketEventDebugEnabled);
     socketLogger.debug('game client connected');
-    setNamespaceConnectionCount({ namespace, gameId: GAME_ID }, nsp.sockets.size);
-    recordSocketEventEnd(
-      recordSocketEventStart({ namespace, event: 'connection', gameId: GAME_ID }),
-      {
-        result: 'ok',
-      }
-    );
+    recordNamespaceConnection({ namespace, gameId: GAME_ID }, nsp);
 
     socket.on('autoJoinRoom', (data, cb) => {
-      const instrumentation = startSocketHandlerInstrumentation(namespace, 'autoJoinRoom');
+      const instrumentation = startSocketHandlerInstrumentation(namespace, 'autoJoinRoom', GAME_ID);
       const respond = instrumentation.wrapCallback(cb);
       try {
         const sessionId = data.sessionId?.trim();
@@ -228,7 +221,7 @@ export function registerGame(io: Server, namespace = `/g/${GAME_ID}`): void {
     });
 
     socket.on('resumePlayer', (data, cb) => {
-      const instrumentation = startSocketHandlerInstrumentation(namespace, 'resumePlayer');
+      const instrumentation = startSocketHandlerInstrumentation(namespace, 'resumePlayer', GAME_ID);
       const respond = instrumentation.wrapCallback(cb);
       try {
         const room = getRoom(data.roomCode);
@@ -276,7 +269,7 @@ export function registerGame(io: Server, namespace = `/g/${GAME_ID}`): void {
     });
 
     socket.on('leaveRoom', (data, cb) => {
-      const instrumentation = startSocketHandlerInstrumentation(namespace, 'leaveRoom');
+      const instrumentation = startSocketHandlerInstrumentation(namespace, 'leaveRoom', GAME_ID);
       const respond = instrumentation.wrapCallback(cb);
       try {
         const room = getRoom(data.roomCode);
@@ -498,7 +491,7 @@ export function registerGame(io: Server, namespace = `/g/${GAME_ID}`): void {
     });
 
     socket.on('startGame', (data, cb) => {
-      const instrumentation = startSocketHandlerInstrumentation(namespace, 'startGame');
+      const instrumentation = startSocketHandlerInstrumentation(namespace, 'startGame', GAME_ID);
       const respond = instrumentation.wrapCallback(cb);
       try {
         const room = getRoom(data.roomCode);
@@ -672,12 +665,12 @@ export function registerGame(io: Server, namespace = `/g/${GAME_ID}`): void {
     });
 
     socket.on('disconnect', (reason) => {
-      setNamespaceConnectionCount({ namespace, gameId: GAME_ID }, nsp.sockets.size);
       const instrumentation = startSocketHandlerInstrumentation(namespace, 'disconnect');
       try {
         const index = getSocketIndex(socket.id);
         if (!index) {
           socketLogger.debug({ reason }, 'secret-signals client disconnected before room binding');
+          recordNamespaceDisconnect({ namespace, gameId: GAME_ID }, nsp);
           instrumentation.finishSuccess();
           return;
         }
@@ -714,6 +707,7 @@ export function registerGame(io: Server, namespace = `/g/${GAME_ID}`): void {
           },
           'secret-signals client disconnected'
         );
+        recordNamespaceDisconnect({ namespace, gameId: GAME_ID }, nsp);
         instrumentation.finishSuccess();
       } catch (err) {
         instrumentation.finishError();

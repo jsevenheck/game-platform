@@ -48,12 +48,13 @@ const WRITE_ALLOW = [
 // ─── Bash-Richtlinien ─────────────────────────────────────────────────────────
 
 const BASH_ALLOW = [
-  /^pnpm\s+run\s+(test|test:e2e|typecheck|dev|build)(\s|$)/,
-  /^pnpm\s+(test|typecheck|build|format|lint|test:e2e)(:|$|\s)/,
-  /^pnpm\s+(install|add)(\s|$)/,
-  /^pnpm\s+exec\s+playwright\b/,
-  /^pnpm\s+playwright-cli\b/,
+  /^pnpm(?:\.cmd)?\s+(?:-C\s+\S+\s+)?run\s+(test|test:e2e|typecheck|dev|build)(\s|$)/,
+  /^pnpm(?:\.cmd)?\s+(?:-C\s+\S+\s+)?(test|typecheck|build|format|lint|test:e2e)(:|$|\s)/,
+  /^pnpm(?:\.cmd)?\s+(?:-C\s+\S+\s+)?(install|add)(\s|$)/,
+  /^pnpm(?:\.cmd)?\s+(?:-C\s+\S+\s+)?exec\s+playwright\b/,
+  /^pnpm(?:\.cmd)?\s+(?:-C\s+\S+\s+)?playwright-cli\b/,
   /^git\s+(status|diff|log)(\s|$)/,
+  /^(rg|grep|find|ls|cat|head|tail|wc|sort|uniq)\b/,
 ];
 
 const BASH_DENY = [
@@ -71,7 +72,7 @@ const BASH_DENY = [
   /^cf\s+(push|login)\b/,
   /^npm\s+publish\b/,
   /^cds\s+deploy\b/,
-  /\b(cat|less|more|grep|awk|sed)\s[^|]*\.env/,
+  /\b(cat|less|more|awk|sed)\s[^|]*\.env/,
 ];
 
 // ─── Extension ────────────────────────────────────────────────────────────────

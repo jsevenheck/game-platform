@@ -24,6 +24,8 @@ apps/platform/               <- the only deployable app
   server/
     index.ts                 <- Express + Socket.IO entry point
     logging/                 <- shared Pino helpers for HTTP + Socket.IO logging
+    metrics/                 <- Prometheus metrics registry, collectors, HTTP endpoint
+    observability/           <- socket handler instrumentation + namespace connection helpers
     party/                   <- party lifecycle (create, join, launch, return)
     registry/                <- game server module registry
   src/
@@ -77,9 +79,26 @@ LOG_SOCKET_EVENTS=false # set true to enable catch-all Socket.IO event debug log
 
 Notes:
 
-- `/health` and successful static asset requests are intentionally not logged by default.
-- Secrets such as `resumeToken`, `joinToken`, `token`, `authorization`, and `cookie` are redacted from log output.
+- `/health`, `/metrics`, and successful static asset requests are intentionally not logged by default.
+- Secrets and sensitive join data such as `resumeToken`, `joinToken`, `token`, `inviteCode`, `authorization`, and `cookie` are redacted from log output.
 - Game server modules should reuse the shared helpers in `apps/platform/server/logging/` instead of adding per-game logging stacks.
+
+## Metrics
+
+The platform exposes Prometheus metrics on `/metrics`.
+
+Supported environment variables:
+
+```bash
+METRICS_ENABLED=true         # default: true outside production, false in production
+METRICS_AUTH_TOKEN=...       # optional bearer token / x-metrics-token protection
+```
+
+Notes:
+
+- In production, `/metrics` is disabled by default unless `METRICS_ENABLED=true` is set.
+- When `METRICS_AUTH_TOKEN` is set, requests must send either `Authorization: Bearer <token>` or `x-metrics-token: <token>`.
+- See [docs/observability-metrics.md](docs/observability-metrics.md) for the metric catalog, alert ideas, and scrape examples.
 
 ## Commands
 
@@ -131,6 +150,7 @@ See [docs/adding-a-new-game.md](docs/adding-a-new-game.md) for the full integrat
 ## Documentation
 
 - [docs/adding-a-new-game.md](docs/adding-a-new-game.md) - how to add a new game to the platform
+- [docs/observability-metrics.md](docs/observability-metrics.md) - metrics contract, scrape config, and alert/dashboard seeds
 - [games/blackout/docs/](games/blackout/docs/) - Blackout API and architecture
 - [games/imposter/docs/](games/imposter/docs/) - Imposter API and architecture
 - [games/secret-signals/docs/](games/secret-signals/docs/) - Secret Signals API and architecture

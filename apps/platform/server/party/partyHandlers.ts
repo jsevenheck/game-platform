@@ -18,6 +18,10 @@ import type { PartySession } from './types';
 import { createComponentLogger, readLoggingConfig, toLoggableError } from '../logging/logger';
 import { attachSocketEventDebugLogging, createSocketLogger } from '../logging/socketLogger';
 import { startSocketHandlerInstrumentation } from '../observability/socketHandlerMetrics';
+import {
+  recordNamespaceConnection,
+  recordNamespaceDisconnect,
+} from '../observability/socketNamespaceMetrics';
 import { incrementPartyLifecycle } from '../metrics/metrics';
 import { getGame } from '../registry/index';
 
@@ -121,6 +125,7 @@ export function registerPartyHandlers(io: Server): void {
 
     attachSocketEventDebugLogging(socket, socketLogger, socketEventDebugEnabled);
     socketLogger.debug('party client connected');
+    recordNamespaceConnection({ namespace: '/party' }, nsp);
 
     socket.on('createParty', (data, cb) => {
       const instrumentation = startSocketHandlerInstrumentation('/party', 'createParty');
@@ -130,7 +135,7 @@ export function registerPartyHandlers(io: Server): void {
         if (!name || name.length > 20) {
           incrementPartyLifecycle({
             event: 'createParty',
-            result: 'error',
+            result: 'rejected',
             reason: 'invalid_name',
           });
           return respond({ ok: false, error: 'Invalid player name' });
@@ -170,7 +175,11 @@ export function registerPartyHandlers(io: Server): void {
         const name = data.playerName?.trim();
         const inviteCode = data.inviteCode?.trim().toUpperCase();
         if (!name || name.length > 20) {
-          incrementPartyLifecycle({ event: 'joinParty', result: 'error', reason: 'invalid_name' });
+          incrementPartyLifecycle({
+            event: 'joinParty',
+            result: 'rejected',
+            reason: 'invalid_name',
+          });
           return respond({ ok: false, error: 'Invalid player name' });
         }
 
@@ -179,7 +188,7 @@ export function registerPartyHandlers(io: Server): void {
           socketLogger.warn({ inviteCode }, 'joinParty rejected: party not found');
           incrementPartyLifecycle({
             event: 'joinParty',
-            result: 'error',
+            result: 'rejected',
             reason: 'party_not_found',
           });
           return respond({ ok: false, error: 'Party not found' });
@@ -187,7 +196,7 @@ export function registerPartyHandlers(io: Server): void {
         if (party.status !== 'lobby') {
           incrementPartyLifecycle({
             event: 'joinParty',
-            result: 'error',
+            result: 'rejected',
             reason: 'party_not_lobby',
           });
           return respond({ ok: false, error: 'Party is already in a match' });
@@ -197,7 +206,7 @@ export function registerPartyHandlers(io: Server): void {
           (m) => m.name.toLowerCase() === name.toLowerCase()
         );
         if (nameExists) {
-          incrementPartyLifecycle({ event: 'joinParty', result: 'error', reason: 'name_taken' });
+          incrementPartyLifecycle({ event: 'joinParty', result: 'rejected', reason: 'name_taken' });
           return respond({ ok: false, error: 'Name already taken' });
         }
 
@@ -252,7 +261,7 @@ export function registerPartyHandlers(io: Server): void {
           socketLogger.warn({ inviteCode, playerId }, 'resumeParty rejected: party not found');
           incrementPartyLifecycle({
             event: 'resumeParty',
-            result: 'error',
+            result: 'rejected',
             reason: 'party_not_found',
           });
           return respond({ ok: false, error: 'Party not found' });
@@ -262,7 +271,7 @@ export function registerPartyHandlers(io: Server): void {
         if (!member) {
           incrementPartyLifecycle({
             event: 'resumeParty',
-            result: 'error',
+            result: 'rejected',
             reason: 'member_not_found',
           });
           return respond({ ok: false, error: 'Player not in party' });
@@ -279,7 +288,7 @@ export function registerPartyHandlers(io: Server): void {
           );
           incrementPartyLifecycle({
             event: 'resumeParty',
-            result: 'error',
+            result: 'rejected',
             reason: 'invalid_token',
           });
           return respond({ ok: false, error: 'Invalid resume token' });
@@ -314,31 +323,54 @@ export function registerPartyHandlers(io: Server): void {
     });
 
     socket.on('leaveParty', (data) => {
-      const party = getPartyBySocket(socket.id);
-      if (!party) return;
+      const instrumentation = startSocketHandlerInstrumentation('/party', 'leaveParty');
+      try {
+        const party = getPartyBySocket(socket.id);
+        if (!party) {
+          instrumentation.finishRejected();
+          return;
+        }
 
-      const member = party.members.get(data.playerId);
-      if (!member || member.socketId !== socket.id) return;
+        const member = party.members.get(data.playerId);
+        if (!member || member.socketId !== socket.id) {
+          instrumentation.finishRejected();
+          return;
+        }
 
-      party.members.delete(data.playerId);
-      incrementPartyLifecycle({ event: 'leaveParty', result: 'ok' });
-      unregisterSocket(socket.id);
-      socket.leave(party.partyId);
+        party.members.delete(data.playerId);
+        incrementPartyLifecycle({ event: 'leaveParty', result: 'ok' });
+        unregisterSocket(socket.id);
+        socket.leave(party.partyId);
 
-      if (party.hostPlayerId === data.playerId) {
-        const nextMember = Array.from(party.members.values()).find((m) => m.connected);
-        if (nextMember) {
-          party.hostPlayerId = nextMember.playerId;
-          socketLogger.info(
-            {
-              partyId: party.partyId,
-              inviteCode: party.inviteCode,
-              previousHostPlayerId: data.playerId,
-              nextHostPlayerId: nextMember.playerId,
-            },
-            'transferred host after leave'
-          );
-        } else {
+        if (party.hostPlayerId === data.playerId) {
+          const nextMember = Array.from(party.members.values()).find((m) => m.connected);
+          if (nextMember) {
+            party.hostPlayerId = nextMember.playerId;
+            socketLogger.info(
+              {
+                partyId: party.partyId,
+                inviteCode: party.inviteCode,
+                previousHostPlayerId: data.playerId,
+                nextHostPlayerId: nextMember.playerId,
+              },
+              'transferred host after leave'
+            );
+          } else {
+            deleteParty(party.partyId);
+            socketLogger.info(
+              {
+                partyId: party.partyId,
+                inviteCode: party.inviteCode,
+                playerId: data.playerId,
+              },
+              'deleted party after last host left'
+            );
+            instrumentation.finishSuccess();
+            return;
+          }
+        }
+
+        if (party.members.size === 0) {
           deleteParty(party.partyId);
           socketLogger.info(
             {
@@ -346,79 +378,78 @@ export function registerPartyHandlers(io: Server): void {
               inviteCode: party.inviteCode,
               playerId: data.playerId,
             },
-            'deleted party after last host left'
+            'deleted empty party after leave'
           );
+          instrumentation.finishSuccess();
           return;
         }
-      }
 
-      if (party.members.size === 0) {
-        deleteParty(party.partyId);
+        if (connectedMemberCount(party) === 0) {
+          schedulePartyCleanup(party.partyId);
+          partyLogger.info(
+            {
+              partyId: party.partyId,
+              inviteCode: party.inviteCode,
+            },
+            'scheduled party cleanup after all players left'
+          );
+        }
+
+        broadcastParty(io, party);
         socketLogger.info(
           {
             partyId: party.partyId,
             inviteCode: party.inviteCode,
             playerId: data.playerId,
+            remainingMembers: party.members.size,
           },
-          'deleted empty party after leave'
+          'player left party'
         );
-        return;
+        instrumentation.finishSuccess();
+      } catch (err) {
+        instrumentation.finishError();
+        throw err;
       }
-
-      if (connectedMemberCount(party) === 0) {
-        schedulePartyCleanup(party.partyId);
-        partyLogger.info(
-          {
-            partyId: party.partyId,
-            inviteCode: party.inviteCode,
-          },
-          'scheduled party cleanup after all players left'
-        );
-      }
-
-      broadcastParty(io, party);
-      socketLogger.info(
-        {
-          partyId: party.partyId,
-          inviteCode: party.inviteCode,
-          playerId: data.playerId,
-          remainingMembers: party.members.size,
-        },
-        'player left party'
-      );
     });
 
     socket.on('selectGame', (data, cb) => {
-      const party = getPartyBySocket(socket.id);
-      if (!party) return cb({ ok: false, error: 'Not in a party' });
-      const actor = Array.from(party.members.values()).find((m) => m.socketId === socket.id);
-      if (!actor || actor.playerId !== party.hostPlayerId) {
-        socketLogger.warn(
+      const instrumentation = startSocketHandlerInstrumentation('/party', 'selectGame');
+      const respond = instrumentation.wrapCallback(cb);
+      try {
+        const party = getPartyBySocket(socket.id);
+        if (!party) return respond({ ok: false, error: 'Not in a party' });
+        const actor = Array.from(party.members.values()).find((m) => m.socketId === socket.id);
+        if (!actor || actor.playerId !== party.hostPlayerId) {
+          socketLogger.warn(
+            {
+              partyId: party.partyId,
+              inviteCode: party.inviteCode,
+              playerId: actor?.playerId ?? data.playerId,
+              gameId: data.gameId,
+            },
+            'selectGame rejected: actor is not party host'
+          );
+          return respond({ ok: false, error: 'Only the host can select a game' });
+        }
+        if (!getGame(data.gameId)) {
+          return respond({ ok: false, error: 'Unknown game' });
+        }
+
+        party.selectedGameId = data.gameId;
+        broadcastParty(io, party);
+        socketLogger.info(
           {
             partyId: party.partyId,
             inviteCode: party.inviteCode,
-            playerId: actor?.playerId ?? data.playerId,
             gameId: data.gameId,
           },
-          'selectGame rejected: actor is not party host'
+          'host selected game'
         );
-        return cb({ ok: false, error: 'Only the host can select a game' });
+        respond({ ok: true });
+      } catch (err) {
+        instrumentation.finishError();
+        throw err;
       }
-      if (!getGame(data.gameId)) {
-        return cb({ ok: false, error: 'Unknown game' });
-      }
-
-      party.selectedGameId = data.gameId;
-      broadcastParty(io, party);
-      socketLogger.info(
-        {
-          partyId: party.partyId,
-          inviteCode: party.inviteCode,
-          gameId: data.gameId,
-        },
-        'host selected game'
-      );
-      cb({ ok: true });
     });
 
     socket.on('launchGame', (data, cb) => {
@@ -680,6 +711,7 @@ export function registerPartyHandlers(io: Server): void {
         const party = getPartyBySocket(socket.id);
         if (!party) {
           socketLogger.debug({ reason }, 'party client disconnected before party binding');
+          recordNamespaceDisconnect({ namespace: '/party' }, nsp);
           instrumentation.finishSuccess();
           return;
         }
@@ -722,6 +754,7 @@ export function registerPartyHandlers(io: Server): void {
           },
           'party client disconnected'
         );
+        recordNamespaceDisconnect({ namespace: '/party' }, nsp);
         instrumentation.finishSuccess();
       } catch (err) {
         instrumentation.finishError();

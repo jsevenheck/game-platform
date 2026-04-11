@@ -1,7 +1,7 @@
 import { Counter, Gauge, Histogram } from 'prom-client';
 import { metricsRegistry } from './registry';
 
-export type MetricResult = 'ok' | 'error';
+export type MetricResult = 'ok' | 'rejected' | 'failed';
 
 export interface SocketEventMetricLabels {
   namespace: string;
@@ -21,14 +21,14 @@ export interface SocketEventEnd {
 
 export const socketEventsTotal = new Counter({
   name: 'platform_socket_events_total',
-  help: 'Total number of handled socket events.',
+  help: 'Total number of explicitly recorded namespace-level socket events.',
   labelNames: ['namespace', 'event', 'game_id', 'result', 'reason'] as const,
   registers: [metricsRegistry],
 });
 
 export const socketEventDurationSeconds = new Histogram({
   name: 'platform_event_latency_seconds',
-  help: 'End-to-end latency for key party/game events.',
+  help: 'Latency for explicitly recorded namespace-level socket events.',
   labelNames: ['namespace', 'event', 'game_id', 'result', 'reason'] as const,
   buckets: [0.001, 0.005, 0.01, 0.025, 0.05, 0.1, 0.25, 0.5, 1, 2, 5],
   registers: [metricsRegistry],
@@ -43,7 +43,7 @@ export const namespaceConnectionsGauge = new Gauge({
 
 export const partyLifecycleTotal = new Counter({
   name: 'platform_party_lifecycle_total',
-  help: 'Total party lifecycle transitions and actions.',
+  help: 'Total party lifecycle transitions and actions by outcome.',
   labelNames: ['event', 'result', 'reason'] as const,
   registers: [metricsRegistry],
 });

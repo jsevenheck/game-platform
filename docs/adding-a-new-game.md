@@ -210,11 +210,53 @@ Reuse the platform logger helpers from `apps/platform/server/logging/` instead o
 - Call `attachSocketEventDebugLogging(socket, socketLogger)` once per connection. It only emits catch-all event summaries when `LOG_SOCKET_EVENTS=true`.
 - The platform logging behavior is controlled with `LOG_LEVEL`, `LOG_PRETTY`, and `LOG_SOCKET_EVENTS`.
 - Log lifecycle events such as room creation, join/resume, host transfer, start/end, cleanup, and unexpected failures.
-- Do not log secrets or hidden game data. Never include `resumeToken`, `joinToken`, auth headers, private hands/cards/words, or raw payload dumps in normal logs.
+- Do not log secrets or hidden game data. Never include `resumeToken`, `joinToken`, `inviteCode`, auth headers, private hands/cards/words, or raw payload dumps in normal logs.
+
+### Server Observability
+
+Reuse the platform observability helpers from `apps/platform/server/observability/` for consistent metrics across all namespaces.
+
+**Per-handler instrumentation** — wrap every callback-based event with `startSocketHandlerInstrumentation`:
+
+```ts
+import { startSocketHandlerInstrumentation } from '../../../../apps/platform/server/observability/socketHandlerMetrics';
+
+socket.on('someEvent', (data, cb) => {
+  const instrumentation = startSocketHandlerInstrumentation(namespace, 'someEvent');
+  const respond = instrumentation.wrapCallback(cb);
+  try {
+    // ... handler logic ...
+    respond({ ok: true });
+  } catch (err) {
+    instrumentation.finishError();
+    throw err;
+  }
+});
+```
+
+Outcome values: `ok` (success), `rejected` (expected validation failure), `failed` (unexpected server error).
+
+**Namespace connection metrics** — call the connection and disconnect helpers once per connection:
+
+```ts
+import {
+  recordNamespaceConnection,
+  recordNamespaceDisconnect,
+} from '../../../../apps/platform/server/observability/socketNamespaceMetrics';
+
+nsp.on('connection', (socket) => {
+  recordNamespaceConnection({ namespace, gameId }, nsp);
+
+  socket.on('disconnect', () => {
+    recordNamespaceDisconnect({ namespace, gameId }, nsp);
+  });
+});
+```
+
+This keeps the `platform_socket_connections_open` gauge and the `platform_socket_events_total` connection/disconnect counters consistent across all namespaces.
 
 ---
 
-## Step 4 — Implement the Client UI
 
 ### `ui-vue/src/App.vue`
 
@@ -581,7 +623,9 @@ The Playwright config passes `E2E_TESTS=1` to the server automatically.
 - [ ] `server/src/index.ts` — exports `definition`, `register()`, `cleanupMatch()`
 - [ ] `server/src/` — `autoJoinRoom` handler respects `sessionId`, `playerId`, `isHost`
 - [ ] `server/src/` — shared logger helpers from `apps/platform/server/logging/` are used
-- [ ] `server/src/` — lifecycle logs exist for join/resume/start/end/cleanup without secrets or raw payload dumps
+- [ ] `server/src/` — lifecycle logs exist for join/resume/start/end/cleanup without secrets or raw payload dumps (`resumeToken`, `joinToken`, `inviteCode` must not appear)
+- [ ] `server/src/` — `startSocketHandlerInstrumentation` used for all callback-bearing events
+- [ ] `server/src/` — `recordNamespaceConnection` / `recordNamespaceDisconnect` called on connect/disconnect
 - [ ] `ui-vue/src/App.vue` — connects to namespace, emits `phase-change`
 - [ ] `ui-vue/src/PlatformAdapter.vue` — wraps App.vue with platform overlay
 - [ ] `ui-vue/tsconfig.json` — paths include `@shared/*`

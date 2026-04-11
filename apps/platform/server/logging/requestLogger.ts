@@ -11,7 +11,8 @@ const STATIC_ASSET_PATH_RE =
   /\.(?:css|js|mjs|cjs|map|json|png|jpe?g|gif|svg|ico|woff2?|ttf|eot|webp|avif|txt)$/i;
 
 export function shouldIgnoreHttpRequest(req: Pick<IncomingMessage, 'url'>): boolean {
-  return normalizeRequestPath(req.url) === '/health';
+  const path = normalizeRequestPath(req.url);
+  return path === '/health' || path === '/metrics';
 }
 
 export function isStaticAssetRequest(req: Pick<IncomingMessage, 'url'>): boolean {

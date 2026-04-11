@@ -9,7 +9,8 @@ export interface LoggingConfig {
   production: boolean;
 }
 
-const DEFAULT_REDACT_PATHS = [
+// Secrets that must always be redacted regardless of environment.
+const ALWAYS_REDACT_PATHS = [
   'authorization',
   'cookie',
   'headers.authorization',
@@ -25,6 +26,13 @@ const DEFAULT_REDACT_PATHS = [
   '*.joinToken',
   '*.resumeToken',
 ];
+
+// Operational join data — redacted in production where logs may be aggregated
+// externally, but visible in development/test to support debugging.
+const PRODUCTION_REDACT_PATHS = ['inviteCode', '*.inviteCode'];
+
+const MAX_REQUEST_ID_LENGTH = 128;
+const REQUEST_ID_PATTERN = /^[A-Za-z0-9._:-]+$/;
 
 const nodeRequire = createRequire(__filename);
 
@@ -62,7 +70,9 @@ export function buildLoggerOptions(config: LoggingConfig = readLoggingConfig()):
       }),
     },
     redact: {
-      paths: DEFAULT_REDACT_PATHS,
+      paths: config.production
+        ? [...ALWAYS_REDACT_PATHS, ...PRODUCTION_REDACT_PATHS]
+        : ALWAYS_REDACT_PATHS,
       remove: true,
     },
   };
@@ -107,7 +117,16 @@ export function createRequestId(headerValue: string | string[] | undefined): str
   const candidate = Array.isArray(headerValue) ? headerValue[0] : headerValue;
   const trimmed = candidate?.trim();
 
-  return trimmed && trimmed.length > 0 ? trimmed : randomUUID();
+  if (
+    trimmed &&
+    trimmed.length > 0 &&
+    trimmed.length <= MAX_REQUEST_ID_LENGTH &&
+    REQUEST_ID_PATTERN.test(trimmed)
+  ) {
+    return trimmed;
+  }
+
+  return randomUUID();
 }
 
 export function toLoggableError(error: unknown): Error | { message: string } {
