@@ -19,7 +19,7 @@ export function startRound(room: Room): void {
     room.currentRound?.dealerIndex ?? (hostIndex - 1 + playerIds.length) % playerIds.length;
   const dealerIndex = (prevDealerIndex + 1) % playerIds.length;
 
-  // Turn order starts after the dealer
+  // Turn order starts with the dealer
   const turnOrder = [...playerIds.slice(dealerIndex), ...playerIds.slice(0, dealerIndex)];
 
   const roundPlayers: Record<string, RoundPlayer> = {};
