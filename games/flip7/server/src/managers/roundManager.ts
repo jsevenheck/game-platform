@@ -208,11 +208,11 @@ function resolveAction(
     advanceTurnOrFinalize(room);
   } else if (action === 'flipThree') {
     rp.flipThreeRemaining = 3;
-    // Set current turn to target so their forced draws happen next
+    // Set current turn to target so their forced draws happen next.
     const targetIdx = round.turnOrder.indexOf(targetId);
     if (targetIdx !== -1) round.currentTurnIndex = targetIdx;
-    // The forced draws are processed via subsequent hit() calls from the server loop
-    // (or the client will see flipThreeRemaining > 0 and the server will auto-draw)
+    // This does not auto-draw cards by itself; the forced draws are only
+    // consumed when subsequent hit() handling processes flipThreeRemaining.
   } else if (action === 'secondChance') {
     if (rp.hasSecondChance) {
       // Target already has one — the card is effectively wasted (discard it),
