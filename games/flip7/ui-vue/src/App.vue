@@ -3,7 +3,9 @@ import { onMounted, onBeforeUnmount, ref } from 'vue';
 import { useGameStore } from './stores/game';
 import { useSocket, type Flip7Socket } from './composables/useSocket';
 import type { HubIntegrationProps } from './types/config';
-import type { RoomView } from '@shared/types';
+import type { RoomView, RoundPlayerView, PendingActionView } from '@shared/types';
+import type { DrawnCardInfo, ActionAnnouncement } from './stores/game';
+import type { ActionResolvedEvent } from '@shared/events';
 import Lobby from './components/Lobby.vue';
 import GameTable from './components/GameTable.vue';
 import RoundSummary from './components/RoundSummary.vue';
@@ -36,8 +38,42 @@ function clearRetryTimer() {
   }
 }
 
+function detectDrawnCard(
+  old: RoundPlayerView,
+  next: RoundPlayerView,
+  oldPending: PendingActionView | null | undefined,
+  newPending: PendingActionView | null | undefined,
+  myPlayerId: string,
+): DrawnCardInfo | null {
+  // Action card: a new pendingAction appeared addressed to me
+  if (!oldPending && newPending?.drawerId === myPlayerId) {
+    return { kind: 'action', action: newPending.action };
+  }
+  // Number card: a value appeared that wasn't in the old array
+  const oldNumbers = new Set(old.numberCards);
+  for (const v of next.numberCards) {
+    if (!oldNumbers.has(v)) return { kind: 'number', value: v };
+  }
+  // Modifier +N: array grew
+  if (next.modifierAdds.length > old.modifierAdds.length) {
+    const bonus = next.modifierAdds[next.modifierAdds.length - 1];
+    return { kind: 'modifierAdd', bonus };
+  }
+  // Modifier ×2
+  if (!old.hasX2 && next.hasX2) return { kind: 'modifierX2' };
+  return null;
+}
+
 function handleRoomUpdate(room: RoomView) {
+  const oldMyPlayer = store.myRoundPlayer;
+  const oldPending = store.currentRound?.pendingAction ?? null;
   store.setRoom(room);
+  const newMyPlayer = store.myRoundPlayer;
+  const newPending = store.currentRound?.pendingAction ?? null;
+  if (store.playerId && oldMyPlayer && newMyPlayer) {
+    const drawn = detectDrawnCard(oldMyPlayer, newMyPlayer, oldPending, newPending, store.playerId);
+    if (drawn) store.setDrawnCard(drawn);
+  }
   embeddedError.value = '';
   autoJoinRetryCount = 0;
   clearRetryTimer();
@@ -77,6 +113,19 @@ function retryJoin() {
   } else {
     socket.connect();
   }
+}
+
+function handleActionResolved(data: ActionResolvedEvent) {
+  const players = store.room?.players ?? [];
+  const drawerName = players.find((p) => p.id === data.drawerId)?.name ?? '?';
+  const targetName = players.find((p) => p.id === data.targetId)?.name ?? '?';
+  const ann: ActionAnnouncement = {
+    drawerName,
+    action: data.action,
+    targetName,
+    isSelf: data.drawerId === data.targetId,
+  };
+  store.setActionAnnouncement(ann);
 }
 
 function handleConnect() {
@@ -128,6 +177,7 @@ onMounted(() => {
   });
   socket = s;
   socket.on('roomUpdate', handleRoomUpdate);
+  socket.on('actionResolved', handleActionResolved);
   socket.on('connect', handleConnect);
   socket.on('connect_error', handleConnectError);
 
@@ -165,6 +215,7 @@ onMounted(() => {
 onBeforeUnmount(() => {
   clearRetryTimer();
   socket?.off('roomUpdate', handleRoomUpdate);
+  socket?.off('actionResolved', handleActionResolved);
   socket?.off('connect', handleConnect);
   socket?.off('connect_error', handleConnectError);
 });

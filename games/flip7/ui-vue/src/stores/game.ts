@@ -1,6 +1,22 @@
 import { defineStore } from 'pinia';
 import type { RoomView, StoredSession } from '@shared/types';
 
+export type DrawnCardInfo =
+  | { kind: 'number'; value: number }
+  | { kind: 'modifierAdd'; bonus: number }
+  | { kind: 'modifierX2' }
+  | { kind: 'action'; action: 'freeze' | 'flipThree' | 'secondChance' };
+
+export interface ActionAnnouncement {
+  drawerName: string;
+  action: 'freeze' | 'flipThree' | 'secondChance';
+  targetName: string;
+  isSelf: boolean; // drawer === target
+}
+
+let _drawnCardTimer: ReturnType<typeof setTimeout> | null = null;
+let _announcementTimer: ReturnType<typeof setTimeout> | null = null;
+
 const SESSION_KEY = 'flip7.session';
 
 export const useGameStore = defineStore('flip7-game', {
@@ -10,6 +26,8 @@ export const useGameStore = defineStore('flip7-game', {
     playerId: '',
     playerName: '',
     resumeToken: '',
+    drawnCard: null as DrawnCardInfo | null,
+    actionAnnouncement: null as ActionAnnouncement | null,
   }),
   getters: {
     self: (state) => state.room?.players.find((p) => p.id === state.playerId),
@@ -58,7 +76,26 @@ export const useGameStore = defineStore('flip7-game', {
         return null;
       }
     },
+    setDrawnCard(card: DrawnCardInfo) {
+      if (_drawnCardTimer) clearTimeout(_drawnCardTimer);
+      this.drawnCard = card;
+      _drawnCardTimer = setTimeout(() => {
+        this.drawnCard = null;
+        _drawnCardTimer = null;
+      }, 1700);
+    },
+    setActionAnnouncement(ann: ActionAnnouncement) {
+      if (_announcementTimer) clearTimeout(_announcementTimer);
+      this.actionAnnouncement = ann;
+      _announcementTimer = setTimeout(() => {
+        this.actionAnnouncement = null;
+        _announcementTimer = null;
+      }, 3200);
+    },
     clearSession() {
+      // Cancel any in-flight toast timers so they don't fire on the reset store.
+      if (_drawnCardTimer) { clearTimeout(_drawnCardTimer); _drawnCardTimer = null; }
+      if (_announcementTimer) { clearTimeout(_announcementTimer); _announcementTimer = null; }
       localStorage.removeItem(SESSION_KEY);
       this.$reset();
     },

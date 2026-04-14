@@ -31,13 +31,14 @@ import {
   scheduleRoomCleanup,
 } from './models/room';
 import { createPlayer, setSocketIndex, getSocketIndex, deleteSocketIndex } from './models/player';
-import { broadcastRoom, sendRoomToPlayer } from './managers/broadcastManager';
+import { broadcastRoom, sendRoomToPlayer, broadcastActionResolved } from './managers/broadcastManager';
 import {
   startRound,
   playerHit,
   playerStay,
   chooseActionTarget,
   computeWinners,
+  popResolvedAction,
 } from './managers/roundManager';
 import {
   transitionToPlaying,
@@ -341,6 +342,10 @@ export function registerFlip7(io: Server, namespace = '/g/flip7'): void {
 
       playerHit(room, playerId);
 
+      // Broadcast action announcement before room state (auto-resolve only).
+      const resolved = popResolvedAction(data.roomCode);
+      if (resolved) broadcastActionResolved(nsp, room, resolved);
+
       // roundManager already calls finalizeRound internally when round ends.
       // We only need to trigger the phase transition from here.
       if (room.currentRound?.roundEndReason) {
@@ -376,6 +381,10 @@ export function registerFlip7(io: Server, namespace = '/g/flip7'): void {
       if (!playerId) return;
 
       chooseActionTarget(room, playerId, data.targetPlayerId);
+
+      // Broadcast action announcement before room state.
+      const resolved = popResolvedAction(data.roomCode);
+      if (resolved) broadcastActionResolved(nsp, room, resolved);
 
       if (room.currentRound?.roundEndReason) {
         broadcastRoom(nsp, room);

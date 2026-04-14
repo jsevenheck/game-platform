@@ -4,6 +4,8 @@ import { useGameStore } from '../stores/game';
 import PlayerBoard from './PlayerBoard.vue';
 import HitStayControls from './HitStayControls.vue';
 import ActionTargetPicker from './ActionTargetPicker.vue';
+import CardDrawToast from './CardDrawToast.vue';
+import ActionAnnouncement from './ActionAnnouncement.vue';
 
 const emit = defineEmits<{
   hit: [];
@@ -137,5 +139,11 @@ const currentTurnPlayerName = computed(() => {
       :my-player-id="store.playerId"
       @choose-target="(id) => emit('choose-target', id)"
     />
+
+    <!-- Card draw toast (personal) -->
+    <CardDrawToast v-if="store.drawnCard" :card="store.drawnCard" />
+
+    <!-- Action announcement (all players) -->
+    <ActionAnnouncement v-if="store.actionAnnouncement" :announcement="store.actionAnnouncement" />
   </div>
 </template>

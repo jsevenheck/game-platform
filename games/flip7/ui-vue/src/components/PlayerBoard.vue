@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import { computed } from 'vue';
 import type { RoundPlayerView, PlayerView } from '@shared/types';
 
 const props = defineProps<{
@@ -7,7 +8,24 @@ const props = defineProps<{
   isCurrentTurn: boolean;
   isMe: boolean;
 }>();
-</script>
+
+/** Returns colour classes for a number card chip based on risk/value. */
+function numberCardClasses(n: number): string {
+  // 0–4 → safe (green)
+  if (n <= 4) return 'bg-success-muted text-success ring-1 ring-success';
+  // 5–8 → medium risk (amber)
+  if (n <= 8) return 'bg-warning-muted text-warning ring-1 ring-warning';
+  // 9–12 → high risk (red)
+  return 'bg-danger-muted text-danger ring-1 ring-danger';
+}
+
+/** Score the player would earn if they stayed right now. */
+const liveScore = computed(() => {
+  const sum = props.roundPlayer.numberCards.reduce((a, b) => a + b, 0);
+  const bonus = props.roundPlayer.modifierAdds.reduce((a, b) => a + b, 0);
+  const withBonus = sum + bonus;
+  return props.roundPlayer.hasX2 ? withBonus * 2 : withBonus;
+});</script>
 
 <template>
   <div
@@ -30,6 +48,14 @@ const props = defineProps<{
         </span>
       </div>
       <div class="flex items-center gap-2">
+        <!-- Live round score -->
+        <span
+          v-if="props.roundPlayer.numberCards.length > 0 && props.roundPlayer.status === 'active'"
+          class="text-xs font-bold text-muted-foreground"
+          title="Live round score"
+        >
+          {{ liveScore }} pts
+        </span>
         <!-- Status badge -->
         <span v-if="props.roundPlayer.status === 'stayed'" class="ui-badge text-xs text-success">
           Stayed
@@ -57,7 +83,8 @@ const props = defineProps<{
       <div
         v-for="n in props.roundPlayer.numberCards"
         :key="n"
-        class="flex size-9 items-center justify-center rounded-[--radius-sm] bg-elevated text-sm font-bold text-foreground ring-1 ring-border"
+        class="flex size-9 items-center justify-center rounded-[--radius-sm] text-sm font-bold transition-colors"
+        :class="numberCardClasses(n)"
       >
         {{ n }}
       </div>

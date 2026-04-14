@@ -5,6 +5,25 @@ import { FLIP7_CARD_COUNT } from '../../../core/src/constants';
 import { shuffle, draw } from './deckManager';
 import { calculatePlayerRoundScore } from './scoreManager';
 
+// ─── Action-resolution side-channel ──────────────────────────────────────────
+// Socket handlers read this after each hit / chooseActionTarget call so they
+// can broadcast the outcome to every player without changing function signatures.
+
+type ResolvedActionRecord = {
+  drawerId: string;
+  action: 'freeze' | 'flipThree' | 'secondChance';
+  targetId: string;
+};
+
+const _resolvedActions = new Map<string, ResolvedActionRecord>();
+
+/** Consume and return the last action resolved for a room (if any). */
+export function popResolvedAction(roomCode: string): ResolvedActionRecord | undefined {
+  const record = _resolvedActions.get(roomCode);
+  _resolvedActions.delete(roomCode);
+  return record;
+}
+
 // ─── Round initialisation ─────────────────────────────────────────────────────
 
 export function startRound(room: Room): void {
@@ -196,6 +215,9 @@ function resolveAction(
 ): void {
   const round = room.currentRound!;
   round.pendingAction = null;
+
+  // Record so the socket handler can broadcast the outcome.
+  _resolvedActions.set(room.code, { drawerId, action, targetId });
 
   const rp = round.players[targetId];
   if (!rp) return;

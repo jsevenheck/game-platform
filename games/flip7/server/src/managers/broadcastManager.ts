@@ -6,7 +6,11 @@ import type {
   PlayerView,
   RoundPlayerView,
 } from '../../../core/src/types';
-import type { ClientToServerEvents, ServerToClientEvents } from '../../../core/src/events';
+import type {
+  ClientToServerEvents,
+  ServerToClientEvents,
+  ActionResolvedEvent,
+} from '../../../core/src/events';
 
 type Flip7Namespace = Namespace<ClientToServerEvents, ServerToClientEvents>;
 
@@ -87,5 +91,17 @@ export function sendRoomToPlayer(nsp: Flip7Namespace, room: Room, playerId: stri
   if (player?.socketId && player.connected) {
     const view = toRoomView(room);
     nsp.to(player.socketId).emit('roomUpdate', view);
+  }
+}
+
+export function broadcastActionResolved(
+  nsp: Flip7Namespace,
+  room: Room,
+  event: ActionResolvedEvent,
+): void {
+  for (const player of Object.values(room.players)) {
+    if (player.socketId && player.connected) {
+      nsp.to(player.socketId).emit('actionResolved', event);
+    }
   }
 }

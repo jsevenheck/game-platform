@@ -20,6 +20,12 @@ export interface ErrorResponse {
   error: string;
 }
 
+export interface ActionResolvedEvent {
+  drawerId: string;
+  action: 'freeze' | 'flipThree' | 'secondChance';
+  targetId: string;
+}
+
 export interface ClientToServerEvents {
   autoJoinRoom: (
     data: AutoJoinRoomData,
@@ -43,4 +49,5 @@ export interface ClientToServerEvents {
 
 export interface ServerToClientEvents {
   roomUpdate: (data: RoomView) => void;
+  actionResolved: (data: ActionResolvedEvent) => void;
 }
