@@ -148,6 +148,8 @@ importers:
 
   games/blackout: {}
 
+  games/flip7: {}
+
   games/imposter: {}
 
   games/secret-signals: {}

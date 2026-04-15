@@ -14,6 +14,8 @@ const cardText = computed(() => {
       return '×2';
     case 'action':
       return { freeze: '🧊', flipThree: '🔄', secondChance: '🛡️' }[props.card.action];
+    default:
+      return '';
   }
 });
 
@@ -29,6 +31,8 @@ const cardSubtext = computed(() => {
       return { freeze: 'Freeze', flipThree: 'Flip Three', secondChance: '2nd Chance' }[
         props.card.action
       ];
+    default:
+      return '';
   }
 });
 
@@ -53,7 +57,11 @@ const chipClasses = computed(() => {
           return 'bg-warning-muted text-warning ring-2 ring-warning shadow-[0_0_20px_rgba(234,179,8,0.25)]';
         case 'secondChance':
           return 'bg-success-muted text-success ring-2 ring-success shadow-[0_0_20px_rgba(34,197,94,0.25)]';
+        default:
+          return '';
       }
+    default:
+      return '';
   }
 });
 </script>

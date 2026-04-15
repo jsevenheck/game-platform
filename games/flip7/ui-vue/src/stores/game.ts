@@ -94,8 +94,14 @@ export const useGameStore = defineStore('flip7-game', {
     },
     clearSession() {
       // Cancel any in-flight toast timers so they don't fire on the reset store.
-      if (_drawnCardTimer) { clearTimeout(_drawnCardTimer); _drawnCardTimer = null; }
-      if (_announcementTimer) { clearTimeout(_announcementTimer); _announcementTimer = null; }
+      if (_drawnCardTimer) {
+        clearTimeout(_drawnCardTimer);
+        _drawnCardTimer = null;
+      }
+      if (_announcementTimer) {
+        clearTimeout(_announcementTimer);
+        _announcementTimer = null;
+      }
       localStorage.removeItem(SESSION_KEY);
       this.$reset();
     },

@@ -9,6 +9,7 @@ Namespace: `/g/flip7`
 Creates or rejoins a Flip 7 room for the given session.
 
 **Request:**
+
 ```ts
 {
   sessionId: string;       // Platform matchKey — unique per match
@@ -20,12 +21,14 @@ Creates or rejoins a Flip 7 room for the given session.
 ```
 
 **Response (`cb`):**
+
 ```ts
 { ok: true;  roomCode: string; playerId: string; resumeToken: string }
 | { ok: false; error: string }
 ```
 
 Error strings:
+
 - `'Missing session info'` — sessionId or name is blank
 - `'Resume token required'` — player slot exists but no token provided
 - `'Invalid resume token'` — wrong token for existing slot
@@ -39,7 +42,10 @@ Error strings:
 Host only. Lobby only. Clamps value to `[MIN_TARGET_SCORE, MAX_TARGET_SCORE]` (50–500, step 25).
 
 ```ts
-{ roomCode: string; targetScore: number }
+{
+  roomCode: string;
+  targetScore: number;
+}
 ```
 
 ---
@@ -63,7 +69,9 @@ Host only. Requires ≥ 3 connected players.
 Current-turn player draws a card. Ignored unless it is your turn, no `pendingAction` is open, and you are `active`.
 
 ```ts
-{ roomCode: string }
+{
+  roomCode: string;
+}
 ```
 
 Also used to draw a forced card during a Flip Three (when `flipThreeRemaining > 0` and it is your turn).
@@ -75,7 +83,9 @@ Also used to draw a forced card during a Flip Three (when `flipThreeRemaining > 
 Current-turn player banks their cards and passes. Ignored if `flipThreeRemaining > 0`.
 
 ```ts
-{ roomCode: string }
+{
+  roomCode: string;
+}
 ```
 
 ---
@@ -85,7 +95,10 @@ Current-turn player banks their cards and passes. Ignored if `flipThreeRemaining
 Resolves a pending action card. Must be the drawer (`pendingAction.drawerId === you`).
 
 ```ts
-{ roomCode: string; targetPlayerId: string }
+{
+  roomCode: string;
+  targetPlayerId: string;
+}
 ```
 
 `targetPlayerId` must be in `pendingAction.eligibleTargets`.
@@ -97,7 +110,9 @@ Resolves a pending action card. Must be the drawer (`pendingAction.drawerId === 
 Host only. Phase `ended` only. Resets the room to `lobby` with zeroed scores.
 
 ```ts
-{ roomCode: string }
+{
+  roomCode: string;
+}
 ```
 
 ---
@@ -107,7 +122,9 @@ Host only. Phase `ended` only. Resets the room to `lobby` with zeroed scores.
 Resync: re-emits `roomUpdate` to the requesting socket only.
 
 ```ts
-{ roomCode: string }
+{
+  roomCode: string;
+}
 ```
 
 ---
@@ -123,7 +140,7 @@ interface RoomView {
   code: string;
   ownerId: string | null;
   phase: 'lobby' | 'playing' | 'roundEnd' | 'ended';
-  players: PlayerView[];           // all players, ordered by join time
+  players: PlayerView[]; // all players, ordered by join time
   targetScore: number;
   currentRound: RoundView | null;
   roundHistory: RoundHistoryEntry[];
@@ -131,14 +148,18 @@ interface RoomView {
 }
 
 interface PlayerView {
-  id: string; name: string; totalScore: number; connected: boolean; isHost: boolean;
+  id: string;
+  name: string;
+  totalScore: number;
+  connected: boolean;
+  isHost: boolean;
 }
 
 interface RoundView {
   roundNumber: number;
   currentTurnPlayerId: string | null;
-  deckSize: number;          // draw pile card count (order NOT revealed)
-  discardSize: number;       // discard pile count
+  deckSize: number; // draw pile card count (order NOT revealed)
+  discardSize: number; // discard pile count
   players: RoundPlayerView[];
   pendingAction: PendingActionView | null;
   roundEndReason: 'allDone' | 'flip7' | null;
@@ -148,7 +169,7 @@ interface RoundView {
 interface RoundPlayerView {
   playerId: string;
   status: 'active' | 'stayed' | 'busted';
-  numberCards: number[];         // face-up — public to all players
+  numberCards: number[]; // face-up — public to all players
   modifierAdds: number[];
   hasX2: boolean;
   hasSecondChance: boolean;
@@ -163,7 +184,7 @@ interface PendingActionView {
 
 interface RoundHistoryEntry {
   roundNumber: number;
-  scores: Record<string, number>;  // earned this round
+  scores: Record<string, number>; // earned this round
   flip7PlayerId: string | null;
 }
 ```

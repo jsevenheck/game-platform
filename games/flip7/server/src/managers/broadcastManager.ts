@@ -97,7 +97,7 @@ export function sendRoomToPlayer(nsp: Flip7Namespace, room: Room, playerId: stri
 export function broadcastActionResolved(
   nsp: Flip7Namespace,
   room: Room,
-  event: ActionResolvedEvent,
+  event: ActionResolvedEvent
 ): void {
   for (const player of Object.values(room.players)) {
     if (player.socketId && player.connected) {

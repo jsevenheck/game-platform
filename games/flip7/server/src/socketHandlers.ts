@@ -31,7 +31,11 @@ import {
   scheduleRoomCleanup,
 } from './models/room';
 import { createPlayer, setSocketIndex, getSocketIndex, deleteSocketIndex } from './models/player';
-import { broadcastRoom, sendRoomToPlayer, broadcastActionResolved } from './managers/broadcastManager';
+import {
+  broadcastRoom,
+  sendRoomToPlayer,
+  broadcastActionResolved,
+} from './managers/broadcastManager';
 import {
   startRound,
   playerHit,
