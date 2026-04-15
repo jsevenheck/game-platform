@@ -43,7 +43,7 @@ function detectDrawnCard(
   next: RoundPlayerView,
   oldPending: PendingActionView | null | undefined,
   newPending: PendingActionView | null | undefined,
-  myPlayerId: string,
+  myPlayerId: string
 ): DrawnCardInfo | null {
   // Action card: a new pendingAction appeared addressed to me
   if (!oldPending && newPending?.drawerId === myPlayerId) {

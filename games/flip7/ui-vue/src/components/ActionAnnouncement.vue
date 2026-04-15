@@ -33,6 +33,8 @@ const meta = computed(() => {
         colorClasses:
           'bg-success-muted text-success ring-2 ring-success shadow-[0_0_28px_rgba(34,197,94,0.30)]',
       };
+    default:
+      return { emoji: '', label: '', verb: '', verbSelf: '', colorClasses: '' };
   }
 });
 

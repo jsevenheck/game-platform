@@ -23,20 +23,20 @@ games/secret-signals/ <- internal platform module
 
 Custom skills live in `.agents/skills/`.
 
-| Skill                      | Trigger description                                                                                                |
-| -------------------------- | ------------------------------------------------------------------------------------------------------------------ |
-| `frontend-design`          | Build distinctive, production-grade frontend UI with strong visual direction and polished implementation                                                                                                                         |
-| `pinia`                    | Pinia official Vue state management library — stores, state/getters/actions, store patterns, plugins, SSR                                                                                                                        |
-| `playwright-best-practices` | Playwright testing best practices for E2E/component/API testing, flaky test fixes, CI, auth, accessibility, multi-user flows, WebSockets, performance, security, and advanced browser scenarios                           |
-| `playwright-cli`           | Browser automation via `playwright-cli` for navigation, interaction, screenshots, and debugging                                                                                                                                  |
-| `pnpm`                     | pnpm-specific commands, workspace config, catalogs, overrides, and patches                                                                                                                                                       |
-| `tailwind-design-system`   | Tailwind CSS v4 design systems, tokens, shared component patterns, and responsive styling                                                                                                                                        |
-| `ui-ux-pro-max`            | UI/UX design intelligence for styles, palettes, typography, accessibility, and frontend direction                                                                                                                                |
-| `vite`                     | Vite build tool configuration, plugin API, SSR, and Vite 8 Rolldown migration                                                                                                                                                    |
-| `vitest`                   | Vitest testing framework — config, test suites, mocking with vi.fn/vi.mock, coverage, parallel runs                                                                                                                              |
-| `vue-best-practices`       | Vue 3 Composition API, reactive components, SSR, TypeScript patterns, and Pinia/Vue Router integration                                                                                                                           |
-| `vue-pinia-best-practices` | Pinia best practices, common gotchas (no active Pinia, reactivity loss), and state management patterns                                                                                                                           |
-| `websocket-engineer`       | Real-time WebSocket and Socket.IO architecture for bidirectional messaging, room management, presence, and scaling                                                                                                               |
+| Skill                       | Trigger description                                                                                                                                                                             |
+| --------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `frontend-design`           | Build distinctive, production-grade frontend UI with strong visual direction and polished implementation                                                                                        |
+| `pinia`                     | Pinia official Vue state management library — stores, state/getters/actions, store patterns, plugins, SSR                                                                                       |
+| `playwright-best-practices` | Playwright testing best practices for E2E/component/API testing, flaky test fixes, CI, auth, accessibility, multi-user flows, WebSockets, performance, security, and advanced browser scenarios |
+| `playwright-cli`            | Browser automation via `playwright-cli` for navigation, interaction, screenshots, and debugging                                                                                                 |
+| `pnpm`                      | pnpm-specific commands, workspace config, catalogs, overrides, and patches                                                                                                                      |
+| `tailwind-design-system`    | Tailwind CSS v4 design systems, tokens, shared component patterns, and responsive styling                                                                                                       |
+| `ui-ux-pro-max`             | UI/UX design intelligence for styles, palettes, typography, accessibility, and frontend direction                                                                                               |
+| `vite`                      | Vite build tool configuration, plugin API, SSR, and Vite 8 Rolldown migration                                                                                                                   |
+| `vitest`                    | Vitest testing framework — config, test suites, mocking with vi.fn/vi.mock, coverage, parallel runs                                                                                             |
+| `vue-best-practices`        | Vue 3 Composition API, reactive components, SSR, TypeScript patterns, and Pinia/Vue Router integration                                                                                          |
+| `vue-pinia-best-practices`  | Pinia best practices, common gotchas (no active Pinia, reactivity loss), and state management patterns                                                                                          |
+| `websocket-engineer`        | Real-time WebSocket and Socket.IO architecture for bidirectional messaging, room management, presence, and scaling                                                                              |
 
 ## Commands (always run from workspace root)
 
@@ -156,4 +156,7 @@ The game's `App.vue` receives props mapped from `PlatformAdapter.vue`. The prop 
   // plus optional: apiBaseUrl, joinToken
 }
 ```
+
+```
+
 ```

@@ -4,18 +4,18 @@
 
 **All checklist items complete. `typecheck`, `lint`, `pnpm test` (190 tests, 22 files) all pass.**
 
-| Area | Status |
-|------|--------|
-| `games/flip7/` scaffold | ✅ |
-| Core types, deck, events, constants | ✅ |
-| Server models (room, player) | ✅ |
-| Server managers (deck, round, score, phase, broadcast) | ✅ |
-| Socket handlers + index.ts | ✅ |
-| Platform registry, client, Vite alias, CSS token, metrics, vitest | ✅ |
-| UI (PlatformAdapter, App, Lobby, GameTable, PlayerBoard, HitStay, ActionPicker, RoundSummary, GameOver) | ✅ |
-| Unit tests (deck, scoreManager, roundManager, socketHandlers) | ✅ |
-| E2E tests (`games/flip7/e2e/game.spec.ts`) | ✅ |
-| Docs (api.md, architecture.md) | ✅ |
+| Area                                                                                                    | Status |
+| ------------------------------------------------------------------------------------------------------- | ------ |
+| `games/flip7/` scaffold                                                                                 | ✅     |
+| Core types, deck, events, constants                                                                     | ✅     |
+| Server models (room, player)                                                                            | ✅     |
+| Server managers (deck, round, score, phase, broadcast)                                                  | ✅     |
+| Socket handlers + index.ts                                                                              | ✅     |
+| Platform registry, client, Vite alias, CSS token, metrics, vitest                                       | ✅     |
+| UI (PlatformAdapter, App, Lobby, GameTable, PlayerBoard, HitStay, ActionPicker, RoundSummary, GameOver) | ✅     |
+| Unit tests (deck, scoreManager, roundManager, socketHandlers)                                           | ✅     |
+| E2E tests (`games/flip7/e2e/game.spec.ts`)                                                              | ✅     |
+| Docs (api.md, architecture.md)                                                                          | ✅     |
 
 **Next step:** `pnpm test:e2e` with 3+ browser contexts to run the Playwright E2E suite end-to-end.
 
@@ -29,15 +29,15 @@ The engine must correctly model every rule in the brief: deck composition (0–1
 
 ## Game design decisions (mirror blackout, adapted for Flip 7)
 
-| Decision                | Value                                                          | Why                                                                                                  |
-| ----------------------- | -------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------- |
-| `id` / `name`           | `flip7` / `Flip 7`                                             | kebab-case id used in paths, namespace, Vite aliases                                                 |
-| Min/max players         | 3 / 18                                                         | Official Flip 7 box is 3–18; matches other platform games                                            |
-| Target score            | 200 (configurable in lobby, default 200)                       | Official rules; host can tune for shorter demos                                                      |
-| Turn order              | Seated order, rotates each round (dealer button advances)      | Standard; deterministic, no extra UI                                                                 |
-| Action-card targeting   | Player who drew an action card picks target from active list  | Required by rules; auto-target self if solo. Server holds a `pendingAction` sub-state until resolved |
-| Deck persistence        | In-memory per-room `Deck` object, reshuffled from discard mid-round when empty | Matches rules; no DB layer needed                                                                    |
-| Data layer              | None — deck is generated from constants, no SQLite             | Unlike blackout, Flip 7 has no prompt database                                                       |
+| Decision              | Value                                                                          | Why                                                                                                  |
+| --------------------- | ------------------------------------------------------------------------------ | ---------------------------------------------------------------------------------------------------- |
+| `id` / `name`         | `flip7` / `Flip 7`                                                             | kebab-case id used in paths, namespace, Vite aliases                                                 |
+| Min/max players       | 3 / 18                                                                         | Official Flip 7 box is 3–18; matches other platform games                                            |
+| Target score          | 200 (configurable in lobby, default 200)                                       | Official rules; host can tune for shorter demos                                                      |
+| Turn order            | Seated order, rotates each round (dealer button advances)                      | Standard; deterministic, no extra UI                                                                 |
+| Action-card targeting | Player who drew an action card picks target from active list                   | Required by rules; auto-target self if solo. Server holds a `pendingAction` sub-state until resolved |
+| Deck persistence      | In-memory per-room `Deck` object, reshuffled from discard mid-round when empty | Matches rules; no DB layer needed                                                                    |
+| Data layer            | None — deck is generated from constants, no SQLite                             | Unlike blackout, Flip 7 has no prompt database                                                       |
 
 ## Directory structure
 
@@ -90,11 +90,15 @@ games/flip7/
 ## Core domain model
 
 ### `core/src/deck.ts`
+
 ```ts
-export type NumberCard  = { kind: 'number'; value: 0|1|2|3|4|5|6|7|8|9|10|11|12 };
-export type ModifierAdd = { kind: 'modifierAdd'; bonus: 2|4|6|8|10 };
-export type ModifierX2  = { kind: 'modifierX2' };
-export type ActionCard  = { kind: 'action'; action: 'freeze'|'flipThree'|'secondChance' };
+export type NumberCard = {
+  kind: 'number';
+  value: 0 | 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8 | 9 | 10 | 11 | 12;
+};
+export type ModifierAdd = { kind: 'modifierAdd'; bonus: 2 | 4 | 6 | 8 | 10 };
+export type ModifierX2 = { kind: 'modifierX2' };
+export type ActionCard = { kind: 'action'; action: 'freeze' | 'flipThree' | 'secondChance' };
 export type Card = NumberCard | ModifierAdd | ModifierX2 | ActionCard;
 
 export function buildDeck(): Card[] {
@@ -107,13 +111,18 @@ export function buildDeck(): Card[] {
 ```
 
 ### `core/src/types.ts` (shape)
+
 ```ts
 export type Phase = 'lobby' | 'playing' | 'roundEnd' | 'ended';
 
 export interface Player {
-  id: string; name: string; socketId: string | null; connected: boolean;
-  isHost: boolean; resumeToken: string;
-  totalScore: number;          // banked across all rounds
+  id: string;
+  name: string;
+  socketId: string | null;
+  connected: boolean;
+  isHost: boolean;
+  resumeToken: string;
+  totalScore: number; // banked across all rounds
 }
 
 export type RoundPlayerStatus = 'active' | 'stayed' | 'busted';
@@ -121,25 +130,25 @@ export type RoundPlayerStatus = 'active' | 'stayed' | 'busted';
 export interface RoundPlayer {
   playerId: string;
   status: RoundPlayerStatus;
-  numberCards: number[];        // face-up numbers (unique while active)
-  modifierAdds: number[];       // flat point adds
+  numberCards: number[]; // face-up numbers (unique while active)
+  modifierAdds: number[]; // flat point adds
   hasX2: boolean;
   hasSecondChance: boolean;
-  flipThreeRemaining: number;   // >0 while resolving a Flip Three
+  flipThreeRemaining: number; // >0 while resolving a Flip Three
 }
 
 export interface PendingAction {
   // Set after a player draws an action card that requires a target.
   drawerId: string;
   action: 'freeze' | 'flipThree' | 'secondChance';
-  eligibleTargets: string[];    // active playerIds (or self-only if solo)
+  eligibleTargets: string[]; // active playerIds (or self-only if solo)
 }
 
 export interface RoundState {
   roundNumber: number;
-  turnOrder: string[];          // playerIds in play order this round
+  turnOrder: string[]; // playerIds in play order this round
   currentTurnIndex: number;
-  deck: Card[];                 // draw pile (top = last)
+  deck: Card[]; // draw pile (top = last)
   discard: Card[];
   players: Record<string, RoundPlayer>;
   pendingAction: PendingAction | null;
@@ -153,14 +162,15 @@ export interface Room {
   hostId: string | null;
   phase: Phase;
   players: Record<string, Player>;
-  targetScore: number;          // default 200
+  targetScore: number; // default 200
   currentRound: RoundState | null;
   roundHistory: Array<{ roundNumber: number; scores: Record<string, number> }>;
-  winnerIds: string[];          // set when phase === 'ended'
+  winnerIds: string[]; // set when phase === 'ended'
 }
 ```
 
 ### `core/src/events.ts` (client→server actions)
+
 - `autoJoinRoom(data, cb)` — **required contract**, matches docs
 - `setTargetScore({ targetScore })` — host only, lobby only
 - `startGame()` — host only
@@ -170,13 +180,14 @@ export interface Room {
 - `playAgain()` — host only, from ended
 - `requestState()` — resync
 
-Server→client: **single `roomUpdate(view: RoomView)`** broadcast per state change (private fields like `deck`/`discard` order are redacted from the view; only card *counts* are sent so clients can't peek).
+Server→client: **single `roomUpdate(view: RoomView)`** broadcast per state change (private fields like `deck`/`discard` order are redacted from the view; only card _counts_ are sent so clients can't peek).
 
 ## Server mechanics — the engine
 
 The engine is fully deterministic given `Math.random` inside `deckManager.shuffle`. All logic lives in pure manager functions that mutate the passed `Room`; the socket handler only validates and calls them.
 
 ### `deckManager`
+
 - `shuffle(deck: Card[]): Card[]` — Fisher–Yates
 - `draw(round: RoundState): Card` — pops top; if empty, `reshuffleFromDiscard(round)` first. Rule: reshuffle only the discard pile, **never** cards currently in front of players.
 
@@ -234,6 +245,7 @@ finalizeRound(room)
 ```
 
 ### `scoreManager`
+
 ```ts
 calculatePlayerRoundScore(rp: RoundPlayer, isFlip7: boolean): number
   if (rp.status === 'busted') return 0;
@@ -245,15 +257,17 @@ calculatePlayerRoundScore(rp: RoundPlayer, isFlip7: boolean): number
 ```
 
 Edge cases verified against the brief:
+
 - `x2` doubles numbers only, not bonus, not flats ✓
 - `0` is worth 0 points but still counts toward the 7 unique ✓ (just push 0 into `numberCards`)
 - Busted player scores 0 regardless of modifiers held ✓
 - Flip 7 bonus only to the triggerer, even if others also have 7 numbers (impossible, round ends immediately) ✓
 - Reshuffle only the discard pile mid-round ✓
-- Action cards drawn during a Flip Three still count as one of the three draws *and* execute ✓
+- Action cards drawn during a Flip Three still count as one of the three draws _and_ execute ✓
 - Action drawn when only drawer is active → must target self ✓
 
 ### Broadcast view
+
 `toRoomView(room, playerId)` strips `round.deck` and `round.discard` to `deckSize` / `discardSize` integers. Player face-up cards are public (the rules require them visible). Resume token never broadcast. This mirrors the blackout pattern in [games/blackout/server/src/managers/broadcastManager.ts](games/blackout/server/src/managers/broadcastManager.ts).
 
 ## Socket handler (mirrors [games/blackout/server/src/socketHandlers.ts](games/blackout/server/src/socketHandlers.ts))
@@ -261,6 +275,7 @@ Edge cases verified against the brief:
 Every callback-bearing event wraps its callback with `startSocketHandlerInstrumentation(namespace, eventName)` → `instrumentation.wrapCallback(cb)`. Connect/disconnect calls `recordNamespaceConnection` / `recordNamespaceDisconnect`. The pattern is already in blackout — copy it verbatim.
 
 `autoJoinRoom` handler enforces the full contract from [docs/adding-a-new-game.md:190](docs/adding-a-new-game.md#L190):
+
 1. Create room if `sessionId` is unknown
 2. Rejoin if player exists → validate `resumeToken` (reject `'Resume token required'` / `'Invalid resume token'`)
 3. Respect `data.isHost`
@@ -273,12 +288,12 @@ Host transfer on disconnect matches blackout: promote first remaining connected 
 
 `App.vue` follows the blackout App.vue shape: `useSocket` composable, local Pinia-free refs for the room view, `watch` for `phase-change` emits. Key render branches:
 
-| Phase       | Component                                                |
-| ----------- | -------------------------------------------------------- |
-| `lobby`     | `Lobby.vue` (roster, target-score stepper, Start button) |
-| `playing`   | `GameTable.vue` + per-player `PlayerBoard` grid          |
-| `roundEnd`  | `RoundSummary.vue` (briefly, auto-advances)              |
-| `ended`     | `GameOver.vue`; `phase-change` emits `'ended'` for the platform overlay |
+| Phase      | Component                                                               |
+| ---------- | ----------------------------------------------------------------------- |
+| `lobby`    | `Lobby.vue` (roster, target-score stepper, Start button)                |
+| `playing`  | `GameTable.vue` + per-player `PlayerBoard` grid                         |
+| `roundEnd` | `RoundSummary.vue` (briefly, auto-advances)                             |
+| `ended`    | `GameOver.vue`; `phase-change` emits `'ended'` for the platform overlay |
 
 `GameTable.vue` shows: deck size, discard size, current-turn highlight, each active player's numbers/modifiers/second-chance token, stayed/busted badges. `HitStayControls.vue` is only rendered when `view.round.currentTurnPlayerId === me && !view.round.pendingAction`. `ActionTargetPicker.vue` is rendered when `view.round.pendingAction?.drawerId === me`, showing the list of eligible targets (or auto-confirming on self when solo).
 
@@ -301,6 +316,7 @@ All inferred from the **verified** current file contents:
 ## Files to create (new) vs. modify (existing)
 
 **Modify (7 files):**
+
 - `apps/platform/server/registry/index.ts`
 - `apps/platform/src/games/index.ts`
 - `apps/platform/vite.config.ts`

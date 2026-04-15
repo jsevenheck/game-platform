@@ -65,6 +65,7 @@ score = (sum of numberCards × (hasX2 ? 2 : 1)) + sum(modifierAdds) + (isFlip7Tr
 
 `broadcastRoom(nsp, room)` iterates connected players and emits `roomUpdate` to each.
 `toRoomView` strips:
+
 - `deck` and `discard` arrays → replaced with `deckSize` / `discardSize` integers
 - `resumeToken` on every `Player` → never appears in any view
 
@@ -83,6 +84,7 @@ All lifecycle events (room create, join, resume, start, round end, match end, cl
 ## Metrics
 
 Two Prometheus gauges track flip7 activity:
+
 - `platform_match_active{game_id="flip7"}` — active room count
 - `platform_room_players_connected{game_id="flip7"}` — connected player count
 

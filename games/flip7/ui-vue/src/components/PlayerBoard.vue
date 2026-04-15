@@ -25,7 +25,8 @@ const liveScore = computed(() => {
   const bonus = props.roundPlayer.modifierAdds.reduce((a, b) => a + b, 0);
   const withBonus = sum + bonus;
   return props.roundPlayer.hasX2 ? withBonus * 2 : withBonus;
-});</script>
+});
+</script>
 
 <template>
   <div
