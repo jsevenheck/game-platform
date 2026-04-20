@@ -1,4 +1,4 @@
-import type { Card } from './deck';
+import type { Card, ActionCard } from './deck';
 
 export type Phase = 'lobby' | 'playing' | 'roundEnd' | 'ended';
 
@@ -14,6 +14,11 @@ export interface Player {
 
 export type RoundPlayerStatus = 'active' | 'stayed' | 'busted';
 
+export interface DeferredAction {
+  action: ActionCard['action'];
+  card: Card;
+}
+
 export interface RoundPlayer {
   playerId: string;
   status: RoundPlayerStatus;
@@ -22,6 +27,10 @@ export interface RoundPlayer {
   hasX2: boolean;
   hasSecondChance: boolean;
   flipThreeRemaining: number;
+  /** Action cards drawn during Flip Three, resolved after all 3 draws complete. */
+  deferredActions: DeferredAction[];
+  /** The last card drawn by this player (set for every draw, including bust/secondChance triggers). */
+  lastDrawnCard: Card | null;
 }
 
 export interface PendingAction {
@@ -30,8 +39,11 @@ export interface PendingAction {
   eligibleTargets: string[];
 }
 
+export type RoundPhase = 'initialDeal' | 'playing';
+
 export interface RoundState {
   roundNumber: number;
+  phase: RoundPhase;
   dealerIndex: number;
   turnOrder: string[];
   currentTurnIndex: number;
@@ -79,6 +91,8 @@ export interface RoundPlayerView {
   hasX2: boolean;
   hasSecondChance: boolean;
   flipThreeRemaining: number;
+  /** The last card drawn by this player – used by the client to reveal the card before applying dramatic state changes (bust / secondChance). */
+  lastDrawnCard: Card | null;
 }
 
 export interface PendingActionView {
@@ -89,6 +103,7 @@ export interface PendingActionView {
 
 export interface RoundView {
   roundNumber: number;
+  phase: RoundPhase;
   currentTurnPlayerId: string | null;
   deckSize: number;
   discardSize: number;

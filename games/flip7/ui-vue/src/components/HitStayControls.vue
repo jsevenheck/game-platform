@@ -1,4 +1,8 @@
 <script setup lang="ts">
+defineProps<{
+  canStay?: boolean;
+}>();
+
 const emit = defineEmits<{
   hit: [];
   stay: [];
@@ -14,7 +18,12 @@ const emit = defineEmits<{
     >
       Hit 🃏
     </button>
-    <button class="ui-btn-secondary flex-1 text-lg font-bold" type="button" @click="emit('stay')">
+    <button
+      class="ui-btn-secondary flex-1 text-lg font-bold"
+      type="button"
+      :disabled="canStay === false"
+      @click="emit('stay')"
+    >
       Stay ✋
     </button>
   </div>

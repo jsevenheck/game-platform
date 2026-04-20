@@ -38,6 +38,7 @@ function toRoundView(room: Room): RoundView | null {
       hasX2: rp.hasX2,
       hasSecondChance: rp.hasSecondChance,
       flipThreeRemaining: rp.flipThreeRemaining,
+      lastDrawnCard: rp.lastDrawnCard ?? null,
     };
   });
 
@@ -48,6 +49,7 @@ function toRoundView(room: Room): RoundView | null {
 
   return {
     roundNumber: round.roundNumber,
+    phase: round.phase,
     currentTurnPlayerId,
     deckSize: round.deck.length,
     discardSize: round.discard.length,

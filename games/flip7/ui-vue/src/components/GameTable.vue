@@ -27,6 +27,7 @@ const playerMap = computed(() => {
 
 const showHitStay = computed(
   () =>
+    round.value?.phase === 'playing' &&
     store.isMyTurn &&
     !store.hasPendingActionToResolve &&
     round.value?.pendingAction === null &&
@@ -34,8 +35,16 @@ const showHitStay = computed(
     (store.myRoundPlayer?.flipThreeRemaining ?? 0) === 0
 );
 
+const canStay = computed(() => {
+  const rp = store.myRoundPlayer;
+  if (!rp) return false;
+  // Must hit with 0 cards — a completely empty hand cannot stay
+  return rp.numberCards.length > 0 || rp.modifierAdds.length > 0 || rp.hasX2;
+});
+
 const showFlipThreePrompt = computed(
   () =>
+    round.value?.phase === 'playing' &&
     store.isMyTurn &&
     !store.hasPendingActionToResolve &&
     (store.myRoundPlayer?.flipThreeRemaining ?? 0) > 0
@@ -111,7 +120,7 @@ const currentTurnPlayerName = computed(() => {
 
     <!-- Hit / Stay controls (your turn, normal) -->
     <div v-if="showHitStay" class="mt-auto">
-      <HitStayControls @hit="emit('hit')" @stay="emit('stay')" />
+      <HitStayControls :can-stay="canStay" @hit="emit('hit')" @stay="emit('stay')" />
     </div>
 
     <!-- Flip Three forced-draw notice -->
@@ -140,8 +149,12 @@ const currentTurnPlayerName = computed(() => {
       @choose-target="(id) => emit('choose-target', id)"
     />
 
-    <!-- Card draw toast (personal) -->
-    <CardDrawToast v-if="store.drawnCard" :card="store.drawnCard" />
+    <!-- Card draw toast (personal + other players) -->
+    <CardDrawToast
+      v-if="store.drawnCard"
+      :card="store.drawnCard"
+      :drawer-name="store.drawnCardDrawerName"
+    />
 
     <!-- Action announcement (all players) -->
     <ActionAnnouncement v-if="store.actionAnnouncement" :announcement="store.actionAnnouncement" />

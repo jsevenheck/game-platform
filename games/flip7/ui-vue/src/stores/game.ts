@@ -27,6 +27,8 @@ export const useGameStore = defineStore('flip7-game', {
     playerName: '',
     resumeToken: '',
     drawnCard: null as DrawnCardInfo | null,
+    /** null = local player drew the card; string = another player's display name */
+    drawnCardDrawerName: null as string | null,
     actionAnnouncement: null as ActionAnnouncement | null,
   }),
   getters: {
@@ -76,13 +78,15 @@ export const useGameStore = defineStore('flip7-game', {
         return null;
       }
     },
-    setDrawnCard(card: DrawnCardInfo) {
+    setDrawnCard(card: DrawnCardInfo, drawerName: string | null = null) {
       if (_drawnCardTimer) clearTimeout(_drawnCardTimer);
       this.drawnCard = card;
+      this.drawnCardDrawerName = drawerName;
       _drawnCardTimer = setTimeout(() => {
         this.drawnCard = null;
+        this.drawnCardDrawerName = null;
         _drawnCardTimer = null;
-      }, 1700);
+      }, 2700);
     },
     setActionAnnouncement(ann: ActionAnnouncement) {
       if (_announcementTimer) clearTimeout(_announcementTimer);
