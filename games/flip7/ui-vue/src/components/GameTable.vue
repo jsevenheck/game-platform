@@ -152,6 +152,7 @@ const currentTurnPlayerName = computed(() => {
     <!-- Card draw toast (personal + other players) -->
     <CardDrawToast
       v-if="store.drawnCard"
+      :key="store.drawnCardKey"
       :card="store.drawnCard"
       :drawer-name="store.drawnCardDrawerName"
     />

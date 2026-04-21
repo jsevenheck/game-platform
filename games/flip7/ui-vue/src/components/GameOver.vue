@@ -1,10 +1,31 @@
 <script setup lang="ts">
-import { computed } from 'vue';
+import { computed, ref, onMounted, onBeforeUnmount } from 'vue';
 import { useGameStore } from '../stores/game';
 
 const emit = defineEmits<{ 'play-again': [] }>();
 
 const store = useGameStore();
+
+// Delay action controls so players can absorb the final scoreboard first.
+// Matches the GAME_OVER_OVERVIEW_MS delay in App.vue that holds off the
+// platform overlay (PlatformAdapter replay/lobby buttons).
+const CONTROLS_DELAY_MS = 4000;
+const showControls = ref(false);
+let controlsTimer: ReturnType<typeof setTimeout> | null = null;
+
+onMounted(() => {
+  controlsTimer = setTimeout(() => {
+    showControls.value = true;
+    controlsTimer = null;
+  }, CONTROLS_DELAY_MS);
+});
+
+onBeforeUnmount(() => {
+  if (controlsTimer) {
+    clearTimeout(controlsTimer);
+    controlsTimer = null;
+  }
+});
 
 const winners = computed(
   () =>
@@ -57,9 +78,12 @@ const sortedPlayers = computed(() =>
 
     <!-- Play again (host only) — the PlatformAdapter shows its own overlay, but
          we also show a local button for reconnect scenarios or direct usage -->
-    <button v-if="store.isHost" class="ui-btn-ghost" type="button" @click="emit('play-again')">
-      Play Again
-    </button>
-    <p v-else class="text-sm text-muted-foreground">Waiting for host…</p>
+    <template v-if="showControls">
+      <button v-if="store.isHost" class="ui-btn-ghost" type="button" @click="emit('play-again')">
+        Play Again
+      </button>
+      <p v-else class="text-sm text-muted-foreground">Waiting for host…</p>
+    </template>
+    <p v-else class="animate-pulse text-sm text-muted-foreground">Reviewing scores…</p>
   </div>
 </template>

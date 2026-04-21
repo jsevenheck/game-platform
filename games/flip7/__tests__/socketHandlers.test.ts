@@ -256,4 +256,32 @@ describe('registerFlip7 — startGame', () => {
 
     expect(cb).toHaveBeenCalledWith({ ok: false, error: 'Only host can start' });
   });
+
+  it('rejects startGame with fewer than 3 players', () => {
+    const ns = makeNamespace();
+    const io = makeIo(ns.nsp);
+    registerFlip7(io as never, '/g/flip7');
+
+    const socket = makeSocket('socket-host');
+    ns.connect(socket);
+
+    // Room with only 2 players
+    const room = makeRoom('ABCD', 'player-host', 'socket-host');
+    room.players['p2'] = {
+      ...room.players['player-host'],
+      id: 'p2',
+      name: 'Bob',
+      socketId: 'socket-p2',
+      isHost: false,
+    };
+    (getRoom as Mock).mockReturnValue(room);
+    setSocketIndex('socket-host', 'ABCD', 'player-host');
+
+    const cb = vi.fn();
+    socket.handlers['startGame']?.({ roomCode: 'ABCD' }, cb);
+
+    expect(cb).toHaveBeenCalledWith({ ok: false, error: 'Need at least 3 players' });
+
+    deleteSocketIndex('socket-host');
+  });
 });

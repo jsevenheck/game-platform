@@ -37,19 +37,6 @@ Error strings:
 
 ---
 
-### `setTargetScore(data)`
-
-Host only. Lobby only. Clamps value to `[MIN_TARGET_SCORE, MAX_TARGET_SCORE]` (50–500, step 25).
-
-```ts
-{
-  roomCode: string;
-  targetScore: number;
-}
-```
-
----
-
 ### `startGame(data, cb)`
 
 Host only. Requires ≥ 3 connected players.
@@ -93,6 +80,7 @@ Current-turn player banks their cards and passes. Ignored if `flipThreeRemaining
 ### `chooseActionTarget(data)`
 
 Resolves a pending action card. Must be the drawer (`pendingAction.drawerId === you`).
+For Flip 7, the eligible target list may include the drawer because self-targeting is allowed for all implemented action cards.
 
 ```ts
 {
@@ -141,7 +129,7 @@ interface RoomView {
   ownerId: string | null;
   phase: 'lobby' | 'playing' | 'roundEnd' | 'ended';
   players: PlayerView[]; // all players, ordered by join time
-  targetScore: number;
+  targetScore: number; // fixed at 200 for Flip 7
   currentRound: RoundView | null;
   roundHistory: RoundHistoryEntry[];
   winnerIds: string[];

@@ -35,9 +35,11 @@
      - `action` → `openPendingAction`; auto-resolves when only one eligible target
    - **stay** → `playerStay` sets status `stayed`, advance turn
 3. Pending action: drawer calls `chooseActionTarget`. Server validates and resolves:
+   - All implemented action cards may target any `active` player, including the drawer.
+   - If the drawer is the only active player left, the action auto-resolves on that player.
    - `freeze` → target status = `stayed`
    - `flipThree` → target gets 3 forced draws (they emit `hit` for each); current turn switches to target
-   - `secondChance` → target gains the bust-protection token (or advance if already held)
+   - `secondChance` → target gains the bust-protection token (or advances if already held)
 4. Round ends when:
    - All players are `stayed` or `busted` (`roundEndReason = 'allDone'`)
    - A player collects 7 unique number cards (`roundEndReason = 'flip7'`) → instant end + Flip 7 bonus
@@ -55,6 +57,7 @@ score = (sum of numberCards × (hasX2 ? 2 : 1)) + sum(modifierAdds) + (isFlip7Tr
 - Busted players always score **0** regardless of held cards.
 - `x2` doubles the **number sum only**; flat modifiers and the Flip 7 bonus are added after.
 - The Flip 7 bonus (15 pts) goes only to the triggering player.
+- `targetScore` is fixed at **200** for Flip 7 and is not player-configurable.
 
 ## Deck management
 

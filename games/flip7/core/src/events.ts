@@ -32,8 +32,6 @@ export interface ClientToServerEvents {
     cb: (res: AutoJoinRoomResponse | ErrorResponse) => void
   ) => void;
 
-  setTargetScore: (data: { roomCode: string; targetScore: number }) => void;
-
   startGame: (data: { roomCode: string }, cb: (res: { ok: true } | ErrorResponse) => void) => void;
 
   hit: (data: { roomCode: string }) => void;

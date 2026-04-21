@@ -13,11 +13,11 @@ const emit = defineEmits<{
 }>();
 
 const ACTION_LABELS: Record<string, { label: string; description: string; emoji: string }> = {
-  freeze: { label: 'Freeze', description: 'Force target to Stay immediately', emoji: '🥶' },
-  flipThree: { label: 'Flip Three', description: 'Force target to draw 3 cards', emoji: '🎴' },
+  freeze: { label: 'Freeze', description: 'Force a player to Stay immediately', emoji: '🥶' },
+  flipThree: { label: 'Flip Three', description: 'Force a player to draw 3 cards', emoji: '🎴' },
   secondChance: {
     label: 'Second Chance',
-    description: 'Give target a bust protection token',
+    description: 'Give a player a bust protection token',
     emoji: '🛡️',
   },
 };

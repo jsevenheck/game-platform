@@ -32,6 +32,10 @@ const MAX_AUTO_JOIN_RETRIES = 3;
 // Timer used to delay a room-state update while a dramatic card reveal toast
 // is playing (bust / secondChance save). Cleared whenever a newer update arrives.
 let dramaticRevealTimer: ReturnType<typeof setTimeout> | null = null;
+// Timer used to delay the platform overlay (PlatformAdapter) after game-over,
+// so players can read the final scoreboard before the replay/lobby buttons appear.
+let phaseChangeTimer: ReturnType<typeof setTimeout> | null = null;
+const GAME_OVER_OVERVIEW_MS = 4000;
 // Plain snapshot of the previous round – used for draw detection.
 // Deliberately NOT a Pinia/Vue reactive reference so Socket.IO callbacks
 // always read the correct previous state without reactivity side-effects.
@@ -85,7 +89,23 @@ function commitRoomUpdate(room: RoomView) {
   embeddedError.value = '';
   autoJoinRetryCount = 0;
   clearRetryTimer();
-  emit('phase-change', room.phase);
+
+  if (room.phase === 'ended') {
+    // Delay the platform overlay so everyone can read the final scores first.
+    // Any earlier pending timer is cleared to avoid double-firing.
+    if (phaseChangeTimer) clearTimeout(phaseChangeTimer);
+    phaseChangeTimer = setTimeout(() => {
+      phaseChangeTimer = null;
+      emit('phase-change', 'ended');
+    }, GAME_OVER_OVERVIEW_MS);
+  } else {
+    // Any stale game-over timer is cancelled if the game somehow resets.
+    if (phaseChangeTimer) {
+      clearTimeout(phaseChangeTimer);
+      phaseChangeTimer = null;
+    }
+    emit('phase-change', room.phase);
+  }
 }
 
 function handleRoomUpdate(room: RoomView) {
@@ -105,6 +125,17 @@ function handleRoomUpdate(room: RoomView) {
 
   const oldPending = oldRound?.pendingAction ?? null;
   const newPending = room.currentRound?.pendingAction ?? null;
+
+  // ── Skip draw detection on round start (initial deal) ───────────────────────
+  // When the round number changes, all players receive their starting card at once.
+  // There is no single "drawer" to highlight — showing a toast here would be
+  // misleading (card appears while everyone already has theirs).
+  const oldRoundNumber = oldRound?.roundNumber ?? null;
+  const newRoundNumber = room.currentRound?.roundNumber ?? null;
+  if (newRoundNumber !== null && oldRoundNumber !== newRoundNumber) {
+    commitRoomUpdate(room);
+    return;
+  }
 
   // ── Detect drawn cards for every player (only one draws per turn) ──────────
   for (const newRp of room.currentRound?.players ?? []) {
@@ -216,10 +247,6 @@ function handleStartGame() {
   });
 }
 
-function handleSetTargetScore(targetScore: number) {
-  socket.emit('setTargetScore', { roomCode: store.roomCode, targetScore });
-}
-
 function handleHit() {
   socket.emit('hit', { roomCode: store.roomCode });
 }
@@ -289,6 +316,10 @@ onBeforeUnmount(() => {
     clearTimeout(dramaticRevealTimer);
     dramaticRevealTimer = null;
   }
+  if (phaseChangeTimer !== null) {
+    clearTimeout(phaseChangeTimer);
+    phaseChangeTimer = null;
+  }
   socket?.off('roomUpdate', handleRoomUpdate);
   socket?.off('actionResolved', handleActionResolved);
   socket?.off('connect', handleConnect);
@@ -316,11 +347,7 @@ onBeforeUnmount(() => {
     </template>
 
     <!-- Lobby -->
-    <Lobby
-      v-else-if="store.phase === 'lobby'"
-      @start-game="handleStartGame"
-      @set-target-score="handleSetTargetScore"
-    />
+    <Lobby v-else-if="store.phase === 'lobby'" @start-game="handleStartGame" />
 
     <!-- Active game -->
     <GameTable

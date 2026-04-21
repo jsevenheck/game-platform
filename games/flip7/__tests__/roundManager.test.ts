@@ -262,7 +262,7 @@ describe('Action cards', () => {
   it('freeze auto-targets self when only active player', () => {
     const room = makeRoom(['p1', 'p2', 'p3']);
     startRoundReady(room);
-    // Bust or stay all other players
+    // Make p1 the sole active player
     room.currentRound!.players['p2'].status = 'busted';
     room.currentRound!.players['p3'].status = 'stayed';
     injectDeck(room, [{ kind: 'action', action: 'freeze' }]);
@@ -270,12 +270,12 @@ describe('Action cards', () => {
     room.currentRound!.currentTurnIndex = room.currentRound!.turnOrder.indexOf('p1');
     playerHit(room, 'p1');
 
-    // Freeze allows self-targeting → auto-resolves on p1 → p1 becomes stayed
+    // Auto-resolves on p1 (only eligible target) → p1 becomes stayed
     expect(room.currentRound!.pendingAction).toBeNull();
     expect(room.currentRound!.players['p1'].status).toBe('stayed');
   });
 
-  it('secondChance is discarded when no valid target (cannot self-target)', () => {
+  it('secondChance auto-targets self when only active player', () => {
     const room = makeRoom(['p1', 'p2', 'p3']);
     startRoundReady(room);
     room.currentRound!.players['p2'].status = 'busted';
@@ -285,9 +285,61 @@ describe('Action cards', () => {
     room.currentRound!.currentTurnIndex = room.currentRound!.turnOrder.indexOf('p1');
     playerHit(room, 'p1');
 
-    // Second Chance cannot self-target → discarded with no effect
+    // Official rules: self-targeting allowed → auto-resolves on self
     expect(room.currentRound!.pendingAction).toBeNull();
-    expect(room.currentRound!.players['p1'].hasSecondChance).toBe(false);
+    expect(room.currentRound!.players['p1'].hasSecondChance).toBe(true);
+  });
+
+  it('flipThree auto-targets self when only active player', () => {
+    const room = makeRoom(['p1', 'p2', 'p3']);
+    startRoundReady(room);
+    room.currentRound!.players['p2'].status = 'busted';
+    room.currentRound!.players['p3'].status = 'stayed';
+    injectDeck(room, [{ kind: 'action', action: 'flipThree' }]);
+
+    room.currentRound!.currentTurnIndex = room.currentRound!.turnOrder.indexOf('p1');
+    playerHit(room, 'p1');
+
+    // Official rules: self-targeting allowed → auto-resolves on self
+    expect(room.currentRound!.pendingAction).toBeNull();
+    expect(room.currentRound!.players['p1'].flipThreeRemaining).toBe(3);
+  });
+
+  it('secondChance eligible targets include the drawer (self-target allowed)', () => {
+    const room = makeRoom(['p1', 'p2', 'p3']);
+    startRoundReady(room);
+    injectDeck(room, [{ kind: 'action', action: 'secondChance' }]);
+
+    room.currentRound!.currentTurnIndex = room.currentRound!.turnOrder.indexOf('p1');
+    playerHit(room, 'p1');
+
+    // pendingAction should list p1 as eligible
+    const pa = room.currentRound!.pendingAction;
+    expect(pa).not.toBeNull();
+    expect(pa!.eligibleTargets).toContain('p1');
+
+    // p1 chooses themselves
+    chooseActionTarget(room, 'p1', 'p1');
+    expect(room.currentRound!.players['p1'].hasSecondChance).toBe(true);
+    expect(room.currentRound!.pendingAction).toBeNull();
+  });
+
+  it('flipThree eligible targets include the drawer (self-target allowed)', () => {
+    const room = makeRoom(['p1', 'p2', 'p3']);
+    startRoundReady(room);
+    injectDeck(room, [{ kind: 'action', action: 'flipThree' }]);
+
+    room.currentRound!.currentTurnIndex = room.currentRound!.turnOrder.indexOf('p1');
+    playerHit(room, 'p1');
+
+    const pa = room.currentRound!.pendingAction;
+    expect(pa).not.toBeNull();
+    expect(pa!.eligibleTargets).toContain('p1');
+
+    // p1 chooses themselves
+    chooseActionTarget(room, 'p1', 'p1');
+    expect(room.currentRound!.players['p1'].flipThreeRemaining).toBe(3);
+    expect(room.currentRound!.pendingAction).toBeNull();
   });
 });
 

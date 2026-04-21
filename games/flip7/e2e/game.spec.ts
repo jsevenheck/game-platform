@@ -68,7 +68,7 @@ test.describe('Flip 7 via Platform', () => {
     await ctx3.close();
   });
 
-  test('host can adjust target score in lobby', async ({ browser }) => {
+  test('lobby shows fixed 200-point target score', async ({ browser }) => {
     const ctx1 = await browser.newContext();
     const ctx2 = await browser.newContext();
     const ctx3 = await browser.newContext();
@@ -86,13 +86,11 @@ test.describe('Flip 7 via Platform', () => {
       timeout: 10_000,
     });
 
-    // Default target is 200 — host clicks + stepper to increase
+    // Target score is fixed at 200 — no stepper controls visible
     await expect(page1.getByText('200', { exact: true })).toBeVisible();
-    await page1.getByRole('button', { name: '+' }).click();
-    await expect(page1.getByText('225', { exact: true })).toBeVisible();
-
-    // Non-host sees updated target
-    await expect(page2.getByText('225', { exact: true })).toBeVisible({ timeout: 5_000 });
+    await expect(page1.getByText('Fixed per official rules')).toBeVisible();
+    await expect(page1.getByRole('button', { name: '+' })).not.toBeVisible();
+    await expect(page1.getByRole('button', { name: '\u2212' })).not.toBeVisible();
 
     await ctx1.close();
     await ctx2.close();

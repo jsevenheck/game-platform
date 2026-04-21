@@ -29,6 +29,11 @@ export const useGameStore = defineStore('flip7-game', {
     drawnCard: null as DrawnCardInfo | null,
     /** null = local player drew the card; string = another player's display name */
     drawnCardDrawerName: null as string | null,
+    /** Increments on every new draw — used as :key on CardDrawToast to force
+     *  component remount and restart the CSS animation even when a previous
+     *  toast is still visible (e.g. action-card toast still playing when the
+     *  next number card is drawn). */
+    drawnCardKey: 0,
     actionAnnouncement: null as ActionAnnouncement | null,
   }),
   getters: {
@@ -80,6 +85,7 @@ export const useGameStore = defineStore('flip7-game', {
     },
     setDrawnCard(card: DrawnCardInfo, drawerName: string | null = null) {
       if (_drawnCardTimer) clearTimeout(_drawnCardTimer);
+      this.drawnCardKey++;
       this.drawnCard = card;
       this.drawnCardDrawerName = drawerName;
       _drawnCardTimer = setTimeout(() => {

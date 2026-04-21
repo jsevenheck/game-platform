@@ -1,10 +1,7 @@
-export const MIN_PLAYERS = 2;
-export const MAX_PLAYERS = 8;
+export const MIN_PLAYERS = 3;
+export const MAX_PLAYERS = 18;
 
 export const DEFAULT_TARGET_SCORE = 200;
-export const MIN_TARGET_SCORE = 50;
-export const MAX_TARGET_SCORE = 500;
-export const TARGET_SCORE_STEP = 25;
 
 export const FLIP7_BONUS = 15;
 export const FLIP7_CARD_COUNT = 7;

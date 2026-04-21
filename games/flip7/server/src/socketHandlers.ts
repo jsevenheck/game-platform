@@ -16,8 +16,6 @@ import {
 } from '../../../../apps/platform/server/observability/socketNamespaceMetrics';
 import {
   MIN_PLAYERS,
-  MAX_TARGET_SCORE,
-  MIN_TARGET_SCORE,
   ROUND_END_DISPLAY_MS,
   ROOM_IDLE_TIMEOUT_MS,
   ROOM_ENDED_CLEANUP_MS,
@@ -283,17 +281,6 @@ export function registerFlip7(io: Server, namespace = '/g/flip7'): void {
         instrumentation.finishError();
         throw err;
       }
-    });
-
-    // ── setTargetScore ────────────────────────────────────────────────────────
-    socket.on('setTargetScore', (data) => {
-      const room = getRoom(data.roomCode);
-      if (!room || room.phase !== 'lobby') return;
-      if (!verifyIsHost(socket, room)) return;
-
-      const clamped = Math.min(MAX_TARGET_SCORE, Math.max(MIN_TARGET_SCORE, data.targetScore));
-      room.targetScore = clamped;
-      broadcastRoom(nsp, room);
     });
 
     // ── startGame ─────────────────────────────────────────────────────────────

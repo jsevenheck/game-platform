@@ -1,30 +1,12 @@
 <script setup lang="ts">
+import { MIN_PLAYERS, DEFAULT_TARGET_SCORE } from '@shared/constants';
 import { useGameStore } from '../stores/game';
-import {
-  MIN_TARGET_SCORE,
-  MAX_TARGET_SCORE,
-  TARGET_SCORE_STEP,
-  MIN_PLAYERS,
-} from '@shared/constants';
 
 const emit = defineEmits<{
   'start-game': [];
-  'set-target-score': [score: number];
 }>();
 
 const store = useGameStore();
-
-function decreaseTarget() {
-  if (!store.room) return;
-  const next = store.room.targetScore - TARGET_SCORE_STEP;
-  if (next >= MIN_TARGET_SCORE) emit('set-target-score', next);
-}
-
-function increaseTarget() {
-  if (!store.room) return;
-  const next = store.room.targetScore + TARGET_SCORE_STEP;
-  if (next <= MAX_TARGET_SCORE) emit('set-target-score', next);
-}
 </script>
 
 <template>
@@ -36,7 +18,7 @@ function increaseTarget() {
         <h1 class="text-3xl font-bold text-flip7">Flip 7</h1>
       </div>
       <p class="text-sm text-muted-foreground">
-        Push your luck — be the first to {{ store.room?.targetScore ?? 200 }} points
+        Push your luck — first to {{ DEFAULT_TARGET_SCORE }} points wins
       </p>
     </div>
 
@@ -58,31 +40,11 @@ function increaseTarget() {
       </ul>
     </div>
 
-    <!-- Target score (host only) -->
-    <div v-if="store.isHost" class="ui-panel w-full max-w-md">
-      <p class="ui-section-label mb-3">Target Score</p>
-      <div class="flex items-center justify-between gap-4">
-        <button
-          class="ui-stepper-btn"
-          type="button"
-          :disabled="(store.room?.targetScore ?? MIN_TARGET_SCORE) <= MIN_TARGET_SCORE"
-          @click="decreaseTarget"
-        >
-          −
-        </button>
-        <span class="text-2xl font-bold text-foreground">{{ store.room?.targetScore ?? 200 }}</span>
-        <button
-          class="ui-stepper-btn"
-          type="button"
-          :disabled="(store.room?.targetScore ?? MAX_TARGET_SCORE) >= MAX_TARGET_SCORE"
-          @click="increaseTarget"
-        >
-          +
-        </button>
-      </div>
-    </div>
-    <div v-else class="text-sm text-muted-foreground">
-      Target: <strong class="text-foreground">{{ store.room?.targetScore ?? 200 }}</strong> points
+    <!-- Fixed target score (visible to all) -->
+    <div class="ui-panel w-full max-w-md">
+      <p class="ui-section-label mb-2">Target Score</p>
+      <p class="text-center text-2xl font-bold text-foreground">{{ DEFAULT_TARGET_SCORE }}</p>
+      <p class="mt-1 text-center text-xs text-muted-foreground">Fixed per official rules</p>
     </div>
 
     <!-- Start (host only) -->

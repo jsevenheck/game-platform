@@ -311,9 +311,8 @@ function applyNumberCard(room: Room, playerId: string, card: NumberCard): void {
 /**
  * Open a pending action state.
  *
- * Fix 5: Freeze allows self-targeting. Flip Three and Second Chance cannot
- * target the drawer. If no valid target exists for Flip Three / Second Chance
- * the card is simply discarded.
+ * All implemented action types allow self-targeting per the official rules.
+ * If only one active player exists, the action auto-resolves on that player.
  */
 function openPendingAction(
   room: Room,
@@ -324,18 +323,12 @@ function openPendingAction(
   const round = room.currentRound!;
   round.discard.push(drawnCard);
 
-  const otherActive = getActivePlayers(round).filter((id) => id !== drawerId);
+  // All action types allow self-targeting per official rules — eligible list is
+  // every currently active player (which always includes the drawer).
+  const eligible = getActivePlayers(round);
 
-  let eligible: string[];
-  if (action === 'freeze') {
-    // Freeze: self-targeting allowed per official rules
-    eligible = [drawerId, ...otherActive];
-  } else {
-    // Flip Three and Second Chance: cannot target yourself
-    eligible = otherActive;
-  }
-
-  // No valid targets → discard without effect
+  // No valid targets → discard without effect (safety guard; should not occur
+  // in normal gameplay since the drawer is always active).
   if (eligible.length === 0) {
     advanceTurnOrFinalize(room);
     return;
