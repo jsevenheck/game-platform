@@ -51,9 +51,23 @@ export const secretSignalsProject = {
   },
 };
 
+export const flip7Project = {
+  resolve: {
+    alias: [{ find: '@shared', replacement: resolve(GAMES_ROOT, 'flip7/core/src') }],
+  },
+  test: {
+    name: 'flip7',
+    include: ['games/flip7/__tests__/**/*.test.ts'],
+    environment: 'node',
+    globals: true,
+    clearMocks: true,
+  },
+};
+
 export const allProjects = [
   platformProject,
   blackoutProject,
   imposterProject,
   secretSignalsProject,
+  flip7Project,
 ];

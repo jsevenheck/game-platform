@@ -257,7 +257,6 @@ This keeps the `platform_socket_connections_open` gauge and the `platform_socket
 
 ---
 
-
 ### `ui-vue/src/App.vue`
 
 The game's root component. It is always launched by `PlatformAdapter.vue` and connects to the game's Socket.IO namespace:

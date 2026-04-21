@@ -61,12 +61,29 @@ const secretSignalsModule: GameServerModule = {
   cleanupMatch: secretSignalsCleanup,
 };
 
+// ─── Flip 7 ───────────────────────────────────────────────────────────────────
+
+import {
+  definition as flip7Def,
+  register as flip7Register,
+  cleanupMatch as flip7Cleanup,
+} from '../../../../games/flip7/server/src/index';
+
+const flip7Module: GameServerModule = {
+  definition: flip7Def,
+  registerServer(io: Server, namespacePath: string) {
+    flip7Register(io, namespacePath);
+  },
+  cleanupMatch: flip7Cleanup,
+};
+
 // ─── Registry ─────────────────────────────────────────────────────────────────
 
 export const gameRegistry = new Map<string, GameServerModule>([
   ['blackout', blackoutModule],
   ['imposter', imposterModule],
   ['secret-signals', secretSignalsModule],
+  ['flip7', flip7Module],
 ]);
 
 export function getGame(gameId: string): GameServerModule | undefined {

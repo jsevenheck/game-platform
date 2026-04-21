@@ -38,6 +38,15 @@ export const clientGameRegistry: PlatformGameModule[] = [
     },
     loadClient: () => import('@secret-signals-ui/PlatformAdapter.vue'),
   },
+  {
+    definition: {
+      id: 'flip7',
+      name: 'Flip 7',
+      minPlayers: 3,
+      maxPlayers: 18,
+    },
+    loadClient: () => import('@flip7-ui/PlatformAdapter.vue'),
+  },
 ];
 
 export function getClientGame(gameId: string): PlatformGameModule | undefined {

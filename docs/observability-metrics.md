@@ -29,34 +29,34 @@ Metric names use the `platform_` prefix and Prometheus naming conventions (`_tot
 
 ### Socket and connection health
 
-| Metric                                          | Type      | Labels                                              | Description                                                                            |
-| ----------------------------------------------- | --------- | --------------------------------------------------- | -------------------------------------------------------------------------------------- |
-| `platform_socket_connections_open`              | Gauge     | `namespace`, `game_id`                              | Current open Socket.IO connections by namespace (`/party`, `/g/blackout`, etc.).        |
-| `platform_engine_connections`                   | Gauge     | _none_                                              | Current number of active Socket.IO engine connections (all namespaces combined).        |
-| `platform_socket_events_total`                  | Counter   | `namespace`, `event`, `game_id`, `result`, `reason` | Total explicitly recorded namespace-level socket events with outcome labels.           |
-| `platform_event_latency_seconds`                | Histogram | `namespace`, `event`, `game_id`, `result`, `reason` | Latency for explicitly recorded namespace-level socket events.                         |
-| `platform_socket_handler_total`                 | Counter   | `namespace`, `event`, `result`                      | Total socket handler invocations by outcome (`ok`, `rejected`, `failed`).             |
-| `platform_socket_handler_duration_seconds`      | Histogram | `namespace`, `event`, `result`                      | Socket handler execution duration in seconds by outcome.                               |
+| Metric                                     | Type      | Labels                                              | Description                                                                      |
+| ------------------------------------------ | --------- | --------------------------------------------------- | -------------------------------------------------------------------------------- |
+| `platform_socket_connections_open`         | Gauge     | `namespace`, `game_id`                              | Current open Socket.IO connections by namespace (`/party`, `/g/blackout`, etc.). |
+| `platform_engine_connections`              | Gauge     | _none_                                              | Current number of active Socket.IO engine connections (all namespaces combined). |
+| `platform_socket_events_total`             | Counter   | `namespace`, `event`, `game_id`, `result`, `reason` | Total explicitly recorded namespace-level socket events with outcome labels.     |
+| `platform_event_latency_seconds`           | Histogram | `namespace`, `event`, `game_id`, `result`, `reason` | Latency for explicitly recorded namespace-level socket events.                   |
+| `platform_socket_handler_total`            | Counter   | `namespace`, `event`, `result`                      | Total socket handler invocations by outcome (`ok`, `rejected`, `failed`).        |
+| `platform_socket_handler_duration_seconds` | Histogram | `namespace`, `event`, `result`                      | Socket handler execution duration in seconds by outcome.                         |
 
 ### Party lifecycle
 
-| Metric                              | Type    | Labels                      | Description                                                                                                                                                |
-| ----------------------------------- | ------- | --------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `platform_parties_active`           | Gauge   | _none_                      | Current number of active parties in memory.                                                                                                                |
-| `platform_party_members_connected`  | Gauge   | _none_                      | Current number of connected party members.                                                                                                                 |
-| `platform_party_lifecycle_total`    | Counter | `event`, `result`, `reason` | Unified party lifecycle counter. `event` values include `createParty`, `joinParty`, `resumeParty`, `launchGame`, `returnToLobby`, `selectGame`, and others. |
+| Metric                             | Type    | Labels                      | Description                                                                                                                                                 |
+| ---------------------------------- | ------- | --------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `platform_parties_active`          | Gauge   | _none_                      | Current number of active parties in memory.                                                                                                                 |
+| `platform_party_members_connected` | Gauge   | _none_                      | Current number of connected party members.                                                                                                                  |
+| `platform_party_lifecycle_total`   | Counter | `event`, `result`, `reason` | Unified party lifecycle counter. `event` values include `createParty`, `joinParty`, `resumeParty`, `launchGame`, `returnToLobby`, `selectGame`, and others. |
 
 ### Match/game lifecycle
 
-| Metric                              | Type  | Labels    | Description                                      |
-| ----------------------------------- | ----- | --------- | ------------------------------------------------ |
-| `platform_match_active`             | Gauge | `game_id` | Current number of active game rooms by game.     |
-| `platform_room_players_connected`   | Gauge | `game_id` | Current connected room players by game.          |
+| Metric                            | Type  | Labels    | Description                                  |
+| --------------------------------- | ----- | --------- | -------------------------------------------- |
+| `platform_match_active`           | Gauge | `game_id` | Current number of active game rooms by game. |
+| `platform_room_players_connected` | Gauge | `game_id` | Current connected room players by game.      |
 
 ### Scrape health
 
-| Metric                          | Type    | Labels   | Description                                                   |
-| ------------------------------- | ------- | -------- | ------------------------------------------------------------- |
+| Metric                          | Type    | Labels   | Description                                                                          |
+| ------------------------------- | ------- | -------- | ------------------------------------------------------------------------------------ |
 | `platform_metrics_scrape_total` | Counter | `result` | Self-observation counter for the `/metrics` handler (`ok`, `unauthorized`, `error`). |
 
 ## Label cardinality rules

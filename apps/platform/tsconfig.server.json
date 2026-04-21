@@ -9,7 +9,8 @@
     "paths": {
       "@blackout/*": ["../../games/blackout/*"],
       "@imposter/*": ["../../games/imposter/*"],
-      "@secret-signals/*": ["../../games/secret-signals/*"]
+      "@secret-signals/*": ["../../games/secret-signals/*"],
+      "@flip7/*": ["../../games/flip7/*"]
     }
   },
   "include": [
@@ -19,6 +20,8 @@
     "../../games/imposter/server/src/**/*",
     "../../games/imposter/core/src/**/*",
     "../../games/secret-signals/server/src/**/*",
-    "../../games/secret-signals/core/src/**/*"
+    "../../games/secret-signals/core/src/**/*",
+    "../../games/flip7/server/src/**/*",
+    "../../games/flip7/core/src/**/*"
   ]
 }
