@@ -2,13 +2,14 @@
 
 ## What this is
 
-A single pnpm workspace monorepo. One platform app, three integrated games.
+A single pnpm workspace monorepo. One platform app, four integrated games.
 
 ```text
-apps/platform/   <- the only production app (Express + Socket.IO server, Vue 3 client)
-games/blackout/  <- internal platform module (no standalone runtime)
-games/imposter/  <- internal platform module
+apps/platform/       <- the only production app (Express + Socket.IO server, Vue 3 client)
+games/blackout/      <- internal platform module (no standalone runtime)
+games/imposter/      <- internal platform module
 games/secret-signals/ <- internal platform module
+games/flip7/         <- internal platform module
 ```
 
 ## Key facts
@@ -43,7 +44,7 @@ Custom skills live in `.agents/skills/`.
 ```bash
 pnpm install        # install all dependencies
 pnpm dev            # start platform (server + client)
-pnpm test           # run all unit tests (vitest, all 3 games)
+pnpm test           # run all unit tests (vitest, all 4 games)
 pnpm lint           # eslint across all source
 pnpm format         # prettier across all source
 pnpm typecheck      # tsc via apps/platform

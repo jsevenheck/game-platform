@@ -7,7 +7,6 @@ function matches(input: string, patterns: RegExp[]): boolean {
   return patterns.some((re) => re.test(input));
 }
 
-/** Gibt true zurück wenn `absPath` innerhalb von `rootDir` liegt */
 function isInsideRoot(absPath: string, rootDir: string): boolean {
   const rel = relative(rootDir, absPath);
   return !rel.startsWith("..") && !rel.startsWith("/");
@@ -34,16 +33,33 @@ const WRITE_DENY = [
 ];
 
 const WRITE_ALLOW = [
+  // Web / App
   /\.ts$/,
   /\.tsx$/,
   /\.vue$/,
   /\.js$/,
-  /\.cds$/,
+  /\.mjs$/,
+  /\.cjs$/,
   /\.json$/,
   /\.md$/,
   /\.css$/,
   /\.html$/,
-  /\.mjs$/,
+  // CI/CD & Build
+  /\.yml$/,
+  /\.yaml$/,
+  /^Dockerfile$/i,
+  /\.dockerfile$/i,
+  /^\.dockerignore$/,
+  /^docker-compose[^/]*\.ya?ml$/,
+  /^\.github\//,          // GitHub Actions workflows
+  /^\.gitlab-ci\.yml$/,
+  /^\.gitignore$/,
+  /^\.npmrc$/,
+  /^\.nvmrc$/,
+  /^\.node-version$/,
+  /Makefile$/,
+  /\.sh$/,
+  /\.env\.example$/,      // .env.example erlaubt, echte .env geblockt via WRITE_DENY
 ];
 
 // ─── Bash-Richtlinien ─────────────────────────────────────────────────────────
@@ -88,10 +104,8 @@ export default function (pi: ExtensionAPI) {
       const rawPath = String(input?.path ?? "");
       if (!rawPath) return;
 
-      // Absoluten Pfad auflösen (relativ zum Projektverzeichnis)
       const absPath = resolve(projectRoot, rawPath);
 
-      // CWD-Grenze: kein Zugriff außerhalb des Projektverzeichnisses
       if (!isInsideRoot(absPath, projectRoot)) {
         return {
           block: true,
@@ -110,7 +124,7 @@ export default function (pi: ExtensionAPI) {
         if (!matches(absPath, WRITE_ALLOW)) {
           return {
             block: true,
-            reason: `Write/Edit blocked (unsupported type): ${absPath} — erlaubt: .ts .tsx .vue .js .cds .json .md .css .html`,
+            reason: `Write/Edit blocked (unsupported type): ${absPath} — erlaubt: .ts .tsx .vue .js .mjs .cjs .json .md .css .html .yml .yaml Dockerfile .sh .gitignore .npmrc`,
           };
         }
       }

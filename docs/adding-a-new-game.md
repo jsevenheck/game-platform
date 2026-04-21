@@ -392,6 +392,7 @@ export const gameRegistry = new Map<string, GameServerModule>([
   ['blackout', blackoutModule],
   ['imposter', imposterModule],
   ['secret-signals', secretSignalsModule],
+  ['flip7', flip7Module],
   ['quiz-rush', quizRushModule], // ← add this
 ]);
 ```
@@ -444,6 +445,8 @@ function sharedAliasPlugin(): Plugin {
         baseDir = resolve(GAMES_ROOT, 'imposter/core/src');
       } else if (normalized.includes('/games/secret-signals/')) {
         baseDir = resolve(GAMES_ROOT, 'secret-signals/core/src');
+      } else if (normalized.includes('/games/flip7/')) {
+        baseDir = resolve(GAMES_ROOT, 'flip7/core/src');
       } else if (normalized.includes('/games/quiz-rush/')) {
         baseDir = resolve(GAMES_ROOT, 'quiz-rush/core/src'); // ← add this branch
       }
@@ -481,6 +484,20 @@ This makes `bg-quiz-rush`, `text-quiz-rush`, `border-quiz-rush`, etc. available.
 
 The workspace is already configured via the glob `'games/*'` in `pnpm-workspace.yaml`, so no changes are needed.
 
+### 5f. Dockerfile
+
+Edit the root `Dockerfile` and add your game's `package.json` to the manifest-copy layer **before** `RUN pnpm install`. This is required so `pnpm install --frozen-lockfile` can resolve the workspace package (the lockfile always references every workspace member):
+
+```dockerfile
+COPY games/blackout/package.json games/blackout/
+COPY games/imposter/package.json games/imposter/
+COPY games/secret-signals/package.json games/secret-signals/
+COPY games/flip7/package.json games/flip7/
+COPY games/quiz-rush/package.json games/quiz-rush/  # ← add this
+```
+
+> **Why:** Docker builds the manifest layer before copying source. If the directory is missing at `pnpm install` time, pnpm will abort with `ERR_PNPM_ABORTED_REMOVE_MODULES_DIR` or a workspace resolution error even though the lockfile was generated with the package present.
+
 ---
 
 ## Step 6 — Design System
@@ -495,7 +512,7 @@ Use the platform's design tokens and shared component classes. Do not define cus
 | Text         | `foreground`, `muted`, `muted-foreground`                   |
 | Borders      | `border`, `border-strong`, `ring`                           |
 | Platform     | `accent` (orange `#f97316`)                                 |
-| Game accents | `blackout` (violet), `imposter` (crimson), `signals` (cyan) |
+| Game accents | `blackout` (violet), `imposter` (crimson), `signals` (cyan), `flip7` (teal) |
 | Semantic     | `danger`, `success`, `warning` (+ `-muted` variants)        |
 
 Use `bg-canvas`, `text-foreground`, `border-border`, etc. directly in your templates.
@@ -558,6 +575,7 @@ export const allProjects = [
   blackoutProject,
   imposterProject,
   secretSignalsProject,
+  flip7Project,
   quizRushProject, // ← add this
 ];
 ```
@@ -632,6 +650,7 @@ The Playwright config passes `E2E_TESTS=1` to the server automatically.
 - [ ] `apps/platform/src/games/index.ts` — client module registered
 - [ ] `apps/platform/vite.config.ts` — UI alias + `@shared` plugin entry added
 - [ ] `apps/platform/src/styles/main.css` — `@source` directive + accent color token added
+- [ ] `Dockerfile` — `COPY games/{id}/package.json games/{id}/` added to manifest layer
 - [ ] `vitest.projects.ts` — test project added
 - [ ] `pnpm install` — no errors
 - [ ] `pnpm lint` — passes

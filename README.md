@@ -113,6 +113,7 @@ pnpm test                 # run all unit tests (Vitest, all 3 game projects)
 pnpm test:blackout        # run Blackout tests only
 pnpm test:imposter        # run Imposter tests only
 pnpm test:secret-signals  # run Secret Signals tests only
+pnpm test:flip7           # run Flip 7 tests only
 pnpm test:e2e             # run Playwright E2E tests (starts server automatically)
 
 pnpm lint                 # ESLint across all source (zero warnings)

@@ -13,6 +13,7 @@
     "test:blackout": "vitest run --project blackout",
     "test:imposter": "vitest run --project imposter",
     "test:secret-signals": "vitest run --project secret-signals",
+    "test:flip7": "vitest run --project flip7",
     "test:e2e": "playwright test",
     "lint": "eslint . --cache --max-warnings 0",
     "lint:fix": "eslint . --cache --fix",
