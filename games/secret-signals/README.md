@@ -6,7 +6,7 @@ Current game rules:
 
 - 5x5 board with unique words
 - 800 curated German board words in `server/src/data/words.ts`
-- 2 to 8 teams
+- 2 to 4 teams
 - 4 to 24 players
 - one assassin card and a neutral pool on every board
 - starting team receives one extra target card

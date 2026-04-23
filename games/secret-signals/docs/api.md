@@ -12,7 +12,7 @@ All callback-based client events return one of:
 
 Shared enums used below:
 
-- `TeamColor`: `red | blue | green | orange | purple | teal | pink | gold`
+- `TeamColor`: `red | blue | green | orange`
 - `PlayerRole`: `director | agent`
 - `AssassinPenaltyMode`: `instant-loss | elimination`
 
@@ -101,7 +101,7 @@ Behavior:
 setTeamCount(data: { roomCode: string; playerId: string; teamCount: number }, cb)
 ```
 
-Host only. Valid team counts are `2` through `8`.
+Host only. Valid team counts are `2` through `4`.
 
 Notes:
 

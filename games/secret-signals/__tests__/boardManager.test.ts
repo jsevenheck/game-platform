@@ -36,19 +36,10 @@ describe('boardManager', () => {
     expect(counts['neutral']).toBe(8);
   });
 
-  test('card distribution for 5 teams keeps one extra card for the starter', () => {
-    const { board } = generateBoard(5, ['red', 'blue', 'green', 'orange', 'purple']);
-    const counts: Record<string, number> = {};
-    for (const card of board) {
-      counts[card.type] = (counts[card.type] ?? 0) + 1;
-    }
-    expect(counts['red']).toBe(5);
-    expect(counts['blue']).toBe(4);
-    expect(counts['green']).toBe(4);
-    expect(counts['orange']).toBe(4);
-    expect(counts['purple']).toBe(4);
-    expect(counts['assassin']).toBe(1);
-    expect(counts['neutral']).toBe(3);
+  test('rejects unsupported team counts above 4', () => {
+    expect(() => generateBoard(5, ['red', 'blue', 'green', 'orange'])).toThrow(
+      'Unsupported team count: 5'
+    );
   });
 
   test('all words are unique', () => {

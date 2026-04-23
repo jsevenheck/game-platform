@@ -1,6 +1,6 @@
 export type Phase = 'lobby' | 'playing' | 'ended';
 
-export type TeamColor = 'red' | 'blue' | 'green' | 'orange' | 'purple' | 'teal' | 'pink' | 'gold';
+export type TeamColor = 'red' | 'blue' | 'green' | 'orange';
 
 export type CardType = TeamColor | 'neutral' | 'assassin';
 

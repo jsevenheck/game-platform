@@ -13,10 +13,6 @@ export const TEAM_DEFINITIONS = [
   { color: 'blue', name: 'Blue', hex: '#3b82f6', textHex: '#ffffff' },
   { color: 'green', name: 'Green', hex: '#22c55e', textHex: '#ffffff' },
   { color: 'orange', name: 'Orange', hex: '#f97316', textHex: '#ffffff' },
-  { color: 'purple', name: 'Purple', hex: '#a855f7', textHex: '#ffffff' },
-  { color: 'teal', name: 'Teal', hex: '#14b8a6', textHex: '#ffffff' },
-  { color: 'pink', name: 'Pink', hex: '#ec4899', textHex: '#ffffff' },
-  { color: 'gold', name: 'Gold', hex: '#f59e0b', textHex: '#18181b' },
 ] as const satisfies ReadonlyArray<{
   color: TeamColor;
   name: string;

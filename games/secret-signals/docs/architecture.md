@@ -17,7 +17,7 @@ Core design rules:
 - handlers stay thin and delegate gameplay logic to managers
 - every client receives a per-player sanitized `RoomView`
 - game flow moves through explicit room and turn phases
-- gameplay scales from 2 to 8 teams on the same 5x5 board
+- gameplay scales from 2 to 4 teams on the same 5x5 board
 - assassin resolution is configurable per room: `instant-loss` or `elimination`
 - room entry is always platform-owned
 
