@@ -1,12 +1,15 @@
 # Version control
 .git
+.gitignore
+.gitattributes
 
 # Dependencies (reinstalled inside Docker)
 node_modules
 **/node_modules
+.pnpm-store
 
 # Build output (produced inside Docker)
-apps/platform/dist
+**/dist
 
 # Database files (re-seeded on first run)
 **/*.sqlite
@@ -16,20 +19,38 @@ apps/platform/dist
 # Test artifacts
 playwright-report
 test-results
+coverage
 
 # Logs
 *.log
 npm-debug.log*
+pnpm-debug.log
+
+# TypeScript incremental build cache
+*.tsbuildinfo
 
 # Environment files
 .env
 .env.local
 .env.*.local
 
+# Dev-only config (not needed at runtime)
+eslint.config.mjs
+vitest.config.ts
+vitest.projects.ts
+playwright.config.ts
+
+# Docs and meta
+docs
+*.md
+
 # IDE / OS
 .vscode
 .idea
 *.DS_Store
+Thumbs.db
+*.swp
+*.swo
 
 .agents/
 .claude/

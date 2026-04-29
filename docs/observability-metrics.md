@@ -130,7 +130,7 @@ scrape_configs:
       credentials: ${METRICS_AUTH_TOKEN}
     static_configs:
       - targets:
-          - platform:3000
+          - platform:3002
         labels:
           service: game-platform
           env: prod

@@ -32,14 +32,15 @@ FROM gcr.io/distroless/nodejs22-debian12 AS runner
 WORKDIR /app
 
 ENV NODE_ENV=production
+ENV PORT=3002
 
 COPY --from=builder /app/node_modules ./node_modules
 COPY --from=builder /app/apps/platform/dist ./apps/platform/dist
 
-EXPOSE 3000
+EXPOSE 3002
 
 HEALTHCHECK --interval=30s --timeout=5s --start-period=10s --retries=3 \
-  CMD ["/nodejs/bin/node", "-e", "require('http').get('http://localhost:3000/health', r => process.exit(r.statusCode === 200 ? 0 : 1)).on('error', () => process.exit(1))"]
+  CMD ["/nodejs/bin/node", "-e", "require('http').get('http://localhost:3002/health', r => process.exit(r.statusCode === 200 ? 0 : 1)).on('error', () => process.exit(1))"]
 
 # distroless entrypoint is /nodejs/bin/node — CMD is the script argument
 CMD ["apps/platform/dist/server/apps/platform/server/index.js"]
