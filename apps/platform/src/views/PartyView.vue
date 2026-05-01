@@ -21,6 +21,56 @@ const activeGameName = computed(() => {
   return clientGameRegistry.find((g) => g.definition.id === gameId)?.definition.name ?? gameId;
 });
 
+/* Per-game visual config */
+const defaultGameConfig = { icon: '🎮', gradFrom: '#1c1c28', gradTo: '#111118', description: '' };
+
+const gameConfig: Record<
+  string,
+  { icon: string; gradFrom: string; gradTo: string; description: string }
+> = {
+  blackout: {
+    icon: '🌑',
+    gradFrom: '#2d1b69',
+    gradTo: '#120b2e',
+    description: 'A word game of deception and darkness',
+  },
+  imposter: {
+    icon: '🕵️',
+    gradFrom: '#5a0a1e',
+    gradTo: '#1a0a10',
+    description: 'Find the imposter among you',
+  },
+  'secret-signals': {
+    icon: '📡',
+    gradFrom: '#063a4a',
+    gradTo: '#051520',
+    description: 'Decode the signals, outsmart your team',
+  },
+  flip7: {
+    icon: '🃏',
+    gradFrom: '#3d2800',
+    gradTo: '#1a1200',
+    description: 'Race to flip exactly 7 — no more, no less',
+  },
+};
+
+function getGameConfig(id: string) {
+  return gameConfig[id] ?? defaultGameConfig;
+}
+
+function avatarBg(name: string): string {
+  const palette = ['#8b5cf6', '#06b6d4', '#f97316', '#e11d48', '#22c55e', '#f59e0b', '#3b82f6'];
+  let hash = 0;
+  for (let i = 0; i < name.length; i++) {
+    hash = (hash * 31 + name.charCodeAt(i)) >>> 0;
+  }
+  return palette[hash % palette.length];
+}
+
+function avatarInitials(name: string): string {
+  return name.slice(0, 2).toUpperCase();
+}
+
 function handleSelectGame(gameId: string) {
   if (!store.isHost || !store.playerId) return;
   socket.emit('selectGame', { playerId: store.playerId, gameId }, (res) => {
@@ -125,110 +175,333 @@ onBeforeUnmount(() => {
 
 <template>
   <div class="min-h-dvh">
+    <!-- Header -->
     <header class="ui-shell-header">
-      <div class="flex flex-col">
-        <span class="text-[0.7rem] uppercase tracking-widest text-muted-foreground"
-          >Party Code</span
-        >
-        <span class="code text-lg font-extrabold tracking-[0.2em] text-accent">{{
-          store.party?.inviteCode ?? inviteCode
-        }}</span>
+      <div class="party-code-block">
+        <span class="party-code-eyebrow">Party Code</span>
+        <span class="party-code-value">{{ store.party?.inviteCode ?? inviteCode }}</span>
       </div>
-      <button
-        class="ui-btn-ghost rounded-pill border border-border-strong px-4 py-1.5 text-sm"
-        @click="handleLeave"
-      >
-        Leave
-      </button>
+      <div class="flex items-center gap-3">
+        <span class="party-player-count">
+          {{ store.connectedMembers.length }}
+          <span class="party-player-count-label"> online</span>
+        </span>
+        <button class="ui-btn-ghost party-leave-btn" @click="handleLeave">Leave</button>
+      </div>
     </header>
 
     <main class="mx-auto flex max-w-140 flex-col gap-8 p-4 pt-6">
       <!-- Rejoin banner when a game is running -->
-      <section
-        v-if="gameInProgress"
-        class="flex flex-col items-center gap-4 rounded-[--radius-md] border border-accent bg-accent-muted p-6 text-center"
-      >
-        <p class="text-sm font-medium text-muted-foreground">Game in progress</p>
-        <p class="text-lg font-bold text-foreground">{{ activeGameName }}</p>
-        <button
-          class="ui-btn-primary px-8 text-base"
-          @click="
-            router.push(`/party/${props.inviteCode}/game/${store.party!.activeMatch!.gameId}`)
-          "
-        >
-          Rejoin Game
-        </button>
-        <button v-if="store.isHost" class="ui-btn-danger px-6 text-sm" @click="handleEndGame">
-          End Game
-        </button>
+      <section v-if="gameInProgress" class="party-game-banner">
+        <div class="party-game-banner-content">
+          <div>
+            <p class="party-game-banner-label">Game in progress</p>
+            <p class="party-game-banner-title">{{ activeGameName }}</p>
+          </div>
+          <div class="flex flex-col gap-2 items-end">
+            <button
+              class="ui-btn-primary"
+              @click="
+                router.push(`/party/${props.inviteCode}/game/${store.party!.activeMatch!.gameId}`)
+              "
+            >
+              Rejoin Game
+            </button>
+            <button v-if="store.isHost" class="ui-btn-danger party-end-btn" @click="handleEndGame">
+              End Game
+            </button>
+          </div>
+        </div>
       </section>
 
+      <!-- Players section -->
       <section>
         <h2 class="ui-section-label">Players ({{ store.connectedMembers.length }})</h2>
         <ul class="flex flex-col gap-1.5">
           <li
             v-for="member in store.party?.members ?? []"
             :key="member.playerId"
-            class="flex items-center gap-2 rounded-[--radius-md] border border-border bg-panel px-3 py-2.5"
-            :class="{ 'opacity-50': !member.connected }"
+            class="ui-player-item"
+            :class="{ 'party-member-away': !member.connected }"
           >
-            <span class="flex-1 font-medium">{{ member.name }}</span>
+            <div
+              class="ui-avatar"
+              :style="{
+                background: member.connected ? avatarBg(member.name) : 'var(--color-elevated)',
+                color: member.connected ? '#fff' : 'var(--color-muted)',
+              }"
+            >
+              {{ avatarInitials(member.name) }}
+            </div>
+            <span class="flex-1 font-semibold text-sm">{{ member.name }}</span>
             <span
               v-if="member.playerId === store.party?.hostPlayerId"
               class="ui-badge bg-blackout text-white"
               >HOST</span
             >
-            <span v-if="!member.connected" class="text-[0.7rem] text-muted-foreground">away</span>
+            <span v-if="!member.connected" class="party-away-badge">away</span>
+            <span v-else class="party-online-dot" />
           </li>
         </ul>
       </section>
 
+      <!-- Game selection (host) -->
       <section v-if="store.isHost && !gameInProgress">
         <h2 class="ui-section-label">Select a Game</h2>
-        <div class="grid grid-cols-[repeat(auto-fill,minmax(150px,1fr))] gap-3">
+        <div class="grid grid-cols-2 gap-3 sm:grid-cols-4">
           <button
             v-for="game in clientGameRegistry"
             :key="game.definition.id"
-            class="flex cursor-pointer flex-col gap-1 rounded-[--radius-md] border border-border-strong bg-panel p-4 text-left transition-all duration-150"
+            class="ui-game-card"
             :class="
-              store.party?.selectedGameId === game.definition.id
-                ? 'border-accent! bg-accent-muted!'
-                : 'hover:border-accent'
+              store.party?.selectedGameId === game.definition.id ? 'ui-game-card-selected' : ''
             "
             @click="handleSelectGame(game.definition.id)"
           >
-            <span class="text-base font-bold">{{ game.definition.name }}</span>
-            <span class="text-xs text-muted-foreground"
-              >{{ game.definition.minPlayers }}–{{ game.definition.maxPlayers }} players</span
+            <div
+              class="ui-game-card-banner"
+              :style="{
+                background: `linear-gradient(135deg, ${getGameConfig(game.definition.id).gradFrom} 0%, ${getGameConfig(game.definition.id).gradTo} 100%)`,
+              }"
             >
+              <span class="relative z-10">{{ getGameConfig(game.definition.id).icon }}</span>
+            </div>
+            <div class="ui-game-card-body">
+              <p class="game-card-name">{{ game.definition.name }}</p>
+              <p class="game-card-meta">
+                {{ game.definition.minPlayers }}–{{ game.definition.maxPlayers }} players
+              </p>
+              <p v-if="getGameConfig(game.definition.id).description" class="game-card-desc">
+                {{ getGameConfig(game.definition.id).description }}
+              </p>
+            </div>
           </button>
         </div>
       </section>
 
-      <section
-        v-else-if="!gameInProgress && store.party?.selectedGameId"
-        class="text-center text-muted"
-      >
-        <p class="mb-2 text-base">
-          Game selected:
-          <strong class="text-foreground">{{
+      <!-- Game selected view (non-host) -->
+      <section v-else-if="!gameInProgress && store.party?.selectedGameId" class="party-waiting">
+        <p class="party-waiting-game">
+          {{
             clientGameRegistry.find((g) => g.definition.id === store.party?.selectedGameId)
               ?.definition.name
-          }}</strong>
+          }}
         </p>
-        <p class="text-sm text-muted-foreground">Waiting for host to launch...</p>
+        <p class="party-waiting-label">Waiting for host to launch...</p>
       </section>
 
-      <p v-if="error" class="text-sm text-danger">{{ error }}</p>
+      <Transition name="fade">
+        <p v-if="error" class="party-error">{{ error }}</p>
+      </Transition>
 
+      <!-- Launch button (host) -->
       <button
         v-if="store.isHost && !gameInProgress"
-        class="ui-btn-primary text-lg"
+        class="ui-btn-primary party-launch-btn"
         :disabled="!store.party?.selectedGameId || launching"
         @click="handleLaunch"
       >
-        {{ launching ? 'Launching...' : 'Launch Game' }}
+        <span v-if="launching" class="party-launching-dot" />
+        {{ launching ? 'Launching…' : 'Launch Game' }}
       </button>
     </main>
   </div>
 </template>
+
+<style scoped>
+/* ── Header ── */
+.party-code-block {
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+}
+
+.party-code-eyebrow {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 0.58rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.14em;
+  color: var(--color-muted-foreground);
+}
+
+.party-code-value {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 1.25rem;
+  font-weight: 700;
+  letter-spacing: 0.18em;
+  color: var(--color-accent);
+  text-shadow: 0 0 12px rgba(249, 115, 22, 0.35);
+}
+
+.party-player-count {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 0.8rem;
+  font-weight: 600;
+  color: var(--color-foreground);
+}
+
+.party-player-count-label {
+  font-weight: 400;
+  color: var(--color-muted-foreground);
+}
+
+.party-leave-btn {
+  font-size: 0.875rem;
+  padding: 0.4rem 1rem;
+  border: 1px solid var(--color-border-strong);
+  border-radius: var(--radius-pill);
+}
+
+/* ── In-progress banner ── */
+.party-game-banner {
+  border-radius: var(--radius-lg);
+  background: var(--color-panel);
+  border: 1px solid rgba(249, 115, 22, 0.3);
+  box-shadow: 0 0 24px rgba(249, 115, 22, 0.08);
+  overflow: hidden;
+  position: relative;
+}
+
+.party-game-banner::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 2px;
+  background: linear-gradient(90deg, transparent, var(--color-accent), transparent);
+}
+
+.party-game-banner-content {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 1.25rem 1.5rem;
+  gap: 1rem;
+}
+
+.party-game-banner-label {
+  font-size: 0.75rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  color: var(--color-accent);
+  margin-bottom: 0.25rem;
+}
+
+.party-game-banner-title {
+  font-size: 1.25rem;
+  font-weight: 700;
+  color: var(--color-foreground);
+}
+
+.party-end-btn {
+  font-size: 0.8rem;
+  padding: 0.4rem 0.875rem;
+}
+
+/* ── Player items ── */
+.party-member-away {
+  opacity: 0.45;
+}
+
+.party-away-badge {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 0.6rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--color-muted-foreground);
+}
+
+.party-online-dot {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: var(--color-success);
+  box-shadow: 0 0 6px rgba(34, 197, 94, 0.5);
+  flex-shrink: 0;
+}
+
+/* ── Game cards ── */
+.game-card-name {
+  font-size: 0.9375rem;
+  font-weight: 700;
+  color: var(--color-foreground);
+  margin-bottom: 0.15rem;
+}
+
+.game-card-meta {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 0.65rem;
+  font-weight: 500;
+  color: var(--color-muted-foreground);
+  margin-bottom: 0.375rem;
+}
+
+.game-card-desc {
+  font-size: 0.75rem;
+  color: var(--color-muted);
+  line-height: 1.35;
+}
+
+/* ── Waiting section ── */
+.party-waiting {
+  text-align: center;
+  padding: 1.5rem;
+  background: var(--color-panel);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-lg);
+}
+
+.party-waiting-game {
+  font-size: 1.125rem;
+  font-weight: 700;
+  color: var(--color-foreground);
+  margin-bottom: 0.375rem;
+}
+
+.party-waiting-label {
+  font-size: 0.875rem;
+  color: var(--color-muted-foreground);
+}
+
+/* ── Error ── */
+.party-error {
+  font-size: 0.875rem;
+  color: var(--color-danger);
+  background: var(--color-danger-muted);
+  border: 1px solid rgba(239, 68, 68, 0.2);
+  border-radius: var(--radius-md);
+  padding: 0.5rem 0.75rem;
+}
+
+/* ── Launch button ── */
+.party-launch-btn {
+  width: 100%;
+  font-size: 1.0625rem;
+  padding: 0.9375rem 1.5rem;
+  letter-spacing: 0.01em;
+}
+
+.party-launching-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.7);
+  animation: pulse 1s ease-in-out infinite;
+}
+
+@keyframes pulse {
+  0%,
+  100% {
+    opacity: 0.3;
+    transform: scale(0.8);
+  }
+  50% {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+</style>
