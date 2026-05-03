@@ -6,8 +6,8 @@ async function createParty(page: Page, name: string): Promise<string> {
   await page.goto('/');
   await page.fill('#name', name);
   await page.click('button[type="submit"]');
-  await page.waitForSelector('.code');
-  return (await page.locator('.code').textContent())?.trim() ?? '';
+  await page.waitForURL(/\/party\/[A-Z0-9]+/);
+  return page.url().split('/party/')[1]?.split('/')[0] ?? '';
 }
 
 async function joinParty(page: Page, name: string, inviteCode: string): Promise<void> {
@@ -16,7 +16,7 @@ async function joinParty(page: Page, name: string, inviteCode: string): Promise<
   await page.fill('#name', name);
   await page.fill('#code', inviteCode);
   await page.click('button[type="submit"]');
-  await page.waitForSelector('.code');
+  await page.waitForURL(/\/party\/[A-Z0-9]+/);
 }
 
 async function launchGame(hostPage: Page, gameName: string): Promise<void> {
@@ -201,7 +201,7 @@ test.describe('Blackout via Platform', () => {
     // Host returns to party lobby
     await page1.locator('.btn-lobby').click();
     await page1.waitForURL(/\/party\/[A-Z0-9]+$/, { timeout: 10_000 });
-    await expect(page1.locator('.code')).toContainText(inviteCode);
+    await expect(page1.locator('.party-code-value')).toContainText(inviteCode);
 
     await ctx1.close();
     await ctx2.close();

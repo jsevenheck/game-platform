@@ -6,8 +6,8 @@ async function createParty(page: Page, name: string): Promise<string> {
   await page.goto('/');
   await page.fill('#name', name);
   await page.click('button[type="submit"]');
-  await page.waitForSelector('.code');
-  return (await page.locator('.code').textContent())?.trim() ?? '';
+  await page.waitForURL(/\/party\/[A-Z0-9]+/);
+  return page.url().split('/party/')[1]?.split('/')[0] ?? '';
 }
 
 async function joinParty(page: Page, name: string, inviteCode: string): Promise<void> {
@@ -16,7 +16,7 @@ async function joinParty(page: Page, name: string, inviteCode: string): Promise<
   await page.fill('#name', name);
   await page.fill('#code', inviteCode);
   await page.click('button[type="submit"]');
-  await page.waitForSelector('.code');
+  await page.waitForURL(/\/party\/[A-Z0-9]+/);
 }
 
 async function launchGame(hostPage: Page, gameName: string): Promise<void> {
@@ -85,10 +85,10 @@ async function setupFourPlayers(browser: Browser): Promise<{
 test.describe('Secret Signals via Platform', () => {
   test('platform home shows Game Platform screen', async ({ page }) => {
     await page.goto('/');
-    await expect(page.getByRole('heading', { name: 'Game Platform' })).toBeVisible();
+    await expect(page.locator('.home-title')).toBeVisible();
     // Two tab buttons exist; use class selector to avoid strict-mode violation with the submit button
-    await expect(page.locator('button.tab', { hasText: 'Create Party' })).toBeVisible();
-    await expect(page.locator('button.tab', { hasText: 'Join Party' })).toBeVisible();
+    await expect(page.locator('button.ui-tab', { hasText: 'Create Party' })).toBeVisible();
+    await expect(page.locator('button.ui-tab', { hasText: 'Join Party' })).toBeVisible();
   });
 
   test('host can configure the lobby and complete the opening turn', async ({ browser }) => {
@@ -161,7 +161,7 @@ test.describe('Secret Signals via Platform', () => {
     // Reload host — platform resume redirects back to party lobby
     await host.reload();
     await host.waitForURL(/\/party\//, { timeout: 8_000 });
-    await expect(host.locator('.code')).toContainText(inviteCode);
+    await expect(host.locator('.party-code-value')).toContainText(inviteCode);
 
     await ctx1.close();
     await ctx2.close();
@@ -271,7 +271,7 @@ test.describe('Secret Signals via Platform', () => {
 
     await host.locator('.btn-lobby').click();
     await host.waitForURL(/\/party\/[A-Z0-9]+$/, { timeout: 10_000 });
-    await expect(host.locator('.code')).toContainText(inviteCode);
+    await expect(host.locator('.party-code-value')).toContainText(inviteCode);
 
     await Promise.all(ctxs.map((c) => c.close()));
   });
