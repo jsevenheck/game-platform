@@ -1,5 +1,12 @@
 import type { Component } from 'vue';
 
+export interface PlatformGameMeta {
+  icon: string;
+  gradFrom: string;
+  gradTo: string;
+  description: string;
+}
+
 export interface PlatformGameModule {
   definition: {
     id: string;
@@ -7,6 +14,7 @@ export interface PlatformGameModule {
     minPlayers: number;
     maxPlayers: number;
   };
+  platformMeta?: PlatformGameMeta;
   loadClient: () => Promise<{ default: Component }>;
 }
 
@@ -18,6 +26,12 @@ export const clientGameRegistry: PlatformGameModule[] = [
       minPlayers: 3,
       maxPlayers: 20,
     },
+    platformMeta: {
+      icon: '🌑',
+      gradFrom: '#2d1b69',
+      gradTo: '#120b2e',
+      description: 'A word game of deception and darkness',
+    },
     loadClient: () => import('@blackout-ui/PlatformAdapter.vue'),
   },
   {
@@ -26,6 +40,12 @@ export const clientGameRegistry: PlatformGameModule[] = [
       name: 'Imposter',
       minPlayers: 3,
       maxPlayers: 16,
+    },
+    platformMeta: {
+      icon: '🕵️',
+      gradFrom: '#5a0a1e',
+      gradTo: '#1a0a10',
+      description: 'Find the imposter among you',
     },
     loadClient: () => import('@imposter-ui/PlatformAdapter.vue'),
   },
@@ -36,6 +56,12 @@ export const clientGameRegistry: PlatformGameModule[] = [
       minPlayers: 4,
       maxPlayers: 24,
     },
+    platformMeta: {
+      icon: '📡',
+      gradFrom: '#063a4a',
+      gradTo: '#051520',
+      description: 'Decode the signals, outsmart your team',
+    },
     loadClient: () => import('@secret-signals-ui/PlatformAdapter.vue'),
   },
   {
@@ -44,6 +70,12 @@ export const clientGameRegistry: PlatformGameModule[] = [
       name: 'Flip 7',
       minPlayers: 3,
       maxPlayers: 18,
+    },
+    platformMeta: {
+      icon: '🃏',
+      gradFrom: '#3d2800',
+      gradTo: '#1a1200',
+      description: 'Race to flip exactly 7 — no more, no less',
     },
     loadClient: () => import('@flip7-ui/PlatformAdapter.vue'),
   },

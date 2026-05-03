@@ -13,6 +13,7 @@
   --color-canvas: #050509;
   --color-shell: #0c0c14;
   --color-panel: #111118;
+  --color-card: #15151f;
   --color-elevated: #1c1c28;
 
   /* Text */
@@ -379,7 +380,7 @@
   /* ─── Game card ─── */
   .ui-game-card {
     position: relative;
-    background: var(--color-panel);
+    background: var(--color-card);
     border: 1px solid var(--color-border);
     border-radius: var(--radius-lg);
     overflow: hidden;
@@ -394,11 +395,11 @@
     box-shadow: 0 16px 36px rgba(0, 0, 0, 0.6);
   }
 
-  .ui-game-card-selected {
-    border-color: var(--color-accent) !important;
+  .ui-game-card.ui-game-card-selected {
+    border-color: var(--color-accent);
     box-shadow:
       0 0 0 1px rgba(249, 115, 22, 0.2),
-      0 12px 32px rgba(249, 115, 22, 0.1) !important;
+      0 12px 32px rgba(249, 115, 22, 0.1);
   }
 
   .ui-game-card-banner {

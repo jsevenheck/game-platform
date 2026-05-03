@@ -214,7 +214,7 @@ onBeforeUnmount(() => {
     </div>
 
     <div v-else-if="!gameComponent || !matchKey" class="game-state-screen">
-      <span class="game-state-icon game-state-spin">⚙️</span>
+      <span class="game-state-icon game-state-spinner" aria-hidden="true" />
       <p class="game-state-title">Loading game…</p>
       <p class="game-state-msg">Please wait a moment</p>
     </div>
@@ -305,9 +305,16 @@ onBeforeUnmount(() => {
   line-height: 1;
 }
 
-.game-state-spin {
+.game-state-spinner {
   display: inline-block;
-  animation: spin 2s linear infinite;
+  width: 2.75rem;
+  height: 2.75rem;
+  border: 3px solid rgba(249, 115, 22, 0.16);
+  border-top-color: var(--color-accent);
+  border-right-color: var(--color-accent-hover);
+  border-radius: 50%;
+  box-shadow: 0 0 24px rgba(249, 115, 22, 0.16);
+  animation: spin 900ms linear infinite;
 }
 
 .game-state-title {

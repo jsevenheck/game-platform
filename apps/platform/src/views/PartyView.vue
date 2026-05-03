@@ -3,7 +3,7 @@ import { ref, computed, onMounted, onBeforeUnmount } from 'vue';
 import { useRouter } from 'vue-router';
 import { usePartyStore } from '../stores/party';
 import { usePartySocket } from '../composables/usePartySocket';
-import { clientGameRegistry } from '../games/index';
+import { clientGameRegistry, getClientGame, type PlatformGameMeta } from '../games/index';
 
 const props = defineProps<{ inviteCode: string }>();
 const router = useRouter();
@@ -18,44 +18,19 @@ const gameInProgress = computed(
 );
 const activeGameName = computed(() => {
   const gameId = store.party?.activeMatch?.gameId;
-  return clientGameRegistry.find((g) => g.definition.id === gameId)?.definition.name ?? gameId;
+  return gameId ? (getClientGame(gameId)?.definition.name ?? gameId) : undefined;
 });
 
-/* Per-game visual config */
-const defaultGameConfig = { icon: '🎮', gradFrom: '#1c1c28', gradTo: '#111118', description: '' };
-
-const gameConfig: Record<
-  string,
-  { icon: string; gradFrom: string; gradTo: string; description: string }
-> = {
-  blackout: {
-    icon: '🌑',
-    gradFrom: '#2d1b69',
-    gradTo: '#120b2e',
-    description: 'A word game of deception and darkness',
-  },
-  imposter: {
-    icon: '🕵️',
-    gradFrom: '#5a0a1e',
-    gradTo: '#1a0a10',
-    description: 'Find the imposter among you',
-  },
-  'secret-signals': {
-    icon: '📡',
-    gradFrom: '#063a4a',
-    gradTo: '#051520',
-    description: 'Decode the signals, outsmart your team',
-  },
-  flip7: {
-    icon: '🃏',
-    gradFrom: '#3d2800',
-    gradTo: '#1a1200',
-    description: 'Race to flip exactly 7 — no more, no less',
-  },
+/* Fallback metadata for games that have not yet defined platform visuals. */
+const defaultGameConfig: PlatformGameMeta = {
+  icon: '🎮',
+  gradFrom: '#1c1c28',
+  gradTo: '#111118',
+  description: '',
 };
 
-function getGameConfig(id: string) {
-  return gameConfig[id] ?? defaultGameConfig;
+function getGameConfig(id: string): PlatformGameMeta {
+  return getClientGame(id)?.platformMeta ?? defaultGameConfig;
 }
 
 function avatarBg(name: string): string {
@@ -236,7 +211,7 @@ onBeforeUnmount(() => {
             <span class="flex-1 font-semibold text-sm">{{ member.name }}</span>
             <span
               v-if="member.playerId === store.party?.hostPlayerId"
-              class="ui-badge bg-blackout text-white"
+              class="ui-badge bg-accent text-white"
               >HOST</span
             >
             <span v-if="!member.connected" class="party-away-badge">away</span>
@@ -291,7 +266,7 @@ onBeforeUnmount(() => {
       </section>
 
       <Transition name="fade">
-        <p v-if="error" class="party-error">{{ error }}</p>
+        <p v-if="error" class="party-error" role="alert" aria-live="polite">{{ error }}</p>
       </Transition>
 
       <!-- Launch button (host) -->

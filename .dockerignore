@@ -39,6 +39,7 @@ eslint.config.mjs
 vitest.config.ts
 vitest.projects.ts
 playwright.config.ts
+.playwright-cli
 
 # Docs and meta
 docs

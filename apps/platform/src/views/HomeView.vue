@@ -170,7 +170,7 @@ onBeforeUnmount(() => {
         </Transition>
 
         <Transition name="fade">
-          <p v-if="error" class="home-error">{{ error }}</p>
+          <p v-if="error" class="home-error" role="alert" aria-live="polite">{{ error }}</p>
         </Transition>
 
         <button type="submit" class="ui-btn-primary home-submit">
