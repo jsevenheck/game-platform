@@ -1,5 +1,5 @@
 # ── Stage 1: Build ──────────────────────────────────────────────────────────
-FROM node:22-slim AS builder
+FROM node:24-slim AS builder
 
 # Native build tools required for better-sqlite3
 RUN apt-get update && apt-get install -y --no-install-recommends python3 make g++ && rm -rf /var/lib/apt/lists/*
@@ -27,7 +27,7 @@ RUN pnpm build
 RUN CI=true pnpm prune --prod
 
 # ── Stage 2: Runtime ────────────────────────────────────────────────────────
-FROM gcr.io/distroless/nodejs22-debian12 AS runner
+FROM gcr.io/distroless/nodejs24-debian12 AS runner
 
 WORKDIR /app
 

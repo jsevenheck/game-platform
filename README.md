@@ -49,7 +49,7 @@ games/{game}/                <- internal source modules (not standalone)
 
 ### Prerequisites
 
-- **Node.js** >= 22.22
+- **Node.js** >= 24.0
 - **pnpm** >= 10
 
 ### Install and Run

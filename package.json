@@ -2,7 +2,10 @@
   "name": "game-platform",
   "version": "1.0.0",
   "private": true,
-  "packageManager": "pnpm@10.32.1",
+  "packageManager": "pnpm@10.33.2",
+  "engines": {
+    "node": ">=24.0.0"
+  },
   "scripts": {
     "dev": "pnpm -C apps/platform dev",
     "build": "pnpm -C apps/platform build && node games/blackout/scripts/copy-db-assets.mjs",
@@ -35,7 +38,7 @@
     "@tailwindcss/vite": "^4.2.2",
     "@types/better-sqlite3": "^7.6.13",
     "@types/express": "^5.0.6",
-    "@types/node": "^22.19.17",
+    "@types/node": "^24.12.2",
     "@vitejs/plugin-vue": "^6.0.5",
     "concurrently": "^9.2.1",
     "eslint": "^9.39.4",
