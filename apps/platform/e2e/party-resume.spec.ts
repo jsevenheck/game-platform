@@ -4,8 +4,8 @@ async function createParty(page: Page, name: string): Promise<string> {
   await page.goto('/');
   await page.fill('#name', name);
   await page.click('button[type="submit"]');
-  await page.waitForSelector('.code');
-  return (await page.locator('.code').textContent())?.trim() ?? '';
+  await page.waitForURL(/\/party\/[A-Z0-9]+/);
+  return page.url().split('/party/')[1]?.split('/')[0] ?? '';
 }
 
 async function joinParty(page: Page, name: string, inviteCode: string): Promise<void> {
@@ -14,7 +14,7 @@ async function joinParty(page: Page, name: string, inviteCode: string): Promise<
   await page.fill('#name', name);
   await page.fill('#code', inviteCode);
   await page.click('button[type="submit"]');
-  await page.waitForSelector('.code');
+  await page.waitForURL(/\/party\/[A-Z0-9]+/);
 }
 
 async function launchGame(hostPage: Page, gameName: string): Promise<void> {
