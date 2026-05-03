@@ -49,9 +49,9 @@ const accentClasses = computed(() => {
   switch (props.card.kind) {
     case 'number':
       if (props.card.value <= 4)
-        return 'ring-2 ring-success text-success shadow-[0_0_32px_rgba(34,197,94,0.45)]';
+        return 'ring-2 ring-flip7 text-flip7 shadow-[0_0_32px_rgba(245,158,11,0.35)]';
       if (props.card.value <= 8)
-        return 'ring-2 ring-warning text-warning shadow-[0_0_32px_rgba(234,179,8,0.45)]';
+        return 'ring-2 ring-flip7-hover text-flip7-hover shadow-[0_0_32px_rgba(217,119,6,0.45)]';
       return 'ring-2 ring-danger text-danger shadow-[0_0_32px_rgba(239,68,68,0.45)]';
     case 'modifierAdd':
       return 'ring-2 ring-success text-success shadow-[0_0_32px_rgba(34,197,94,0.45)]';
@@ -84,7 +84,9 @@ const accentClasses = computed(() => {
         <span class="text-[10px] font-semibold uppercase tracking-widest opacity-50">{{
           label
         }}</span>
-        <span class="text-5xl font-black leading-none tracking-tight">{{ cardText }}</span>
+        <span class="text-5xl font-black leading-none tracking-tight font-mono-num">{{
+          cardText
+        }}</span>
         <span class="text-xs font-bold opacity-70">{{ cardSubtext }}</span>
       </div>
     </div>

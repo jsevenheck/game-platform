@@ -133,7 +133,7 @@ function getDescriptionText(playerId: string): string {
             />
           </svg>
           <span
-            class="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 text-4xl font-black"
+            class="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 text-4xl font-black font-mono-num"
             :class="timeRemaining < 10 ? 'text-danger animate-pulse' : 'text-imposter'"
           >
             {{ timeRemaining }}

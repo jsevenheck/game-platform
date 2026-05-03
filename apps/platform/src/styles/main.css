@@ -1,5 +1,5 @@
+@import url('https://fonts.googleapis.com/css2?family=Syne:wght@400;500;600;700;800;900&family=JetBrains+Mono:wght@400;500;600&display=swap');
 @import 'tailwindcss';
-@import url('https://fonts.googleapis.com/css2?family=Syne:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap');
 
 /* Scan game UI source outside the platform directory */
 @source "../../../../games/*/ui-vue/src/**/*.vue";
@@ -85,6 +85,7 @@
       -apple-system,
       sans-serif;
     min-height: 100dvh;
+    font-variant-numeric: proportional-nums;
     background-image:
       radial-gradient(ellipse at 15% 10%, rgba(139, 92, 246, 0.1) 0%, transparent 45%),
       radial-gradient(ellipse at 85% 90%, rgba(6, 182, 212, 0.07) 0%, transparent 45%),
@@ -182,6 +183,14 @@
   .ui-btn-primary:focus-visible {
     outline: 2px solid var(--color-accent);
     outline-offset: 2px;
+  }
+
+  /* Strip platform gradient when a game override colour is applied */
+  .ui-btn-primary[class*="bg-blackout"],
+  .ui-btn-primary[class*="bg-imposter"],
+  .ui-btn-primary[class*="bg-signals"],
+  .ui-btn-primary[class*="bg-flip7"] {
+    background-image: none !important;
   }
 
   .ui-btn-secondary {
@@ -499,5 +508,11 @@
     background: linear-gradient(90deg, var(--color-accent), var(--color-accent-hover));
     transition: width 500ms ease;
     box-shadow: 0 0 8px rgba(249, 115, 22, 0.5);
+  }
+
+  /* ─── Numeric rendering helper ─── */
+  .font-mono-num {
+    font-family: 'JetBrains Mono', monospace;
+    font-variant-numeric: tabular-nums;
   }
 }

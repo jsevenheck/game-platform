@@ -89,7 +89,7 @@ const voteTally = computed(() => {
               :style="{ width: `${(entry.votes / (store.connectedPlayers.length || 1)) * 100}%` }"
             ></div>
           </div>
-          <span class="text-imposter font-extrabold text-lg min-w-6 text-center">{{
+          <span class="text-imposter font-extrabold text-lg min-w-6 text-center font-mono-num">{{
             entry.votes
           }}</span>
         </div>

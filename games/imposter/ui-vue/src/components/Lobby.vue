@@ -121,7 +121,7 @@ function handleSubmitWord() {
             >
               -
             </button>
-            <span class="text-imposter text-2xl font-extrabold min-w-8 text-center">{{
+            <span class="text-imposter text-2xl font-extrabold min-w-8 text-center font-mono-num">{{
               infiltratorCount
             }}</span>
             <button
@@ -148,7 +148,7 @@ function handleSubmitWord() {
             >
               -
             </button>
-            <span class="text-imposter text-2xl font-extrabold min-w-14 text-center"
+            <span class="text-imposter text-2xl font-extrabold min-w-14 text-center font-mono-num"
               >{{ discussionDurationMs / 1000 }}s</span
             >
             <button
@@ -175,7 +175,7 @@ function handleSubmitWord() {
             >
               -
             </button>
-            <span class="text-imposter text-2xl font-extrabold min-w-8 text-center">{{
+            <span class="text-imposter text-2xl font-extrabold min-w-8 text-center font-mono-num">{{
               targetScore
             }}</span>
             <button
