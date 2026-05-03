@@ -1,3 +1,4 @@
+@import url('https://fonts.googleapis.com/css2?family=Syne:wght@400;500;600;700;800;900&family=JetBrains+Mono:wght@400;500;600&display=swap');
 @import 'tailwindcss';
 
 /* Scan game UI source outside the platform directory */
@@ -9,53 +10,54 @@
 /* ------------------------------------------------------------------ */
 @theme {
   /* Surfaces — four depth levels */
-  --color-canvas: #09090b;
-  --color-shell: #111114;
-  --color-panel: #18181b;
-  --color-elevated: #27272a;
+  --color-canvas: #050509;
+  --color-shell: #0c0c14;
+  --color-panel: #111118;
+  --color-card: #15151f;
+  --color-elevated: #1c1c28;
 
   /* Text */
-  --color-foreground: #fafafa;
-  --color-muted: #a1a1aa;
-  --color-muted-foreground: #71717a;
+  --color-foreground: #f0f0f5;
+  --color-muted: #7878a0;
+  --color-muted-foreground: #50506a;
 
   /* Borders / rings */
-  --color-border: #27272a;
-  --color-border-strong: #3f3f46;
-  --color-ring: rgba(250, 250, 250, 0.15);
+  --color-border: #1e1e2e;
+  --color-border-strong: #2e2e42;
+  --color-ring: rgba(249, 115, 22, 0.2);
 
   /* Platform accent (orange) */
   --color-accent: #f97316;
   --color-accent-hover: #fb923c;
-  --color-accent-muted: rgba(249, 115, 22, 0.25);
+  --color-accent-muted: rgba(249, 115, 22, 0.12);
 
   /* Game accents */
   --color-blackout: #8b5cf6;
   --color-blackout-hover: #7c3aed;
-  --color-blackout-muted: rgba(139, 92, 246, 0.15);
+  --color-blackout-muted: rgba(139, 92, 246, 0.12);
 
   --color-imposter: #e11d48;
   --color-imposter-hover: #be123c;
-  --color-imposter-muted: rgba(225, 29, 72, 0.15);
+  --color-imposter-muted: rgba(225, 29, 72, 0.12);
   --color-imposter-gradient-1: #0f0f23;
   --color-imposter-gradient-2: #1a1a2e;
   --color-imposter-gradient-3: #16213e;
 
   --color-signals: #06b6d4;
   --color-signals-hover: #0891b2;
-  --color-signals-muted: rgba(6, 182, 212, 0.15);
+  --color-signals-muted: rgba(6, 182, 212, 0.12);
 
   --color-flip7: #f59e0b;
   --color-flip7-hover: #d97706;
-  --color-flip7-muted: rgba(245, 158, 11, 0.15);
+  --color-flip7-muted: rgba(245, 158, 11, 0.12);
 
   /* Semantic */
   --color-danger: #ef4444;
-  --color-danger-muted: rgba(239, 68, 68, 0.15);
+  --color-danger-muted: rgba(239, 68, 68, 0.12);
   --color-success: #22c55e;
-  --color-success-muted: rgba(34, 197, 94, 0.15);
+  --color-success-muted: rgba(34, 197, 94, 0.12);
   --color-warning: #eab308;
-  --color-warning-muted: rgba(234, 179, 8, 0.15);
+  --color-warning-muted: rgba(234, 179, 8, 0.12);
 
   /* Radius */
   --radius-sm: 6px;
@@ -65,9 +67,10 @@
   --radius-pill: 999px;
 
   /* Shadows */
-  --shadow-panel: 0 1px 3px rgba(0, 0, 0, 0.4);
-  --shadow-elevated: 0 4px 16px rgba(0, 0, 0, 0.5);
-  --shadow-dialog: 0 8px 32px rgba(0, 0, 0, 0.6);
+  --shadow-panel: 0 2px 8px rgba(0, 0, 0, 0.5), 0 0 0 1px rgba(255, 255, 255, 0.02) inset;
+  --shadow-elevated: 0 6px 24px rgba(0, 0, 0, 0.6);
+  --shadow-dialog: 0 12px 48px rgba(0, 0, 0, 0.75), 0 0 0 1px rgba(255, 255, 255, 0.04) inset;
+  --shadow-glow-accent: 0 0 24px rgba(249, 115, 22, 0.3), 0 6px 20px rgba(0, 0, 0, 0.5);
 }
 
 /* ------------------------------------------------------------------ */
@@ -77,16 +80,21 @@
   body {
     @apply bg-canvas text-foreground antialiased;
     font-family:
+      'Syne',
       system-ui,
       -apple-system,
-      BlinkMacSystemFont,
-      'Segoe UI',
       sans-serif;
     min-height: 100dvh;
+    font-variant-numeric: proportional-nums;
+    background-image:
+      radial-gradient(ellipse at 15% 10%, rgba(139, 92, 246, 0.1) 0%, transparent 45%),
+      radial-gradient(ellipse at 85% 90%, rgba(6, 182, 212, 0.07) 0%, transparent 45%),
+      radial-gradient(ellipse at 50% 50%, rgba(249, 115, 22, 0.04) 0%, transparent 60%);
   }
 
   #app {
     min-height: 100dvh;
+    position: relative;
   }
 }
 
@@ -97,10 +105,11 @@
   /* ─── Shell header (sticky top bar) ─── */
   .ui-shell-header {
     @apply sticky top-0 z-10 flex items-center justify-between;
-    padding: 0.75rem 1rem;
-    background: rgba(9, 9, 11, 0.92);
-    border-bottom: 1px solid var(--color-border);
-    backdrop-filter: blur(12px);
+    padding: 0.75rem 1.25rem;
+    background: rgba(5, 5, 9, 0.88);
+    border-bottom: 1px solid rgba(255, 255, 255, 0.04);
+    backdrop-filter: blur(20px);
+    -webkit-backdrop-filter: blur(20px);
   }
 
   /* ─── Panel (card-like sections) ─── */
@@ -115,8 +124,9 @@
   /* ─── Modal / dialog overlay ─── */
   .ui-overlay {
     @apply fixed inset-0 z-9999 flex items-center justify-center;
-    background: rgba(9, 9, 11, 0.85);
-    backdrop-filter: blur(8px);
+    background: rgba(5, 5, 9, 0.88);
+    backdrop-filter: blur(16px);
+    -webkit-backdrop-filter: blur(16px);
   }
 
   .ui-dialog {
@@ -124,9 +134,21 @@
     background: var(--color-panel);
     border: 1px solid var(--color-border-strong);
     padding: 2.5rem 2rem;
-    max-width: 340px;
-    width: 100%;
+    max-width: 360px;
+    width: calc(100% - 2rem);
     box-shadow: var(--shadow-dialog);
+    position: relative;
+    overflow: hidden;
+  }
+
+  .ui-dialog::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 1px;
+    background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.1), transparent);
   }
 
   /* ─── Buttons ─── */
@@ -136,16 +158,26 @@
     padding: 0.75rem 1.5rem;
     font-size: 1rem;
     border: none;
-    transition: all 150ms ease;
-    background: var(--color-accent);
+    transition: all 200ms ease;
+    background: linear-gradient(135deg, var(--color-accent) 0%, #fb923c 100%);
+    box-shadow: 0 2px 10px rgba(249, 115, 22, 0.3);
   }
 
   .ui-btn-primary:disabled {
-    @apply opacity-40 cursor-not-allowed;
+    @apply opacity-35 cursor-not-allowed;
+    box-shadow: none;
   }
 
   .ui-btn-primary:hover:not(:disabled) {
-    background: var(--color-accent-hover);
+    background: linear-gradient(135deg, var(--color-accent-hover) 0%, #fca552 100%);
+    box-shadow:
+      0 0 22px rgba(249, 115, 22, 0.45),
+      0 4px 14px rgba(0, 0, 0, 0.4);
+    transform: translateY(-1px);
+  }
+
+  .ui-btn-primary:active:not(:disabled) {
+    transform: translateY(0);
   }
 
   .ui-btn-primary:focus-visible {
@@ -153,24 +185,34 @@
     outline-offset: 2px;
   }
 
+  /* Strip platform gradient when a game override colour is applied */
+  .ui-btn-primary[class*="bg-blackout"],
+  .ui-btn-primary[class*="bg-imposter"],
+  .ui-btn-primary[class*="bg-signals"],
+  .ui-btn-primary[class*="bg-flip7"] {
+    background-image: none !important;
+  }
+
   .ui-btn-secondary {
     @apply inline-flex items-center justify-center gap-2 font-semibold cursor-pointer select-none;
     border-radius: var(--radius-md);
     padding: 0.75rem 1.5rem;
     font-size: 1rem;
-    transition: all 150ms ease;
-    background: transparent;
+    transition: all 200ms ease;
+    background: rgba(255, 255, 255, 0.04);
     border: 1px solid var(--color-border-strong);
     color: var(--color-foreground);
   }
 
   .ui-btn-secondary:disabled {
-    @apply opacity-40 cursor-not-allowed;
+    @apply opacity-35 cursor-not-allowed;
   }
 
   .ui-btn-secondary:hover:not(:disabled) {
-    border-color: var(--color-accent);
+    border-color: rgba(249, 115, 22, 0.5);
     color: var(--color-accent);
+    background: rgba(249, 115, 22, 0.06);
+    box-shadow: 0 0 14px rgba(249, 115, 22, 0.12);
   }
 
   .ui-btn-secondary:focus-visible {
@@ -184,17 +226,18 @@
     padding: 0.75rem 1.5rem;
     font-size: 1rem;
     border: none;
-    transition: all 150ms ease;
+    transition: all 200ms ease;
     background: transparent;
     color: var(--color-muted);
   }
 
   .ui-btn-ghost:disabled {
-    @apply opacity-40 cursor-not-allowed;
+    @apply opacity-35 cursor-not-allowed;
   }
 
   .ui-btn-ghost:hover:not(:disabled) {
     color: var(--color-foreground);
+    background: rgba(255, 255, 255, 0.06);
   }
 
   .ui-btn-ghost:focus-visible {
@@ -208,16 +251,25 @@
     padding: 0.75rem 1.5rem;
     font-size: 1rem;
     border: none;
-    transition: all 150ms ease;
-    background: var(--color-danger);
+    transition: all 200ms ease;
+    background: linear-gradient(135deg, var(--color-danger) 0%, #f87171 100%);
+    box-shadow: 0 2px 10px rgba(239, 68, 68, 0.25);
   }
 
   .ui-btn-danger:disabled {
-    @apply opacity-40 cursor-not-allowed;
+    @apply opacity-35 cursor-not-allowed;
+    box-shadow: none;
   }
 
   .ui-btn-danger:hover:not(:disabled) {
-    opacity: 0.9;
+    box-shadow:
+      0 0 18px rgba(239, 68, 68, 0.4),
+      0 4px 14px rgba(0, 0, 0, 0.4);
+    transform: translateY(-1px);
+  }
+
+  .ui-btn-danger:active:not(:disabled) {
+    transform: translateY(0);
   }
 
   .ui-btn-danger:focus-visible {
@@ -228,29 +280,40 @@
   /* ─── Input ─── */
   .ui-input {
     @apply block w-full outline-none;
-    padding: 0.65rem 0.9rem;
+    padding: 0.7rem 1rem;
     border: 1px solid var(--color-border-strong);
     border-radius: var(--radius-md);
-    background: var(--color-panel);
+    background: rgba(255, 255, 255, 0.03);
     color: var(--color-foreground);
     font: inherit;
     font-size: 1rem;
-    transition: border-color 150ms ease;
+    transition: all 200ms ease;
+  }
+
+  .ui-input::placeholder {
+    color: var(--color-muted-foreground);
+  }
+
+  .ui-input:hover {
+    border-color: rgba(255, 255, 255, 0.1);
   }
 
   .ui-input:focus,
   .ui-input:focus-visible {
-    border-color: var(--color-accent);
-    box-shadow: 0 0 0 2px var(--color-ring);
+    border-color: rgba(249, 115, 22, 0.5);
+    background: rgba(249, 115, 22, 0.04);
+    box-shadow: 0 0 0 3px rgba(249, 115, 22, 0.1);
     outline: none;
   }
 
   /* ─── Badge ─── */
   .ui-badge {
     @apply inline-flex items-center font-bold uppercase tracking-wide;
-    font-size: 0.65rem;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.58rem;
     padding: 0.15rem 0.5rem;
     border-radius: var(--radius-sm);
+    letter-spacing: 0.08em;
   }
 
   /* ─── Small stepper button ─── */
@@ -260,26 +323,145 @@
     height: 2.25rem;
     border: 1px solid var(--color-border-strong);
     border-radius: var(--radius-sm);
-    background: var(--color-panel);
+    background: rgba(255, 255, 255, 0.04);
     color: var(--color-foreground);
     font-size: 1.2rem;
-    transition: border-color 150ms ease;
+    transition: all 150ms ease;
   }
 
   .ui-stepper-btn:hover:not(:disabled) {
     border-color: var(--color-accent);
+    color: var(--color-accent);
   }
 
   .ui-stepper-btn:disabled {
-    @apply opacity-30 cursor-not-allowed;
+    @apply opacity-25 cursor-not-allowed;
   }
 
   /* ─── Section heading ─── */
   .ui-section-label {
     @apply uppercase tracking-widest font-semibold;
-    font-size: 0.75rem;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.62rem;
     color: var(--color-muted-foreground);
-    margin-bottom: 0.75rem;
+    margin-bottom: 0.875rem;
+    letter-spacing: 0.14em;
+  }
+
+  /* ─── Tab group (pill switcher) ─── */
+  .ui-tab-group {
+    display: flex;
+    background: var(--color-elevated);
+    border-radius: var(--radius-lg);
+    padding: 4px;
+    gap: 4px;
+    border: 1px solid var(--color-border);
+  }
+
+  .ui-tab {
+    flex: 1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 0.55rem 1rem;
+    border-radius: var(--radius-md);
+    border: none;
+    background: transparent;
+    color: var(--color-muted-foreground);
+    font: inherit;
+    font-weight: 600;
+    font-size: 0.875rem;
+    cursor: pointer;
+    transition: all 200ms ease;
+  }
+
+  .ui-tab:hover:not(.ui-tab-active) {
+    color: var(--color-muted);
+    background: rgba(255, 255, 255, 0.04);
+  }
+
+  .ui-tab-active {
+    background: var(--color-panel);
+    color: var(--color-foreground);
+    box-shadow: 0 1px 6px rgba(0, 0, 0, 0.5);
+  }
+
+  /* ─── Game card ─── */
+  .ui-game-card {
+    position: relative;
+    background: var(--color-card);
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-lg);
+    overflow: hidden;
+    cursor: pointer;
+    transition: all 220ms ease;
+    text-align: left;
+  }
+
+  .ui-game-card:hover {
+    border-color: var(--color-border-strong);
+    transform: translateY(-3px);
+    box-shadow: 0 16px 36px rgba(0, 0, 0, 0.6);
+  }
+
+  .ui-game-card.ui-game-card-selected {
+    border-color: var(--color-accent);
+    box-shadow:
+      0 0 0 1px rgba(249, 115, 22, 0.2),
+      0 12px 32px rgba(249, 115, 22, 0.1);
+  }
+
+  .ui-game-card-banner {
+    height: 72px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.75rem;
+    position: relative;
+    overflow: hidden;
+  }
+
+  .ui-game-card-banner::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(to bottom, transparent 40%, rgba(0, 0, 0, 0.5) 100%);
+  }
+
+  .ui-game-card-body {
+    padding: 0.75rem 0.875rem 0.875rem;
+  }
+
+  /* ─── Player item ─── */
+  .ui-player-item {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    padding: 0.6rem 0.875rem;
+    background: var(--color-panel);
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-md);
+    transition: all 150ms ease;
+  }
+
+  .ui-player-item:hover {
+    border-color: var(--color-border-strong);
+    background: var(--color-elevated);
+  }
+
+  .ui-avatar {
+    width: 2rem;
+    height: 2rem;
+    border-radius: var(--radius-pill);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.68rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    flex-shrink: 0;
+    border: 1px solid rgba(255, 255, 255, 0.06);
   }
 
   /* ─── Fade transition (Vue <Transition>) ─── */
@@ -293,9 +475,28 @@
     opacity: 0;
   }
 
+  /* ─── Slide-up transition ─── */
+  .slide-up-enter-active {
+    transition: all 280ms cubic-bezier(0.34, 1.56, 0.64, 1);
+  }
+
+  .slide-up-leave-active {
+    transition: all 180ms ease;
+  }
+
+  .slide-up-enter-from {
+    opacity: 0;
+    transform: translateY(10px) scale(0.97);
+  }
+
+  .slide-up-leave-to {
+    opacity: 0;
+    transform: translateY(4px);
+  }
+
   /* ─── Progress bar ─── */
   .ui-progress-track {
-    height: 6px;
+    height: 4px;
     background: var(--color-elevated);
     border-radius: 3px;
     overflow: hidden;
@@ -304,7 +505,14 @@
   .ui-progress-fill {
     height: 100%;
     border-radius: 3px;
-    background: var(--color-accent);
+    background: linear-gradient(90deg, var(--color-accent), var(--color-accent-hover));
     transition: width 500ms ease;
+    box-shadow: 0 0 8px rgba(249, 115, 22, 0.5);
+  }
+
+  /* ─── Numeric rendering helper ─── */
+  .font-mono-num {
+    font-family: 'JetBrains Mono', monospace;
+    font-variant-numeric: tabular-nums;
   }
 }

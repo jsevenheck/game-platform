@@ -144,7 +144,7 @@ function handleSubmit() {
         </button>
       </div>
       <p
-        class="text-xs text-right mt-1"
+        class="text-xs text-right mt-1 font-mono-num"
         :class="description.length > 25 ? 'text-imposter' : 'text-muted-foreground'"
       >
         {{ description.length }}/30

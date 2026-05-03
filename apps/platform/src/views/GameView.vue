@@ -186,11 +186,8 @@ onBeforeUnmount(() => {
     <!-- Leave button via Teleport to body so it's always above everything -->
     <Teleport to="body">
       <div class="fixed top-3 left-3 z-[100]">
-        <button
-          class="ui-btn-ghost bg-shell/90 backdrop-blur px-2! py-1! text-sm shadow-md"
-          @click="showLeaveConfirm = true"
-        >
-          ← Leave
+        <button class="game-leave-btn" @click="showLeaveConfirm = true">
+          <span class="game-leave-arrow">←</span> Leave
         </button>
       </div>
     </Teleport>
@@ -199,21 +196,28 @@ onBeforeUnmount(() => {
     <Transition name="fade">
       <div v-if="showLeaveConfirm" class="ui-overlay !z-[200]">
         <div class="ui-dialog">
-          <h2 class="mb-2 text-lg font-bold">Leave Game?</h2>
-          <p class="mb-6 text-sm text-muted-foreground">You can rejoin from the party lobby.</p>
+          <div class="game-dialog-icon">🚪</div>
+          <h2 class="game-dialog-title">Leave Game?</h2>
+          <p class="game-dialog-desc">You can rejoin from the party lobby at any time.</p>
           <div class="flex flex-col gap-3">
-            <button class="ui-btn-danger" @click="onLeaveGame">Leave</button>
-            <button class="ui-btn-secondary" @click="showLeaveConfirm = false">Cancel</button>
+            <button class="ui-btn-danger" @click="onLeaveGame">Leave Game</button>
+            <button class="ui-btn-secondary" @click="showLeaveConfirm = false">Stay</button>
           </div>
         </div>
       </div>
     </Transition>
 
-    <p v-if="loadError" class="p-8 text-center text-danger">{{ loadError }}</p>
+    <div v-if="loadError" class="game-state-screen">
+      <span class="game-state-icon">⚠️</span>
+      <p class="game-state-title">Failed to Load</p>
+      <p class="game-state-msg">{{ loadError }}</p>
+    </div>
 
-    <p v-else-if="!gameComponent || !matchKey" class="p-8 text-center text-muted-foreground">
-      Loading game...
-    </p>
+    <div v-else-if="!gameComponent || !matchKey" class="game-state-screen">
+      <span class="game-state-icon game-state-spinner" aria-hidden="true" />
+      <p class="game-state-title">Loading game…</p>
+      <p class="game-state-msg">Please wait a moment</p>
+    </div>
 
     <!-- key on matchKey forces full re-mount when the match changes (replay) -->
     <component
@@ -231,3 +235,107 @@ onBeforeUnmount(() => {
     />
   </div>
 </template>
+
+<style scoped>
+.game-leave-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.375rem;
+  padding: 0.4rem 0.875rem;
+  background: rgba(12, 12, 20, 0.9);
+  border: 1px solid var(--color-border-strong);
+  border-radius: var(--radius-pill);
+  color: var(--color-muted);
+  font: inherit;
+  font-size: 0.8rem;
+  font-weight: 600;
+  cursor: pointer;
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  transition: all 200ms ease;
+}
+
+.game-leave-btn:hover {
+  color: var(--color-foreground);
+  border-color: rgba(255, 255, 255, 0.15);
+  background: rgba(20, 20, 32, 0.95);
+}
+
+.game-leave-arrow {
+  font-size: 0.875rem;
+  line-height: 1;
+}
+
+/* Dialog */
+.game-dialog-icon {
+  font-size: 2rem;
+  margin-bottom: 0.75rem;
+  line-height: 1;
+}
+
+.game-dialog-title {
+  font-size: 1.25rem;
+  font-weight: 700;
+  color: var(--color-foreground);
+  margin-bottom: 0.5rem;
+  letter-spacing: -0.01em;
+}
+
+.game-dialog-desc {
+  font-size: 0.875rem;
+  color: var(--color-muted-foreground);
+  margin-bottom: 1.75rem;
+  line-height: 1.5;
+}
+
+/* Loading / error state */
+.game-state-screen {
+  min-height: 100dvh;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  padding: 2rem;
+}
+
+.game-state-icon {
+  font-size: 2.5rem;
+  margin-bottom: 0.5rem;
+  line-height: 1;
+}
+
+.game-state-spinner {
+  display: inline-block;
+  width: 2.75rem;
+  height: 2.75rem;
+  border: 3px solid rgba(249, 115, 22, 0.16);
+  border-top-color: var(--color-accent);
+  border-right-color: var(--color-accent-hover);
+  border-radius: 50%;
+  box-shadow: 0 0 24px rgba(249, 115, 22, 0.16);
+  animation: spin 900ms linear infinite;
+}
+
+.game-state-title {
+  font-size: 1.125rem;
+  font-weight: 700;
+  color: var(--color-foreground);
+}
+
+.game-state-msg {
+  font-size: 0.875rem;
+  color: var(--color-muted-foreground);
+  text-align: center;
+  max-width: 320px;
+}
+
+@keyframes spin {
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(360deg);
+  }
+}
+</style>

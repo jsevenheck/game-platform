@@ -68,7 +68,7 @@ const singleWinner = computed(() =>
       >
         <span class="text-muted-foreground font-bold min-w-8">#{{ index + 1 }}</span>
         <span class="flex-1 text-foreground font-medium">{{ player.name }}</span>
-        <span class="text-imposter font-extrabold text-xl">{{ player.score }}</span>
+        <span class="text-imposter font-extrabold text-xl font-mono-num">{{ player.score }}</span>
       </div>
     </div>
 

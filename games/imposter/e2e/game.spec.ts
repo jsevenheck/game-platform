@@ -6,8 +6,8 @@ async function createParty(page: Page, name: string): Promise<string> {
   await page.goto('/');
   await page.fill('#name', name);
   await page.click('button[type="submit"]');
-  await page.waitForSelector('.code');
-  return (await page.locator('.code').textContent())?.trim() ?? '';
+  await page.waitForURL(/\/party\/[A-Z0-9]+/);
+  return page.url().split('/party/')[1]?.split('/')[0] ?? '';
 }
 
 async function joinParty(page: Page, name: string, inviteCode: string): Promise<void> {
@@ -16,7 +16,7 @@ async function joinParty(page: Page, name: string, inviteCode: string): Promise<
   await page.fill('#name', name);
   await page.fill('#code', inviteCode);
   await page.click('button[type="submit"]');
-  await page.waitForSelector('.code');
+  await page.waitForURL(/\/party\/[A-Z0-9]+/);
 }
 
 async function launchGame(hostPage: Page, gameName: string): Promise<void> {
@@ -140,7 +140,7 @@ test.describe('Imposter via Platform', () => {
 
     // The platform enforces unique names at the party level — the server returns an
     // error and the UI renders it via the .error element.
-    await expect(joinPage.locator('.error')).toBeVisible();
+    await expect(joinPage.locator('.home-error')).toBeVisible();
 
     await hostCtx.close();
     await joinCtx.close();
@@ -164,7 +164,7 @@ test.describe('Imposter via Platform', () => {
     await expect(hostPage.locator('.platform-overlay')).toBeVisible({ timeout: 5_000 });
     await hostPage.locator('.btn-lobby').click();
     await hostPage.waitForURL(/\/party\/[A-Z0-9]+$/, { timeout: 10_000 });
-    await expect(hostPage.locator('.code')).toContainText(inviteCode);
+    await expect(hostPage.locator('.party-code-value')).toContainText(inviteCode);
 
     await Promise.all(ctxs.map((c) => c.close()));
   });
@@ -268,7 +268,7 @@ test.describe('Imposter via Platform', () => {
     // Reload host — platform resume redirects back to party lobby
     await page1.reload();
     await page1.waitForURL(/\/party\//, { timeout: 8_000 });
-    await expect(page1.locator('.code')).toContainText(inviteCode);
+    await expect(page1.locator('.party-code-value')).toContainText(inviteCode);
 
     await ctx1.close();
     await ctx2.close();

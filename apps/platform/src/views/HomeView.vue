@@ -109,56 +109,178 @@ onBeforeUnmount(() => {
 </script>
 
 <template>
-  <div class="mx-auto max-w-100 px-4 pt-16">
-    <h1 class="mb-8 text-center text-3xl font-extrabold text-accent">Game Platform</h1>
+  <div class="home-root">
+    <div class="home-card">
+      <!-- Top accent line -->
+      <div class="home-top-line" />
 
-    <div class="mb-6 flex gap-2">
-      <button
-        v-for="tab in ['create', 'join'] as const"
-        :key="tab"
-        class="tab flex-1 cursor-pointer rounded-[--radius-md] border border-border-strong bg-transparent px-4 py-2.5 text-muted transition-all duration-150"
-        :class="mode === tab && 'border-accent bg-shell text-foreground'"
-        @click="mode = tab"
+      <!-- Hero -->
+      <div class="home-hero">
+        <div class="home-logo-wrap">
+          <span class="home-logo-icon">⚡</span>
+        </div>
+        <h1 class="home-title">Game Platform</h1>
+        <p class="home-sub">Create a party or join your friends</p>
+      </div>
+
+      <!-- Tab switcher -->
+      <div class="ui-tab-group mb-6">
+        <button
+          v-for="tab in ['create', 'join'] as const"
+          :key="tab"
+          class="ui-tab"
+          :class="{ 'ui-tab-active': mode === tab }"
+          @click="mode = tab"
+        >
+          {{ tab === 'create' ? 'Create Party' : 'Join Party' }}
+        </button>
+      </div>
+
+      <!-- Form -->
+      <form
+        class="flex flex-col gap-4"
+        @submit.prevent="mode === 'create' ? handleCreate() : handleJoin()"
       >
-        {{ tab === 'create' ? 'Create Party' : 'Join Party' }}
-      </button>
+        <div class="flex flex-col gap-1.5">
+          <label for="name" class="home-label">Your Name</label>
+          <input
+            id="name"
+            v-model="playerName"
+            class="ui-input"
+            type="text"
+            placeholder="Enter your name"
+            maxlength="20"
+            autocomplete="off"
+          />
+        </div>
+
+        <Transition name="slide-up">
+          <div v-if="mode === 'join'" class="flex flex-col gap-1.5">
+            <label for="code" class="home-label">Invite Code</label>
+            <input
+              id="code"
+              v-model="inviteCode"
+              class="ui-input home-code-input uppercase"
+              type="text"
+              placeholder="ABC123"
+              maxlength="6"
+              autocomplete="off"
+            />
+          </div>
+        </Transition>
+
+        <Transition name="fade">
+          <p v-if="error" class="home-error" role="alert" aria-live="polite">{{ error }}</p>
+        </Transition>
+
+        <button type="submit" class="ui-btn-primary home-submit">
+          {{ mode === 'create' ? 'Create Party' : 'Join Party' }}
+        </button>
+      </form>
     </div>
-
-    <form
-      class="flex flex-col gap-4"
-      @submit.prevent="mode === 'create' ? handleCreate() : handleJoin()"
-    >
-      <div class="flex flex-col gap-1.5">
-        <label for="name" class="text-sm text-muted">Your Name</label>
-        <input
-          id="name"
-          v-model="playerName"
-          class="ui-input"
-          type="text"
-          placeholder="Enter your name"
-          maxlength="20"
-          autocomplete="off"
-        />
-      </div>
-
-      <div v-if="mode === 'join'" class="flex flex-col gap-1.5">
-        <label for="code" class="text-sm text-muted">Invite Code</label>
-        <input
-          id="code"
-          v-model="inviteCode"
-          class="ui-input uppercase"
-          type="text"
-          placeholder="e.g. ABC123"
-          maxlength="6"
-          autocomplete="off"
-        />
-      </div>
-
-      <p v-if="error" class="error text-sm text-danger">{{ error }}</p>
-
-      <button type="submit" class="ui-btn-primary">
-        {{ mode === 'create' ? 'Create Party' : 'Join Party' }}
-      </button>
-    </form>
   </div>
 </template>
+
+<style scoped>
+.home-root {
+  min-height: 100dvh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 1.5rem;
+}
+
+.home-card {
+  width: 100%;
+  max-width: 400px;
+  background: var(--color-panel);
+  border: 1px solid var(--color-border-strong);
+  border-radius: var(--radius-xl);
+  padding: 2.5rem 2rem;
+  box-shadow:
+    0 24px 64px rgba(0, 0, 0, 0.65),
+    0 0 0 1px rgba(255, 255, 255, 0.03) inset;
+  position: relative;
+  overflow: hidden;
+}
+
+.home-top-line {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 1px;
+  background: linear-gradient(90deg, transparent, rgba(249, 115, 22, 0.4), transparent);
+}
+
+.home-hero {
+  text-align: center;
+  margin-bottom: 2rem;
+}
+
+.home-logo-wrap {
+  width: 56px;
+  height: 56px;
+  margin: 0 auto 1.125rem;
+  background: var(--color-elevated);
+  border: 1px solid var(--color-border-strong);
+  border-radius: var(--radius-lg);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.625rem;
+  box-shadow: 0 0 24px rgba(249, 115, 22, 0.18);
+}
+
+.home-logo-icon {
+  line-height: 1;
+}
+
+.home-title {
+  font-size: 1.875rem;
+  font-weight: 800;
+  letter-spacing: -0.02em;
+  background: linear-gradient(135deg, #f0f0f5 0%, #7878a0 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+  margin-bottom: 0.375rem;
+  line-height: 1.2;
+}
+
+.home-sub {
+  font-size: 0.875rem;
+  color: var(--color-muted-foreground);
+  font-weight: 400;
+}
+
+.home-label {
+  font-size: 0.8rem;
+  font-weight: 600;
+  color: var(--color-muted);
+  letter-spacing: 0.02em;
+}
+
+.home-code-input {
+  text-align: center;
+  letter-spacing: 0.2em;
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 1.125rem;
+}
+
+.home-error {
+  font-size: 0.875rem;
+  color: var(--color-danger);
+  background: var(--color-danger-muted);
+  border: 1px solid rgba(239, 68, 68, 0.2);
+  border-radius: var(--radius-md);
+  padding: 0.5rem 0.75rem;
+}
+
+.home-submit {
+  width: 100%;
+  font-size: 1rem;
+  margin-top: 0.25rem;
+  padding: 0.875rem 1.5rem;
+}
+</style>
