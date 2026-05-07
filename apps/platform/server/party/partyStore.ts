@@ -177,3 +177,27 @@ export function partyToView(party: PartySession) {
     status: party.status,
   };
 }
+
+export interface ClearAllPartiesResult {
+  partiesRemoved: number;
+  membersRemoved: number;
+}
+
+export function clearAllParties(): ClearAllPartiesResult {
+  let membersRemoved = 0;
+  for (const party of parties.values()) {
+    membersRemoved += party.members.size;
+  }
+
+  for (const timer of partyCleanupTimers.values()) clearTimeout(timer);
+  for (const timer of matchTimeoutTimers.values()) clearTimeout(timer);
+
+  const partiesRemoved = parties.size;
+  parties.clear();
+  inviteCodeToParty.clear();
+  socketToParty.clear();
+  partyCleanupTimers.clear();
+  matchTimeoutTimers.clear();
+
+  return { partiesRemoved, membersRemoved };
+}

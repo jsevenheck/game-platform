@@ -6,6 +6,7 @@ import { createComponentLogger, registerProcessLogging } from './logging/logger'
 import { registerPartyHandlers } from './party/partyHandlers';
 import { gameRegistry } from './registry/index';
 import { registerHttpRoutes } from './httpRoutes';
+import { registerAdminRoutes } from './admin';
 import { initializeMetrics, setActiveConnections } from './metrics/collectors';
 import { registerMetricsRoutes } from './metrics/httpMetrics';
 
@@ -50,6 +51,7 @@ io.engine.on('connection', (engineSocket) => {
 registerPartyHandlers(io);
 serverLogger.info({ namespace: '/party' }, 'registered party namespace');
 
+registerAdminRoutes(app);
 registerHttpRoutes(app);
 
 httpServer.on('error', (error) => {

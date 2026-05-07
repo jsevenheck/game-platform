@@ -1,6 +1,7 @@
 import { randomUUID } from 'crypto';
 import { createRequire } from 'module';
 import pino, { type Bindings, type Logger, type LoggerOptions } from 'pino';
+import { appendLogEntry } from './logBuffer';
 
 export interface LoggingConfig {
   level: string;
@@ -68,6 +69,23 @@ export function buildLoggerOptions(config: LoggingConfig = readLoggingConfig()):
         pid: bindings.pid,
         host: bindings.hostname,
       }),
+    },
+
+    hooks: {
+      logMethod(args, method) {
+        const [first, second] = args as [unknown, unknown];
+        const data = (typeof first === 'object' && first !== null ? first : {}) as Record<string, unknown>;
+        const msg = typeof second === 'string' ? second : typeof first === 'string' ? first : 'log';
+        appendLogEntry({
+          timestamp: new Date().toISOString(),
+          level: String((data.level as string | undefined) ?? 'info'),
+          msg,
+          component: typeof data.component === 'string' ? data.component : undefined,
+          namespace: typeof data.namespace === 'string' ? data.namespace : undefined,
+          requestId: typeof data.requestId === 'string' ? data.requestId : undefined,
+        });
+        method.apply(this, args as Parameters<typeof method>);
+      },
     },
     redact: {
       paths: config.production
