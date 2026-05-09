@@ -1,6 +1,7 @@
-import { timingSafeEqual } from 'crypto';
 import type { Express, Request, Response, NextFunction } from 'express';
 import type { Server } from 'socket.io';
+import jwt from 'jsonwebtoken';
+import bcrypt from 'bcryptjs';
 import { createComponentLogger } from './logging/logger';
 import { clearAllParties } from './party/partyStore';
 import { getRecentLogs } from './logging/logBuffer';
@@ -11,6 +12,10 @@ const adminLogger = createComponentLogger('admin-http');
 const rateLimitMap = new Map<string, { count: number; resetAt: number }>();
 const RATE_LIMIT_WINDOW_MS = 60_000;
 const RATE_LIMIT_MAX = 20;
+
+const loginRateLimitMap = new Map<string, { count: number; resetAt: number }>();
+const LOGIN_RATE_LIMIT_WINDOW_MS = 60_000;
+const LOGIN_RATE_LIMIT_MAX = 5;
 
 function checkRateLimit(ip: string): boolean {
   const now = Date.now();
@@ -26,24 +31,63 @@ function checkRateLimit(ip: string): boolean {
   return true;
 }
 
-function readAdminToken(): string | null {
-  const token = process.env.ADMIN_TOKEN?.trim();
-  return token && token.length > 0 ? token : null;
+function checkLoginRateLimit(ip: string): boolean {
+  const now = Date.now();
+  const record = loginRateLimitMap.get(ip);
+  if (!record || now > record.resetAt) {
+    loginRateLimitMap.set(ip, { count: 1, resetAt: now + LOGIN_RATE_LIMIT_WINDOW_MS });
+    return true;
+  }
+  if (record.count >= LOGIN_RATE_LIMIT_MAX) {
+    return false;
+  }
+  record.count++;
+  return true;
 }
 
-function safeTokenEquals(expected: string, supplied: string): boolean {
-  const a = Buffer.from(expected);
-  const b = Buffer.from(supplied);
-  if (a.length !== b.length) return false;
-  return timingSafeEqual(a, b);
+function readAdminPasswordHash(): string | null {
+  const hash = process.env.ADMIN_PASSWORD_HASH?.trim();
+  return hash && hash.length > 0 ? hash : null;
+}
+
+function readJwtSecret(): string | null {
+  const secret = process.env.ADMIN_JWT_SECRET?.trim();
+  return secret && secret.length > 0 ? secret : null;
+}
+
+function isAdminEnabled(): boolean {
+  return !!(readAdminPasswordHash() && readJwtSecret());
+}
+
+const JWT_MAX_AGE_MS = 60 * 60 * 1000; // 1 hour
+
+function signAdminJwt(): string {
+  const secret = readJwtSecret()!;
+  return jwt.sign({ role: 'admin' }, secret, { expiresIn: '1h' });
+}
+
+function verifyAdminJwt(token: string): boolean {
+  const secret = readJwtSecret();
+  if (!secret) return false;
+  try {
+    jwt.verify(token, secret);
+    return true;
+  } catch {
+    return false;
+  }
+}
+
+function getAdminTokenFromCookie(req: Request): string | undefined {
+  const raw = req.cookies?.admin_session;
+  return typeof raw === 'string' ? raw : undefined;
 }
 
 function authenticateAdmin(req: Request, res: Response, next: NextFunction): void {
-  const expected = readAdminToken();
-  if (!expected) {
-    res
-      .status(503)
-      .json({ ok: false, error: 'Admin API is disabled: ADMIN_TOKEN is not configured' });
+  if (!isAdminEnabled()) {
+    res.status(503).json({
+      ok: false,
+      error: 'Admin API is disabled: ADMIN_PASSWORD_HASH and ADMIN_JWT_SECRET must be configured',
+    });
     return;
   }
 
@@ -53,12 +97,8 @@ function authenticateAdmin(req: Request, res: Response, next: NextFunction): voi
     return;
   }
 
-  const authHeader = req.header('authorization')?.trim();
-  const supplied = authHeader?.startsWith('Bearer ')
-    ? authHeader.slice('Bearer '.length).trim()
-    : '';
-
-  if (!supplied || !safeTokenEquals(expected, supplied)) {
+  const token = getAdminTokenFromCookie(req);
+  if (!token || !verifyAdminJwt(token)) {
     adminLogger.warn({ ip, path: req.path }, 'admin authentication failed');
     res.status(401).json({ ok: false, error: 'Unauthorized' });
     return;
@@ -67,7 +107,86 @@ function authenticateAdmin(req: Request, res: Response, next: NextFunction): voi
   next();
 }
 
+function setAdminCookie(res: Response, token: string): void {
+  res.cookie('admin_session', token, {
+    httpOnly: true,
+    secure: process.env.NODE_ENV === 'production',
+    sameSite: 'strict',
+    maxAge: JWT_MAX_AGE_MS,
+    path: '/api/admin',
+  });
+}
+
+function clearAdminCookie(res: Response): void {
+  res.clearCookie('admin_session', {
+    httpOnly: true,
+    secure: process.env.NODE_ENV === 'production',
+    sameSite: 'strict',
+    path: '/api/admin',
+  });
+}
+
 export function registerAdminRoutes(app: Express, io?: Server): void {
+  app.post('/api/admin/login', (req, res) => {
+    if (!isAdminEnabled()) {
+      res.status(503).json({
+        ok: false,
+        error: 'Admin API is disabled: ADMIN_PASSWORD_HASH and ADMIN_JWT_SECRET must be configured',
+      });
+      return;
+    }
+
+    const ip = req.ip ?? 'unknown';
+    if (!checkLoginRateLimit(ip)) {
+      res.status(429).json({ ok: false, error: 'Too many login attempts' });
+      return;
+    }
+
+    const { username, password } = req.body ?? {};
+    if (
+      typeof username !== 'string' ||
+      typeof password !== 'string' ||
+      username.length === 0 ||
+      password.length === 0
+    ) {
+      res.status(400).json({ ok: false, error: 'Username and password are required' });
+      return;
+    }
+
+    // Only a single admin account is supported; username is not security-critical.
+    const hash = readAdminPasswordHash()!;
+    if (!bcrypt.compareSync(password, hash)) {
+      adminLogger.warn({ ip, username }, 'admin login failed');
+      res.status(401).json({ ok: false, error: 'Invalid credentials' });
+      return;
+    }
+
+    const token = signAdminJwt();
+    setAdminCookie(res, token);
+    adminLogger.info({ ip, username }, 'admin logged in');
+    res.json({ ok: true });
+  });
+
+  app.get('/api/admin/me', (req, res) => {
+    if (!isAdminEnabled()) {
+      res.status(503).json({ ok: false, error: 'Admin API is disabled' });
+      return;
+    }
+
+    const token = getAdminTokenFromCookie(req);
+    if (!token || !verifyAdminJwt(token)) {
+      res.status(401).json({ ok: false, authenticated: false });
+      return;
+    }
+
+    res.json({ ok: true, authenticated: true });
+  });
+
+  app.post('/api/admin/logout', (_req, res) => {
+    clearAdminCookie(res);
+    res.json({ ok: true });
+  });
+
   app.get('/api/admin/logs', authenticateAdmin, (req, res) => {
     const limitCandidate = Number(req.query.limit ?? 200);
     const limit = Number.isFinite(limitCandidate)
@@ -93,6 +212,8 @@ export function registerAdminRoutes(app: Express, io?: Server): void {
       logs = logs.filter((l) => l.msg.toLowerCase().includes(searchFilter));
     }
 
+    // Future: stream logs from structured log backend (e.g. Loki, Datadog, CloudWatch)
+    // instead of the in-memory ring buffer when available.
     res.json({ ok: true, logs, total: logs.length });
   });
 

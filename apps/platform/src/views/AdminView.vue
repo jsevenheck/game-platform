@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref, computed, onMounted, onUnmounted, watch } from 'vue';
+import { ref, computed, onMounted, onUnmounted } from 'vue';
 
 interface AdminLog {
   timestamp: string;
@@ -10,7 +10,14 @@ interface AdminLog {
   requestId?: string;
 }
 
-const token = ref('');
+const authenticated = ref(false);
+const checkingAuth = ref(true);
+
+const username = ref('');
+const password = ref('');
+const loginError = ref('');
+const loggingIn = ref(false);
+
 const logs = ref<AdminLog[]>([]);
 const loadingLogs = ref(false);
 const actionMessage = ref('');
@@ -22,16 +29,73 @@ const searchQuery = ref('');
 const autoRefresh = ref(false);
 
 let refreshInterval: ReturnType<typeof setInterval> | null = null;
-const STORAGE_KEY = 'admin_token';
 
-onMounted(() => {
-  token.value = localStorage.getItem(STORAGE_KEY) ?? '';
+onMounted(async () => {
+  await checkAuth();
 });
 
-watch(token, (val) => {
-  if (val) localStorage.setItem(STORAGE_KEY, val);
-  else localStorage.removeItem(STORAGE_KEY);
-});
+async function checkAuth(): Promise<void> {
+  checkingAuth.value = true;
+  try {
+    const res = await fetch('/api/admin/me', { credentials: 'include' });
+    if (res.ok) {
+      authenticated.value = true;
+      await fetchLogs();
+    } else {
+      authenticated.value = false;
+    }
+  } catch {
+    authenticated.value = false;
+  } finally {
+    checkingAuth.value = false;
+  }
+}
+
+async function doLogin(): Promise<void> {
+  loginError.value = '';
+  loggingIn.value = true;
+  try {
+    const res = await fetch('/api/admin/login', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      credentials: 'include',
+      body: JSON.stringify({
+        username: username.value.trim(),
+        password: password.value,
+      }),
+    });
+    const json = await res.json();
+    if (!res.ok || !json.ok) {
+      loginError.value = json.error ?? 'Login failed';
+      return;
+    }
+    authenticated.value = true;
+    password.value = '';
+    await fetchLogs();
+  } catch {
+    loginError.value = 'Request failed during login';
+  } finally {
+    loggingIn.value = false;
+  }
+}
+
+async function doLogout(): Promise<void> {
+  try {
+    await fetch('/api/admin/logout', {
+      method: 'POST',
+      credentials: 'include',
+    });
+  } catch {
+    // ignore
+  }
+  authenticated.value = false;
+  logs.value = [];
+  autoRefresh.value = false;
+  if (refreshInterval) {
+    clearInterval(refreshInterval);
+    refreshInterval = null;
+  }
+}
 
 const filteredLogs = computed(() => {
   let result = logs.value;
@@ -69,11 +133,14 @@ async function fetchLogs(): Promise<void> {
   loadingLogs.value = true;
   try {
     const res = await fetch(`/api/admin/logs?${buildQueryParams().toString()}`, {
-      headers: { Authorization: `Bearer ${token.value}` },
+      credentials: 'include',
     });
     const json = await res.json();
     if (!res.ok || !json.ok) {
       errorMessage.value = json.error ?? 'Failed to load logs';
+      if (res.status === 401) {
+        authenticated.value = false;
+      }
       return;
     }
     logs.value = json.logs;
@@ -91,11 +158,14 @@ async function cleanupAll(): Promise<void> {
 
   const res = await fetch('/api/admin/cleanup', {
     method: 'POST',
-    headers: { Authorization: `Bearer ${token.value}` },
+    credentials: 'include',
   });
   const json = await res.json();
   if (!res.ok || !json.ok) {
     errorMessage.value = json.error ?? 'Cleanup failed';
+    if (res.status === 401) {
+      authenticated.value = false;
+    }
     return;
   }
 
@@ -141,110 +211,147 @@ function levelBadgeClass(level: string): string {
       </p>
     </header>
 
-    <section class="ui-panel flex flex-wrap items-end gap-3 p-5">
-      <label class="flex min-w-80 flex-1 flex-col gap-2 text-sm">
-        Admin Bearer Token
-        <input v-model="token" type="password" class="ui-input" placeholder="ADMIN_TOKEN" />
+    <!-- Loading state -->
+    <section v-if="checkingAuth" class="ui-panel p-5 text-sm text-muted-foreground">
+      Checking session…
+    </section>
+
+    <!-- Login form -->
+    <section v-else-if="!authenticated" class="ui-panel flex max-w-md flex-col gap-4 p-5">
+      <h2 class="text-lg font-medium">Admin Login</h2>
+      <label class="flex flex-col gap-1 text-sm">
+        Username
+        <input
+          v-model="username"
+          type="text"
+          class="ui-input"
+          placeholder="admin"
+          @keyup.enter="doLogin"
+        />
       </label>
-      <button class="ui-btn-secondary" :disabled="loadingLogs || !token" @click="fetchLogs">
-        {{ loadingLogs ? 'Loading…' : 'Refresh Logs' }}
-      </button>
+      <label class="flex flex-col gap-1 text-sm">
+        Password
+        <input
+          v-model="password"
+          type="password"
+          class="ui-input"
+          placeholder="Password"
+          @keyup.enter="doLogin"
+        />
+      </label>
       <button
-        class="ui-btn-secondary"
-        :class="{ 'bg-accent! text-white!': autoRefresh }"
-        :disabled="!token"
-        @click="toggleAutoRefresh"
+        class="ui-btn-primary"
+        :disabled="loggingIn || !username.trim() || !password"
+        @click="doLogin"
       >
-        {{ autoRefresh ? 'Stop Auto-Refresh' : 'Auto-Refresh (5s)' }}
+        {{ loggingIn ? 'Signing in…' : 'Sign In' }}
       </button>
-      <button class="ui-btn-danger" :disabled="!token" @click="cleanupAll">
-        Delete All Parties
-      </button>
+      <p v-if="loginError" class="border border-danger bg-danger-muted p-3 text-sm text-danger">
+        {{ loginError }}
+      </p>
     </section>
 
-    <section class="ui-panel flex flex-wrap gap-3 p-4">
-      <label class="flex flex-col gap-1 text-xs">
-        Level
-        <select v-model="levelFilter" class="ui-input text-sm" @change="fetchLogs">
-          <option value="">All</option>
-          <option v-for="lvl in uniqueLevels" :key="lvl" :value="lvl">{{ lvl }}</option>
-        </select>
-      </label>
-      <label class="flex flex-col gap-1 text-xs">
-        Component
-        <input
-          v-model="componentFilter"
-          type="text"
-          class="ui-input text-sm"
-          placeholder="e.g. party"
-          @keyup.enter="fetchLogs"
-        />
-      </label>
-      <label class="flex flex-col gap-1 text-xs">
-        Search
-        <input
-          v-model="searchQuery"
-          type="text"
-          class="ui-input text-sm"
-          placeholder="Message contains…"
-          @keyup.enter="fetchLogs"
-        />
-      </label>
-    </section>
+    <!-- Dashboard -->
+    <template v-else>
+      <section class="ui-panel flex flex-wrap items-end gap-3 p-5">
+        <button class="ui-btn-secondary" :disabled="loadingLogs" @click="fetchLogs">
+          {{ loadingLogs ? 'Loading…' : 'Refresh Logs' }}
+        </button>
+        <button
+          class="ui-btn-secondary"
+          :class="{ 'bg-accent! text-white!': autoRefresh }"
+          @click="toggleAutoRefresh"
+        >
+          {{ autoRefresh ? 'Stop Auto-Refresh' : 'Auto-Refresh (5s)' }}
+        </button>
+        <button class="ui-btn-danger" @click="cleanupAll">Delete All Parties</button>
+        <button class="ui-btn-ghost ml-auto" @click="doLogout">Logout</button>
+      </section>
 
-    <p
-      v-if="errorMessage"
-      class="ui-panel border border-danger bg-danger-muted p-3 text-sm text-danger"
-    >
-      {{ errorMessage }}
-    </p>
-    <p
-      v-if="actionMessage"
-      class="ui-panel border border-success bg-success-muted p-3 text-sm text-success"
-    >
-      {{ actionMessage }}
-    </p>
+      <section class="ui-panel flex flex-wrap gap-3 p-4">
+        <label class="flex flex-col gap-1 text-xs">
+          Level
+          <select v-model="levelFilter" class="ui-input text-sm" @change="fetchLogs">
+            <option value="">All</option>
+            <option v-for="lvl in uniqueLevels" :key="lvl" :value="lvl">{{ lvl }}</option>
+          </select>
+        </label>
+        <label class="flex flex-col gap-1 text-xs">
+          Component
+          <input
+            v-model="componentFilter"
+            type="text"
+            class="ui-input text-sm"
+            placeholder="e.g. party"
+            @keyup.enter="fetchLogs"
+          />
+        </label>
+        <label class="flex flex-col gap-1 text-xs">
+          Search
+          <input
+            v-model="searchQuery"
+            type="text"
+            class="ui-input text-sm"
+            placeholder="Message contains…"
+            @keyup.enter="fetchLogs"
+          />
+        </label>
+      </section>
 
-    <section class="ui-panel p-0">
-      <div class="border-b border-border px-4 py-3 text-sm font-medium">
-        Recent Logs
-        <span v-if="filteredLogs.length" class="text-muted-foreground">
-          ({{ filteredLogs.length }})
-        </span>
-      </div>
-      <div class="max-h-[60vh] overflow-auto">
-        <table v-if="filteredLogs.length" class="w-full text-left text-xs">
-          <thead class="bg-shell sticky top-0">
-            <tr>
-              <th class="px-3 py-2 font-medium">Time</th>
-              <th class="px-3 py-2 font-medium">Level</th>
-              <th class="px-3 py-2 font-medium">Component</th>
-              <th class="px-3 py-2 font-medium">Namespace</th>
-              <th class="px-3 py-2 font-medium">Message</th>
-            </tr>
-          </thead>
-          <tbody class="divide-y divide-border">
-            <tr v-for="(log, idx) in filteredLogs" :key="idx" class="hover:bg-panel">
-              <td class="px-3 py-2 whitespace-nowrap text-muted-foreground">
-                {{ new Date(log.timestamp).toLocaleTimeString() }}
-              </td>
-              <td class="px-3 py-2">
-                <span class="ui-badge" :class="levelBadgeClass(log.level)">
-                  {{ log.level }}
-                </span>
-              </td>
-              <td class="px-3 py-2 text-muted-foreground">
-                {{ log.component ?? '-' }}
-              </td>
-              <td class="px-3 py-2 text-muted-foreground">
-                {{ log.namespace ?? '-' }}
-              </td>
-              <td class="px-3 py-2">{{ log.msg }}</td>
-            </tr>
-          </tbody>
-        </table>
-        <p v-else class="p-4 text-sm text-muted-foreground">No logs loaded.</p>
-      </div>
-    </section>
+      <p
+        v-if="errorMessage"
+        class="ui-panel border border-danger bg-danger-muted p-3 text-sm text-danger"
+      >
+        {{ errorMessage }}
+      </p>
+      <p
+        v-if="actionMessage"
+        class="ui-panel border border-success bg-success-muted p-3 text-sm text-success"
+      >
+        {{ actionMessage }}
+      </p>
+
+      <section class="ui-panel p-0">
+        <div class="border-b border-border px-4 py-3 text-sm font-medium">
+          Recent Logs
+          <span v-if="filteredLogs.length" class="text-muted-foreground">
+            ({{ filteredLogs.length }})
+          </span>
+        </div>
+        <div class="max-h-[60vh] overflow-auto">
+          <table v-if="filteredLogs.length" class="w-full text-left text-xs">
+            <thead class="bg-shell sticky top-0">
+              <tr>
+                <th class="px-3 py-2 font-medium">Time</th>
+                <th class="px-3 py-2 font-medium">Level</th>
+                <th class="px-3 py-2 font-medium">Component</th>
+                <th class="px-3 py-2 font-medium">Namespace</th>
+                <th class="px-3 py-2 font-medium">Message</th>
+              </tr>
+            </thead>
+            <tbody class="divide-y divide-border">
+              <tr v-for="(log, idx) in filteredLogs" :key="idx" class="hover:bg-panel">
+                <td class="px-3 py-2 whitespace-nowrap text-muted-foreground">
+                  {{ new Date(log.timestamp).toLocaleTimeString() }}
+                </td>
+                <td class="px-3 py-2">
+                  <span class="ui-badge" :class="levelBadgeClass(log.level)">
+                    {{ log.level }}
+                  </span>
+                </td>
+                <td class="px-3 py-2 text-muted-foreground">
+                  {{ log.component ?? '-' }}
+                </td>
+                <td class="px-3 py-2 text-muted-foreground">
+                  {{ log.namespace ?? '-' }}
+                </td>
+                <td class="px-3 py-2">{{ log.msg }}</td>
+              </tr>
+            </tbody>
+          </table>
+          <p v-else class="p-4 text-sm text-muted-foreground">No logs loaded.</p>
+        </div>
+      </section>
+    </template>
   </main>
 </template>

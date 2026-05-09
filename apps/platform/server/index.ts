@@ -1,4 +1,5 @@
 import express from 'express';
+import cookieParser from 'cookie-parser';
 import { createServer } from 'http';
 import { Server } from 'socket.io';
 import { requestLogger } from './logging/requestLogger';
@@ -15,6 +16,8 @@ const httpServer = createServer(app);
 const serverLogger = createComponentLogger('platform-server');
 
 registerProcessLogging(serverLogger);
+app.use(express.json());
+app.use(cookieParser());
 app.use(requestLogger);
 registerMetricsRoutes(app, serverLogger);
 
