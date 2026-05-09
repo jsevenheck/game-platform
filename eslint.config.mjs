@@ -96,6 +96,8 @@ export default tseslint.config(
         setInterval: 'readonly',
         clearInterval: 'readonly',
         localStorage: 'readonly',
+        fetch: 'readonly',
+        confirm: 'readonly',
       },
       parserOptions: {
         parser: tseslint.parser,

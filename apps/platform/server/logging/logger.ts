@@ -1,5 +1,6 @@
 import { randomUUID } from 'crypto';
 import { createRequire } from 'module';
+import { Writable } from 'stream';
 import pino, { type Bindings, type Logger, type LoggerOptions } from 'pino';
 import { appendLogEntry } from './logBuffer';
 
@@ -71,22 +72,6 @@ export function buildLoggerOptions(config: LoggingConfig = readLoggingConfig()):
       }),
     },
 
-    hooks: {
-      logMethod(args, method) {
-        const [first, second] = args as [unknown, unknown];
-        const data = (typeof first === 'object' && first !== null ? first : {}) as Record<string, unknown>;
-        const msg = typeof second === 'string' ? second : typeof first === 'string' ? first : 'log';
-        appendLogEntry({
-          timestamp: new Date().toISOString(),
-          level: String((data.level as string | undefined) ?? 'info'),
-          msg,
-          component: typeof data.component === 'string' ? data.component : undefined,
-          namespace: typeof data.namespace === 'string' ? data.namespace : undefined,
-          requestId: typeof data.requestId === 'string' ? data.requestId : undefined,
-        });
-        method.apply(this, args as Parameters<typeof method>);
-      },
-    },
     redact: {
       paths: config.production
         ? [...ALWAYS_REDACT_PATHS, ...PRODUCTION_REDACT_PATHS]
@@ -122,7 +107,39 @@ export function resolvePrettyTransportTarget(
 }
 
 export function createRootLogger(config: LoggingConfig = readLoggingConfig()): Logger {
-  return pino(buildLoggerOptions(config));
+  const options = buildLoggerOptions(config);
+
+  // Pretty mode uses pino transport workers; we cannot easily intercept the
+  // serialized stream there. In production (non-pretty) we tap the already
+  // serialized + redacted JSON line so the buffer never stores raw secrets.
+  if (options.transport) {
+    return pino(options);
+  }
+
+  const logBufferStream = new Writable({
+    write(chunk, _encoding, callback) {
+      const line = typeof chunk === 'string' ? chunk : chunk.toString();
+      try {
+        const entry = JSON.parse(line);
+        appendLogEntry({
+          timestamp: entry.time ? new Date(entry.time).toISOString() : new Date().toISOString(),
+          level: pino.levels.labels[entry.level] ?? 'info',
+          msg: entry.msg,
+          component: typeof entry.component === 'string' ? entry.component : undefined,
+          namespace: typeof entry.namespace === 'string' ? entry.namespace : undefined,
+          requestId: typeof entry.requestId === 'string' ? entry.requestId : undefined,
+        });
+      } catch {
+        // Ignore non-JSON lines (e.g. pretty-printed output)
+      }
+      callback();
+    },
+  });
+
+  return pino(
+    options,
+    pino.multistream([{ stream: pino.destination({ sync: false }) }, { stream: logBufferStream }])
+  );
 }
 
 export const logger = createRootLogger();
