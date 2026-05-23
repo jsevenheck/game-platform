@@ -51,6 +51,10 @@
   --color-flip7-hover: #d97706;
   --color-flip7-muted: rgba(245, 158, 11, 0.12);
 
+  --color-scout: #14b8a6;
+  --color-scout-hover: #0d9488;
+  --color-scout-muted: rgba(20, 184, 166, 0.12);
+
   /* Semantic */
   --color-danger: #ef4444;
   --color-danger-muted: rgba(239, 68, 68, 0.12);
@@ -189,7 +193,8 @@
   .ui-btn-primary[class*="bg-blackout"],
   .ui-btn-primary[class*="bg-imposter"],
   .ui-btn-primary[class*="bg-signals"],
-  .ui-btn-primary[class*="bg-flip7"] {
+  .ui-btn-primary[class*="bg-flip7"],
+  .ui-btn-primary[class*="bg-scout"] {
     background-image: none !important;
   }
 

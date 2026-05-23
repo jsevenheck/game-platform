@@ -79,6 +79,21 @@ export const clientGameRegistry: PlatformGameModule[] = [
     },
     loadClient: () => import('@flip7-ui/PlatformAdapter.vue'),
   },
+  {
+    definition: {
+      id: 'scout',
+      name: 'Scout',
+      minPlayers: 2,
+      maxPlayers: 5,
+    },
+    platformMeta: {
+      icon: '🎯',
+      gradFrom: '#065f46',
+      gradTo: '#022c22',
+      description: 'Outwit your friends in this ladder-climbing card trick game',
+    },
+    loadClient: () => import('@scout-ui/PlatformAdapter.vue'),
+  },
 ];
 
 export function getClientGame(gameId: string): PlatformGameModule | undefined {

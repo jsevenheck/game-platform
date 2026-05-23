@@ -167,6 +167,8 @@ importers:
 
   games/imposter: {}
 
+  games/scout: {}
+
   games/secret-signals: {}
 
 packages:

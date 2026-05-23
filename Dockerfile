@@ -16,6 +16,7 @@ COPY games/blackout/package.json games/blackout/
 COPY games/imposter/package.json games/imposter/
 COPY games/secret-signals/package.json games/secret-signals/
 COPY games/flip7/package.json games/flip7/
+COPY games/scout/package.json games/scout/
 
 RUN pnpm install --frozen-lockfile
 
