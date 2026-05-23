@@ -53,7 +53,7 @@ export interface Room {
   trick: TrickState | null;
   trickHistory: TrickHistoryEntry[];
   winnerIds: string[];
-  gameEndReason: 'rowEmpty' | 'supplyExhausted' | 'manual' | null;
+  gameEndReason: 'rowEmpty' | null;
 }
 
 // ─── Client-safe view types ─────────────────────────────────────────────────
