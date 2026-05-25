@@ -50,13 +50,18 @@ function readAdminPasswordHash(): string | null {
   return hash && hash.length > 0 ? hash : null;
 }
 
+function readAdminUsername(): string | null {
+  const username = process.env.ADMIN_USERNAME?.trim();
+  return username && username.length > 0 ? username : null;
+}
+
 function readJwtSecret(): string | null {
   const secret = process.env.ADMIN_JWT_SECRET?.trim();
   return secret && secret.length > 0 ? secret : null;
 }
 
 function isAdminEnabled(): boolean {
-  return !!(readAdminPasswordHash() && readJwtSecret());
+  return !!(readAdminPasswordHash() && readAdminUsername() && readJwtSecret());
 }
 
 const JWT_MAX_AGE_MS = 60 * 60 * 1000; // 1 hour
@@ -86,7 +91,8 @@ function authenticateAdmin(req: Request, res: Response, next: NextFunction): voi
   if (!isAdminEnabled()) {
     res.status(503).json({
       ok: false,
-      error: 'Admin API is disabled: ADMIN_PASSWORD_HASH and ADMIN_JWT_SECRET must be configured',
+      error:
+        'Admin API is disabled: ADMIN_USERNAME, ADMIN_PASSWORD_HASH and ADMIN_JWT_SECRET must be configured',
     });
     return;
   }
@@ -131,7 +137,8 @@ export function registerAdminRoutes(app: Express, io?: Server): void {
     if (!isAdminEnabled()) {
       res.status(503).json({
         ok: false,
-        error: 'Admin API is disabled: ADMIN_PASSWORD_HASH and ADMIN_JWT_SECRET must be configured',
+        error:
+          'Admin API is disabled: ADMIN_USERNAME, ADMIN_PASSWORD_HASH and ADMIN_JWT_SECRET must be configured',
       });
       return;
     }
@@ -153,9 +160,11 @@ export function registerAdminRoutes(app: Express, io?: Server): void {
       return;
     }
 
-    // Only a single admin account is supported; username is not security-critical.
+    const expectedUsername = readAdminUsername()!;
     const hash = readAdminPasswordHash()!;
-    if (!bcrypt.compareSync(password, hash)) {
+    const usernameOk = username === expectedUsername;
+    const passwordOk = bcrypt.compareSync(password, hash);
+    if (!usernameOk || !passwordOk) {
       adminLogger.warn({ ip, username }, 'admin login failed');
       res.status(401).json({ ok: false, error: 'Invalid credentials' });
       return;
