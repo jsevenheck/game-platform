@@ -1,8 +1,8 @@
 # ── Stage 1: Build ──────────────────────────────────────────────────────────
-FROM node:24-slim AS builder
+FROM node:24-alpine AS builder
 
 # Native build tools required for better-sqlite3
-RUN apt-get update && apt-get install -y --no-install-recommends python3 make g++ && rm -rf /var/lib/apt/lists/*
+RUN apk add --no-cache python3 make g++
 
 WORKDIR /app
 
@@ -18,7 +18,7 @@ COPY games/secret-signals/package.json games/secret-signals/
 COPY games/flip7/package.json games/flip7/
 COPY games/scout/package.json games/scout/
 
-RUN pnpm install --frozen-lockfile
+RUN pnpm install --frozen-lockfile --config.minimumReleaseAge=0
 
 # Copy all source and build
 COPY . .
