@@ -46,7 +46,7 @@ function handleScout(payload: {
 <template>
   <main
     v-if="room"
-    class="mx-auto grid min-h-dvh max-w-7xl gap-5 p-4 lg:grid-cols-[1fr_320px] lg:p-6"
+    class="mx-auto grid max-w-7xl gap-4 p-3 lg:grid-cols-[1fr_280px] lg:p-4"
   >
     <section class="space-y-5">
       <header class="ui-panel flex flex-wrap items-center justify-between gap-3">
@@ -90,7 +90,7 @@ function handleScout(payload: {
         </article>
       </section>
 
-      <section class="ui-panel min-h-52">
+      <section class="ui-panel min-h-28">
         <div class="mb-4 flex items-center justify-between">
           <h2 class="text-lg font-bold">Table</h2>
           <p v-if="currentPlay" class="text-sm text-muted">

@@ -20,7 +20,7 @@ const props = withDefaults(
 );
 
 const cardClasses = computed(() => [
-  props.compact ? 'h-20 w-14' : 'h-28 w-20',
+  props.compact ? 'h-[4.5rem] w-12' : 'h-28 w-20',
   props.selected
     ? 'border-scout shadow-[0_0_22px_rgba(20,184,166,0.45)] -translate-y-2'
     : 'border-border-strong',
@@ -41,11 +41,11 @@ const cardClasses = computed(() => [
       </div>
     </template>
     <template v-else>
-      <span class="font-mono text-xl font-bold text-scout">{{ card.playValue }}</span>
-      <span class="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 text-xs text-muted">
+      <span class="font-mono text-lg font-bold text-scout">{{ card.playValue }}</span>
+      <span class="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 text-[10px] text-muted">
         play
       </span>
-      <span class="self-end font-mono text-lg font-semibold text-warning">{{
+      <span class="self-end font-mono text-base font-semibold text-warning">{{
         card.scoutPoints
       }}</span>
     </template>

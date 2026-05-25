@@ -24,10 +24,15 @@ function cardColor(card: ScoutCard): string {
 
 function analyzePlay(cards: ScoutCard[]): PlayAnalysis {
   const count = cards.length;
-  if (count < 2) throw new Error('Play must be a valid set or run');
+  if (count < 1) throw new Error('Play must be a valid set or run');
 
   const values = cards.map((card) => card.playValue);
   const highCard = Math.max(...values);
+
+  if (count === 1) {
+    return { strength: values[0], count, highCard };
+  }
+
   const isSet = values.every((value) => value === values[0]);
   if (isSet) {
     return { strength: values[0] * count, count, highCard };
@@ -36,7 +41,7 @@ function analyzePlay(cards: ScoutCard[]): PlayAnalysis {
   const sameColor = cards.every((card) => cardColor(card) === cardColor(cards[0]));
   const sortedValues = [...values].sort((a, b) => a - b);
   const isRun =
-    count >= 3 &&
+    count >= 2 &&
     sameColor &&
     sortedValues.every((value, index) => index === 0 || value === sortedValues[index - 1] + 1);
   if (isRun) {
@@ -96,10 +101,12 @@ export function setupComplete(room: Room): boolean {
   return room.playerOrder.every((playerId) => room.players[playerId]?.setupConfirmed);
 }
 
+const HAND_SIZES: Record<number, number> = { 2: 11, 3: 12, 4: 9, 5: 9 };
+
 export function startGame(room: Room): void {
   const deck = shuffle(buildDeck());
   const order = [...room.playerOrder];
-  const handSize = Math.floor(deck.length / order.length);
+  const handSize = HAND_SIZES[order.length] ?? Math.floor(deck.length / order.length);
 
   for (const playerId of order) {
     const player = room.players[playerId];

@@ -64,7 +64,20 @@ describe('Scout trick manager', () => {
       highCard: 4,
     };
     expect(beatsCurrentPlay([card('y', 5), card('z', 5)], current)).toBe(true);
+    // single 7 has strength 7, pair of 4s has strength 8 — does not beat
     expect(beatsCurrentPlay([card('q', 7)], current)).toBe(false);
+    // single 9 has strength 9 > 8 — beats it
+    expect(beatsCurrentPlay([card('r', 9)], current)).toBe(true);
+  });
+
+  it('accepts a single card as the opening play (no current play on table)', () => {
+    expect(beatsCurrentPlay([card('x', 1)], null)).toBe(true);
+    expect(beatsCurrentPlay([card('x', 7)], null)).toBe(true);
+  });
+
+  it('accepts a run of exactly two same-color consecutive cards', () => {
+    const twoCardRun = [card('a', 5), card('b', 6)];
+    expect(beatsCurrentPlay(twoCardRun, null)).toBe(true);
   });
 
   it('plays contiguous cards and resolves when the other player scouts', () => {
