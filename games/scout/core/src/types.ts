@@ -1,6 +1,6 @@
 import type { ScoutCard } from './deck';
 
-export type GamePhase = 'lobby' | 'playing' | 'scoring' | 'ended';
+export type GamePhase = 'lobby' | 'playing' | 'ended';
 
 export interface Player {
   id: string;

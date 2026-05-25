@@ -18,7 +18,7 @@ function card(id: string, playValue: number, scoutPoints = playValue): ScoutCard
 function room(): Room {
   const a = createPlayer('Alice', true, 'a');
   const b = createPlayer('Bob', false, 'b');
-  a.row = [card('a1', 3), card('a2', 4), card('a3', 9)];
+  a.row = [card('a1', 3), card('a2', 3), card('a3', 9)];
   b.row = [card('b1', 5), card('b2', 6), card('b3', 7)];
   return {
     code: 'TEST',
@@ -36,28 +36,34 @@ function room(): Room {
 }
 
 describe('Scout trick manager', () => {
-  it('compares plays by sum, then card count, then high card', () => {
+  it('compares valid Scout plays by strength, then high card', () => {
     expect(
-      comparePlays({ sum: 10, count: 1, highCard: 10 }, { sum: 9, count: 3, highCard: 4 })
+      comparePlays({ cards: [card('a', 5), card('b', 5)] }, { cards: [card('c', 4), card('d', 4)] })
     ).toBeGreaterThan(0);
     expect(
-      comparePlays({ sum: 9, count: 3, highCard: 4 }, { sum: 9, count: 2, highCard: 5 })
-    ).toBeGreaterThan(0);
+      comparePlays(
+        { cards: [card('a', 1), card('b', 2), card('c', 3)] },
+        { cards: [card('d', 6), card('e', 6)] }
+      )
+    ).toBeLessThan(0);
     expect(
-      comparePlays({ sum: 9, count: 2, highCard: 6 }, { sum: 9, count: 2, highCard: 5 })
-    ).toBeGreaterThan(0);
+      comparePlays(
+        { cards: [card('a', 5), card('b', 5)] },
+        { cards: [card('c', 2), card('d', 3), card('e', 4)] }
+      )
+    ).toBeLessThan(0);
   });
 
   it('validates beating the current play', () => {
     const current = {
       id: 'p',
       playerId: 'a',
-      cards: [card('x', 8)],
+      cards: [card('x', 4), card('w', 4)],
       sum: 8,
-      count: 1,
-      highCard: 8,
+      count: 2,
+      highCard: 4,
     };
-    expect(beatsCurrentPlay([card('y', 4), card('z', 5)], current)).toBe(true);
+    expect(beatsCurrentPlay([card('y', 5), card('z', 5)], current)).toBe(true);
     expect(beatsCurrentPlay([card('q', 7)], current)).toBe(false);
   });
 

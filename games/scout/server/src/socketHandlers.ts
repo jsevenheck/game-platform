@@ -315,7 +315,13 @@ export function registerScout(io: Server, namespace = '/g/scout'): void {
           { roomCode: room.code, playerId, count: data.count, ended },
           'scout cards played'
         );
-        if (ended) scheduleRoomCleanup(room.code, ROOM_ENDED_CLEANUP_MS);
+        if (ended) {
+          gameLogger.info(
+            { roomCode: room.code, winnerIds: room.winnerIds, reason: room.gameEndReason },
+            'scout game ended'
+          );
+          scheduleRoomCleanup(room.code, ROOM_ENDED_CLEANUP_MS);
+        }
         return respond({ ok: true });
       } catch (err) {
         return respond({ ok: false, error: callbackErrorMessage(err) });
@@ -338,7 +344,13 @@ export function registerScout(io: Server, namespace = '/g/scout'): void {
           'scout player passed'
         );
         const ended = (room.phase as Room['phase']) === 'ended';
-        if (ended) scheduleRoomCleanup(room.code, ROOM_ENDED_CLEANUP_MS);
+        if (ended) {
+          gameLogger.info(
+            { roomCode: room.code, winnerIds: room.winnerIds, reason: room.gameEndReason },
+            'scout game ended'
+          );
+          scheduleRoomCleanup(room.code, ROOM_ENDED_CLEANUP_MS);
+        }
         return respond({ ok: true });
       } catch (err) {
         return respond({ ok: false, error: callbackErrorMessage(err) });
@@ -370,11 +382,20 @@ export function registerScout(io: Server, namespace = '/g/scout'): void {
       const respond = cb ? instrumentation.wrapCallback(cb) : undefined;
       try {
         const room = getRoom(data.roomCode);
-        if (!room) return respond?.({ ok: false, error: 'Room not found' });
+        if (!room) {
+          respond?.({ ok: false, error: 'Room not found' });
+          instrumentation.finishRejected();
+          return;
+        }
         const playerId = verifyPlayerInRoom(socket, data.roomCode);
-        if (!playerId) return respond?.({ ok: false, error: 'Not in room' });
+        if (!playerId) {
+          respond?.({ ok: false, error: 'Not in room' });
+          instrumentation.finishRejected();
+          return;
+        }
         sendRoomToPlayer(nsp, room, playerId);
-        return respond?.({ ok: true });
+        respond?.({ ok: true });
+        instrumentation.finishSuccess();
       } catch (err) {
         instrumentation.finishError();
         throw err;

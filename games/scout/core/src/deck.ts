@@ -6,6 +6,7 @@ export interface ScoutCard {
   playValue: number;
   scoutPoints: number;
   flipped: boolean;
+  color?: string;
 }
 
 /**

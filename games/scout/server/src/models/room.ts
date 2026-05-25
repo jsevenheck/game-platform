@@ -94,6 +94,7 @@ const CLEANUP_INTERVAL_MS = 10 * 60 * 1000;
 const cleanupInterval = setInterval(() => {
   for (const [code, room] of rooms) {
     const allDisconnected = Object.values(room.players).every((p) => !p.connected);
+    if (roomTimers.has(code)) continue;
     if (room.phase === 'ended') scheduleRoomCleanup(code, ROOM_ENDED_CLEANUP_MS);
     else if (allDisconnected) scheduleRoomCleanup(code, ROOM_IDLE_TIMEOUT_MS);
   }

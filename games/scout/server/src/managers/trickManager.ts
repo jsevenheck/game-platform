@@ -11,29 +11,73 @@ function shuffle<T>(items: T[]): T[] {
   return copy;
 }
 
-function summarizePlay(playerId: string, cards: ScoutCard[]): PlayedSet {
+type PlayAnalysis = {
+  strength: number;
+  count: number;
+  highCard: number;
+};
+
+function cardColor(card: ScoutCard): string {
+  if ('color' in card && typeof card.color === 'string') return card.color;
+  return card.flipped ? 'flipped' : 'base';
+}
+
+function analyzePlay(cards: ScoutCard[]): PlayAnalysis {
+  const count = cards.length;
+  if (count < 2) throw new Error('Play must be a valid set or run');
+
+  const values = cards.map((card) => card.playValue);
+  const highCard = Math.max(...values);
+  const isSet = values.every((value) => value === values[0]);
+  if (isSet) {
+    return { strength: values[0] * count, count, highCard };
+  }
+
+  const sameColor = cards.every((card) => cardColor(card) === cardColor(cards[0]));
+  const sortedValues = [...values].sort((a, b) => a - b);
+  const isRun =
+    count >= 3 &&
+    sameColor &&
+    sortedValues.every((value, index) => index === 0 || value === sortedValues[index - 1] + 1);
+  if (isRun) {
+    return { strength: highCard * count, count, highCard };
+  }
+
+  throw new Error('Play must be a valid set or run');
+}
+
+function summarizePlay(playerId: string, cards: ScoutCard[], id = nanoid(10)): PlayedSet {
+  const analysis = analyzePlay(cards);
   return {
-    id: nanoid(10),
+    id,
     playerId,
     cards,
-    sum: cards.reduce((total, card) => total + card.playValue, 0),
-    count: cards.length,
-    highCard: Math.max(...cards.map((card) => card.playValue)),
+    sum: analysis.strength,
+    count: analysis.count,
+    highCard: analysis.highCard,
   };
 }
 
 export function comparePlays(
-  candidate: Pick<PlayedSet, 'sum' | 'count' | 'highCard'>,
-  current: Pick<PlayedSet, 'sum' | 'count' | 'highCard'>
+  candidate: Pick<PlayedSet, 'cards'>,
+  current: Pick<PlayedSet, 'cards'>
 ): number {
-  if (candidate.sum !== current.sum) return candidate.sum - current.sum;
-  if (candidate.count !== current.count) return candidate.count - current.count;
-  return candidate.highCard - current.highCard;
+  const candidateAnalysis = analyzePlay(candidate.cards);
+  const currentAnalysis = analyzePlay(current.cards);
+  if (candidateAnalysis.strength !== currentAnalysis.strength) {
+    return candidateAnalysis.strength - currentAnalysis.strength;
+  }
+  return candidateAnalysis.highCard - currentAnalysis.highCard;
 }
 
 export function beatsCurrentPlay(cards: ScoutCard[], current: PlayedSet | null): boolean {
-  if (!current) return cards.length > 0;
-  return comparePlays(summarizePlay('candidate', cards), current) > 0;
+  try {
+    const candidate = summarizePlay('candidate', cards);
+    if (!current) return true;
+    return comparePlays(candidate, current) > 0;
+  } catch {
+    return false;
+  }
 }
 
 export function flipPlayerRow(player: Player): void {
@@ -228,11 +272,23 @@ function removeCardFromTable(
   cardId?: string,
   fromPlayerId?: string
 ): ScoutCard | null {
-  for (const play of trick.plays) {
+  for (let playIndex = 0; playIndex < trick.plays.length; playIndex++) {
+    const play = trick.plays[playIndex];
     if (fromPlayerId && play.playerId !== fromPlayerId) continue;
     const index = cardId ? play.cards.findIndex((card) => card.id === cardId) : 0;
     if (index >= 0) {
-      return play.cards.splice(index, 1)[0] ?? null;
+      const removed = play.cards.splice(index, 1)[0] ?? null;
+      if (removed && play === trick.currentPlay) {
+        try {
+          const updatedPlay = summarizePlay(play.playerId, play.cards, play.id);
+          trick.plays[playIndex] = updatedPlay;
+          trick.currentPlay = updatedPlay;
+        } catch (err) {
+          play.cards.splice(index, 0, removed);
+          throw err;
+        }
+      }
+      return removed;
     }
   }
   return null;
