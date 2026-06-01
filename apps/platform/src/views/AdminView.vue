@@ -205,11 +205,11 @@ function levelBadgeClass(level: string): string {
   switch (level) {
     case 'fatal':
     case 'error':
-      return 'bg-danger! text-white!';
+      return 'bg-danger text-white';
     case 'warn':
-      return 'bg-warning! text-black!';
+      return 'bg-warning text-black';
     case 'info':
-      return 'bg-success! text-white!';
+      return 'bg-success text-white';
     default:
       return 'bg-muted text-muted-foreground';
   }
@@ -273,7 +273,7 @@ function levelBadgeClass(level: string): string {
         </button>
         <button
           class="ui-btn-secondary"
-          :class="{ 'bg-accent! text-white!': autoRefresh }"
+          :class="{ 'admin-auto-refresh-active': autoRefresh }"
           @click="toggleAutoRefresh"
         >
           {{ autoRefresh ? 'Stop Auto-Refresh' : 'Auto-Refresh (5s)' }}
@@ -369,3 +369,18 @@ function levelBadgeClass(level: string): string {
     </template>
   </main>
 </template>
+
+<style scoped>
+.admin-auto-refresh-active.ui-btn-secondary {
+  background: var(--color-accent);
+  border-color: var(--color-accent);
+  color: white;
+  box-shadow: 0 0 14px rgba(249, 115, 22, 0.22);
+}
+
+.admin-auto-refresh-active.ui-btn-secondary:hover:not(:disabled) {
+  background: var(--color-accent);
+  border-color: var(--color-accent);
+  color: white;
+}
+</style>

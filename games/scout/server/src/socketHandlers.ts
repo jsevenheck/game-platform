@@ -97,8 +97,12 @@ function clearHost(room: Room): void {
   room.hostId = null;
 }
 
+function isConnectedPlayer(room: Room, playerId: string | null | undefined): boolean {
+  return !!playerId && room.players[playerId]?.connected === true;
+}
+
 function restoreHostToFirstConnectedPlayer(room: Room): boolean {
-  if (room.hostId !== null) return false;
+  if (isConnectedPlayer(room, room.hostId)) return false;
   const nextHostId = room.playerOrder.find((playerId) => room.players[playerId]?.connected);
   if (!nextHostId) {
     clearHost(room);
@@ -110,11 +114,11 @@ function restoreHostToFirstConnectedPlayer(room: Room): boolean {
 
 function syncRoomHostFromParty(room: Room, hostPlayerId: string): void {
   room.ownerId = hostPlayerId;
-  if (room.players[hostPlayerId]) {
+  if (isConnectedPlayer(room, hostPlayerId)) {
     assignHost(room, hostPlayerId);
-  } else {
-    clearHost(room);
+    return;
   }
+  restoreHostToFirstConnectedPlayer(room);
 }
 
 function syncRoomHostFromActiveParty(room: Room, gameId: string): boolean {
@@ -127,19 +131,27 @@ function syncRoomHostFromActiveParty(room: Room, gameId: string): boolean {
 
 function syncRoomHostAfterJoin(room: Room, hostPlayerId: string, allowFallbackHost: boolean): void {
   syncRoomHostFromParty(room, hostPlayerId);
-  if (allowFallbackHost) restoreHostToFirstConnectedPlayer(room);
+  if (allowFallbackHost || !isConnectedPlayer(room, room.hostId)) {
+    restoreHostToFirstConnectedPlayer(room);
+  }
 }
 
 function verifyIsHost(socket: ScoutSocket, room: Room): boolean {
+  syncRoomHostFromActiveParty(room, 'scout');
+
   const index = getSocketIndex(socket.id);
   if (!index || index.roomCode !== room.code || index.playerId !== room.hostId) return false;
 
-  const sessionId = getRoomSession(room.code);
-  const party = sessionId ? getPartyByActiveMatch(sessionId, 'scout') : undefined;
-  if (!party || party.hostPlayerId === index.playerId) return true;
+  const player = room.players[index.playerId];
+  return player?.connected === true && player.socketId === socket.id;
+}
 
-  const partyHost = party.members.get(party.hostPlayerId);
-  return !partyHost?.connected;
+function createInstrumentedResponder<T extends { ok?: boolean }>(
+  instrumentation: ReturnType<typeof startSocketHandlerInstrumentation>,
+  cb: unknown
+): (result: T) => void {
+  const callback = typeof cb === 'function' ? (cb as (result: T) => void) : () => {};
+  return instrumentation.wrapCallback(callback);
 }
 
 function verifyPlayerInRoom(socket: ScoutSocket, roomCode: string): string | null {
@@ -265,12 +277,10 @@ export function registerScout(io: Server, namespace = '/g/scout'): void {
 
     socket.on('autoJoinRoom', (data: unknown, cb: unknown) => {
       const instrumentation = startSocketHandlerInstrumentation(namespace, 'autoJoinRoom', gameId);
-      const respond: (result: AutoJoinRoomResponse | ErrorResponse) => void =
-        typeof cb === 'function'
-          ? instrumentation.wrapCallback(
-              cb as (result: AutoJoinRoomResponse | ErrorResponse) => void
-            )
-          : () => {};
+      const respond = createInstrumentedResponder<AutoJoinRoomResponse | ErrorResponse>(
+        instrumentation,
+        cb
+      );
       try {
         if (!isObjectPayload(data)) return respond({ ok: false, error: INVALID_REQUEST_ERROR });
 
@@ -388,10 +398,7 @@ export function registerScout(io: Server, namespace = '/g/scout'): void {
 
     socket.on('startGame', (data: unknown, cb: unknown) => {
       const instrumentation = startSocketHandlerInstrumentation(namespace, 'startGame', gameId);
-      const respond: (result: BasicResponse) => void =
-        typeof cb === 'function'
-          ? instrumentation.wrapCallback(cb as (result: BasicResponse) => void)
-          : () => {};
+      const respond = createInstrumentedResponder<BasicResponse>(instrumentation, cb);
       try {
         if (!isObjectPayload(data)) return respond({ ok: false, error: INVALID_REQUEST_ERROR });
         const roomCode = normalizeRequiredString(data.roomCode);
@@ -431,10 +438,7 @@ export function registerScout(io: Server, namespace = '/g/scout'): void {
 
     socket.on('flipRow', (data: unknown, cb: unknown) => {
       const instrumentation = startSocketHandlerInstrumentation(namespace, 'flipRow', gameId);
-      const respond: (result: BasicResponse) => void =
-        typeof cb === 'function'
-          ? instrumentation.wrapCallback(cb as (result: BasicResponse) => void)
-          : () => {};
+      const respond = createInstrumentedResponder<BasicResponse>(instrumentation, cb);
       try {
         if (!isObjectPayload(data)) return respond({ ok: false, error: INVALID_REQUEST_ERROR });
         const roomCode = normalizeRequiredString(data.roomCode);
@@ -465,10 +469,7 @@ export function registerScout(io: Server, namespace = '/g/scout'): void {
 
     socket.on('playCards', (data: unknown, cb: unknown) => {
       const instrumentation = startSocketHandlerInstrumentation(namespace, 'playCards', gameId);
-      const respond: (result: BasicResponse) => void =
-        typeof cb === 'function'
-          ? instrumentation.wrapCallback(cb as (result: BasicResponse) => void)
-          : () => {};
+      const respond = createInstrumentedResponder<BasicResponse>(instrumentation, cb);
       try {
         if (!isObjectPayload(data)) return respond({ ok: false, error: INVALID_REQUEST_ERROR });
         const roomCode = normalizeRequiredString(data.roomCode);
@@ -508,10 +509,7 @@ export function registerScout(io: Server, namespace = '/g/scout'): void {
 
     socket.on('pass', (data: unknown, cb: unknown) => {
       const instrumentation = startSocketHandlerInstrumentation(namespace, 'pass', gameId);
-      const respond: (result: BasicResponse) => void =
-        typeof cb === 'function'
-          ? instrumentation.wrapCallback(cb as (result: BasicResponse) => void)
-          : () => {};
+      const respond = createInstrumentedResponder<BasicResponse>(instrumentation, cb);
       try {
         if (!isObjectPayload(data)) return respond({ ok: false, error: INVALID_REQUEST_ERROR });
         const roomCode = normalizeRequiredString(data.roomCode);
@@ -547,10 +545,7 @@ export function registerScout(io: Server, namespace = '/g/scout'): void {
 
     socket.on('playAgain', (data: unknown, cb: unknown) => {
       const instrumentation = startSocketHandlerInstrumentation(namespace, 'playAgain', gameId);
-      const respond: (result: BasicResponse) => void =
-        typeof cb === 'function'
-          ? instrumentation.wrapCallback(cb as (result: BasicResponse) => void)
-          : () => {};
+      const respond = createInstrumentedResponder<BasicResponse>(instrumentation, cb);
       try {
         if (!isObjectPayload(data)) return respond({ ok: false, error: INVALID_REQUEST_ERROR });
         const roomCode = normalizeRequiredString(data.roomCode);
@@ -574,10 +569,7 @@ export function registerScout(io: Server, namespace = '/g/scout'): void {
 
     socket.on('requestState', (data: unknown, cb: unknown) => {
       const instrumentation = startSocketHandlerInstrumentation(namespace, 'requestState', gameId);
-      const respond: (result: BasicResponse) => void =
-        typeof cb === 'function'
-          ? instrumentation.wrapCallback(cb as (result: BasicResponse) => void)
-          : () => {};
+      const respond = createInstrumentedResponder<BasicResponse>(instrumentation, cb);
       try {
         if (!isObjectPayload(data)) return respond({ ok: false, error: INVALID_REQUEST_ERROR });
         const roomCode = normalizeRequiredString(data.roomCode);
@@ -613,17 +605,14 @@ export function registerScout(io: Server, namespace = '/g/scout'): void {
         if (room) {
           const player = room.players[index.playerId];
           if (player) {
-            const wasHost = player.isHost;
+            const wasHost = room.hostId === index.playerId || player.isHost;
             player.connected = false;
             player.socketId = null;
 
-            if (wasHost && !syncRoomHostFromActiveParty(room, gameId)) {
-              const remaining = room.playerOrder.map((id) => room.players[id]);
-              const newHost =
-                remaining.find((p) => p.id !== index.playerId && p.connected) ??
-                remaining.find((p) => p.id !== index.playerId);
-              if (newHost) assignHost(room, newHost.id);
-              else clearHost(room);
+            if (wasHost || !isConnectedPlayer(room, room.hostId)) {
+              if (!syncRoomHostFromActiveParty(room, gameId)) {
+                restoreHostToFirstConnectedPlayer(room);
+              }
             }
 
             if (room.phase === 'playing') {
