@@ -9,6 +9,8 @@ A real-time multiplayer party game platform built as a single **pnpm workspace m
 | **Blackout**       | Category-based trivia with a rotating host who reveals prompts and picks winners  | 3-20    |
 | **Imposter**       | Social deduction where one player is the infiltrator; describe, discuss, and vote | 3-16    |
 | **Secret Signals** | Team-based word association where directors give clues and agents guess cards     | 4-24    |
+| **Flip 7**         | Push-your-luck card game where players race toward a total of exactly 7           | 3-18    |
+| **Scout**          | Ladder-climbing card game about timing, scouting, and hand management             | 2-5     |
 
 ## Tech Stack
 
@@ -50,7 +52,7 @@ games/{game}/                <- internal source modules (not standalone)
 ### Prerequisites
 
 - **Node.js** >= 24.0
-- **pnpm** >= 10
+- **pnpm** >= 11
 
 ### Install and Run
 
@@ -109,11 +111,12 @@ pnpm dev                  # start dev server (Express + Vite HMR)
 pnpm build                # build client + server for production
 pnpm start                # run production build
 
-pnpm test                 # run all unit tests (Vitest, all 3 game projects)
+pnpm test                 # run all unit tests (Vitest, all 5 game projects)
 pnpm test:blackout        # run Blackout tests only
 pnpm test:imposter        # run Imposter tests only
 pnpm test:secret-signals  # run Secret Signals tests only
 pnpm test:flip7           # run Flip 7 tests only
+pnpm test:scout           # run Scout tests only
 pnpm test:e2e             # run Playwright E2E tests (starts server automatically)
 
 pnpm lint                 # ESLint across all source (zero warnings)
@@ -134,14 +137,14 @@ Create Party -> Join Party -> Select Game -> Launch Game -> Play -> Replay / Ret
 1. **Party lifecycle** is owned entirely by the platform (`/party` Socket.IO namespace).
 2. When the host launches a game, the platform creates a unique `matchKey` and broadcasts it.
 3. All clients navigate to `/party/:code/game/:gameId` and auto-join the game's Socket.IO namespace (`/g/{gameId}`).
-4. Each game receives the `matchKey` as `sessionId` in its `autoJoinRoom` event and manages its own room state.
+4. Each game receives the `matchKey` as `sessionId` plus the platform `joinToken` in its `autoJoinRoom` event, authorizes the party member, and manages its own room state.
 5. After a match ends, the host can **replay** (new `matchKey`, same game) or **return to lobby**.
 
 ### Game Integration
 
 Games are internal source modules. They have no standalone server or client. The platform imports them directly:
 
-- **Server side:** each game exports `register(io, namespacePath)` and `cleanupMatch(matchKey)`.
+- **Server side:** each game exports `definition`, `register(io, namespacePath)`, and `cleanupMatch(matchKey)`.
 - **Client side:** each game's `PlatformAdapter.vue` is loaded dynamically via Vite aliases.
 - **Shared code:** the `@shared/*` alias resolves to each game's `core/src/` directory based on the importing file's location (context-sensitive Vite plugin).
 - **Logging:** game server modules should use the shared logger helpers from `apps/platform/server/logging/`.
@@ -155,3 +158,5 @@ See [docs/adding-a-new-game.md](docs/adding-a-new-game.md) for the full integrat
 - [games/blackout/docs/](games/blackout/docs/) - Blackout API and architecture
 - [games/imposter/docs/](games/imposter/docs/) - Imposter API and architecture
 - [games/secret-signals/docs/](games/secret-signals/docs/) - Secret Signals API and architecture
+- [games/flip7/docs/](games/flip7/docs/) - Flip 7 API and architecture
+- [games/scout/docs/](games/scout/docs/) - Scout API and architecture

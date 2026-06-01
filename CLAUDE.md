@@ -1,6 +1,6 @@
 # CLAUDE.md
 
-Single pnpm workspace monorepo: one platform app + four integrated games.
+Single pnpm workspace monorepo: one platform app + five integrated games.
 
 ```text
 apps/platform/       <- Express + Socket.IO server, Vue 3 client (the only production app)
@@ -8,6 +8,7 @@ games/blackout/      <- internal platform module (no standalone runtime)
 games/imposter/      <- internal platform module
 games/secret-signals/ <- internal platform module
 games/flip7/         <- internal platform module
+games/scout/         <- internal platform module
 ```
 
 Games are **internal modules** and run only through the platform party flow. They have no own standalone runtime or toolchain. The platform owns the full lifecycle: create → join → launch game → replay / return to lobby.
@@ -19,8 +20,12 @@ pnpm install        # install all dependencies
 pnpm dev            # start platform (server + client)
 pnpm build          # build client + server for production
 pnpm start          # run production server from dist/
-pnpm test           # run all unit tests (vitest, all 4 games)
-pnpm test:blackout  # run unit tests for a single game
+pnpm test           # run all unit tests (vitest, all 5 games)
+pnpm test:blackout  # run Blackout unit tests
+pnpm test:imposter  # run Imposter unit tests
+pnpm test:secret-signals  # run Secret Signals unit tests
+pnpm test:flip7     # run Flip 7 unit tests
+pnpm test:scout     # run Scout unit tests
 pnpm lint           # eslint across all source
 pnpm lint:fix       # eslint with auto-fix
 pnpm format         # prettier --write across all source
@@ -33,7 +38,7 @@ pnpm test:e2e       # playwright (starts server automatically)
 
 - Vue 3 Composition API (`<script setup lang="ts">`)
 - Pinia for state management
-- Tailwind CSS v4.2 with `@tailwindcss/vite` plugin
+- Tailwind CSS v4.3 with `@tailwindcss/vite` plugin
 - Socket.IO for real-time party and game communication
 - Express server in `apps/platform/server/`
 - better-sqlite3 (database used by some games)
@@ -46,14 +51,14 @@ Game UI source is scanned via `@source` directives so Tailwind generates classes
 
 ### Design tokens (`@theme`)
 
-| Category | Tokens |
-| --- | --- |
-| Surfaces | `canvas` (#050509), `shell`, `panel` (#111118), `card` (#15151f), `elevated` |
-| Text | `foreground`, `muted`, `muted-foreground` |
-| Borders | `border`, `border-strong`, `ring` |
-| Platform accent | `accent` (orange #f97316) |
-| Game accents | `blackout` (violet), `imposter` (crimson), `signals` (cyan), `flip7` (amber) |
-| Semantic | `danger`, `success`, `warning` plus `-muted` variants |
+| Category        | Tokens                                                                                       |
+| --------------- | -------------------------------------------------------------------------------------------- |
+| Surfaces        | `canvas` (#050509), `shell`, `panel` (#111118), `card` (#15151f), `elevated`                 |
+| Text            | `foreground`, `muted`, `muted-foreground`                                                    |
+| Borders         | `border`, `border-strong`, `ring`                                                            |
+| Platform accent | `accent` (orange #f97316)                                                                    |
+| Game accents    | `blackout` (violet), `imposter` (crimson), `signals` (cyan), `flip7` (amber), `scout` (teal) |
+| Semantic        | `danger`, `success`, `warning` plus `-muted` variants                                        |
 
 ### Shared component classes (`@layer components`)
 
@@ -92,14 +97,15 @@ games/{game}/
 
 ### Vite aliases
 
-| Alias | Resolves to |
-| --- | --- |
-| `@platform` | `apps/platform/src/` |
-| `@shared/*` | `games/{game}/core/src/` (context-sensitive per game) |
-| `@blackout-ui` | `games/blackout/ui-vue/src/` |
-| `@imposter-ui` | `games/imposter/ui-vue/src/` |
-| `@secret-signals-ui` | `games/secret-signals/ui-vue/src/` |
-| `@flip7-ui` | `games/flip7/ui-vue/src/` |
+| Alias                | Resolves to                                           |
+| -------------------- | ----------------------------------------------------- |
+| `@platform`          | `apps/platform/src/`                                  |
+| `@shared/*`          | `games/{game}/core/src/` (context-sensitive per game) |
+| `@blackout-ui`       | `games/blackout/ui-vue/src/`                          |
+| `@imposter-ui`       | `games/imposter/ui-vue/src/`                          |
+| `@secret-signals-ui` | `games/secret-signals/ui-vue/src/`                    |
+| `@flip7-ui`          | `games/flip7/ui-vue/src/`                             |
+| `@scout-ui`          | `games/scout/ui-vue/src/`                             |
 
 `vue`, `pinia`, and `vue-router` are force-deduplicated so game UIs share a single framework instance with the platform.
 
@@ -111,9 +117,10 @@ games/{game}/
 
 Every game server module exposes:
 
+- `definition` — `{ id, name, minPlayers, maxPlayers }` used by the platform registry
 - `register(io, namespacePath)` — registers Socket.IO handlers
 - `cleanupMatch(matchKey)` — tears down a room by matchKey
-- `autoJoinRoom` socket event — creates or rejoins a room for a given sessionId/matchKey
+- `autoJoinRoom` socket event — creates or rejoins a room for a given sessionId/matchKey, validates the platform `joinToken`, and syncs host identity from party state
 
 ### Props passed to PlatformAdapter.vue
 
@@ -123,6 +130,7 @@ Every game server module exposes:
   playerId: string;
   playerName: string;
   namespace: string;     // Socket.IO namespace, e.g. /g/secret-signals
+  joinToken?: string;    // platform resume token used as game join authorization
   isHost?: boolean;
   onReplayGame?: () => void;
   onReturnToLobby?: () => void;
@@ -138,8 +146,9 @@ Every game server module exposes:
   playerId: string;
   playerName: string;
   wsNamespace: string;  // maps from namespace
-  isHost?: boolean;
-  // plus optional: apiBaseUrl, joinToken
+  joinToken?: string;   // forwarded to socket auth / autoJoinRoom
+  isHost?: boolean;     // UI hint only; server derives host from party state
+  // plus optional: apiBaseUrl
 }
 ```
 
@@ -157,12 +166,12 @@ export interface PlatformGameMeta {
 
 export interface PlatformGameModule {
   definition: { id: string; name: string; minPlayers: number; maxPlayers: number };
-  platformMeta?: PlatformGameMeta;   // visual metadata for the lobby cards
+  platformMeta?: PlatformGameMeta; // visual metadata for the lobby cards
   loadClient: () => Promise<{ default: Component }>;
 }
 ```
 
-Each entry maps a game ID to its `PlatformAdapter.vue` via lazy `import('@{game}-ui/PlatformAdapter.vue')`. When adding a new game, register it here with both `definition` and `platformMeta`.
+Each entry maps a game ID to its `PlatformAdapter.vue` via lazy `import('@{game}-ui/PlatformAdapter.vue')`. Current IDs: `blackout`, `imposter`, `secret-signals`, `flip7`, and `scout`. When adding a new game, register it here with both `definition` and `platformMeta`.
 
 ## Logging Rules
 
@@ -181,7 +190,7 @@ Each entry maps a game ID to its `PlatformAdapter.vue` via lazy `import('@{game}
 
 ## Adding a New Game
 
-See [docs/adding-a-new-game.md](docs/adding-a-new-game.md) for the full guide: folder structure, server module contract, `PlatformAdapter.vue` pattern, all four platform registration points, design system usage, and the integration checklist.
+See [docs/adding-a-new-game.md](docs/adding-a-new-game.md) for the full guide: folder structure, server module contract, `PlatformAdapter.vue` pattern, platform registration points, design system usage, and the integration checklist.
 
 ## Skills
 

@@ -116,7 +116,8 @@ export interface ClientToServerEvents {
       sessionId: string;
       name: string;
       playerId?: string;
-      isHost?: boolean;
+      isHost?: boolean; // UI hint only; server must derive host from party state
+      joinToken?: string;
       resumeToken?: string;
     },
     cb: (
@@ -134,7 +135,7 @@ export interface ServerToClientEvents {
 }
 ```
 
-> **Important:** The `autoJoinRoom` event is required. The platform calls it with `sessionId` (the matchKey), `name`, `playerId`, and `isHost` for every player entering the game.
+> **Important:** The `autoJoinRoom` event is required. The platform calls it with `sessionId` (the matchKey), `name`, `playerId`, `joinToken`, and `isHost` for every player entering the game. Treat `isHost` as a UI hint only; authorize the player and derive host status from platform party state on the server.
 
 ---
 
@@ -169,10 +170,12 @@ export function register(io: Server, namespace = `/g/${definition.id}`): void {
     const socketLogger = createSocketLogger(gameLogger, socket, { namespace });
     attachSocketEventDebugLogging(socket, socketLogger);
 
-    socket.on('autoJoinRoom', (data, cb) => {
+    socket.on('autoJoinRoom', (data: unknown, cb: unknown) => {
+      // Validate the unknown payload shape before reading fields.
       // Create or rejoin a room using data.sessionId as the room key.
-      // Handle data.isHost to transfer host status from the platform.
-      // Call cb({ ok: true, roomCode, playerId }) on success.
+      // Validate data.joinToken against the active platform party member.
+      // Derive host status from party state; do not trust data.isHost.
+      // Call cb({ ok: true, roomCode, playerId, resumeToken }) on success.
     });
 
     // ... other game event handlers
@@ -192,13 +195,22 @@ This is the critical integration point. The handler must:
 
 1. **Create a room** if none exists for the given `sessionId` (matchKey).
 2. **Rejoin** if the player's `playerId` already exists in the room (reconnection) — **validate the `resumeToken`**: if the slot has a server-issued token, require the client to supply it; reject with `{ ok: false, error: 'Resume token required' }` if absent or `'Invalid resume token'` if wrong.
-3. **Respect `isHost`** — when `data.isHost === true`, make that player the game host regardless of join order.
-4. **Call back** with `{ ok: true, roomCode, playerId, resumeToken }` on success or `{ ok: false, error }` on failure.
-5. The server-issued `resumeToken` must never be included in any broadcast room view sent to clients.
+3. **Authorize with `joinToken`** — validate the platform-provided token against the active party member for this match before allowing the socket into the room.
+4. **Sync host from party state** — treat `data.isHost` only as an optional client/UI hint. Re-sync the game room host from the active party on join/reconnect/disconnect and before host-only actions.
+5. **Call back** with `{ ok: true, roomCode, playerId, resumeToken }` on success or `{ ok: false, error }` on failure.
+6. The server-issued `resumeToken` must never be included in any broadcast room view sent to clients.
+
+### Socket Handler Validation and Authorization
+
+- Type Socket.IO handler input as `unknown` on the server and validate shape before reading fields.
+- Normalize required strings, validate enums/booleans/integers, and respond with `{ ok: false, error: 'Invalid request' }` for malformed payloads.
+- For host-only actions, re-sync host state from the active party first, then verify the socket index, room code, player id, `player.connected === true`, and `player.socketId === socket.id`.
+- Do not trust client-provided `isHost` for authorization.
 
 ### `cleanupMatch` Contract
 
 - Remove the room/session mapped to the given matchKey.
+- Remove socket indexes/session mappings associated with that room so stale sockets cannot pass later authorization checks.
 - Clean up any active timers, intervals, or scheduled tasks for that room.
 
 ### Server Logging
@@ -216,25 +228,30 @@ Reuse the platform logger helpers from `apps/platform/server/logging/` instead o
 
 Reuse the platform observability helpers from `apps/platform/server/observability/` for consistent metrics across all namespaces.
 
-**Per-handler instrumentation** — wrap every callback-based event with `startSocketHandlerInstrumentation`:
+**Per-handler instrumentation** — wrap every callback-based event with `startSocketHandlerInstrumentation`. Socket acknowledgements are optional, so normalize missing callbacks to a no-op before wrapping:
 
 ```ts
 import { startSocketHandlerInstrumentation } from '../../../../apps/platform/server/observability/socketHandlerMetrics';
 
-socket.on('someEvent', (data, cb) => {
-  const instrumentation = startSocketHandlerInstrumentation(namespace, 'someEvent');
-  const respond = instrumentation.wrapCallback(cb);
+socket.on('someEvent', (data: unknown, cb: unknown) => {
+  const instrumentation = startSocketHandlerInstrumentation(namespace, 'someEvent', definition.id);
+  const callback =
+    typeof cb === 'function' ? (cb as (res: { ok: boolean; error?: string }) => void) : () => {};
+  const respond = instrumentation.wrapCallback(callback);
+
   try {
+    if (!isValidPayload(data)) return respond({ ok: false, error: 'Invalid request' });
     // ... handler logic ...
-    respond({ ok: true });
+    return respond({ ok: true });
   } catch (err) {
     instrumentation.finishError();
-    throw err;
+    socketLogger.error({ err }, 'someEvent failed');
+    return respond({ ok: false, error: 'Invalid action' });
   }
 });
 ```
 
-Outcome values: `ok` (success), `rejected` (expected validation failure), `failed` (unexpected server error).
+Outcome values: `ok` (success), `rejected` (expected validation failure), `failed` (unexpected server error). Do not `throw` for expected request failures; finish instrumentation and respond with a sanitized error.
 
 **Namespace connection metrics** — call the connection and disconnect helpers once per connection:
 
@@ -263,22 +280,24 @@ The game's root component. It is always launched by `PlatformAdapter.vue` and co
 
 ```vue
 <script setup lang="ts">
-import { onMounted, onUnmounted } from 'vue';
+import { onBeforeUnmount, onMounted } from 'vue';
 import { io, type Socket } from 'socket.io-client';
 
 const props = withDefaults(
   defineProps<{
-    namespace?: string;
+    wsNamespace?: string;
     sessionId?: string;
     playerName?: string;
     playerId?: string;
+    joinToken?: string;
     isHost?: boolean;
   }>(),
   {
-    namespace: '/g/quiz-rush',
+    wsNamespace: '/g/quiz-rush',
     sessionId: '',
     playerName: '',
     playerId: '',
+    joinToken: '',
     isHost: false,
   }
 );
@@ -287,35 +306,51 @@ const emit = defineEmits<{
   'phase-change': [phase: string];
 }>();
 
-let socket: Socket;
+let socket: Socket | undefined;
+
+function emitAutoJoinRoom() {
+  if (!socket?.connected || !props.sessionId) return;
+  socket.emit(
+    'autoJoinRoom',
+    {
+      sessionId: props.sessionId,
+      name: props.playerName,
+      playerId: props.playerId,
+      joinToken: props.joinToken,
+      isHost: props.isHost,
+    },
+    (res) => {
+      if (!res.ok) console.error(res.error);
+      // Initialize game state from response, including resumeToken.
+    }
+  );
+}
 
 onMounted(() => {
-  socket = io(props.namespace, { transports: ['websocket'] });
-  socket.on('connect', () => {
-    socket.emit(
-      'autoJoinRoom',
-      {
-        sessionId: props.sessionId,
-        name: props.playerName,
-        playerId: props.playerId,
-        isHost: props.isHost,
-      },
-      (res) => {
-        if (!res.ok) console.error(res.error);
-        // Initialize game state from response
-      }
-    );
+  socket = io(props.wsNamespace, {
+    auth: {
+      sessionId: props.sessionId,
+      playerId: props.playerId,
+      joinToken: props.joinToken,
+    },
+    autoConnect: false,
+    transports: ['websocket', 'polling'],
   });
-  // Listen for room updates, emit phase-change when relevant
+  socket.on('connect', emitAutoJoinRoom);
+  socket.connect();
+  // Listen for room updates, emit phase-change when relevant.
 });
 
-onUnmounted(() => {
+onBeforeUnmount(() => {
+  socket?.off('connect', emitAutoJoinRoom);
   socket?.disconnect();
 });
 </script>
 ```
 
 > **Key:** Emit `phase-change` with the value `'ended'` when the game is over. The `PlatformAdapter` watches for this to show the replay/return overlay.
+>
+> If you extract socket creation into a `useSocket()` composable, keep ownership explicit: return the socket (and/or a cleanup function) and disconnect in the owning `App.vue` `onBeforeUnmount()`. Do not hide parent-owned socket teardown inside a composable lifecycle hook.
 
 ### `ui-vue/src/PlatformAdapter.vue`
 
@@ -326,11 +361,12 @@ Wraps `App.vue` and adds the platform overlay (replay / return to lobby). Also a
 import { ref, computed } from 'vue';
 import GameApp from './App.vue';
 
-const props = defineProps<{
+defineProps<{
   matchKey: string;
   playerId: string;
   playerName: string;
   namespace: string;
+  joinToken?: string;
   isHost?: boolean;
   onReplayGame?: () => void;
   onReturnToLobby?: () => void;
@@ -352,6 +388,7 @@ function onPhaseChange(phase: string) {
       :session-id="matchKey"
       :player-name="playerName"
       :player-id="playerId"
+      :join-token="joinToken"
       :is-host="isHost"
       @phase-change="onPhaseChange"
     />
@@ -367,7 +404,7 @@ function onPhaseChange(phase: string) {
 </template>
 ```
 
-> **Important:** The prop names differ between `PlatformAdapter` (uses `wsNamespace`, `matchKey`) and the game `App.vue` (uses `wsNamespace`, `sessionId`). The adapter is responsible for mapping these correctly.
+> **Important:** The platform passes `namespace` and `matchKey`; the game `App.vue` expects `wsNamespace` and `sessionId`. The adapter is responsible for mapping these correctly and forwarding `joinToken` for socket auth / `autoJoinRoom`.
 
 ---
 
@@ -393,6 +430,7 @@ export const gameRegistry = new Map<string, GameServerModule>([
   ['imposter', imposterModule],
   ['secret-signals', secretSignalsModule],
   ['flip7', flip7Module],
+  ['scout', scoutModule],
   ['quiz-rush', quizRushModule], // ← add this
 ]);
 ```
@@ -407,6 +445,12 @@ export const clientGameRegistry: PlatformGameModule[] = [
   // ... existing entries ...
   {
     definition: { id: 'quiz-rush', name: 'Quiz Rush', minPlayers: 3, maxPlayers: 10 },
+    platformMeta: {
+      icon: '⚡',
+      gradFrom: '#3b0764',
+      gradTo: '#111827',
+      description: 'Fast trivia for party chaos',
+    },
     loadClient: () => import('@quiz-rush-ui/PlatformAdapter.vue'),
   },
 ];
@@ -447,6 +491,8 @@ function sharedAliasPlugin(): Plugin {
         baseDir = resolve(GAMES_ROOT, 'secret-signals/core/src');
       } else if (normalized.includes('/games/flip7/')) {
         baseDir = resolve(GAMES_ROOT, 'flip7/core/src');
+      } else if (normalized.includes('/games/scout/')) {
+        baseDir = resolve(GAMES_ROOT, 'scout/core/src');
       } else if (normalized.includes('/games/quiz-rush/')) {
         baseDir = resolve(GAMES_ROOT, 'quiz-rush/core/src'); // ← add this branch
       }
@@ -462,29 +508,44 @@ function sharedAliasPlugin(): Plugin {
 
 > **Note:** `sharedAliasPlugin()` is **hardcoded** — every new game must add its own `else if` branch.
 
-### 5d. Tailwind Source Scan
+### 5d. Platform Vue Module Declaration
 
-Edit `apps/platform/src/styles/main.css` — add a `@source` directive so Tailwind generates all utility classes used in your game's Vue files:
+Edit `apps/platform/env.d.ts` so TypeScript recognizes the new adapter alias:
 
-```css
-@source "../../../../games/quiz-rush/ui-vue/src/**/*.{vue,ts}";
+```ts
+declare module '@quiz-rush-ui/PlatformAdapter.vue' {
+  import type { DefineComponent } from 'vue';
+  const component: DefineComponent;
+  export default component;
+}
 ```
 
-> The platform's `main.css` already has a global scan covering all games (`@source "../../../../games/*/ui-vue/src/**/*.{vue,ts}";`), so a per-game source is optional. Still recommended to keep the generated CSS more focused.
+### 5e. Tailwind Source Scan and Accent Token
 
-Also add your game's accent color token inside `@theme`:
+The platform's `main.css` already scans all game UI source with these global directives:
 
 ```css
---color-quiz-rush: #your-color;
+@source "../../../../games/*/ui-vue/src/**/*.vue";
+@source "../../../../games/*/ui-vue/src/**/*.ts";
 ```
 
-This makes `bg-quiz-rush`, `text-quiz-rush`, `border-quiz-rush`, etc. available. Use `!bg-quiz-rush` for important overrides.
+No per-game `@source` directive is required while those globs remain in place.
 
-### 5e. pnpm Workspace
+Add your game's accent color token inside `@theme`:
+
+```css
+--color-quiz-rush: #7c3aed;
+--color-quiz-rush-hover: #6d28d9;
+--color-quiz-rush-muted: rgba(124, 58, 237, 0.12);
+```
+
+This makes `bg-quiz-rush`, `text-quiz-rush`, `border-quiz-rush`, etc. available. Avoid Tailwind `!important` utility overrides such as `!bg-quiz-rush`; prefer scoped `<style>` classes in the Vue component when a shared component needs game-specific styling.
+
+### 5f. pnpm Workspace
 
 The workspace is already configured via the glob `'games/*'` in `pnpm-workspace.yaml`, so no changes are needed.
 
-### 5f. Dockerfile
+### 5g. Dockerfile
 
 Edit the root `Dockerfile` and add your game's `package.json` to the manifest-copy layer **before** `RUN pnpm install`. This is required so `pnpm install --frozen-lockfile` can resolve the workspace package (the lockfile always references every workspace member):
 
@@ -493,6 +554,7 @@ COPY games/blackout/package.json games/blackout/
 COPY games/imposter/package.json games/imposter/
 COPY games/secret-signals/package.json games/secret-signals/
 COPY games/flip7/package.json games/flip7/
+COPY games/scout/package.json games/scout/
 COPY games/quiz-rush/package.json games/quiz-rush/  # ← add this
 ```
 
@@ -506,34 +568,38 @@ Use the platform's design tokens and shared component classes. Do not define cus
 
 ### Design Tokens
 
-| Category     | Token names                                                 |
-| ------------ | ----------------------------------------------------------- |
-| Surfaces     | `canvas`, `shell`, `panel`, `elevated`                      |
-| Text         | `foreground`, `muted`, `muted-foreground`                   |
-| Borders      | `border`, `border-strong`, `ring`                           |
-| Platform     | `accent` (orange `#f97316`)                                 |
-| Game accents | `blackout` (violet), `imposter` (crimson), `signals` (cyan), `flip7` (teal) |
-| Semantic     | `danger`, `success`, `warning` (+ `-muted` variants)        |
+| Category     | Token names                                                                                  |
+| ------------ | -------------------------------------------------------------------------------------------- |
+| Surfaces     | `canvas`, `shell`, `panel`, `card`, `elevated`                                               |
+| Text         | `foreground`, `muted`, `muted-foreground`                                                    |
+| Borders      | `border`, `border-strong`, `ring`                                                            |
+| Platform     | `accent` (orange `#f97316`)                                                                  |
+| Game accents | `blackout` (violet), `imposter` (crimson), `signals` (cyan), `flip7` (amber), `scout` (teal) |
+| Semantic     | `danger`, `success`, `warning` (+ `-muted` variants)                                         |
 
 Use `bg-canvas`, `text-foreground`, `border-border`, etc. directly in your templates.
 
 ### Shared Component Classes
 
-| Class                                    | Purpose                      |
-| ---------------------------------------- | ---------------------------- |
-| `ui-shell-header`                        | Top navigation bar           |
-| `ui-panel`                               | Content panel                |
-| `ui-overlay`                             | Full-screen overlay backdrop |
-| `ui-dialog`                              | Centered dialog box          |
-| `ui-btn-primary`                         | Primary action button        |
-| `ui-btn-secondary`                       | Secondary action button      |
-| `ui-btn-ghost`                           | Ghost / tertiary button      |
-| `ui-btn-danger`                          | Destructive action button    |
-| `ui-input`                               | Text input field             |
-| `ui-badge`                               | Status badge                 |
-| `ui-stepper-btn`                         | Numeric stepper button       |
-| `ui-section-label`                       | Section heading label        |
-| `ui-progress-track` / `ui-progress-fill` | Progress bar                 |
+| Class                                       | Purpose                      |
+| ------------------------------------------- | ---------------------------- |
+| `ui-shell-header`                           | Top navigation bar           |
+| `ui-panel`                                  | Content panel                |
+| `ui-overlay`                                | Full-screen overlay backdrop |
+| `ui-dialog`                                 | Centered dialog box          |
+| `ui-btn-primary`                            | Primary action button        |
+| `ui-btn-secondary`                          | Secondary action button      |
+| `ui-btn-ghost`                              | Ghost / tertiary button      |
+| `ui-btn-danger`                             | Destructive action button    |
+| `ui-input`                                  | Text input field             |
+| `ui-badge`                                  | Status badge                 |
+| `ui-stepper-btn`                            | Numeric stepper button       |
+| `ui-section-label`                          | Section heading label        |
+| `ui-game-card` / `ui-game-card-selected`    | Lobby game cards             |
+| `ui-game-card-banner` / `ui-game-card-body` | Lobby card sections          |
+| `ui-player-item` / `ui-avatar`              | Party player rows            |
+| `ui-tab-group` / `ui-tab`                   | Tab controls                 |
+| `ui-progress-track` / `ui-progress-fill`    | Progress bar                 |
 
 These classes are defined in `@layer components` and are available in all game Vue files without any import.
 
@@ -576,8 +642,15 @@ export const allProjects = [
   imposterProject,
   secretSignalsProject,
   flip7Project,
+  scoutProject,
   quizRushProject, // ← add this
 ];
+```
+
+Add a root script in `package.json` for targeted runs:
+
+```json
+"test:quiz-rush": "vitest run --project quiz-rush"
 ```
 
 ### E2E Tests
@@ -638,10 +711,10 @@ The Playwright config passes `E2E_TESTS=1` to the server automatically.
 - [ ] `games/quiz-rush/` directory structure created
 - [ ] `core/src/` — types, constants, events defined
 - [ ] `server/src/index.ts` — exports `definition`, `register()`, `cleanupMatch()`
-- [ ] `server/src/` — `autoJoinRoom` handler respects `sessionId`, `playerId`, `isHost`
+- [ ] `server/src/` — `autoJoinRoom` handler validates unknown payloads, authorizes `joinToken`, handles `sessionId`/`playerId`, and derives host from party state (not client `isHost`)
 - [ ] `server/src/` — shared logger helpers from `apps/platform/server/logging/` are used
 - [ ] `server/src/` — lifecycle logs exist for join/resume/start/end/cleanup without secrets or raw payload dumps (`resumeToken`, `joinToken`, `inviteCode` must not appear)
-- [ ] `server/src/` — `startSocketHandlerInstrumentation` used for all callback-bearing events
+- [ ] `server/src/` — `startSocketHandlerInstrumentation` used for all callback-bearing events, including no-callback events via a no-op ack
 - [ ] `server/src/` — `recordNamespaceConnection` / `recordNamespaceDisconnect` called on connect/disconnect
 - [ ] `ui-vue/src/App.vue` — connects to namespace, emits `phase-change`
 - [ ] `ui-vue/src/PlatformAdapter.vue` — wraps App.vue with platform overlay
@@ -649,9 +722,11 @@ The Playwright config passes `E2E_TESTS=1` to the server automatically.
 - [ ] `apps/platform/server/registry/index.ts` — game registered
 - [ ] `apps/platform/src/games/index.ts` — client module registered
 - [ ] `apps/platform/vite.config.ts` — UI alias + `@shared` plugin entry added
-- [ ] `apps/platform/src/styles/main.css` — `@source` directive + accent color token added
+- [ ] `apps/platform/env.d.ts` — adapter alias module declaration added
+- [ ] `apps/platform/src/styles/main.css` — global game `@source` globs still cover the new UI and accent color tokens are added
 - [ ] `Dockerfile` — `COPY games/{id}/package.json games/{id}/` added to manifest layer
 - [ ] `vitest.projects.ts` — test project added
+- [ ] `package.json` — `test:{game-id}` script added
 - [ ] `pnpm install` — no errors
 - [ ] `pnpm lint` — passes
 - [ ] `pnpm typecheck` — passes
