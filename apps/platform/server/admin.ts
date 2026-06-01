@@ -10,14 +10,35 @@ import { gameRegistry, getGame } from './registry/index';
 
 const adminLogger = createComponentLogger('admin-http');
 
+interface RateLimitRecord {
+  count: number;
+  resetAt: number;
+}
+
 // Simple in-memory rate limiting for admin endpoints
-const rateLimitMap = new Map<string, { count: number; resetAt: number }>();
+const rateLimitMap = new Map<string, RateLimitRecord>();
 const RATE_LIMIT_WINDOW_MS = 60_000;
 const RATE_LIMIT_MAX = 20;
 
-const loginRateLimitMap = new Map<string, { count: number; resetAt: number }>();
+const loginRateLimitMap = new Map<string, RateLimitRecord>();
 const LOGIN_RATE_LIMIT_WINDOW_MS = 60_000;
 const LOGIN_RATE_LIMIT_MAX = 5;
+const RATE_LIMIT_PRUNE_INTERVAL_MS = 5 * 60_000;
+
+function pruneExpiredRateLimitEntries(map: Map<string, RateLimitRecord>, now = Date.now()): void {
+  for (const [ip, record] of map) {
+    if (now > record.resetAt) {
+      map.delete(ip);
+    }
+  }
+}
+
+const rateLimitPruneInterval = setInterval(() => {
+  const now = Date.now();
+  pruneExpiredRateLimitEntries(rateLimitMap, now);
+  pruneExpiredRateLimitEntries(loginRateLimitMap, now);
+}, RATE_LIMIT_PRUNE_INTERVAL_MS);
+rateLimitPruneInterval.unref?.();
 
 function checkRateLimit(ip: string): boolean {
   const now = Date.now();
