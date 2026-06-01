@@ -42,6 +42,7 @@ import { broadcastRoom, sendRoomToPlayer } from './managers/broadcastManager';
 import {
   beginFirstTrickIfReady,
   flipPlayerRow,
+  handlePlayerDisconnected,
   keepPlayerRow,
   passAndScout,
   playCards,
@@ -365,7 +366,12 @@ export function registerScout(io: Server, namespace = '/g/scout'): void {
         if (!verifyIsHost(socket, room))
           return respond({ ok: false, error: 'Only host can start' });
         if (room.phase !== 'lobby') return respond({ ok: false, error: 'Game already started' });
-        const connectedPlayers = Object.values(room.players).filter((p) => p.connected);
+        const lobbyPlayers = room.playerOrder.map((playerId) => room.players[playerId]);
+        const disconnectedPlayers = lobbyPlayers.filter((player) => !player?.connected);
+        if (disconnectedPlayers.length > 0) {
+          return respond({ ok: false, error: 'All players must be connected to start' });
+        }
+        const connectedPlayers = lobbyPlayers.filter((player) => player?.connected);
         if (connectedPlayers.length < MIN_PLAYERS) {
           return respond({ ok: false, error: `Need at least ${MIN_PLAYERS} players` });
         }
@@ -584,9 +590,14 @@ export function registerScout(io: Server, namespace = '/g/scout'): void {
               else clearHost(room);
             }
 
+            if (room.phase === 'playing') {
+              handlePlayerDisconnected(room);
+            }
+
             broadcastRoom(nsp, room);
             const allDisconnected = Object.values(room.players).every((p) => !p.connected);
-            if (allDisconnected) scheduleRoomCleanup(room.code, ROOM_IDLE_TIMEOUT_MS);
+            if (room.phase === 'ended') scheduleRoomCleanup(room.code, ROOM_ENDED_CLEANUP_MS);
+            else if (allDisconnected) scheduleRoomCleanup(room.code, ROOM_IDLE_TIMEOUT_MS);
           }
         }
 

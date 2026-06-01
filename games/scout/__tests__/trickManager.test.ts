@@ -5,8 +5,10 @@ import {
   beatsCurrentPlay,
   comparePlays,
   currentTurnPlayerId,
+  handlePlayerDisconnected,
   passAndScout,
   playCards,
+  setupComplete,
   startTrick,
 } from '../server/src/managers/trickManager';
 import { createPlayer } from '../server/src/models/player';
@@ -91,5 +93,25 @@ describe('Scout trick manager', () => {
     expect(r.players.b.row.map((c) => c.id)).toContain('s1');
     expect(r.players.a.takenPile.map((c) => c.id)).toEqual(['a1', 'a2']);
     expect(r.trick?.leaderId).toBe('a');
+  });
+
+  it('does not wait for disconnected players during setup', () => {
+    const r = room();
+    r.players.a.setupConfirmed = true;
+    r.players.b.connected = false;
+
+    expect(setupComplete(r)).toBe(true);
+  });
+
+  it('resolves the trick when the current turn player disconnects', () => {
+    const r = room();
+    startTrick(r, 'a');
+    playCards(r, 'a', 0, 2);
+    r.players.b.connected = false;
+
+    expect(handlePlayerDisconnected(r)).toBe(true);
+    expect(r.players.a.takenPile.map((c) => c.id)).toEqual(['a1', 'a2']);
+    expect(r.trick?.leaderId).toBe('a');
+    expect(currentTurnPlayerId(r.trick)).toBe('a');
   });
 });

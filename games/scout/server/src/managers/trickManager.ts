@@ -98,7 +98,13 @@ export function keepPlayerRow(player: Player): void {
 }
 
 export function setupComplete(room: Room): boolean {
-  return room.playerOrder.every((playerId) => room.players[playerId]?.setupConfirmed);
+  const connectedPlayerIds = room.playerOrder.filter(
+    (playerId) => room.players[playerId]?.connected
+  );
+  return (
+    connectedPlayerIds.length > 0 &&
+    connectedPlayerIds.every((playerId) => room.players[playerId]?.setupConfirmed)
+  );
 }
 
 const HAND_SIZES: Record<number, number> = { 2: 11, 3: 12, 4: 9, 5: 9 };
@@ -131,6 +137,15 @@ export function beginFirstTrickIfReady(room: Room): void {
   startTrick(room, leaderId);
 }
 
+function isAvailableForTurn(room: Room, playerId: string): boolean {
+  return Boolean(room.players[playerId]?.connected);
+}
+
+function firstAvailableTurnIndex(room: Room, turnOrder: string[]): number {
+  const index = turnOrder.findIndex((playerId) => isAvailableForTurn(room, playerId));
+  return index >= 0 ? index : 0;
+}
+
 export function startTrick(room: Room, leaderId: string): void {
   const leaderIndex = Math.max(0, room.playerOrder.indexOf(leaderId));
   const turnOrder = [
@@ -142,7 +157,7 @@ export function startTrick(room: Room, leaderId: string): void {
     trickNumber: nextNumber,
     leaderId,
     turnOrder,
-    currentTurnIndex: 0,
+    currentTurnIndex: firstAvailableTurnIndex(room, turnOrder),
     passedPlayerIds: [],
     plays: [],
     currentPlay: null,
@@ -154,19 +169,26 @@ export function currentTurnPlayerId(trick: TrickState | null): string | null {
   return trick.turnOrder[trick.currentTurnIndex] ?? null;
 }
 
-function advanceTurn(trick: TrickState): void {
+function findNextActiveTurnIndex(room: Room, trick: TrickState): number | null {
   for (let step = 1; step <= trick.turnOrder.length; step++) {
     const index = (trick.currentTurnIndex + step) % trick.turnOrder.length;
     const playerId = trick.turnOrder[index];
-    if (!trick.passedPlayerIds.includes(playerId)) {
-      trick.currentTurnIndex = index;
-      return;
+    if (!trick.passedPlayerIds.includes(playerId) && isAvailableForTurn(room, playerId)) {
+      return index;
     }
   }
+  return null;
 }
 
-function activePlayerCount(trick: TrickState): number {
-  return trick.turnOrder.length - trick.passedPlayerIds.length;
+function advanceTurn(room: Room, trick: TrickState): void {
+  const nextIndex = findNextActiveTurnIndex(room, trick);
+  if (nextIndex !== null) trick.currentTurnIndex = nextIndex;
+}
+
+function activePlayerCount(room: Room, trick: TrickState): number {
+  return trick.turnOrder.filter(
+    (playerId) => !trick.passedPlayerIds.includes(playerId) && isAvailableForTurn(room, playerId)
+  ).length;
 }
 
 function collectCardsFromTrick(trick: TrickState): ScoutCard[] {
@@ -230,7 +252,51 @@ function resolveTrick(room: Room): string {
   }
 
   startTrick(room, winnerId);
+  skipDisconnectedCurrentTurn(room);
   return winnerId;
+}
+
+function skipDisconnectedCurrentTurn(room: Room): boolean {
+  let changed = false;
+
+  while (room.phase === 'playing' && room.trick) {
+    const trick = room.trick;
+    const playerId = currentTurnPlayerId(trick);
+    if (!playerId || isAvailableForTurn(room, playerId)) return changed;
+
+    if (!trick.passedPlayerIds.includes(playerId)) {
+      trick.passedPlayerIds.push(playerId);
+    }
+    changed = true;
+
+    if (trick.currentPlay && activePlayerCount(room, trick) <= 1) {
+      resolveTrick(room);
+      continue;
+    }
+
+    const nextIndex = findNextActiveTurnIndex(room, trick);
+    if (nextIndex === null) return changed;
+    trick.currentTurnIndex = nextIndex;
+  }
+
+  return changed;
+}
+
+export function handlePlayerDisconnected(room: Room): boolean {
+  if (room.phase !== 'playing') return false;
+
+  const initialTrick = room.trick;
+  if (!room.trick) beginFirstTrickIfReady(room);
+
+  let changed = room.trick !== initialTrick;
+  if (!room.trick) return changed;
+
+  if (room.trick.currentPlay && activePlayerCount(room, room.trick) <= 1) {
+    resolveTrick(room);
+    changed = true;
+  }
+
+  return skipDisconnectedCurrentTurn(room) || changed;
 }
 
 export function playCards(room: Room, playerId: string, startIndex: number, count: number): void {
@@ -271,7 +337,13 @@ export function playCards(room: Room, playerId: string, startIndex: number, coun
     return;
   }
 
-  advanceTurn(trick);
+  if (activePlayerCount(room, trick) <= 1) {
+    resolveTrick(room);
+    return;
+  }
+
+  advanceTurn(room, trick);
+  skipDisconnectedCurrentTurn(room);
 }
 
 function removeCardFromTable(
@@ -331,12 +403,13 @@ export function passAndScout(
 
   trick.passedPlayerIds.push(playerId);
 
-  if (activePlayerCount(trick) <= 1) {
+  if (activePlayerCount(room, trick) <= 1) {
     resolveTrick(room);
     return;
   }
 
-  advanceTurn(trick);
+  advanceTurn(room, trick);
+  skipDisconnectedCurrentTurn(room);
 }
 
 export function resetToLobby(room: Room): void {
