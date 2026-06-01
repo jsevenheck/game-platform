@@ -74,14 +74,14 @@ export function startSocketHandlerInstrumentation(
     finishSuccess: () => finish('ok'),
     finishRejected: () => finish('rejected'),
     finishError: () => finish('failed'),
-    wrapCallback: <T extends { ok?: boolean }>(cb: (result: T) => void) => {
+    wrapCallback: <T extends { ok?: boolean }>(cb: ((result: T) => void) | undefined) => {
       return (result: T) => {
         if (result && typeof result === 'object' && 'ok' in result && result.ok === false) {
           finish('rejected');
         } else {
           finish('ok');
         }
-        cb(result);
+        if (typeof cb === 'function') cb(result);
       };
     },
   };

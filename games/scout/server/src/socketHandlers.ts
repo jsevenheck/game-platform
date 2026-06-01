@@ -1,5 +1,11 @@
 import type { Namespace, Server, Socket } from 'socket.io';
-import type { ClientToServerEvents, ServerToClientEvents } from '../../core/src/events';
+import type {
+  AutoJoinRoomResponse,
+  BasicResponse,
+  ClientToServerEvents,
+  ErrorResponse,
+  ServerToClientEvents,
+} from '../../core/src/events';
 import type { Room } from '../../core/src/types';
 import {
   createComponentLogger,
@@ -44,6 +50,29 @@ import {
 } from './managers/trickManager';
 
 type ScoutSocket = Socket<ClientToServerEvents, ServerToClientEvents>;
+
+const INVALID_REQUEST_ERROR = 'Invalid request';
+
+type ScoutSource = 'showPile' | 'table';
+type ScoutSide = 'left' | 'right';
+
+function isObjectPayload(value: unknown): value is Record<string, unknown> {
+  return typeof value === 'object' && value !== null && !Array.isArray(value);
+}
+
+function normalizeRequiredString(value: unknown): string | null {
+  if (typeof value !== 'string') return null;
+  const trimmed = value.trim();
+  return trimmed.length > 0 ? trimmed : null;
+}
+
+function isScoutSource(value: unknown): value is ScoutSource {
+  return value === 'showPile' || value === 'table';
+}
+
+function isScoutSide(value: unknown): value is ScoutSide {
+  return value === 'left' || value === 'right';
+}
 
 function normalizeStablePlayerId(value: unknown): string | null {
   if (typeof value !== 'string') return null;
@@ -205,16 +234,25 @@ export function registerScout(io: Server, namespace = '/g/scout'): void {
     recordNamespaceConnection({ namespace, gameId }, nsp);
     socketLogger.debug('scout client connected');
 
-    socket.on('autoJoinRoom', (data, cb) => {
+    socket.on('autoJoinRoom', (data: unknown, cb: unknown) => {
       const instrumentation = startSocketHandlerInstrumentation(namespace, 'autoJoinRoom', gameId);
-      const respond = instrumentation.wrapCallback(cb);
+      const respond: (result: AutoJoinRoomResponse | ErrorResponse) => void =
+        typeof cb === 'function'
+          ? instrumentation.wrapCallback(
+              cb as (result: AutoJoinRoomResponse | ErrorResponse) => void
+            )
+          : () => {};
       try {
-        const sessionId = data.sessionId?.trim();
+        if (!isObjectPayload(data)) return respond({ ok: false, error: INVALID_REQUEST_ERROR });
+
+        const sessionId = normalizeRequiredString(data.sessionId);
+        if (!sessionId) return respond({ ok: false, error: INVALID_REQUEST_ERROR });
+
         const stablePlayerId =
           normalizeStablePlayerId(data.playerId) ?? normalizeStablePlayerId(socket.data.playerId);
         const joinToken = normalizeJoinToken(data.joinToken, socket.data.joinToken);
-
-        if (!sessionId) return respond({ ok: false, error: 'Missing session info' });
+        const providedResumeToken =
+          typeof data.resumeToken === 'string' ? data.resumeToken : undefined;
 
         const authorization = authorizePartyJoin(sessionId, stablePlayerId, joinToken);
         if (!authorization.ok) {
@@ -236,14 +274,14 @@ export function registerScout(io: Server, namespace = '/g/scout'): void {
 
           if (existingRoom.players[reconnectPlayerId]) {
             const player = existingRoom.players[reconnectPlayerId];
-            if (data.resumeToken && player.resumeToken !== data.resumeToken) {
+            if (providedResumeToken && player.resumeToken !== providedResumeToken) {
               socketLogger.warn(
                 { roomCode: existingRoom.code, playerId: player.id, sessionId },
                 'autoJoinRoom rejected: invalid scout resume token'
               );
               return respond({ ok: false, error: 'Invalid resume token' });
             }
-            if (!data.resumeToken && player.resumeToken) {
+            if (!providedResumeToken && player.resumeToken) {
               socketLogger.warn(
                 { roomCode: existingRoom.code, playerId: player.id, sessionId },
                 'autoJoinRoom rejected: scout resume token required'
@@ -307,15 +345,22 @@ export function registerScout(io: Server, namespace = '/g/scout'): void {
         return respond({ ok: true, roomCode: room.code, playerId: hostId, resumeToken });
       } catch (err) {
         instrumentation.finishError();
-        throw err;
+        return respond({ ok: false, error: callbackErrorMessage(err) });
       }
     });
 
-    socket.on('startGame', (data, cb) => {
+    socket.on('startGame', (data: unknown, cb: unknown) => {
       const instrumentation = startSocketHandlerInstrumentation(namespace, 'startGame', gameId);
-      const respond = instrumentation.wrapCallback(cb);
+      const respond: (result: BasicResponse) => void =
+        typeof cb === 'function'
+          ? instrumentation.wrapCallback(cb as (result: BasicResponse) => void)
+          : () => {};
       try {
-        const room = getRoom(data.roomCode);
+        if (!isObjectPayload(data)) return respond({ ok: false, error: INVALID_REQUEST_ERROR });
+        const roomCode = normalizeRequiredString(data.roomCode);
+        if (!roomCode) return respond({ ok: false, error: INVALID_REQUEST_ERROR });
+
+        const room = getRoom(roomCode);
         if (!room) return respond({ ok: false, error: 'Room not found' });
         if (!verifyIsHost(socket, room))
           return respond({ ok: false, error: 'Only host can start' });
@@ -338,26 +383,36 @@ export function registerScout(io: Server, namespace = '/g/scout'): void {
         return respond({ ok: true });
       } catch (err) {
         instrumentation.finishError();
-        throw err;
+        return respond({ ok: false, error: callbackErrorMessage(err) });
       }
     });
 
-    socket.on('flipRow', (data, cb) => {
+    socket.on('flipRow', (data: unknown, cb: unknown) => {
       const instrumentation = startSocketHandlerInstrumentation(namespace, 'flipRow', gameId);
-      const respond = instrumentation.wrapCallback(cb);
+      const respond: (result: BasicResponse) => void =
+        typeof cb === 'function'
+          ? instrumentation.wrapCallback(cb as (result: BasicResponse) => void)
+          : () => {};
       try {
-        const room = getRoom(data.roomCode);
+        if (!isObjectPayload(data)) return respond({ ok: false, error: INVALID_REQUEST_ERROR });
+        const roomCode = normalizeRequiredString(data.roomCode);
+        const flip = data.flip;
+        if (!roomCode || typeof flip !== 'boolean') {
+          return respond({ ok: false, error: INVALID_REQUEST_ERROR });
+        }
+
+        const room = getRoom(roomCode);
         if (!room || room.phase !== 'playing')
           return respond({ ok: false, error: 'Room not found' });
-        const playerId = verifyPlayerInRoom(socket, data.roomCode);
+        const playerId = verifyPlayerInRoom(socket, roomCode);
         if (!playerId) return respond({ ok: false, error: 'Not in room' });
         const player = room.players[playerId];
-        if (data.flip) flipPlayerRow(player);
+        if (flip) flipPlayerRow(player);
         else keepPlayerRow(player);
         beginFirstTrickIfReady(room);
         broadcastRoom(nsp, room);
         socketLogger.info(
-          { roomCode: room.code, playerId, flipped: data.flip },
+          { roomCode: room.code, playerId, flipped: flip },
           'scout setup choice made'
         );
         return respond({ ok: true });
@@ -366,22 +421,36 @@ export function registerScout(io: Server, namespace = '/g/scout'): void {
       }
     });
 
-    socket.on('playCards', (data, cb) => {
+    socket.on('playCards', (data: unknown, cb: unknown) => {
       const instrumentation = startSocketHandlerInstrumentation(namespace, 'playCards', gameId);
-      const respond = instrumentation.wrapCallback(cb);
+      const respond: (result: BasicResponse) => void =
+        typeof cb === 'function'
+          ? instrumentation.wrapCallback(cb as (result: BasicResponse) => void)
+          : () => {};
       try {
-        const room = getRoom(data.roomCode);
+        if (!isObjectPayload(data)) return respond({ ok: false, error: INVALID_REQUEST_ERROR });
+        const roomCode = normalizeRequiredString(data.roomCode);
+        const startIndex = data.startIndex;
+        const count = data.count;
+        if (
+          !roomCode ||
+          typeof startIndex !== 'number' ||
+          typeof count !== 'number' ||
+          !Number.isInteger(startIndex) ||
+          !Number.isInteger(count)
+        ) {
+          return respond({ ok: false, error: INVALID_REQUEST_ERROR });
+        }
+
+        const room = getRoom(roomCode);
         if (!room || room.phase !== 'playing')
           return respond({ ok: false, error: 'Room not found' });
-        const playerId = verifyPlayerInRoom(socket, data.roomCode);
+        const playerId = verifyPlayerInRoom(socket, roomCode);
         if (!playerId) return respond({ ok: false, error: 'Not in room' });
-        playCards(room, playerId, data.startIndex, data.count);
+        playCards(room, playerId, startIndex, count);
         broadcastRoom(nsp, room);
         const ended = (room.phase as Room['phase']) === 'ended';
-        socketLogger.info(
-          { roomCode: room.code, playerId, count: data.count, ended },
-          'scout cards played'
-        );
+        socketLogger.info({ roomCode: room.code, playerId, count, ended }, 'scout cards played');
         if (ended) {
           gameLogger.info(
             { roomCode: room.code, winnerIds: room.winnerIds, reason: room.gameEndReason },
@@ -395,21 +464,31 @@ export function registerScout(io: Server, namespace = '/g/scout'): void {
       }
     });
 
-    socket.on('pass', (data, cb) => {
+    socket.on('pass', (data: unknown, cb: unknown) => {
       const instrumentation = startSocketHandlerInstrumentation(namespace, 'pass', gameId);
-      const respond = instrumentation.wrapCallback(cb);
+      const respond: (result: BasicResponse) => void =
+        typeof cb === 'function'
+          ? instrumentation.wrapCallback(cb as (result: BasicResponse) => void)
+          : () => {};
       try {
-        const room = getRoom(data.roomCode);
+        if (!isObjectPayload(data)) return respond({ ok: false, error: INVALID_REQUEST_ERROR });
+        const roomCode = normalizeRequiredString(data.roomCode);
+        const source = data.source;
+        const side = data.side;
+        if (!roomCode || !isScoutSource(source) || !isScoutSide(side)) {
+          return respond({ ok: false, error: INVALID_REQUEST_ERROR });
+        }
+        const cardId = typeof data.cardId === 'string' ? data.cardId : undefined;
+        const fromPlayerId = typeof data.fromPlayerId === 'string' ? data.fromPlayerId : undefined;
+
+        const room = getRoom(roomCode);
         if (!room || room.phase !== 'playing')
           return respond({ ok: false, error: 'Room not found' });
-        const playerId = verifyPlayerInRoom(socket, data.roomCode);
+        const playerId = verifyPlayerInRoom(socket, roomCode);
         if (!playerId) return respond({ ok: false, error: 'Not in room' });
-        passAndScout(room, playerId, data.source, data.side, data.cardId, data.fromPlayerId);
+        passAndScout(room, playerId, source, side, cardId, fromPlayerId);
         broadcastRoom(nsp, room);
-        socketLogger.info(
-          { roomCode: room.code, playerId, source: data.source, side: data.side },
-          'scout player passed'
-        );
+        socketLogger.info({ roomCode: room.code, playerId, source, side }, 'scout player passed');
         const ended = (room.phase as Room['phase']) === 'ended';
         if (ended) {
           gameLogger.info(
@@ -424,11 +503,18 @@ export function registerScout(io: Server, namespace = '/g/scout'): void {
       }
     });
 
-    socket.on('playAgain', (data, cb) => {
+    socket.on('playAgain', (data: unknown, cb: unknown) => {
       const instrumentation = startSocketHandlerInstrumentation(namespace, 'playAgain', gameId);
-      const respond = instrumentation.wrapCallback(cb);
+      const respond: (result: BasicResponse) => void =
+        typeof cb === 'function'
+          ? instrumentation.wrapCallback(cb as (result: BasicResponse) => void)
+          : () => {};
       try {
-        const room = getRoom(data.roomCode);
+        if (!isObjectPayload(data)) return respond({ ok: false, error: INVALID_REQUEST_ERROR });
+        const roomCode = normalizeRequiredString(data.roomCode);
+        if (!roomCode) return respond({ ok: false, error: INVALID_REQUEST_ERROR });
+
+        const room = getRoom(roomCode);
         if (!room) return respond({ ok: false, error: 'Room not found' });
         if (!verifyIsHost(socket, room))
           return respond({ ok: false, error: 'Only host can restart' });
@@ -440,32 +526,34 @@ export function registerScout(io: Server, namespace = '/g/scout'): void {
         return respond({ ok: true });
       } catch (err) {
         instrumentation.finishError();
-        throw err;
+        return respond({ ok: false, error: callbackErrorMessage(err) });
       }
     });
 
-    socket.on('requestState', (data, cb) => {
+    socket.on('requestState', (data: unknown, cb: unknown) => {
       const instrumentation = startSocketHandlerInstrumentation(namespace, 'requestState', gameId);
-      const respond = cb ? instrumentation.wrapCallback(cb) : undefined;
+      const respond: (result: BasicResponse) => void =
+        typeof cb === 'function'
+          ? instrumentation.wrapCallback(cb as (result: BasicResponse) => void)
+          : () => {};
       try {
-        const room = getRoom(data.roomCode);
+        if (!isObjectPayload(data)) return respond({ ok: false, error: INVALID_REQUEST_ERROR });
+        const roomCode = normalizeRequiredString(data.roomCode);
+        if (!roomCode) return respond({ ok: false, error: INVALID_REQUEST_ERROR });
+
+        const room = getRoom(roomCode);
         if (!room) {
-          respond?.({ ok: false, error: 'Room not found' });
-          instrumentation.finishRejected();
-          return;
+          return respond({ ok: false, error: 'Room not found' });
         }
-        const playerId = verifyPlayerInRoom(socket, data.roomCode);
+        const playerId = verifyPlayerInRoom(socket, roomCode);
         if (!playerId) {
-          respond?.({ ok: false, error: 'Not in room' });
-          instrumentation.finishRejected();
-          return;
+          return respond({ ok: false, error: 'Not in room' });
         }
         sendRoomToPlayer(nsp, room, playerId);
-        respond?.({ ok: true });
-        instrumentation.finishSuccess();
+        return respond({ ok: true });
       } catch (err) {
         instrumentation.finishError();
-        throw err;
+        return respond({ ok: false, error: callbackErrorMessage(err) });
       }
     });
 
@@ -511,7 +599,7 @@ export function registerScout(io: Server, namespace = '/g/scout'): void {
         instrumentation.finishSuccess();
       } catch (err) {
         instrumentation.finishError();
-        throw err;
+        socketLogger.error({ err }, 'failed to handle scout disconnect');
       }
     });
   });
