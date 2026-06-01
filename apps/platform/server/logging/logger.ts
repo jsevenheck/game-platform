@@ -24,9 +24,11 @@ const ALWAYS_REDACT_PATHS = [
   'token',
   'joinToken',
   'resumeToken',
+  'csrfToken',
   '*.token',
   '*.joinToken',
   '*.resumeToken',
+  '*.csrfToken',
 ];
 
 // Operational join data — redacted in production where logs may be aggregated
@@ -106,17 +108,8 @@ export function resolvePrettyTransportTarget(
   }
 }
 
-export function createRootLogger(config: LoggingConfig = readLoggingConfig()): Logger {
-  const options = buildLoggerOptions(config);
-
-  // Pretty mode uses pino transport workers; we cannot easily intercept the
-  // serialized stream there. In production (non-pretty) we tap the already
-  // serialized + redacted JSON line so the buffer never stores raw secrets.
-  if (options.transport) {
-    return pino(options);
-  }
-
-  const logBufferStream = new Writable({
+function createLogBufferStream(): Writable {
+  return new Writable({
     write(chunk, _encoding, callback) {
       const line = typeof chunk === 'string' ? chunk : chunk.toString();
       try {
@@ -124,21 +117,29 @@ export function createRootLogger(config: LoggingConfig = readLoggingConfig()): L
         appendLogEntry({
           timestamp: entry.time ? new Date(entry.time).toISOString() : new Date().toISOString(),
           level: pino.levels.labels[entry.level] ?? 'info',
-          msg: entry.msg,
+          msg: typeof entry.msg === 'string' ? entry.msg : '',
           component: typeof entry.component === 'string' ? entry.component : undefined,
           namespace: typeof entry.namespace === 'string' ? entry.namespace : undefined,
           requestId: typeof entry.requestId === 'string' ? entry.requestId : undefined,
         });
       } catch {
-        // Ignore non-JSON lines (e.g. pretty-printed output)
+        // Ignore non-JSON lines.
       }
       callback();
     },
   });
+}
 
+export function createRootLogger(config: LoggingConfig = readLoggingConfig()): Logger {
+  const options = buildLoggerOptions(config);
+  const { transport, ...loggerOptions } = options;
+  const outputStream = transport ? pino.transport(transport) : pino.destination({ sync: false });
+
+  // Feed the admin in-memory log buffer from the redacted JSON stream in every
+  // mode, while the visible output can still be pretty-printed in development.
   return pino(
-    options,
-    pino.multistream([{ stream: pino.destination({ sync: false }) }, { stream: logBufferStream }])
+    loggerOptions,
+    pino.multistream([{ stream: outputStream }, { stream: createLogBufferStream() }])
   );
 }
 

@@ -12,6 +12,7 @@ interface AdminLog {
 
 const authenticated = ref(false);
 const checkingAuth = ref(true);
+const csrfToken = ref('');
 
 const username = ref('');
 const password = ref('');
@@ -39,13 +40,17 @@ async function checkAuth(): Promise<void> {
   try {
     const res = await fetch('/api/admin/me', { credentials: 'include' });
     if (res.ok) {
+      const json = await res.json();
       authenticated.value = true;
+      csrfToken.value = typeof json.csrfToken === 'string' ? json.csrfToken : '';
       await fetchLogs();
     } else {
       authenticated.value = false;
+      csrfToken.value = '';
     }
   } catch {
     authenticated.value = false;
+    csrfToken.value = '';
   } finally {
     checkingAuth.value = false;
   }
@@ -70,6 +75,7 @@ async function doLogin(): Promise<void> {
       return;
     }
     authenticated.value = true;
+    csrfToken.value = typeof json.csrfToken === 'string' ? json.csrfToken : '';
     password.value = '';
     await fetchLogs();
   } catch {
@@ -89,6 +95,7 @@ async function doLogout(): Promise<void> {
     // ignore
   }
   authenticated.value = false;
+  csrfToken.value = '';
   logs.value = [];
   autoRefresh.value = false;
   if (refreshInterval) {
@@ -140,6 +147,7 @@ async function fetchLogs(): Promise<void> {
       errorMessage.value = json.error ?? 'Failed to load logs';
       if (res.status === 401) {
         authenticated.value = false;
+        csrfToken.value = '';
       }
       return;
     }
@@ -158,13 +166,19 @@ async function cleanupAll(): Promise<void> {
 
   const res = await fetch('/api/admin/cleanup', {
     method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      'X-CSRF-Token': csrfToken.value,
+    },
     credentials: 'include',
+    body: JSON.stringify({ csrfToken: csrfToken.value }),
   });
   const json = await res.json();
   if (!res.ok || !json.ok) {
     errorMessage.value = json.error ?? 'Cleanup failed';
     if (res.status === 401) {
       authenticated.value = false;
+      csrfToken.value = '';
     }
     return;
   }

@@ -195,6 +195,26 @@ export function partyToView(party: PartySession) {
   };
 }
 
+export interface ActivePartyMatch {
+  gameId: string;
+  matchKey: string;
+}
+
+export function getActivePartyMatches(): ActivePartyMatch[] {
+  const matches: ActivePartyMatch[] = [];
+
+  for (const party of parties.values()) {
+    if (party.status === 'in-match' && party.activeMatch) {
+      matches.push({
+        gameId: party.activeMatch.gameId,
+        matchKey: party.activeMatch.matchKey,
+      });
+    }
+  }
+
+  return matches;
+}
+
 export interface ClearAllPartiesResult {
   partiesRemoved: number;
   membersRemoved: number;
