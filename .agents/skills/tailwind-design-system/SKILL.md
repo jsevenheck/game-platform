@@ -847,6 +847,7 @@ Define reusable custom utilities:
 - **Use semantic tokens** - `bg-primary` not `bg-blue-500`
 - **Use `size-*`** - New shorthand for `w-* h-*`
 - **Add accessibility** - ARIA attributes, focus states
+- **Use scoped CSS for state overrides** - When a design-system component class needs an active/selected state override, prefer a semantic class plus scoped CSS using theme variables.
 
 ### Don'ts
 
@@ -855,4 +856,5 @@ Define reusable custom utilities:
 - **Don't use `forwardRef`** - React 19 passes ref as prop
 - **Don't use arbitrary values** - Extend `@theme` instead
 - **Don't hardcode colors** - Use semantic tokens
+- **Don't use Tailwind `!important` utilities** - Avoid classes like `bg-danger!`, `text-white!`, or `bg-accent!` to fight component styles; use plain semantic utilities where possible or scoped CSS with sufficient specificity.
 - **Don't forget dark mode** - Test both themes
