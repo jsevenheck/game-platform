@@ -1,319 +1,314 @@
-import { test, expect, type Page } from '@playwright/test';
+import {
+  expect,
+  test,
+  type Browser,
+  type BrowserContext,
+  type Locator,
+  type Page,
+} from '@playwright/test';
+
+interface ScoutSession {
+  contexts: BrowserContext[];
+  hostPage: Page;
+  guestPage: Page;
+  inviteCode: string;
+}
 
 // ── Platform helpers ──────────────────────────────────────────────────────────
 
 async function createParty(page: Page, name: string): Promise<string> {
   await page.goto('/');
-  await page.fill('#name', name);
-  await page.click('button[type="submit"]');
+  const form = page.locator('form');
+  await form.getByLabel('Your Name').fill(name);
+  await form.getByRole('button', { name: 'Create Party', exact: true }).click();
   await page.waitForURL(/\/party\/[A-Z0-9]+/);
   return page.url().split('/party/')[1]?.split('/')[0] ?? '';
 }
 
 async function joinParty(page: Page, name: string, inviteCode: string): Promise<void> {
   await page.goto('/');
-  await page.getByRole('button', { name: 'Join Party' }).click();
-  await page.fill('#name', name);
-  await page.fill('#code', inviteCode);
-  await page.click('button[type="submit"]');
+  await page.getByRole('button', { name: 'Join Party', exact: true }).click();
+
+  const form = page.locator('form');
+  await form.getByLabel('Your Name').fill(name);
+  await form.getByLabel('Invite Code').fill(inviteCode);
+  await form.getByRole('button', { name: 'Join Party', exact: true }).click();
   await page.waitForURL(/\/party\/[A-Z0-9]+/);
 }
 
-async function launchGame(hostPage: Page, gameName: string): Promise<void> {
-  await hostPage.getByRole('button', { name: gameName }).click();
-  await hostPage.getByRole('button', { name: 'Launch Game' }).click();
-  await hostPage.waitForURL(/\/game\//);
+async function createTwoPlayerScoutSession(browser: Browser): Promise<ScoutSession> {
+  const hostContext = await browser.newContext();
+  const guestContext = await browser.newContext();
+  const hostPage = await hostContext.newPage();
+  const guestPage = await guestContext.newPage();
+
+  const inviteCode = await createParty(hostPage, 'Alice');
+  await joinParty(guestPage, 'Bob', inviteCode);
+  await expect(hostPage.getByRole('heading', { name: 'Players (2)' })).toBeVisible();
+
+  return {
+    contexts: [hostContext, guestContext],
+    hostPage,
+    guestPage,
+    inviteCode,
+  };
+}
+
+async function closeSession(session: ScoutSession): Promise<void> {
+  await Promise.all(session.contexts.map((context) => context.close()));
+}
+
+async function launchScout(hostPage: Page, guestPage: Page): Promise<void> {
+  await hostPage.getByRole('button', { name: /Scout/ }).click();
+  await Promise.all([
+    hostPage.waitForURL(/\/game\/scout/, { timeout: 15_000 }),
+    guestPage.waitForURL(/\/game\/scout/, { timeout: 15_000 }),
+    hostPage.getByRole('button', { name: 'Launch Game' }).click(),
+  ]);
 }
 
 // ── Scout game helpers ────────────────────────────────────────────────────────
 
 async function waitForScoutLobby(page: Page): Promise<void> {
-  await expect(page.getByText('Ready your row')).toBeVisible({ timeout: 15_000 });
+  await expect(page.getByRole('heading', { name: 'Ready your row' })).toBeVisible({
+    timeout: 15_000,
+  });
 }
 
 async function hostStartsFromLobby(hostPage: Page): Promise<void> {
-  await expect(hostPage.getByRole('button', { name: 'Start Game' })).toBeVisible({
-    timeout: 10_000,
+  const startButton = hostPage.getByRole('button', { name: 'Start Game', exact: true });
+  await expect(startButton).toBeEnabled({ timeout: 10_000 });
+  await startButton.click();
+}
+
+async function waitForSetup(page: Page): Promise<void> {
+  await expect(page.getByRole('heading', { name: 'Flip or keep?' })).toBeVisible({
+    timeout: 15_000,
   });
-  await hostPage.getByRole('button', { name: 'Start Game' }).click();
+  await expect(page.getByText('Your dealt row')).toBeVisible();
+  await expect(page.getByRole('button', { name: 'Keep Row' })).toBeVisible();
+  await expect(page.getByRole('button', { name: 'Flip Row' })).toBeVisible();
 }
 
 async function confirmSetupKeep(page: Page): Promise<void> {
-  await page.waitForSelector('text=Flip or keep?', { timeout: 15_000 });
-  await expect(page.getByRole('button', { name: 'Keep Row' })).toBeVisible({ timeout: 10_000 });
+  await waitForSetup(page);
   await page.getByRole('button', { name: 'Keep Row' }).click();
 }
 
 async function waitForGameTable(page: Page): Promise<void> {
-  await expect(page.getByText(/(?:[A-Z][a-z]+'s turn|Your turn)/)).toBeVisible({ timeout: 15_000 });
-  await expect(page.getByText('Your row')).toBeVisible({ timeout: 10_000 });
+  await expect(page.getByRole('heading', { name: /(?:Your turn|.+?'s turn)/ })).toBeVisible({
+    timeout: 15_000,
+  });
+  await expect(page.getByRole('heading', { name: 'Your row' })).toBeVisible();
+  await expect(page.getByRole('heading', { name: 'Table' })).toBeVisible();
+}
+
+async function startScoutAndCompleteSetup(session: ScoutSession): Promise<void> {
+  const { hostPage, guestPage } = session;
+
+  await launchScout(hostPage, guestPage);
+  await waitForScoutLobby(hostPage);
+  await waitForScoutLobby(guestPage);
+
+  await hostStartsFromLobby(hostPage);
+  await confirmSetupKeep(hostPage);
+  await confirmSetupKeep(guestPage);
+
+  await waitForGameTable(hostPage);
+  await waitForGameTable(guestPage);
+}
+
+function playerRow(page: Page): Locator {
+  return page.getByTestId('scout-player-row');
+}
+
+async function cardPlayValues(container: Locator): Promise<string[]> {
+  return (await container.getByTestId('scout-card-play-value').allTextContents()).map((value) =>
+    value.trim()
+  );
+}
+
+async function cardScoutValues(container: Locator): Promise<string[]> {
+  return (await container.getByTestId('scout-card-scout-value').allTextContents()).map((value) =>
+    value.trim()
+  );
+}
+
+async function isMyTurn(page: Page): Promise<boolean> {
+  return page
+    .getByRole('heading', { name: 'Your turn', exact: true })
+    .isVisible()
+    .catch(() => false);
+}
+
+async function playSelectedRowCards(page: Page, indexes: number[]): Promise<void> {
+  const row = playerRow(page);
+  for (const index of indexes) {
+    const card = row.getByTestId(`scout-row-card-${index}`);
+    await expect(card).toBeEnabled();
+    await card.click();
+  }
+
+  const playButton = page.getByRole('button', { name: 'Play selected' });
+  await expect(playButton).toBeEnabled();
+  await playButton.click();
+}
+
+async function scoutFromShowPile(page: Page): Promise<void> {
+  const scoutButton = page.getByRole('button', { name: 'Pass / Scout' });
+  await expect(scoutButton).toBeEnabled({ timeout: 10_000 });
+  await scoutButton.click();
+
+  await expect(page.getByRole('heading', { name: 'Scout a card' })).toBeVisible();
+  await expect(page.getByText('Show pile', { exact: true }).first()).toBeVisible();
+  await page.getByRole('button', { name: 'Confirm scout' }).click();
 }
 
 // ── Tests ─────────────────────────────────────────────────────────────────────
 
 test.describe('Scout via Platform', () => {
   test('create party, launch Scout, complete setup, and reach game table', async ({ browser }) => {
-    const ctx1 = await browser.newContext();
-    const ctx2 = await browser.newContext();
-    const page1 = await ctx1.newPage();
-    const page2 = await ctx2.newPage();
+    const session = await createTwoPlayerScoutSession(browser);
 
-    const inviteCode = await createParty(page1, 'Alice');
-    await joinParty(page2, 'Bob', inviteCode);
+    try {
+      await startScoutAndCompleteSetup(session);
 
-    await expect(page1.getByText('Players (2)')).toBeVisible();
-
-    await launchGame(page1, 'Scout');
-    await page2.waitForURL(/\/game\/scout/, { timeout: 15_000 });
-
-    // Both land in Scout lobby
-    await waitForScoutLobby(page1);
-    await waitForScoutLobby(page2);
-
-    // Host starts the game → both enter setup phase
-    await hostStartsFromLobby(page1);
-    await confirmSetupKeep(page1);
-    await confirmSetupKeep(page2);
-
-    // Both should now see the game table
-    await waitForGameTable(page1);
-    await waitForGameTable(page2);
-
-    // Verify table UI elements are present
-    await expect(page1.getByText('Trick 1')).toBeVisible({ timeout: 5_000 });
-    await expect(page1.getByText('Show pile:')).toBeVisible();
-    await expect(page1.getByRole('button', { name: 'Play selected' })).toBeVisible();
-    await expect(page1.getByRole('button', { name: 'Pass / Scout' })).toBeVisible();
-
-    await ctx1.close();
-    await ctx2.close();
+      await expect(session.hostPage.getByText('Trick 1')).toBeVisible();
+      await expect(session.hostPage.getByText(/Show pile: \d+/)).toBeVisible();
+      await expect(session.hostPage.getByRole('button', { name: 'Play selected' })).toBeVisible();
+      await expect(session.hostPage.getByRole('button', { name: 'Pass / Scout' })).toBeVisible();
+    } finally {
+      await closeSession(session);
+    }
   });
 
-  test('scout-specific UI text is correct after starting the game', async ({ browser }) => {
-    const ctx1 = await browser.newContext();
-    const ctx2 = await browser.newContext();
-    const page1 = await ctx1.newPage();
-    const page2 = await ctx2.newPage();
+  test('scout lobby and setup controls use the Scout-specific flow', async ({ browser }) => {
+    const session = await createTwoPlayerScoutSession(browser);
 
-    const inviteCode = await createParty(page1, 'Alice');
-    await joinParty(page2, 'Bob', inviteCode);
+    try {
+      await launchScout(session.hostPage, session.guestPage);
+      await waitForScoutLobby(session.hostPage);
+      await waitForScoutLobby(session.guestPage);
+      await expect(session.guestPage.getByText('Waiting for host to start…')).toBeVisible();
 
-    await launchGame(page1, 'Scout');
-    await page2.waitForURL(/\/game\/scout/, { timeout: 15_000 });
-
-    await waitForScoutLobby(page1);
-    await waitForScoutLobby(page2);
-
-    await hostStartsFromLobby(page1);
-    await page1.waitForSelector('text=Flip or keep?', { timeout: 10_000 });
-    await expect(page2.getByRole('button', { name: 'Keep Row' })).toBeVisible();
-    await expect(page2.getByRole('button', { name: 'Flip Row' })).toBeVisible();
-
-    await ctx1.close();
-    await ctx2.close();
+      await hostStartsFromLobby(session.hostPage);
+      await waitForSetup(session.hostPage);
+      await waitForSetup(session.guestPage);
+    } finally {
+      await closeSession(session);
+    }
   });
 
   test('host resumes active Scout match after reloading the tab', async ({ browser }) => {
-    const ctx1 = await browser.newContext();
-    const ctx2 = await browser.newContext();
-    const page1 = await ctx1.newPage();
-    const page2 = await ctx2.newPage();
+    const session = await createTwoPlayerScoutSession(browser);
 
-    const inviteCode = await createParty(page1, 'Alice');
-    await joinParty(page2, 'Bob', inviteCode);
+    try {
+      await startScoutAndCompleteSetup(session);
 
-    await launchGame(page1, 'Scout');
-    await page2.waitForURL(/\/game\/scout/, { timeout: 15_000 });
-
-    await waitForScoutLobby(page1);
-    await waitForScoutLobby(page2);
-
-    await hostStartsFromLobby(page1);
-    await confirmSetupKeep(page1);
-    await confirmSetupKeep(page2);
-    await waitForGameTable(page1);
-
-    // Reload host tab — should reconnect and show game state
-    await page1.reload();
-    await page1.waitForURL(/\/game\/scout/, { timeout: 10_000 });
-    await waitForGameTable(page1);
-
-    await ctx1.close();
-    await ctx2.close();
-  });
-
-  test('flip row swaps play and scout values on cards', async ({ browser }) => {
-    const ctx1 = await browser.newContext();
-    const ctx2 = await browser.newContext();
-    const page1 = await ctx1.newPage();
-    const page2 = await ctx2.newPage();
-
-    const inviteCode = await createParty(page1, 'Alice');
-    await joinParty(page2, 'Bob', inviteCode);
-
-    await launchGame(page1, 'Scout');
-    await page2.waitForURL(/\/game\/scout/, { timeout: 15_000 });
-
-    await waitForScoutLobby(page1);
-    await waitForScoutLobby(page2);
-
-    await hostStartsFromLobby(page1);
-    await page1.waitForSelector('text=Flip or keep?', { timeout: 10_000 });
-
-    // Capture card values before flipping (the big play value label)
-    const cardsBefore = await page1.locator('[class*="font-mono text-xl"]').allTextContents();
-
-    await page1.getByRole('button', { name: 'Flip Row' }).click();
-
-    // After flipping, Alice should see waiting text
-    await expect(page1.getByText(/Waiting for \d+ player/)).toBeVisible({ timeout: 10_000 });
-
-    // Bob keeps row normally
-    await page2.getByRole('button', { name: 'Keep Row' }).click();
-
-    await waitForGameTable(page1);
-
-    // Cards should reflect flipped play values
-    const cardsAfter = await page1.locator('[class*="font-mono text-xl"]').allTextContents();
-    expect(cardsAfter).not.toEqual(cardsBefore);
-
-    await ctx1.close();
-    await ctx2.close();
-  });
-
-  test('current turn player sees enabled play controls; other does not', async ({ browser }) => {
-    const ctx1 = await browser.newContext();
-    const ctx2 = await browser.newContext();
-    const page1 = await ctx1.newPage();
-    const page2 = await ctx2.newPage();
-
-    const inviteCode = await createParty(page1, 'Alice');
-    await joinParty(page2, 'Bob', inviteCode);
-
-    await launchGame(page1, 'Scout');
-    await page2.waitForURL(/\/game\/scout/, { timeout: 15_000 });
-
-    await waitForScoutLobby(page1);
-    await waitForScoutLobby(page2);
-
-    await hostStartsFromLobby(page1);
-    await confirmSetupKeep(page1);
-    await confirmSetupKeep(page2);
-    await waitForGameTable(page1);
-
-    // Determine whose turn it is
-    const aliceIsTurn = await page1
-      .getByText('Your turn')
-      .isVisible()
-      .catch(() => false);
-    const bobIsTurn = await page2
-      .getByText('Your turn')
-      .isVisible()
-      .catch(() => false);
-
-    // Exactly one player should see "Your turn"
-    expect([aliceIsTurn, bobIsTurn].filter(Boolean)).toHaveLength(1);
-
-    // The active player's controls are VISIBLE (they may be disabled until cards selected)
-    const activePage = aliceIsTurn ? page1 : page2;
-    await expect(activePage.getByRole('button', { name: 'Play selected' })).toBeVisible();
-
-    // The inactive player should have disabled controls
-    const inactivePage = aliceIsTurn ? page2 : page1;
-    await expect(inactivePage.getByRole('button', { name: 'Play selected' })).toBeDisabled();
-
-    await ctx1.close();
-    await ctx2.close();
-  });
-
-  test('player can play a contiguous run and the other gets the turn', async ({ browser }) => {
-    const ctx1 = await browser.newContext();
-    const ctx2 = await browser.newContext();
-    const page1 = await ctx1.newPage();
-    const page2 = await ctx2.newPage();
-
-    const inviteCode = await createParty(page1, 'Alice');
-    await joinParty(page2, 'Bob', inviteCode);
-
-    await launchGame(page1, 'Scout');
-    await page2.waitForURL(/\/game\/scout/, { timeout: 15_000 });
-
-    await waitForScoutLobby(page1);
-    await waitForScoutLobby(page2);
-
-    await hostStartsFromLobby(page1);
-    await confirmSetupKeep(page1);
-    await confirmSetupKeep(page2);
-    await waitForGameTable(page1);
-
-    // Active player plays: select first card and play
-    const activeIsAlice = await page1
-      .getByText('Your turn')
-      .isVisible()
-      .catch(() => false);
-    const activePage = activeIsAlice ? page1 : page2;
-
-    const card = activePage.locator('button[class*="rounded-xl"] > div').first();
-    if (await card.isVisible({ timeout: 5_000 })) {
-      await card.click();
-      // Wait for selection state (border highlight)
-      await activePage.waitForSelector('[class*="border-scout"]', { timeout: 3_000 });
-      await activePage.getByRole('button', { name: 'Play selected' }).click();
-
-      // Table should now show the play
-      await expect(activePage.getByText('Table')).toBeVisible();
+      await session.hostPage.reload();
+      await session.hostPage.waitForURL(/\/game\/scout/, { timeout: 10_000 });
+      await waitForGameTable(session.hostPage);
+    } finally {
+      await closeSession(session);
     }
-
-    // Other player should have the option to pass / scout (they may already be in a state
-    // where it's their turn to respond after a play)
-    const otherPage = activeIsAlice ? page2 : page1;
-    // Either the other player sees "Your turn" or they see the active player name + table
-    const otherHasTurn = await otherPage
-      .getByText('Your turn')
-      .isVisible()
-      .catch(() => false);
-    if (otherHasTurn) {
-      await expect(otherPage.getByRole('button', { name: 'Pass / Scout' })).toBeVisible();
-    } else {
-      // If not their turn yet, at least verify table state is present
-      await expect(otherPage.getByText('Table')).toBeVisible();
-    }
-
-    await ctx1.close();
-    await ctx2.close();
   });
 
-  test('game over screen is prepared and shows scores when ended', async ({ browser }) => {
-    const ctx1 = await browser.newContext();
-    const ctx2 = await browser.newContext();
-    const page1 = await ctx1.newPage();
-    const page2 = await ctx2.newPage();
+  test('flip row swaps card values', async ({ browser }) => {
+    const session = await createTwoPlayerScoutSession(browser);
+    const { hostPage, guestPage } = session;
 
-    const inviteCode = await createParty(page1, 'Alice');
-    await joinParty(page2, 'Bob', inviteCode);
+    try {
+      await launchScout(hostPage, guestPage);
+      await waitForScoutLobby(hostPage);
+      await waitForScoutLobby(guestPage);
+      await hostStartsFromLobby(hostPage);
+      await waitForSetup(hostPage);
 
-    await launchGame(page1, 'Scout');
-    await page2.waitForURL(/\/game\/scout/, { timeout: 15_000 });
+      const setupRow = hostPage.getByTestId('scout-setup-row');
+      await expect(setupRow.getByTestId('scout-card-play-value')).toHaveCount(3);
+      const playValuesBefore = await cardPlayValues(setupRow);
+      const scoutValuesBefore = await cardScoutValues(setupRow);
 
-    await waitForScoutLobby(page1);
-    await waitForScoutLobby(page2);
+      await hostPage.getByRole('button', { name: 'Flip Row' }).click();
+      await expect(hostPage.getByText(/Choice locked\. Waiting for \d+ player\(s\)…/)).toBeVisible({
+        timeout: 10_000,
+      });
 
-    await hostStartsFromLobby(page1);
-    await confirmSetupKeep(page1);
-    await confirmSetupKeep(page2);
-    await waitForGameTable(page1);
+      const playValuesAfter = await cardPlayValues(setupRow);
+      expect(playValuesAfter).toEqual([...scoutValuesBefore].reverse());
+      expect(playValuesAfter).not.toEqual(playValuesBefore);
 
-    // We cannot exhaust the deck reliably in a timely Playwright run
-    // without complex multi-step deterministic play orchestration.
-    const gameOverText = page1.getByText('Game over');
-    const isGameOverVisible = await gameOverText.isVisible().catch(() => false);
-    if (isGameOverVisible) {
-      await expect(page1.getByRole('button', { name: 'Play Again' })).toBeVisible();
-    } else {
-      await expect(page1.getByText('Trick 1')).toBeVisible();
+      await guestPage.getByRole('button', { name: 'Keep Row' }).click();
+      await waitForGameTable(hostPage);
+    } finally {
+      await closeSession(session);
     }
+  });
 
-    await ctx1.close();
-    await ctx2.close();
+  test('current turn controls are enabled only for active player', async ({ browser }) => {
+    const session = await createTwoPlayerScoutSession(browser);
+    const { hostPage, guestPage } = session;
+
+    try {
+      await startScoutAndCompleteSetup(session);
+
+      const hostHasTurn = await isMyTurn(hostPage);
+      const guestHasTurn = await isMyTurn(guestPage);
+      expect([hostHasTurn, guestHasTurn].filter(Boolean)).toHaveLength(1);
+
+      const activePage = hostHasTurn ? hostPage : guestPage;
+      const inactivePage = hostHasTurn ? guestPage : hostPage;
+
+      await expect(activePage.getByRole('button', { name: 'Play selected' })).toBeVisible();
+      await expect(playerRow(activePage).getByTestId('scout-row-card-0')).toBeEnabled();
+      await expect(inactivePage.getByRole('button', { name: 'Play selected' })).toBeDisabled();
+      await expect(playerRow(inactivePage).getByTestId('scout-row-card-0')).toBeDisabled();
+    } finally {
+      await closeSession(session);
+    }
+  });
+
+  test('run, scout response, and game over score flow', async ({ browser }) => {
+    const session = await createTwoPlayerScoutSession(browser);
+    const { hostPage, guestPage } = session;
+
+    try {
+      await startScoutAndCompleteSetup(session);
+      await expect(hostPage.getByRole('heading', { name: 'Your turn' })).toBeVisible();
+
+      const openingValues = await cardPlayValues(playerRow(hostPage));
+      expect(openingValues.slice(0, 2)).toEqual(['1', '2']);
+
+      await playSelectedRowCards(hostPage, [0, 1]);
+      await expect(hostPage.getByText('Beat sum 4 · 2 cards · high 2')).toBeVisible();
+      await expect(guestPage.getByRole('heading', { name: 'Your turn' })).toBeVisible({
+        timeout: 10_000,
+      });
+
+      await scoutFromShowPile(guestPage);
+      await expect(hostPage.getByText('Trick 2')).toBeVisible({ timeout: 10_000 });
+      await expect(hostPage.getByRole('heading', { name: 'Your turn' })).toBeVisible();
+
+      await playSelectedRowCards(hostPage, [0]);
+
+      await expect(hostPage.getByText('Game over', { exact: true })).toBeVisible({
+        timeout: 10_000,
+      });
+      await expect(guestPage.getByText('Game over', { exact: true })).toBeVisible({
+        timeout: 10_000,
+      });
+      await expect(
+        hostPage.getByText('Scores count scout points from collected tricks.')
+      ).toBeVisible();
+
+      const aliceScoreRow = hostPage.getByRole('listitem').filter({ hasText: /#1 Alice/ });
+      await expect(aliceScoreRow).toContainText('15');
+      await expect(hostPage.getByRole('button', { name: 'Play Again' }).first()).toBeVisible();
+
+      await expect(hostPage.getByText('Game Over!')).toBeVisible({ timeout: 5_000 });
+      await expect(hostPage.getByRole('button', { name: 'Back to Party' })).toBeVisible();
+    } finally {
+      await closeSession(session);
+    }
   });
 });

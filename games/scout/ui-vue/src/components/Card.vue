@@ -41,15 +41,20 @@ const cardClasses = computed(() => [
       </div>
     </template>
     <template v-else>
-      <span class="font-mono text-lg font-bold text-scout">{{ card.playValue }}</span>
+      <span data-testid="scout-card-play-value" class="font-mono text-lg font-bold text-scout">
+        {{ card.playValue }}
+      </span>
       <span
         class="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 text-[10px] text-muted"
       >
         play
       </span>
-      <span class="self-end font-mono text-base font-semibold text-warning">{{
-        card.scoutPoints
-      }}</span>
+      <span
+        data-testid="scout-card-scout-value"
+        class="self-end font-mono text-base font-semibold text-warning"
+      >
+        {{ card.scoutPoints }}
+      </span>
     </template>
   </div>
 </template>

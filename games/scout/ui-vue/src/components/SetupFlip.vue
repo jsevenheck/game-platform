@@ -25,7 +25,7 @@ const waitingCount = computed(
         <h2 class="font-bold text-foreground">Your dealt row</h2>
         <span class="text-sm text-muted">{{ store.myRow.length }} cards</span>
       </div>
-      <div class="flex gap-2 overflow-x-auto py-3">
+      <div data-testid="scout-setup-row" class="flex gap-2 overflow-x-auto py-3">
         <Card v-for="card in store.myRow" :key="card.id" :card="card" compact />
       </div>
     </section>

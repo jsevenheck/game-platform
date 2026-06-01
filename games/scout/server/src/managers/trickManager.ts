@@ -12,6 +12,29 @@ function shuffle<T>(items: T[]): T[] {
   return copy;
 }
 
+function buildE2EDeck(): ScoutCard[] {
+  const source = buildDeck();
+  const selectedIds = new Set<string>();
+
+  function takeByPlayValue(playValue: number): ScoutCard {
+    const card = source.find(
+      (candidate) => candidate.playValue === playValue && !selectedIds.has(candidate.id)
+    );
+    if (!card) throw new Error(`Missing E2E Scout card for play value ${playValue}`);
+    selectedIds.add(card.id);
+    return card;
+  }
+
+  const scriptedDeal = [
+    // Host opens with a real two-card run (1, 2), then has one card left to end the game.
+    ...[1, 2, 9].map(takeByPlayValue),
+    // Opponent has a normal row but can pass/scout in the scripted browser flow.
+    ...[3, 4, 5].map(takeByPlayValue),
+  ];
+
+  return [...scriptedDeal, ...source.filter((card) => !selectedIds.has(card.id))];
+}
+
 function summarizePlay(playerId: string, cards: ScoutCard[], id = nanoid(10)): PlayedSet {
   const analysis = analyzePlay(cards);
   return {
@@ -66,11 +89,15 @@ export function setupComplete(room: Room): boolean {
 }
 
 const HAND_SIZES: Record<number, number> = { 2: 11, 3: 12, 4: 9, 5: 9 };
+const E2E_HAND_SIZE = 3;
 
 export function startGame(room: Room): void {
-  const deck = shuffle(buildDeck());
   const order = [...room.playerOrder];
-  const handSize = HAND_SIZES[order.length] ?? Math.floor(deck.length / order.length);
+  const useE2EDeal = process.env.E2E_TESTS === '1' && order.length === 2;
+  const deck = useE2EDeal ? buildE2EDeck() : shuffle(buildDeck());
+  const handSize = useE2EDeal
+    ? E2E_HAND_SIZE
+    : (HAND_SIZES[order.length] ?? Math.floor(deck.length / order.length));
 
   for (const playerId of order) {
     const player = room.players[playerId];

@@ -96,12 +96,13 @@ watch(
       </div>
     </div>
 
-    <div class="flex gap-2 overflow-x-auto py-4">
+    <div data-testid="scout-player-row" class="flex gap-2 overflow-x-auto py-4">
       <button
         v-for="(card, index) in store.myRow"
         :key="card.id"
         class="rounded-xl focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-scout"
         type="button"
+        :data-testid="`scout-row-card-${index}`"
         :disabled="!store.isMyTurn"
         @click="toggle(index)"
       >
