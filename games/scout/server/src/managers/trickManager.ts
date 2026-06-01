@@ -91,8 +91,14 @@ export function setupComplete(room: Room): boolean {
 const HAND_SIZES: Record<number, number> = { 2: 11, 3: 12, 4: 9, 5: 9 };
 const E2E_HAND_SIZE = 3;
 
+function playerOrderStartingFrom(room: Room, playerId: string | null | undefined): string[] {
+  const leaderIndex = playerId ? room.playerOrder.indexOf(playerId) : -1;
+  if (leaderIndex <= 0) return [...room.playerOrder];
+  return [...room.playerOrder.slice(leaderIndex), ...room.playerOrder.slice(0, leaderIndex)];
+}
+
 export function startGame(room: Room): void {
-  const order = [...room.playerOrder];
+  const order = playerOrderStartingFrom(room, room.hostId ?? room.playerOrder[0]);
   const useE2EDeal = process.env.E2E_TESTS === '1' && order.length === 2;
   const deck = useE2EDeal ? buildE2EDeck() : shuffle(buildDeck());
   const handSize = useE2EDeal
@@ -132,11 +138,7 @@ function firstAvailableTurnIndex(room: Room, turnOrder: string[]): number {
 }
 
 export function startTrick(room: Room, leaderId: string): void {
-  const leaderIndex = Math.max(0, room.playerOrder.indexOf(leaderId));
-  const turnOrder = [
-    ...room.playerOrder.slice(leaderIndex),
-    ...room.playerOrder.slice(0, leaderIndex),
-  ];
+  const turnOrder = playerOrderStartingFrom(room, leaderId);
   const nextNumber = (room.trick?.trickNumber ?? room.trickHistory.length) + 1;
   room.trick = {
     trickNumber: nextNumber,

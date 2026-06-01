@@ -125,10 +125,9 @@ function syncRoomHostFromActiveParty(room: Room, gameId: string): boolean {
   return true;
 }
 
-function syncRoomHostAfterJoin(room: Room, hostPlayerId: string): void {
-  if (restoreHostToFirstConnectedPlayer(room)) return;
+function syncRoomHostAfterJoin(room: Room, hostPlayerId: string, allowFallbackHost: boolean): void {
   syncRoomHostFromParty(room, hostPlayerId);
-  restoreHostToFirstConnectedPlayer(room);
+  if (allowFallbackHost) restoreHostToFirstConnectedPlayer(room);
 }
 
 function verifyIsHost(socket: ScoutSocket, room: Room): boolean {
@@ -207,7 +206,13 @@ function authorizePartyJoin(
   playerId: string | null,
   joinToken: string | null
 ):
-  | { ok: true; member: PartyMember; hostPlayerId: string; isHost: boolean }
+  | {
+      ok: true;
+      member: PartyMember;
+      hostPlayerId: string;
+      hostConnected: boolean;
+      isHost: boolean;
+    }
   | { ok: false; error: string; reason: string } {
   if (!playerId) {
     return { ok: false, error: 'Missing player info', reason: 'missing_player_id' };
@@ -227,10 +232,13 @@ function authorizePartyJoin(
     return { ok: false, error: 'Not authorized for this match', reason: 'invalid_join_token' };
   }
 
+  const hostMember = party.members.get(party.hostPlayerId);
+
   return {
     ok: true,
     member,
     hostPlayerId: party.hostPlayerId,
+    hostConnected: hostMember?.connected ?? false,
     isHost: party.hostPlayerId === playerId,
   };
 }
@@ -310,7 +318,11 @@ export function registerScout(io: Server, namespace = '/g/scout'): void {
               return respond({ ok: false, error: 'Resume token required' });
             }
             bindPlayerToSocket(nsp, socket, existingRoom, reconnectPlayerId);
-            syncRoomHostAfterJoin(existingRoom, authorization.hostPlayerId);
+            syncRoomHostAfterJoin(
+              existingRoom,
+              authorization.hostPlayerId,
+              !authorization.hostConnected
+            );
             broadcastRoom(nsp, existingRoom);
             socketLogger.info(
               { roomCode: existingRoom.code, playerId: player.id, sessionId, resumed: true },
@@ -339,7 +351,11 @@ export function registerScout(io: Server, namespace = '/g/scout'): void {
           existingRoom.players[player.id] = player;
           existingRoom.playerOrder.push(player.id);
           bindPlayerToSocket(nsp, socket, existingRoom, player.id);
-          syncRoomHostAfterJoin(existingRoom, authorization.hostPlayerId);
+          syncRoomHostAfterJoin(
+            existingRoom,
+            authorization.hostPlayerId,
+            !authorization.hostConnected
+          );
           broadcastRoom(nsp, existingRoom);
           socketLogger.info(
             { roomCode: existingRoom.code, playerId: player.id, sessionId, resumed: false },
@@ -357,7 +373,7 @@ export function registerScout(io: Server, namespace = '/g/scout'): void {
         setSessionToRoom(sessionId, room.code);
         clearRoomCleanup(room.code);
         socket.join(room.code);
-        syncRoomHostFromParty(room, authorization.hostPlayerId);
+        syncRoomHostAfterJoin(room, authorization.hostPlayerId, !authorization.hostConnected);
         broadcastRoom(nsp, room);
         socketLogger.info(
           { roomCode: room.code, playerId: hostId, sessionId },

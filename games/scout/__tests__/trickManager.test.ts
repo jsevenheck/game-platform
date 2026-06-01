@@ -9,6 +9,7 @@ import {
   passAndScout,
   playCards,
   setupComplete,
+  startGame,
   startTrick,
 } from '../server/src/managers/trickManager';
 import { createPlayer } from '../server/src/models/player';
@@ -93,6 +94,26 @@ describe('Scout trick manager', () => {
     expect(r.players.b.row.map((c) => c.id)).toContain('s1');
     expect(r.players.a.takenPile.map((c) => c.id)).toEqual(['a1', 'a2']);
     expect(r.trick?.leaderId).toBe('a');
+  });
+
+  it('deals the scripted E2E opening row to the host even if they joined the room second', () => {
+    const originalE2E = process.env.E2E_TESTS;
+    process.env.E2E_TESTS = '1';
+
+    try {
+      const r = room();
+      r.phase = 'lobby';
+      r.playerOrder = ['b', 'a'];
+      r.hostId = 'a';
+
+      startGame(r);
+
+      expect(r.players.a.row.map((c) => c.playValue)).toEqual([1, 2, 9]);
+      expect(r.players.b.row.map((c) => c.playValue)).toEqual([3, 4, 5]);
+    } finally {
+      if (originalE2E === undefined) delete process.env.E2E_TESTS;
+      else process.env.E2E_TESTS = originalE2E;
+    }
   });
 
   it('does not wait for disconnected players during setup', () => {
