@@ -97,6 +97,17 @@ function clearHost(room: Room): void {
   room.hostId = null;
 }
 
+function restoreHostToFirstConnectedPlayer(room: Room): boolean {
+  if (room.hostId !== null) return false;
+  const nextHostId = room.playerOrder.find((playerId) => room.players[playerId]?.connected);
+  if (!nextHostId) {
+    clearHost(room);
+    return false;
+  }
+  assignHost(room, nextHostId);
+  return true;
+}
+
 function syncRoomHostFromParty(room: Room, hostPlayerId: string): void {
   room.ownerId = hostPlayerId;
   if (room.players[hostPlayerId]) {
@@ -114,13 +125,22 @@ function syncRoomHostFromActiveParty(room: Room, gameId: string): boolean {
   return true;
 }
 
+function syncRoomHostAfterJoin(room: Room, hostPlayerId: string): void {
+  if (restoreHostToFirstConnectedPlayer(room)) return;
+  syncRoomHostFromParty(room, hostPlayerId);
+  restoreHostToFirstConnectedPlayer(room);
+}
+
 function verifyIsHost(socket: ScoutSocket, room: Room): boolean {
   const index = getSocketIndex(socket.id);
   if (!index || index.roomCode !== room.code || index.playerId !== room.hostId) return false;
 
   const sessionId = getRoomSession(room.code);
   const party = sessionId ? getPartyByActiveMatch(sessionId, 'scout') : undefined;
-  return !party || party.hostPlayerId === index.playerId;
+  if (!party || party.hostPlayerId === index.playerId) return true;
+
+  const partyHost = party.members.get(party.hostPlayerId);
+  return !partyHost?.connected;
 }
 
 function verifyPlayerInRoom(socket: ScoutSocket, roomCode: string): string | null {
@@ -290,7 +310,7 @@ export function registerScout(io: Server, namespace = '/g/scout'): void {
               return respond({ ok: false, error: 'Resume token required' });
             }
             bindPlayerToSocket(nsp, socket, existingRoom, reconnectPlayerId);
-            syncRoomHostFromParty(existingRoom, authorization.hostPlayerId);
+            syncRoomHostAfterJoin(existingRoom, authorization.hostPlayerId);
             broadcastRoom(nsp, existingRoom);
             socketLogger.info(
               { roomCode: existingRoom.code, playerId: player.id, sessionId, resumed: true },
@@ -319,7 +339,7 @@ export function registerScout(io: Server, namespace = '/g/scout'): void {
           existingRoom.players[player.id] = player;
           existingRoom.playerOrder.push(player.id);
           bindPlayerToSocket(nsp, socket, existingRoom, player.id);
-          syncRoomHostFromParty(existingRoom, authorization.hostPlayerId);
+          syncRoomHostAfterJoin(existingRoom, authorization.hostPlayerId);
           broadcastRoom(nsp, existingRoom);
           socketLogger.info(
             { roomCode: existingRoom.code, playerId: player.id, sessionId, resumed: false },

@@ -1,6 +1,6 @@
 import type { Room } from '../../../core/src/types';
 import { ROOM_ENDED_CLEANUP_MS, ROOM_IDLE_TIMEOUT_MS } from '../../../core/src/constants';
-import { createPlayer, setSocketIndex } from './player';
+import { createPlayer, deleteSocketIndexesForRoom, setSocketIndex } from './player';
 
 const rooms = new Map<string, Room>();
 const sessionToRoom = new Map<string, string>();
@@ -50,10 +50,12 @@ export function getRoom(code: string): Room | undefined {
 }
 
 export function deleteRoom(code: string): void {
-  clearRoomCleanup(code);
-  rooms.delete(code);
+  const normalizedCode = code.toUpperCase();
+  clearRoomCleanup(normalizedCode);
+  rooms.delete(normalizedCode);
+  deleteSocketIndexesForRoom(normalizedCode);
   for (const [sessionId, mappedCode] of sessionToRoom.entries()) {
-    if (mappedCode === code) sessionToRoom.delete(sessionId);
+    if (mappedCode === normalizedCode) sessionToRoom.delete(sessionId);
   }
 }
 

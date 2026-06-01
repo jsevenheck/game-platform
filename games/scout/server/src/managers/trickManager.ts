@@ -1,4 +1,5 @@
 import { nanoid } from 'nanoid';
+import { analyzePlay, comparePlayAnalyses } from '../../../core/src/analyzePlay';
 import { buildDeck, flipCard, type ScoutCard } from '../../../core/src/deck';
 import type { PlayedSet, Player, Room, TrickState } from '../../../core/src/types';
 
@@ -9,46 +10,6 @@ function shuffle<T>(items: T[]): T[] {
     [copy[i], copy[j]] = [copy[j], copy[i]];
   }
   return copy;
-}
-
-type PlayAnalysis = {
-  strength: number;
-  count: number;
-  highCard: number;
-};
-
-function cardColor(card: ScoutCard): string {
-  if ('color' in card && typeof card.color === 'string') return card.color;
-  return card.flipped ? 'flipped' : 'base';
-}
-
-function analyzePlay(cards: ScoutCard[]): PlayAnalysis {
-  const count = cards.length;
-  if (count < 1) throw new Error('Play must be a valid set or run');
-
-  const values = cards.map((card) => card.playValue);
-  const highCard = Math.max(...values);
-
-  if (count === 1) {
-    return { strength: values[0], count, highCard };
-  }
-
-  const isSet = values.every((value) => value === values[0]);
-  if (isSet) {
-    return { strength: values[0] * count, count, highCard };
-  }
-
-  const sameColor = cards.every((card) => cardColor(card) === cardColor(cards[0]));
-  const sortedValues = [...values].sort((a, b) => a - b);
-  const isRun =
-    count >= 2 &&
-    sameColor &&
-    sortedValues.every((value, index) => index === 0 || value === sortedValues[index - 1] + 1);
-  if (isRun) {
-    return { strength: highCard * count, count, highCard };
-  }
-
-  throw new Error('Play must be a valid set or run');
 }
 
 function summarizePlay(playerId: string, cards: ScoutCard[], id = nanoid(10)): PlayedSet {
@@ -69,10 +30,7 @@ export function comparePlays(
 ): number {
   const candidateAnalysis = analyzePlay(candidate.cards);
   const currentAnalysis = analyzePlay(current.cards);
-  if (candidateAnalysis.strength !== currentAnalysis.strength) {
-    return candidateAnalysis.strength - currentAnalysis.strength;
-  }
-  return candidateAnalysis.highCard - currentAnalysis.highCard;
+  return comparePlayAnalyses(candidateAnalysis, currentAnalysis);
 }
 
 export function beatsCurrentPlay(cards: ScoutCard[], current: PlayedSet | null): boolean {

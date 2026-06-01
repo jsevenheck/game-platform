@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { computed, ref, watch } from 'vue';
+import { analyzePlay, comparePlayAnalyses } from '@shared/analyzePlay';
 import type { ScoutCard } from '@shared/deck';
 import type { PlayedSetView } from '@shared/types';
 import { useGameStore } from '../stores/game';
@@ -24,26 +25,42 @@ const isContiguous = computed(() => {
     (value, index, arr) => index === 0 || value === arr[index - 1] + 1
   );
 });
-const selectedCards = computed(() =>
-  sortedSelected.value.map((index) => store.myRow[index]).filter(Boolean)
+const selectedCards = computed<ScoutCard[]>(() =>
+  sortedSelected.value.flatMap((index) => {
+    const card = store.myRow[index];
+    return card ? [card] : [];
+  })
 );
-const selectedSummary = computed(() => summarize(selectedCards.value));
-const beatsPlay = computed(() => {
-  if (!props.currentPlay) return selectedCards.value.length > 0;
-  const summary = selectedSummary.value;
-  if (summary.sum !== props.currentPlay.sum) return summary.sum > props.currentPlay.sum;
-  if (summary.count !== props.currentPlay.count) return summary.count > props.currentPlay.count;
-  return summary.highCard > props.currentPlay.highCard;
+const selectedAnalysis = computed(() => {
+  if (selectedCards.value.length === 0) return null;
+  try {
+    return analyzePlay(selectedCards.value);
+  } catch {
+    return null;
+  }
 });
-const canPlay = computed(() => store.isMyTurn && isContiguous.value && beatsPlay.value);
-
-function summarize(cards: ScoutCard[]) {
+const selectedSummary = computed(() => {
+  const analysis = selectedAnalysis.value;
+  if (!analysis) return null;
   return {
-    sum: cards.reduce((total, card) => total + card.playValue, 0),
-    count: cards.length,
-    highCard: Math.max(0, ...cards.map((card) => card.playValue)),
+    sum: analysis.strength,
+    count: analysis.count,
+    highCard: analysis.highCard,
   };
-}
+});
+const beatsPlay = computed(() => {
+  const candidate = selectedAnalysis.value;
+  if (!candidate) return false;
+  if (!props.currentPlay) return true;
+  try {
+    return comparePlayAnalyses(candidate, analyzePlay(props.currentPlay.cards)) > 0;
+  } catch {
+    return false;
+  }
+});
+const canPlay = computed(
+  () => store.isMyTurn && isContiguous.value && Boolean(selectedSummary.value) && beatsPlay.value
+);
 
 function toggle(index: number) {
   if (!store.isMyTurn) return;
@@ -73,7 +90,7 @@ watch(
         <h2 class="text-lg font-bold">Your row</h2>
         <p class="text-sm text-muted">Select adjacent cards to play.</p>
       </div>
-      <div v-if="selectedCards.length" class="text-sm text-muted">
+      <div v-if="selectedSummary" class="text-sm text-muted">
         Sum {{ selectedSummary.sum }} · {{ selectedSummary.count }} card(s) · High
         {{ selectedSummary.highCard }}
       </div>
@@ -119,6 +136,12 @@ watch(
         class="self-center text-sm text-danger"
       >
         Selection must be contiguous.
+      </p>
+      <p
+        v-else-if="store.isMyTurn && selectedCards.length && !selectedSummary"
+        class="self-center text-sm text-danger"
+      >
+        Selection must be a matching set or consecutive run.
       </p>
       <p
         v-else-if="store.isMyTurn && selectedCards.length && !beatsPlay"

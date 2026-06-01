@@ -32,3 +32,12 @@ export function getSocketIndex(
 export function deleteSocketIndex(socketId: string): void {
   socketIndex.delete(socketId);
 }
+
+export function deleteSocketIndexesForRoom(roomCode: string): void {
+  const normalizedRoomCode = roomCode.toUpperCase();
+  for (const [socketId, index] of socketIndex.entries()) {
+    if (index.roomCode === normalizedRoomCode) {
+      socketIndex.delete(socketId);
+    }
+  }
+}
