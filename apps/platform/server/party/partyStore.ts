@@ -72,6 +72,23 @@ export function getPartyBySocket(socketId: string): PartySession | undefined {
   return partyId ? parties.get(partyId) : undefined;
 }
 
+export function getPartyByActiveMatch(matchKey: string, gameId?: string): PartySession | undefined {
+  const normalizedMatchKey = matchKey.trim();
+  if (!normalizedMatchKey) return undefined;
+
+  for (const party of parties.values()) {
+    if (
+      party.status === 'in-match' &&
+      party.activeMatch?.matchKey === normalizedMatchKey &&
+      (!gameId || party.activeMatch.gameId === gameId)
+    ) {
+      return party;
+    }
+  }
+
+  return undefined;
+}
+
 export function registerSocket(socketId: string, partyId: string): void {
   socketToParty.set(socketId, partyId);
 }

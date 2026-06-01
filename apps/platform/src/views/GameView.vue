@@ -228,6 +228,7 @@ onBeforeUnmount(() => {
       :player-id="store.playerId ?? ''"
       :player-name="store.playerName ?? ''"
       :namespace="namespace"
+      :join-token="store.resumeToken ?? ''"
       :is-host="store.isHost"
       :on-replay-game="onReplayGame"
       :on-return-to-lobby="onReturnToLobby"

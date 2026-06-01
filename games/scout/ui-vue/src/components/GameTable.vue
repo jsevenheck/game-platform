@@ -44,10 +44,7 @@ function handleScout(payload: {
 </script>
 
 <template>
-  <main
-    v-if="room"
-    class="mx-auto grid max-w-7xl gap-4 p-3 lg:grid-cols-[1fr_280px] lg:p-4"
-  >
+  <main v-if="room" class="mx-auto grid max-w-7xl gap-4 p-3 lg:grid-cols-[1fr_280px] lg:p-4">
     <section class="space-y-5">
       <header class="ui-panel flex flex-wrap items-center justify-between gap-3">
         <div>

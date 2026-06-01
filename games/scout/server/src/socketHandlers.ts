@@ -14,6 +14,8 @@ import {
   recordNamespaceConnection,
   recordNamespaceDisconnect,
 } from '../../../../apps/platform/server/observability/socketNamespaceMetrics';
+import { getPartyByActiveMatch } from '../../../../apps/platform/server/party/partyStore';
+import type { PartyMember } from '../../../../apps/platform/server/party/types';
 import {
   MAX_PLAYERS,
   MIN_PLAYERS,
@@ -24,6 +26,7 @@ import {
   createRoom,
   getRoom,
   getSessionRoom,
+  getRoomSession,
   setSessionToRoom,
   clearRoomCleanup,
   scheduleRoomCleanup,
@@ -51,17 +54,43 @@ function normalizeStablePlayerId(value: unknown): string | null {
 function assignHost(room: Room, newHostId: string): void {
   const nextHost = room.players[newHostId];
   if (!nextHost) return;
-  if (room.hostId) {
-    const currentHost = room.players[room.hostId];
-    if (currentHost) currentHost.isHost = false;
+  for (const player of Object.values(room.players)) {
+    player.isHost = player.id === newHostId;
   }
   room.hostId = newHostId;
-  nextHost.isHost = true;
+}
+
+function clearHost(room: Room): void {
+  for (const player of Object.values(room.players)) {
+    player.isHost = false;
+  }
+  room.hostId = null;
+}
+
+function syncRoomHostFromParty(room: Room, hostPlayerId: string): void {
+  room.ownerId = hostPlayerId;
+  if (room.players[hostPlayerId]) {
+    assignHost(room, hostPlayerId);
+  } else {
+    clearHost(room);
+  }
+}
+
+function syncRoomHostFromActiveParty(room: Room, gameId: string): boolean {
+  const sessionId = getRoomSession(room.code);
+  const party = sessionId ? getPartyByActiveMatch(sessionId, gameId) : undefined;
+  if (!party) return false;
+  syncRoomHostFromParty(room, party.hostPlayerId);
+  return true;
 }
 
 function verifyIsHost(socket: ScoutSocket, room: Room): boolean {
   const index = getSocketIndex(socket.id);
-  return index !== undefined && index.roomCode === room.code && index.playerId === room.hostId;
+  if (!index || index.roomCode !== room.code || index.playerId !== room.hostId) return false;
+
+  const sessionId = getRoomSession(room.code);
+  const party = sessionId ? getPartyByActiveMatch(sessionId, 'scout') : undefined;
+  return !party || party.hostPlayerId === index.playerId;
 }
 
 function verifyPlayerInRoom(socket: ScoutSocket, roomCode: string): string | null {
@@ -116,6 +145,46 @@ function callbackErrorMessage(err: unknown): string {
   return err instanceof Error ? err.message : 'Invalid action';
 }
 
+function normalizeJoinToken(payloadValue: unknown, socketValue: unknown): string | null {
+  const value = typeof payloadValue === 'string' ? payloadValue : socketValue;
+  if (typeof value !== 'string') return null;
+  const trimmed = value.trim();
+  return trimmed.length > 0 ? trimmed : null;
+}
+
+function authorizePartyJoin(
+  matchKey: string,
+  playerId: string | null,
+  joinToken: string | null
+):
+  | { ok: true; member: PartyMember; hostPlayerId: string; isHost: boolean }
+  | { ok: false; error: string; reason: string } {
+  if (!playerId) {
+    return { ok: false, error: 'Missing player info', reason: 'missing_player_id' };
+  }
+
+  const party = getPartyByActiveMatch(matchKey, 'scout');
+  if (!party) {
+    return { ok: false, error: 'Match not found', reason: 'match_not_found' };
+  }
+
+  const member = party.members.get(playerId);
+  if (!member) {
+    return { ok: false, error: 'Not authorized for this match', reason: 'member_not_found' };
+  }
+
+  if (!joinToken || member.resumeToken !== joinToken) {
+    return { ok: false, error: 'Not authorized for this match', reason: 'invalid_join_token' };
+  }
+
+  return {
+    ok: true,
+    member,
+    hostPlayerId: party.hostPlayerId,
+    isHost: party.hostPlayerId === playerId,
+  };
+}
+
 export function registerScout(io: Server, namespace = '/g/scout'): void {
   const gameId = 'scout';
   const nsp = io.of(namespace);
@@ -126,6 +195,7 @@ export function registerScout(io: Server, namespace = '/g/scout'): void {
     const auth = socket.handshake.auth || {};
     socket.data.sessionId = auth.sessionId;
     socket.data.playerId = auth.playerId;
+    socket.data.joinToken = auth.joinToken || auth.token;
     next();
   });
 
@@ -140,24 +210,31 @@ export function registerScout(io: Server, namespace = '/g/scout'): void {
       const respond = instrumentation.wrapCallback(cb);
       try {
         const sessionId = data.sessionId?.trim();
-        const name = data.name?.trim();
-        const wantsHost = data.isHost === true;
         const stablePlayerId =
           normalizeStablePlayerId(data.playerId) ?? normalizeStablePlayerId(socket.data.playerId);
+        const joinToken = normalizeJoinToken(data.joinToken, socket.data.joinToken);
 
-        if (!sessionId || !name) return respond({ ok: false, error: 'Missing session info' });
+        if (!sessionId) return respond({ ok: false, error: 'Missing session info' });
 
+        const authorization = authorizePartyJoin(sessionId, stablePlayerId, joinToken);
+        if (!authorization.ok) {
+          socketLogger.warn(
+            { sessionId, playerId: stablePlayerId, reason: authorization.reason },
+            'autoJoinRoom rejected: unauthorized scout party member'
+          );
+          return respond({ ok: false, error: authorization.error });
+        }
+
+        const authorizedPlayerId = authorization.member.playerId;
+        const name = authorization.member.name;
+        const isPartyHost = authorization.isHost;
         const roomCode = getSessionRoom(sessionId);
         const existingRoom = roomCode ? getRoom(roomCode) : undefined;
 
         if (existingRoom) {
-          const indexedPlayerId =
-            getSocketIndex(socket.id)?.roomCode === existingRoom.code
-              ? getSocketIndex(socket.id)?.playerId
-              : undefined;
-          const reconnectPlayerId = stablePlayerId ?? indexedPlayerId;
+          const reconnectPlayerId = authorizedPlayerId;
 
-          if (reconnectPlayerId && existingRoom.players[reconnectPlayerId]) {
+          if (existingRoom.players[reconnectPlayerId]) {
             const player = existingRoom.players[reconnectPlayerId];
             if (data.resumeToken && player.resumeToken !== data.resumeToken) {
               socketLogger.warn(
@@ -174,10 +251,7 @@ export function registerScout(io: Server, namespace = '/g/scout'): void {
               return respond({ ok: false, error: 'Resume token required' });
             }
             bindPlayerToSocket(nsp, socket, existingRoom, reconnectPlayerId);
-            if (wantsHost) {
-              assignHost(existingRoom, reconnectPlayerId);
-              existingRoom.ownerId = reconnectPlayerId;
-            }
+            syncRoomHostFromParty(existingRoom, authorization.hostPlayerId);
             broadcastRoom(nsp, existingRoom);
             socketLogger.info(
               { roomCode: existingRoom.code, playerId: player.id, sessionId, resumed: true },
@@ -192,7 +266,7 @@ export function registerScout(io: Server, namespace = '/g/scout'): void {
           }
 
           const nameExists = Object.values(existingRoom.players).some(
-            (p) => p.id !== stablePlayerId && p.name.toLowerCase() === name.toLowerCase()
+            (p) => p.id !== authorizedPlayerId && p.name.toLowerCase() === name.toLowerCase()
           );
           if (nameExists) return respond({ ok: false, error: 'Name already taken' });
           if (existingRoom.phase !== 'lobby') {
@@ -202,14 +276,11 @@ export function registerScout(io: Server, namespace = '/g/scout'): void {
             return respond({ ok: false, error: 'Room is full' });
           }
 
-          const player = createPlayer(name, false, stablePlayerId ?? undefined);
+          const player = createPlayer(name, isPartyHost, authorizedPlayerId);
           existingRoom.players[player.id] = player;
           existingRoom.playerOrder.push(player.id);
           bindPlayerToSocket(nsp, socket, existingRoom, player.id);
-          if (wantsHost) {
-            assignHost(existingRoom, player.id);
-            existingRoom.ownerId = player.id;
-          }
+          syncRoomHostFromParty(existingRoom, authorization.hostPlayerId);
           broadcastRoom(nsp, existingRoom);
           socketLogger.info(
             { roomCode: existingRoom.code, playerId: player.id, sessionId, resumed: false },
@@ -223,15 +294,11 @@ export function registerScout(io: Server, namespace = '/g/scout'): void {
           });
         }
 
-        const { room, hostId, resumeToken } = createRoom(
-          name,
-          socket.id,
-          stablePlayerId ?? undefined
-        );
+        const { room, hostId, resumeToken } = createRoom(name, socket.id, authorizedPlayerId);
         setSessionToRoom(sessionId, room.code);
         clearRoomCleanup(room.code);
         socket.join(room.code);
-        if (wantsHost) assignHost(room, hostId);
+        syncRoomHostFromParty(room, authorization.hostPlayerId);
         broadcastRoom(nsp, room);
         socketLogger.info(
           { roomCode: room.code, playerId: hostId, sessionId },
@@ -420,13 +487,13 @@ export function registerScout(io: Server, namespace = '/g/scout'): void {
             player.connected = false;
             player.socketId = null;
 
-            if (wasHost) {
+            if (wasHost && !syncRoomHostFromActiveParty(room, gameId)) {
               const remaining = room.playerOrder.map((id) => room.players[id]);
               const newHost =
                 remaining.find((p) => p.id !== index.playerId && p.connected) ??
                 remaining.find((p) => p.id !== index.playerId);
               if (newHost) assignHost(room, newHost.id);
-              else room.hostId = null;
+              else clearHost(room);
             }
 
             broadcastRoom(nsp, room);

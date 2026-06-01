@@ -23,6 +23,7 @@ function resolveSocketUrl(apiBaseUrl: string | undefined, namespace: string): st
 export function useSocket(opts?: {
   apiBaseUrl?: string;
   sessionId?: string;
+  joinToken?: string;
   playerId?: string;
   wsNamespace?: string;
 }): { socket: ScoutSocket; connected: Ref<boolean> } {
@@ -33,6 +34,7 @@ export function useSocket(opts?: {
   const socket: ScoutSocket = io(url, {
     auth: {
       sessionId: opts?.sessionId,
+      joinToken: opts?.joinToken,
       playerId: opts?.playerId,
     },
     autoConnect: false,

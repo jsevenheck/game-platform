@@ -69,6 +69,13 @@ export function getSessionRoom(sessionId: string): string | undefined {
   return sessionToRoom.get(sessionId);
 }
 
+export function getRoomSession(roomCode: string): string | undefined {
+  for (const [sessionId, mappedCode] of sessionToRoom.entries()) {
+    if (mappedCode === roomCode) return sessionId;
+  }
+  return undefined;
+}
+
 const roomTimers = new Map<string, NodeJS.Timeout>();
 
 export function scheduleRoomCleanup(code: string, delayMs: number): void {

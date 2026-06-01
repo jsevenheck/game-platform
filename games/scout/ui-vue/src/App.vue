@@ -13,6 +13,7 @@ const props = withDefaults(defineProps<HubIntegrationProps>(), {
   playerId: undefined,
   playerName: undefined,
   sessionId: undefined,
+  joinToken: undefined,
   wsNamespace: undefined,
   apiBaseUrl: undefined,
   isHost: undefined,
@@ -67,6 +68,7 @@ function emitAutoJoinRoom() {
       name: displayName(),
       isHost: props.isHost,
       resumeToken: store.resumeToken || undefined,
+      joinToken: props.joinToken,
     },
     (res) => {
       if (res.ok) {
@@ -135,6 +137,7 @@ onMounted(() => {
   const { socket: s } = useSocket({
     apiBaseUrl: props.apiBaseUrl,
     sessionId: props.sessionId,
+    joinToken: props.joinToken,
     playerId: props.playerId,
     wsNamespace: props.wsNamespace,
   });
