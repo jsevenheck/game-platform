@@ -20,14 +20,15 @@ export function analyzePlay(cards: readonly ScoutCard[]): PlayAnalysis {
 
   const values = cards.map((card) => card.playValue);
   const highCard = Math.max(...values);
+  const strength = values.reduce((sum, v) => sum + v, 0);
 
   if (count === 1) {
-    return { kind: 'single', strength: values[0], count, highCard };
+    return { kind: 'single', strength, count, highCard };
   }
 
   const isSet = values.every((value) => value === values[0]);
   if (isSet) {
-    return { kind: 'set', strength: values[0] * count, count, highCard };
+    return { kind: 'set', strength, count, highCard };
   }
 
   const sameColor = cards.every((card) => cardColor(card) === cardColor(cards[0]));
@@ -36,15 +37,23 @@ export function analyzePlay(cards: readonly ScoutCard[]): PlayAnalysis {
     (value, index) => index === 0 || value === sortedValues[index - 1] + 1
   );
   if (isRun && sameColor) {
-    return { kind: 'run', strength: highCard * count, count, highCard };
+    return { kind: 'run', strength, count, highCard };
   }
 
   throw new Error('Play must be a valid set or run');
 }
 
+// Official Scout beat order:
+// 1. More cards wins
+// 2. Same count → higher highCard wins
+// 3. Same count + same highCard → set beats run
 export function comparePlayAnalyses(candidate: PlayAnalysis, current: PlayAnalysis): number {
-  if (candidate.strength !== current.strength) {
-    return candidate.strength - current.strength;
+  if (candidate.count !== current.count) {
+    return candidate.count - current.count;
   }
-  return candidate.highCard - current.highCard;
+  if (candidate.highCard !== current.highCard) {
+    return candidate.highCard - current.highCard;
+  }
+  const kindRank: Record<PlayKind, number> = { single: 0, run: 1, set: 2 };
+  return kindRank[candidate.kind] - kindRank[current.kind];
 }

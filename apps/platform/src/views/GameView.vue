@@ -60,6 +60,11 @@ function handlePartyUpdate(view: Parameters<typeof store.applyPartyUpdate>[0]) {
   }
 }
 
+function handlePartyKicked(): void {
+  store.clearSession();
+  router.push('/');
+}
+
 async function loadGameComponent(retries = 2): Promise<void> {
   const game = getClientGame(props.gameId);
   if (!game) {
@@ -117,6 +122,7 @@ function resumePartyBinding() {
 
 onMounted(async () => {
   socket.on('partyUpdate', handlePartyUpdate);
+  socket.on('partyKicked', handlePartyKicked);
 
   // Resume party state if needed (initial load / hard reload)
   if (!store.party) {
@@ -177,6 +183,7 @@ onMounted(async () => {
 
 onBeforeUnmount(() => {
   socket.off('partyUpdate', handlePartyUpdate);
+  socket.off('partyKicked', handlePartyKicked);
   socket.off('connect', resumePartyBinding);
 });
 </script>

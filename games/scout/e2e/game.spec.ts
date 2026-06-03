@@ -280,7 +280,7 @@ test.describe('Scout via Platform', () => {
       expect(openingValues.slice(0, 2)).toEqual(['1', '2']);
 
       await playSelectedRowCards(hostPage, [0, 1]);
-      await expect(hostPage.getByText('Beat sum 4 · 2 cards · high 2')).toBeVisible();
+      await expect(hostPage.getByText('Beat sum 3 · 2 cards · high 2')).toBeVisible();
       await expect(guestPage.getByRole('heading', { name: 'Your turn' })).toBeVisible({
         timeout: 10_000,
       });

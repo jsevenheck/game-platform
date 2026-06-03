@@ -89,6 +89,10 @@ export function getPartyByActiveMatch(matchKey: string, gameId?: string): PartyS
   return undefined;
 }
 
+export function getAllParties(): PartySession[] {
+  return Array.from(parties.values());
+}
+
 export function registerSocket(socketId: string, partyId: string): void {
   socketToParty.set(socketId, partyId);
 }

@@ -4,5 +4,10 @@ services:
     restart: unless-stopped
     ports:
       - "3002:3002"
+    env_file:
+      - path: ./.env
+        required: false
+        format: raw
     environment:
       - NODE_ENV=production
+      - PORT=3002

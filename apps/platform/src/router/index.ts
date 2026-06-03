@@ -19,9 +19,10 @@ const router = createRouter({
       props: true,
     },
     {
-      path: '/admin',
+      path: '/admin/:section(logs|parties)?',
       name: 'admin',
       component: AdminView,
+      props: (route) => ({ section: route.params.section ?? 'logs' }),
     },
     {
       path: '/party/:inviteCode/game/:gameId',

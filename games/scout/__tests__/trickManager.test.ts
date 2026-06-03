@@ -39,16 +39,19 @@ function room(): Room {
 }
 
 describe('Scout trick manager', () => {
-  it('compares valid Scout plays by strength, then high card', () => {
+  it('compares valid Scout plays by count first, then highCard', () => {
+    // same count (2), higher highCard wins
     expect(
       comparePlays({ cards: [card('a', 5), card('b', 5)] }, { cards: [card('c', 4), card('d', 4)] })
     ).toBeGreaterThan(0);
+    // 3 cards beats 2 cards regardless of values
     expect(
       comparePlays(
         { cards: [card('a', 1), card('b', 2), card('c', 3)] },
         { cards: [card('d', 6), card('e', 6)] }
       )
-    ).toBeLessThan(0);
+    ).toBeGreaterThan(0);
+    // 3 cards beats 2 cards regardless of values
     expect(
       comparePlays(
         { cards: [card('a', 5), card('b', 5)] },
@@ -66,11 +69,12 @@ describe('Scout trick manager', () => {
       count: 2,
       highCard: 4,
     };
+    // same count (2), higher highCard → beats
     expect(beatsCurrentPlay([card('y', 5), card('z', 5)], current)).toBe(true);
-    // single 7 has strength 7, pair of 4s has strength 8 — does not beat
+    // 1 card never beats 2 cards
     expect(beatsCurrentPlay([card('q', 7)], current)).toBe(false);
-    // single 9 has strength 9 > 8 — beats it
-    expect(beatsCurrentPlay([card('r', 9)], current)).toBe(true);
+    // 1 card never beats 2 cards, even with a high value
+    expect(beatsCurrentPlay([card('r', 9)], current)).toBe(false);
   });
 
   it('accepts a single card as the opening play (no current play on table)', () => {

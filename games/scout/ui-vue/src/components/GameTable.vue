@@ -95,23 +95,22 @@ function handleScout(payload: {
             {{ currentPlay.highCard }}
           </p>
         </div>
-        <div class="grid gap-3 md:grid-cols-2">
+        <div>
           <article
-            v-for="play in room.trick?.plays ?? []"
-            :key="play.id"
+            v-if="currentPlay"
             class="rounded-xl border border-border bg-card p-3"
           >
             <div class="mb-2 flex justify-between text-sm">
-              <span class="font-semibold text-foreground">{{ playerName(play.playerId) }}</span>
+              <span class="font-semibold text-foreground">{{ playerName(currentPlay.playerId) }}</span>
               <span class="text-muted"
-                >{{ play.sum }} / {{ play.count }} / {{ play.highCard }}</span
+                >{{ currentPlay.sum }} / {{ currentPlay.count }} / {{ currentPlay.highCard }}</span
               >
             </div>
             <div class="flex gap-2 overflow-x-auto">
-              <Card v-for="card in play.cards" :key="card.id" :card="card" compact />
+              <Card v-for="card in currentPlay.cards" :key="card.id" :card="card" compact />
             </div>
           </article>
-          <p v-if="(room.trick?.plays.length ?? 0) === 0" class="text-muted">
+          <p v-else class="text-muted">
             Leader chooses the opening run.
           </p>
         </div>

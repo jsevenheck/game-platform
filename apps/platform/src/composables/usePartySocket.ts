@@ -44,6 +44,7 @@ interface PartyClientToServerEvents {
 
 interface PartyServerToClientEvents {
   partyUpdate: (partyView: PartyView) => void;
+  partyKicked: (data: { reason: string }) => void;
 }
 
 export type PartySocket = Socket<PartyServerToClientEvents, PartyClientToServerEvents>;

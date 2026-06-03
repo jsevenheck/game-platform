@@ -94,6 +94,12 @@ function handlePartyUpdate(view: Parameters<typeof store.applyPartyUpdate>[0]) {
   }
 }
 
+function handlePartyKicked(data: { reason: string }): void {
+  store.clearSession();
+  error.value = data.reason || 'You were removed from the party.';
+  router.push('/');
+}
+
 // Hoisted so it can be registered for reconnects as well as initial mount.
 // Reads the session fresh each time — safe to call repeatedly.
 function doResume() {
@@ -128,6 +134,7 @@ function doResume() {
 
 onMounted(() => {
   socket.on('partyUpdate', handlePartyUpdate);
+  socket.on('partyKicked', handlePartyKicked);
   // Re-bind to party on every reconnect (network drop → new socket ID on server)
   socket.on('connect', doResume);
 
@@ -144,6 +151,7 @@ onMounted(() => {
 
 onBeforeUnmount(() => {
   socket.off('partyUpdate', handlePartyUpdate);
+  socket.off('partyKicked', handlePartyKicked);
   socket.off('connect', doResume);
 });
 </script>

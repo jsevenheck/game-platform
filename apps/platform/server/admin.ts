@@ -4,7 +4,18 @@ import type { Server } from 'socket.io';
 import jwt from 'jsonwebtoken';
 import bcrypt from 'bcryptjs';
 import { createComponentLogger } from './logging/logger';
-import { clearAllParties, getActivePartyMatches } from './party/partyStore';
+import {
+  clearAllParties,
+  clearMatchTimeout,
+  deleteParty,
+  getActivePartyMatches,
+  getAllParties,
+  getParty,
+  partyToView,
+  schedulePartyCleanup,
+  unregisterSocket,
+} from './party/partyStore';
+import type { PartyMember, PartySession } from './party/types';
 import { getRecentLogs } from './logging/logBuffer';
 import { gameRegistry, getGame } from './registry/index';
 
@@ -24,6 +35,191 @@ const loginRateLimitMap = new Map<string, RateLimitRecord>();
 const LOGIN_RATE_LIMIT_WINDOW_MS = 60_000;
 const LOGIN_RATE_LIMIT_MAX = 5;
 const RATE_LIMIT_PRUNE_INTERVAL_MS = 5 * 60_000;
+
+interface AdminPartyMemberView {
+  playerId: string;
+  name: string;
+  connected: boolean;
+  isHost: boolean;
+}
+
+interface AdminPartyView {
+  partyId: string;
+  inviteCode: string;
+  hostPlayerId: string;
+  status: PartySession['status'];
+  selectedGameId: string | null;
+  activeMatch: PartySession['activeMatch'];
+  members: AdminPartyMemberView[];
+  memberCount: number;
+  connectedMemberCount: number;
+}
+
+function toAdminPartyView(party: PartySession): AdminPartyView {
+  const members = Array.from(party.members.values()).map((member) => ({
+    playerId: member.playerId,
+    name: member.name,
+    connected: member.connected,
+    isHost: member.playerId === party.hostPlayerId,
+  }));
+
+  return {
+    partyId: party.partyId,
+    inviteCode: party.inviteCode,
+    hostPlayerId: party.hostPlayerId,
+    status: party.status,
+    selectedGameId: party.selectedGameId,
+    activeMatch: party.activeMatch,
+    members,
+    memberCount: members.length,
+    connectedMemberCount: members.filter((member) => member.connected).length,
+  };
+}
+
+function chooseNextHost(party: PartySession): PartyMember | undefined {
+  return (
+    Array.from(party.members.values()).find((member) => member.connected) ??
+    Array.from(party.members.values())[0]
+  );
+}
+
+function disconnectActiveMatchSockets(io: Server, party: PartySession): number {
+  if (!party.activeMatch) return 0;
+
+  let disconnected = 0;
+  const { matchKey, namespace: namespacePath } = party.activeMatch;
+  const namespace = io.of(namespacePath);
+  for (const socket of namespace.sockets.values()) {
+    const socketSessionId = typeof socket.data.sessionId === 'string' ? socket.data.sessionId : '';
+    if (socketSessionId === matchKey) {
+      socket.disconnect(true);
+      disconnected += 1;
+    }
+  }
+
+  return disconnected;
+}
+
+function cleanupActiveMatch(party: PartySession): boolean {
+  if (!party.activeMatch) return false;
+
+  const { gameId, matchKey } = party.activeMatch;
+  const game = getGame(gameId);
+  if (!game) return false;
+
+  game.cleanupMatch(matchKey);
+  clearMatchTimeout(party.partyId);
+  party.activeMatch = null;
+  party.pendingCleanupMatchKey = null;
+  party.returnAcks = new Set();
+  party.status = 'lobby';
+  return true;
+}
+
+interface KickPartyMemberResult {
+  removed: boolean;
+  partyDeleted: boolean;
+  disconnectedPartySocket: boolean;
+  disconnectedGameSockets: number;
+  partyView: AdminPartyView | null;
+}
+
+function kickPartyMember(
+  io: Server | undefined,
+  party: PartySession,
+  playerId: string
+): KickPartyMemberResult {
+  const member = party.members.get(playerId);
+  if (!member) {
+    return {
+      removed: false,
+      partyDeleted: false,
+      disconnectedPartySocket: false,
+      disconnectedGameSockets: 0,
+      partyView: toAdminPartyView(party),
+    };
+  }
+
+  const partySocket =
+    io && member.socketId ? io.of('/party').sockets.get(member.socketId) : undefined;
+  let disconnectedGameSockets = 0;
+
+  if (member.socketId) {
+    unregisterSocket(member.socketId);
+  }
+
+  partySocket?.emit('partyKicked', { reason: 'You were removed from the party by an admin.' });
+  partySocket?.leave(party.partyId);
+  partySocket?.disconnect(true);
+
+  party.members.delete(playerId);
+  party.returnAcks.delete(playerId);
+
+  if (party.hostPlayerId === playerId) {
+    const nextHost = chooseNextHost(party);
+    if (nextHost) {
+      party.hostPlayerId = nextHost.playerId;
+    }
+  }
+
+  if (party.members.size === 0) {
+    const partyId = party.partyId;
+    try {
+      disconnectedGameSockets = io ? disconnectActiveMatchSockets(io, party) : 0;
+      cleanupActiveMatch(party);
+    } catch (err) {
+      adminLogger.warn({ err, partyId }, 'failed to cleanup active match after admin kick');
+    }
+    clearMatchTimeout(partyId);
+    deleteParty(partyId);
+    return {
+      removed: true,
+      partyDeleted: true,
+      disconnectedPartySocket: !!partySocket,
+      disconnectedGameSockets,
+      partyView: null,
+    };
+  }
+
+  if (party.activeMatch) {
+    // Current game modules only expose cleanupMatch(matchKey), not a safe generic
+    // mid-match remove-player operation. See docs/known-issues.md for the future
+    // removePlayerFromMatch(matchKey, playerId) improvement idea.
+    const { gameId, matchKey } = party.activeMatch;
+    try {
+      disconnectedGameSockets = io ? disconnectActiveMatchSockets(io, party) : 0;
+      cleanupActiveMatch(party);
+      adminLogger.warn(
+        { partyId: party.partyId, gameId, matchKey, reason: 'admin_kick' },
+        'admin kick ended active match and returned party to lobby'
+      );
+    } catch (err) {
+      adminLogger.warn(
+        { err, partyId: party.partyId, gameId, matchKey },
+        'failed to cleanup active match after admin kick'
+      );
+    }
+  }
+
+  const anyConnected = Array.from(party.members.values()).some(
+    (currentMember) => currentMember.connected
+  );
+  if (!anyConnected) {
+    schedulePartyCleanup(party.partyId);
+  }
+
+  if (io) {
+    io.of('/party').to(party.partyId).emit('partyUpdate', partyToView(party));
+  }
+
+  return {
+    removed: true,
+    partyDeleted: false,
+    disconnectedPartySocket: !!partySocket,
+    disconnectedGameSockets,
+    partyView: toAdminPartyView(party),
+  };
+}
 
 function pruneExpiredRateLimitEntries(map: Map<string, RateLimitRecord>, now = Date.now()): void {
   for (const [ip, record] of map) {
@@ -309,6 +505,52 @@ export function registerAdminRoutes(app: Express, io?: Server): void {
     // instead of the in-memory ring buffer when available.
     res.json({ ok: true, logs, total: logs.length });
   });
+
+  app.get('/api/admin/parties', authenticateAdmin, (_req, res) => {
+    const parties = getAllParties().map(toAdminPartyView);
+    res.json({ ok: true, parties, total: parties.length });
+  });
+
+  app.post(
+    '/api/admin/parties/:partyId/members/:playerId/kick',
+    authenticateAdmin,
+    requireAdminCsrf,
+    (req, res) => {
+      const rawPartyId = req.params.partyId;
+      const rawPlayerId = req.params.playerId;
+      const partyId = typeof rawPartyId === 'string' ? rawPartyId.trim() : '';
+      const playerId = typeof rawPlayerId === 'string' ? rawPlayerId.trim() : '';
+      if (!partyId || !playerId) {
+        res.status(400).json({ ok: false, error: 'Party and player are required' });
+        return;
+      }
+
+      const party = getParty(partyId);
+      if (!party) {
+        res.status(404).json({ ok: false, error: 'Party not found' });
+        return;
+      }
+
+      const result = kickPartyMember(io, party, playerId);
+      if (!result.removed) {
+        res.status(404).json({ ok: false, error: 'Player not found' });
+        return;
+      }
+
+      adminLogger.warn(
+        {
+          partyId,
+          targetPlayerId: playerId,
+          partyDeleted: result.partyDeleted,
+          disconnectedPartySocket: result.disconnectedPartySocket,
+          disconnectedGameSockets: result.disconnectedGameSockets,
+        },
+        'admin kicked party member'
+      );
+
+      res.json({ ok: true, ...result });
+    }
+  );
 
   app.post('/api/admin/cleanup', authenticateAdmin, requireAdminCsrf, (_req, res) => {
     const activeMatches = getActivePartyMatches();
