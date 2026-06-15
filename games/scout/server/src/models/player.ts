@@ -16,6 +16,9 @@ export function createPlayer(name: string, isHost: boolean, playerId?: string): 
     setupFlipped: false,
     setupConfirmed: false,
     score: 0,
+    roundScore: 0,
+    scoutTokens: 0,
+    scoutAndShowTokens: 0,
   };
 }
 

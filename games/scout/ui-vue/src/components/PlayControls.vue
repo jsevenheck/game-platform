@@ -43,8 +43,9 @@ const selectedSummary = computed(() => {
   const analysis = selectedAnalysis.value;
   if (!analysis) return null;
   return {
-    sum: analysis.strength,
+    kind: analysis.kind,
     count: analysis.count,
+    lowCard: analysis.lowCard,
     highCard: analysis.highCard,
   };
 });
@@ -88,11 +89,11 @@ watch(
     <div class="mb-4 flex flex-wrap items-center justify-between gap-3">
       <div>
         <h2 class="text-lg font-bold">Your row</h2>
-        <p class="text-sm text-muted">Select adjacent cards to play.</p>
+        <p class="text-sm text-muted">Select adjacent cards to show.</p>
       </div>
       <div v-if="selectedSummary" class="text-sm text-muted">
-        Sum {{ selectedSummary.sum }} · {{ selectedSummary.count }} card(s) · High
-        {{ selectedSummary.highCard }}
+        {{ selectedSummary.kind }} · {{ selectedSummary.count }} card(s) · Low
+        {{ selectedSummary.lowCard }} · High {{ selectedSummary.highCard }}
       </div>
     </div>
 
@@ -122,7 +123,7 @@ watch(
         :disabled="!canPlay"
         @click="playSelected"
       >
-        Play selected
+        Show selected
       </button>
       <button
         class="ui-btn-secondary"
@@ -130,7 +131,7 @@ watch(
         :disabled="!store.isMyTurn || !currentPlay"
         @click="emit('scout')"
       >
-        Pass / Scout
+        Scout
       </button>
       <p
         v-if="store.isMyTurn && selectedCards.length && !isContiguous"
@@ -142,13 +143,13 @@ watch(
         v-else-if="store.isMyTurn && selectedCards.length && !selectedSummary"
         class="self-center text-sm text-danger"
       >
-        Selection must be a matching set or consecutive run.
+        Selection must be matching numbers or an ordered consecutive run.
       </p>
       <p
         v-else-if="store.isMyTurn && selectedCards.length && !beatsPlay"
         class="self-center text-sm text-danger"
       >
-        Selection does not beat the table.
+        Selection does not beat the prior set.
       </p>
     </div>
   </section>

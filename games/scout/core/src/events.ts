@@ -23,6 +23,21 @@ export interface ErrorResponse {
 
 export type BasicResponse = { ok: true } | ErrorResponse;
 
+export interface ScoutActionPayload {
+  roomCode: string;
+  /** Must be the leftmost or rightmost card of the current prior set. */
+  cardId: string;
+  /** Insert before this row index; row.length appends to the end. */
+  insertIndex: number;
+  /** Whether to flip the scouted card before inserting it. */
+  flip?: boolean;
+  /** Optional official Scout & Show follow-up, consuming one token. */
+  thenPlay?: {
+    startIndex: number;
+    count: number;
+  };
+}
+
 export interface ClientToServerEvents {
   autoJoinRoom: (
     data: AutoJoinRoomData,
@@ -38,16 +53,7 @@ export interface ClientToServerEvents {
     cb: (res: BasicResponse) => void
   ) => void;
 
-  pass: (
-    data: {
-      roomCode: string;
-      source: 'showPile' | 'table';
-      side: 'left' | 'right';
-      cardId?: string;
-      fromPlayerId?: string;
-    },
-    cb: (res: BasicResponse) => void
-  ) => void;
+  pass: (data: ScoutActionPayload, cb: (res: BasicResponse) => void) => void;
 
   playAgain: (data: { roomCode: string }, cb: (res: BasicResponse) => void) => void;
 

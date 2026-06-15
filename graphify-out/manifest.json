@@ -790,9 +790,9 @@
     "semantic_hash": "3e644b858a68d35cd6dcab22e189c54f"
   },
   "games/scout/__tests__/analyzePlay.test.ts": {
-    "mtime": 1780504096.1671298,
-    "ast_hash": "a91baf63e76df36c6a1bd3d5ceea0a3d",
-    "semantic_hash": "a91baf63e76df36c6a1bd3d5ceea0a3d"
+    "mtime": 1781533698.4965048,
+    "ast_hash": "745a65434a0d639f163884b281ada132",
+    "semantic_hash": "745a65434a0d639f163884b281ada132"
   },
   "games/scout/__tests__/deck.test.ts": {
     "mtime": 1779724295.363163,
@@ -810,14 +810,14 @@
     "semantic_hash": "aaf7a5e852e3c91584806a17deb338cd"
   },
   "games/scout/__tests__/trickManager.test.ts": {
-    "mtime": 1780504119.9638665,
-    "ast_hash": "1731b2eaace91eaa96269fae3764e595",
-    "semantic_hash": "1731b2eaace91eaa96269fae3764e595"
+    "mtime": 1781534189.3111396,
+    "ast_hash": "4e80c7d579952f858129fe3742403e3c",
+    "semantic_hash": "4e80c7d579952f858129fe3742403e3c"
   },
   "games/scout/core/src/analyzePlay.ts": {
-    "mtime": 1780504076.2247672,
-    "ast_hash": "7dcfa6e9d0fcff0c6db96f5dee3d2630",
-    "semantic_hash": "7dcfa6e9d0fcff0c6db96f5dee3d2630"
+    "mtime": 1781533397.159016,
+    "ast_hash": "8e6a38d5b1afc02575d44a95115df0b9",
+    "semantic_hash": "8e6a38d5b1afc02575d44a95115df0b9"
   },
   "games/scout/core/src/constants.ts": {
     "mtime": 1779724295.3744955,
@@ -830,19 +830,19 @@
     "semantic_hash": "b816e5c00eca6f9c902ee3439d7ba055"
   },
   "games/scout/core/src/events.ts": {
-    "mtime": 1780499612.480173,
-    "ast_hash": "a4a3e56fadc173beba1643962c961a29",
-    "semantic_hash": "a4a3e56fadc173beba1643962c961a29"
+    "mtime": 1781533377.9201512,
+    "ast_hash": "1b89c43b3eaca9716d6c919c188665ae",
+    "semantic_hash": "1b89c43b3eaca9716d6c919c188665ae"
   },
   "games/scout/core/src/types.ts": {
-    "mtime": 1779724295.386009,
-    "ast_hash": "8d9ddcd8c4f958c52c68c52405557dea",
-    "semantic_hash": "8d9ddcd8c4f958c52c68c52405557dea"
+    "mtime": 1781533366.0314384,
+    "ast_hash": "1d2f4bede31df0716222eafac0cedcaf",
+    "semantic_hash": "1d2f4bede31df0716222eafac0cedcaf"
   },
   "games/scout/e2e/game.spec.ts": {
-    "mtime": 1780511774.3680193,
-    "ast_hash": "14f8ce5a889e90e984ef37aa5019e9cb",
-    "semantic_hash": "14f8ce5a889e90e984ef37aa5019e9cb"
+    "mtime": 1781533976.2914805,
+    "ast_hash": "92b35f9d83c0f03dc3b701532346dfe6",
+    "semantic_hash": "92b35f9d83c0f03dc3b701532346dfe6"
   },
   "games/scout/package.json": {
     "mtime": 1779724295.4115162,
@@ -855,29 +855,29 @@
     "semantic_hash": "1b46932cef96eff42643f06f50754ccf"
   },
   "games/scout/server/src/managers/broadcastManager.ts": {
-    "mtime": 1779724295.4207907,
-    "ast_hash": "c839cec969508d7838dba6debf9657b4",
-    "semantic_hash": "c839cec969508d7838dba6debf9657b4"
+    "mtime": 1781533501.5919316,
+    "ast_hash": "b7d79a22d1816458af75cb6323c7ad23",
+    "semantic_hash": "b7d79a22d1816458af75cb6323c7ad23"
   },
   "games/scout/server/src/managers/trickManager.ts": {
-    "mtime": 1780499612.4931114,
-    "ast_hash": "f9e1d851a72d0f05ecd4c4aeaa73d41e",
-    "semantic_hash": "f9e1d851a72d0f05ecd4c4aeaa73d41e"
+    "mtime": 1781533843.6649942,
+    "ast_hash": "138dab1168810b162105cad99fad6f2d",
+    "semantic_hash": "138dab1168810b162105cad99fad6f2d"
   },
   "games/scout/server/src/models/player.ts": {
-    "mtime": 1780499612.5064957,
-    "ast_hash": "176af122303b0acf6ee3d7f14e213606",
-    "semantic_hash": "176af122303b0acf6ee3d7f14e213606"
+    "mtime": 1781533381.2015948,
+    "ast_hash": "76b478ec5e5c21ac5643216a0cbed0ed",
+    "semantic_hash": "76b478ec5e5c21ac5643216a0cbed0ed"
   },
   "games/scout/server/src/models/room.ts": {
-    "mtime": 1780499612.5109177,
-    "ast_hash": "e902f542061f17d46ff4db3ed17ff729",
-    "semantic_hash": "e902f542061f17d46ff4db3ed17ff729"
+    "mtime": 1781533385.1798916,
+    "ast_hash": "5b833cc55f2c715558dc4fc174e3d0e0",
+    "semantic_hash": "5b833cc55f2c715558dc4fc174e3d0e0"
   },
   "games/scout/server/src/socketHandlers.ts": {
-    "mtime": 1780499612.5159233,
-    "ast_hash": "8e38aba0ae84ebbf16ec145c7008559c",
-    "semantic_hash": "8e38aba0ae84ebbf16ec145c7008559c"
+    "mtime": 1781533823.1236813,
+    "ast_hash": "ffb75c9111d4f0e543ef99027dc1d64d",
+    "semantic_hash": "ffb75c9111d4f0e543ef99027dc1d64d"
   },
   "games/scout/ui-vue/env.d.ts": {
     "mtime": 1779724295.449497,
@@ -885,9 +885,9 @@
     "semantic_hash": "9602c9913fe4e53df712099fe45a0fa4"
   },
   "games/scout/ui-vue/src/App.vue": {
-    "mtime": 1780499612.523799,
-    "ast_hash": "f57a5df118a4c502fb568ff88f1f8bd5",
-    "semantic_hash": "f57a5df118a4c502fb568ff88f1f8bd5"
+    "mtime": 1781533631.7608137,
+    "ast_hash": "f965919bd3f53aeeea735c7934be4fac",
+    "semantic_hash": "f965919bd3f53aeeea735c7934be4fac"
   },
   "games/scout/ui-vue/src/PlatformAdapter.vue": {
     "mtime": 1780499612.5318046,
@@ -900,14 +900,14 @@
     "semantic_hash": "c14667327357e6bf77f123fea223ab6e"
   },
   "games/scout/ui-vue/src/components/GameOver.vue": {
-    "mtime": 1779724295.4723024,
-    "ast_hash": "5beb9d0e52033ef77c75cd8a2bbbc0d7",
-    "semantic_hash": "5beb9d0e52033ef77c75cd8a2bbbc0d7"
+    "mtime": 1781533645.4862292,
+    "ast_hash": "5feb7eb0754a911ea0ced28064781ae7",
+    "semantic_hash": "5feb7eb0754a911ea0ced28064781ae7"
   },
   "games/scout/ui-vue/src/components/GameTable.vue": {
-    "mtime": 1781506072.0447485,
-    "ast_hash": "098d99130a7b8d8a0f1f427042359cd4",
-    "semantic_hash": "098d99130a7b8d8a0f1f427042359cd4"
+    "mtime": 1781533823.2092116,
+    "ast_hash": "c58bba46cda7c1fde98b11834cceae0a",
+    "semantic_hash": "c58bba46cda7c1fde98b11834cceae0a"
   },
   "games/scout/ui-vue/src/components/Lobby.vue": {
     "mtime": 1779724295.485109,
@@ -915,14 +915,14 @@
     "semantic_hash": "cf3b14f75bf8827072a9b94aed2868a7"
   },
   "games/scout/ui-vue/src/components/PlayControls.vue": {
-    "mtime": 1780499612.5516722,
-    "ast_hash": "bb60e196e214a24f864200f0d66f0abf",
-    "semantic_hash": "bb60e196e214a24f864200f0d66f0abf"
+    "mtime": 1781533546.9947228,
+    "ast_hash": "65932363d3e325f936cb56eb5dac7f0b",
+    "semantic_hash": "65932363d3e325f936cb56eb5dac7f0b"
   },
   "games/scout/ui-vue/src/components/ScoutDialog.vue": {
-    "mtime": 1779724295.4980087,
-    "ast_hash": "e4d071eefbe2124d10114ef731e8dd68",
-    "semantic_hash": "e4d071eefbe2124d10114ef731e8dd68"
+    "mtime": 1781533823.2631886,
+    "ast_hash": "22114a28c206d9bf1b22c479c92979e0",
+    "semantic_hash": "22114a28c206d9bf1b22c479c92979e0"
   },
   "games/scout/ui-vue/src/components/SetupFlip.vue": {
     "mtime": 1780499612.5576723,
@@ -930,9 +930,9 @@
     "semantic_hash": "e9f20579d9dce982983a5df406840e74"
   },
   "games/scout/ui-vue/src/components/TrickHistory.vue": {
-    "mtime": 1779724295.5103414,
-    "ast_hash": "e9b25227b230fefed559c9f0cd35ddf0",
-    "semantic_hash": "e9b25227b230fefed559c9f0cd35ddf0"
+    "mtime": 1781533657.484845,
+    "ast_hash": "0571a1c5e8d2b0d5a8d682f208958007",
+    "semantic_hash": "0571a1c5e8d2b0d5a8d682f208958007"
   },
   "games/scout/ui-vue/src/composables/useSocket.ts": {
     "mtime": 1780499612.563907,

@@ -6,10 +6,7 @@ const emit = defineEmits<{ playAgain: [] }>();
 const store = useGameStore();
 
 const rankedPlayers = computed(() =>
-  [...(store.room?.players ?? [])].sort((a, b) => {
-    if (b.score !== a.score) return b.score - a.score;
-    return b.takenCount - a.takenCount;
-  })
+  [...(store.room?.players ?? [])].sort((a, b) => b.score - a.score)
 );
 </script>
 
@@ -20,7 +17,9 @@ const rankedPlayers = computed(() =>
       <h1 class="mt-2 text-4xl font-black text-foreground">
         {{ store.room?.winnerIds.includes(store.playerId) ? 'You win!' : 'Final scores' }}
       </h1>
-      <p class="mt-3 text-muted">Scores count scout points from collected tricks.</p>
+      <p class="mt-3 text-muted">
+        Official scoring: taken cards + scout tokens - cards left in hand, across all rounds.
+      </p>
     </section>
 
     <section class="ui-panel">
@@ -36,7 +35,10 @@ const rankedPlayers = computed(() =>
               #{{ index + 1 }} {{ player.name
               }}<span v-if="player.id === store.playerId"> (you)</span>
             </p>
-            <p class="text-sm text-muted">{{ player.takenCount }} cards taken</p>
+            <p class="text-sm text-muted">
+              Last round {{ player.roundScore >= 0 ? '+' : '' }}{{ player.roundScore }} ·
+              {{ player.takenCount }} cards taken · {{ player.scoutTokens }} scout tokens
+            </p>
           </div>
           <p class="font-mono text-2xl font-black text-scout">{{ player.score }}</p>
         </li>

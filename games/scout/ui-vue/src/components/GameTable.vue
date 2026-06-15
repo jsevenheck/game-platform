@@ -10,10 +10,10 @@ const emit = defineEmits<{
   playCards: [payload: { startIndex: number; count: number }];
   scout: [
     payload: {
-      source: 'showPile' | 'table';
-      side: 'left' | 'right';
-      cardId?: string;
-      fromPlayerId?: string;
+      cardId: string;
+      insertIndex: number;
+      flip?: boolean;
+      thenPlay?: { startIndex: number; count: number };
     },
   ];
 }>();
@@ -33,10 +33,10 @@ function playerName(playerId: string): string {
 }
 
 function handleScout(payload: {
-  source: 'showPile' | 'table';
-  side: 'left' | 'right';
-  cardId?: string;
-  fromPlayerId?: string;
+  cardId: string;
+  insertIndex: number;
+  flip?: boolean;
+  thenPlay?: { startIndex: number; count: number };
 }) {
   scoutDialogOpen.value = false;
   emit('scout', payload);
@@ -49,15 +49,17 @@ function handleScout(payload: {
       <header class="ui-panel flex flex-wrap items-center justify-between gap-3">
         <div>
           <p class="text-sm font-semibold uppercase tracking-[0.3em] text-scout">
-            Trick {{ room.trick?.trickNumber ?? 1 }}
+            Round {{ room.roundNumber }} / {{ room.totalRounds }} · Turn
+            {{ room.trick?.trickNumber ?? 1 }}
           </p>
           <h1 class="text-2xl font-black text-foreground">
             {{ store.isMyTurn ? 'Your turn' : `${currentTurnName}'s turn` }}
           </h1>
         </div>
-        <div class="flex gap-2 text-sm text-muted">
-          <span class="ui-badge">Show pile: {{ room.showPile.length }}</span>
+        <div class="flex flex-wrap gap-2 text-sm text-muted">
           <span class="ui-badge">Taken: {{ store.self?.takenCount ?? 0 }}</span>
+          <span class="ui-badge">Scout tokens: {{ store.self?.scoutTokens ?? 0 }}</span>
+          <span class="ui-badge">Scout & Show: {{ store.self?.scoutAndShowTokens ?? 0 }}</span>
         </div>
       </header>
 
@@ -83,16 +85,19 @@ function handleScout(payload: {
               compact
             />
           </div>
-          <p class="mt-2 text-xs text-muted">{{ player.takenCount }} cards taken</p>
+          <p class="mt-2 text-xs text-muted">
+            {{ player.takenCount }} cards · {{ player.scoutTokens }} scout token(s) · total
+            {{ player.score }}
+          </p>
         </article>
       </section>
 
       <section class="ui-panel min-h-28">
         <div class="mb-4 flex items-center justify-between">
-          <h2 class="text-lg font-bold">Table</h2>
+          <h2 class="text-lg font-bold">Prior set</h2>
           <p v-if="currentPlay" class="text-sm text-muted">
-            Beat sum {{ currentPlay.sum }} · {{ currentPlay.count }} cards · high
-            {{ currentPlay.highCard }}
+            Beat {{ currentPlay.kind }} · {{ currentPlay.count }} card(s) · low
+            {{ currentPlay.lowCard }} · high {{ currentPlay.highCard }}
           </p>
         </div>
         <div>
@@ -101,15 +106,15 @@ function handleScout(payload: {
               <span class="font-semibold text-foreground">{{
                 playerName(currentPlay.playerId)
               }}</span>
-              <span class="text-muted"
-                >{{ currentPlay.sum }} / {{ currentPlay.count }} / {{ currentPlay.highCard }}</span
-              >
+              <span class="text-muted">
+                {{ currentPlay.kind }} / {{ currentPlay.count }} / low {{ currentPlay.lowCard }}
+              </span>
             </div>
             <div class="flex gap-2 overflow-x-auto">
               <Card v-for="card in currentPlay.cards" :key="card.id" :card="card" compact />
             </div>
           </article>
-          <p v-else class="text-muted">Leader chooses the opening run.</p>
+          <p v-else class="text-muted">Leader chooses the opening show.</p>
         </div>
       </section>
 
@@ -122,11 +127,11 @@ function handleScout(payload: {
 
     <aside class="space-y-5">
       <section class="ui-panel">
-        <h2 class="mb-3 text-lg font-bold">Show pile</h2>
-        <div class="flex flex-wrap gap-2">
-          <Card v-for="card in room.showPile.slice(0, 4)" :key="card.id" :card="card" compact />
-          <p v-if="room.showPile.length === 0" class="text-sm text-muted">Empty</p>
-        </div>
+        <h2 class="mb-3 text-lg font-bold">Round scoring</h2>
+        <p class="text-sm text-muted">
+          +1 per taken card, +1 per scout token, -1 per card left in hand. If everyone else only
+          scouts, the prior-set owner takes no hand penalty.
+        </p>
       </section>
       <TrickHistory :room="room" />
     </aside>

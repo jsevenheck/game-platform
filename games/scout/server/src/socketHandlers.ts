@@ -54,9 +54,6 @@ type ScoutSocket = Socket<ClientToServerEvents, ServerToClientEvents>;
 
 const INVALID_REQUEST_ERROR = 'Invalid request';
 
-type ScoutSource = 'showPile' | 'table';
-type ScoutSide = 'left' | 'right';
-
 function isObjectPayload(value: unknown): value is Record<string, unknown> {
   return typeof value === 'object' && value !== null && !Array.isArray(value);
 }
@@ -65,14 +62,6 @@ function normalizeRequiredString(value: unknown): string | null {
   if (typeof value !== 'string') return null;
   const trimmed = value.trim();
   return trimmed.length > 0 ? trimmed : null;
-}
-
-function isScoutSource(value: unknown): value is ScoutSource {
-  return value === 'showPile' || value === 'table';
-}
-
-function isScoutSide(value: unknown): value is ScoutSide {
-  return value === 'left' || value === 'right';
 }
 
 function normalizeStablePlayerId(value: unknown): string | null {
@@ -513,22 +502,44 @@ export function registerScout(io: Server, namespace = '/g/scout'): void {
       try {
         if (!isObjectPayload(data)) return respond({ ok: false, error: INVALID_REQUEST_ERROR });
         const roomCode = normalizeRequiredString(data.roomCode);
-        const source = data.source;
-        const side = data.side;
-        if (!roomCode || !isScoutSource(source) || !isScoutSide(side)) {
+        const cardId = normalizeRequiredString(data.cardId);
+        const insertIndex = data.insertIndex;
+        const flip = data.flip === true;
+        const thenPlayRaw = data.thenPlay;
+        let thenPlay: { startIndex: number; count: number } | undefined;
+        if (isObjectPayload(thenPlayRaw)) {
+          const startIndex = thenPlayRaw.startIndex;
+          const count = thenPlayRaw.count;
+          if (
+            typeof startIndex !== 'number' ||
+            typeof count !== 'number' ||
+            !Number.isInteger(startIndex) ||
+            !Number.isInteger(count)
+          ) {
+            return respond({ ok: false, error: INVALID_REQUEST_ERROR });
+          }
+          thenPlay = { startIndex, count };
+        }
+        if (
+          !roomCode ||
+          !cardId ||
+          typeof insertIndex !== 'number' ||
+          !Number.isInteger(insertIndex)
+        ) {
           return respond({ ok: false, error: INVALID_REQUEST_ERROR });
         }
-        const cardId = typeof data.cardId === 'string' ? data.cardId : undefined;
-        const fromPlayerId = typeof data.fromPlayerId === 'string' ? data.fromPlayerId : undefined;
 
         const room = getRoom(roomCode);
         if (!room || room.phase !== 'playing')
           return respond({ ok: false, error: 'Room not found' });
         const playerId = verifyPlayerInRoom(socket, roomCode);
         if (!playerId) return respond({ ok: false, error: 'Not in room' });
-        passAndScout(room, playerId, source, side, cardId, fromPlayerId);
+        passAndScout(room, playerId, cardId, insertIndex, flip, thenPlay);
         broadcastRoom(nsp, room);
-        socketLogger.info({ roomCode: room.code, playerId, source, side }, 'scout player passed');
+        socketLogger.info(
+          { roomCode: room.code, playerId, scoutAndShow: Boolean(thenPlay) },
+          'scout player scouted prior set'
+        );
         const ended = (room.phase as Room['phase']) === 'ended';
         if (ended) {
           gameLogger.info(

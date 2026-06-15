@@ -36,6 +36,11 @@ export function createRoom(
     showPile: [],
     trick: null,
     trickHistory: [],
+    roundHistory: [],
+    roundNumber: 0,
+    totalRounds: 0,
+    roundStartPlayerIndex: 0,
+    twoPlayerReserve: [],
     winnerIds: [],
     gameEndReason: null,
   };

@@ -117,10 +117,10 @@ function handlePlayCards(payload: { startIndex: number; count: number }) {
 }
 
 function handleScout(payload: {
-  source: 'showPile' | 'table';
-  side: 'left' | 'right';
-  cardId?: string;
-  fromPlayerId?: string;
+  cardId: string;
+  insertIndex: number;
+  flip?: boolean;
+  thenPlay?: { startIndex: number; count: number };
 }) {
   socket.emit('pass', { roomCode: store.roomCode, ...payload }, (res) => {
     if (!res.ok) embeddedError.value = res.error;

@@ -4,56 +4,54 @@ export type PlayKind = 'single' | 'set' | 'run';
 
 export interface PlayAnalysis {
   kind: PlayKind;
-  strength: number;
   count: number;
   highCard: number;
-}
-
-function cardColor(card: ScoutCard): string {
-  if ('color' in card && typeof card.color === 'string') return card.color;
-  return card.flipped ? 'flipped' : 'base';
+  lowCard: number;
 }
 
 export function analyzePlay(cards: readonly ScoutCard[]): PlayAnalysis {
   const count = cards.length;
-  if (count < 1) throw new Error('Play must be a valid set or run');
+  if (count < 1) throw new Error('Play must contain at least one card');
 
   const values = cards.map((card) => card.playValue);
   const highCard = Math.max(...values);
-  const strength = values.reduce((sum, v) => sum + v, 0);
+  const lowCard = Math.min(...values);
 
   if (count === 1) {
-    return { kind: 'single', strength, count, highCard };
+    return { kind: 'single', count, highCard, lowCard };
   }
 
   const isSet = values.every((value) => value === values[0]);
   if (isSet) {
-    return { kind: 'set', strength, count, highCard };
+    return { kind: 'set', count, highCard, lowCard };
   }
 
-  const sameColor = cards.every((card) => cardColor(card) === cardColor(cards[0]));
-  const sortedValues = [...values].sort((a, b) => a - b);
-  const isRun = sortedValues.every(
-    (value, index) => index === 0 || value === sortedValues[index - 1] + 1
+  const ascendingRun = values.every(
+    (value, index) => index === 0 || value === values[index - 1] + 1
   );
-  if (isRun && sameColor) {
-    return { kind: 'run', strength, count, highCard };
+  const descendingRun = values.every(
+    (value, index) => index === 0 || value === values[index - 1] - 1
+  );
+  if (ascendingRun || descendingRun) {
+    return { kind: 'run', count, highCard, lowCard };
   }
 
-  throw new Error('Play must be a valid set or run');
+  throw new Error('Play must be a matching set or an ordered consecutive run');
 }
 
 // Official Scout beat order:
-// 1. More cards wins
-// 2. Same count → higher highCard wins
-// 3. Same count + same highCard → set beats run
+// 1. More cards wins.
+// 2. Same count: matching-number sets beat consecutive runs.
+// 3. Same count + same kind: higher lowest number wins.
 export function comparePlayAnalyses(candidate: PlayAnalysis, current: PlayAnalysis): number {
   if (candidate.count !== current.count) {
     return candidate.count - current.count;
   }
-  if (candidate.highCard !== current.highCard) {
-    return candidate.highCard - current.highCard;
+
+  if (candidate.kind !== current.kind) {
+    const kindRank: Record<PlayKind, number> = { single: 1, run: 1, set: 2 };
+    return kindRank[candidate.kind] - kindRank[current.kind];
   }
-  const kindRank: Record<PlayKind, number> = { single: 0, run: 1, set: 2 };
-  return kindRank[candidate.kind] - kindRank[current.kind];
+
+  return candidate.lowCard - current.lowCard;
 }

@@ -100,7 +100,7 @@ async function waitForGameTable(page: Page): Promise<void> {
     timeout: 15_000,
   });
   await expect(page.getByRole('heading', { name: 'Your row' })).toBeVisible();
-  await expect(page.getByRole('heading', { name: 'Table' })).toBeVisible();
+  await expect(page.getByRole('heading', { name: 'Prior set', exact: true })).toBeVisible();
 }
 
 async function startScoutAndCompleteSetup(session: ScoutSession): Promise<void> {
@@ -149,19 +149,19 @@ async function playSelectedRowCards(page: Page, indexes: number[]): Promise<void
     await card.click();
   }
 
-  const playButton = page.getByRole('button', { name: 'Play selected' });
+  const playButton = page.getByRole('button', { name: 'Show selected' });
   await expect(playButton).toBeEnabled();
   await playButton.click();
 }
 
-async function scoutFromShowPile(page: Page): Promise<void> {
-  const scoutButton = page.getByRole('button', { name: 'Pass / Scout' });
+async function scoutFromPriorSet(page: Page): Promise<void> {
+  const scoutButton = page.getByRole('button', { name: 'Scout' });
   await expect(scoutButton).toBeEnabled({ timeout: 10_000 });
   await scoutButton.click();
 
   await expect(page.getByRole('heading', { name: 'Scout a card' })).toBeVisible();
-  await expect(page.getByText('Show pile', { exact: true }).first()).toBeVisible();
-  await page.getByRole('button', { name: 'Confirm scout' }).click();
+  await expect(page.getByText('Prior set edge cards', { exact: true }).first()).toBeVisible();
+  await page.getByRole('button', { name: 'Confirm Scout', exact: true }).click();
 }
 
 // ── Tests ─────────────────────────────────────────────────────────────────────
@@ -173,10 +173,14 @@ test.describe('Scout via Platform', () => {
     try {
       await startScoutAndCompleteSetup(session);
 
-      await expect(session.hostPage.getByText('Trick 1')).toBeVisible();
-      await expect(session.hostPage.getByText(/Show pile: \d+/)).toBeVisible();
-      await expect(session.hostPage.getByRole('button', { name: 'Play selected' })).toBeVisible();
-      await expect(session.hostPage.getByRole('button', { name: 'Pass / Scout' })).toBeVisible();
+      await expect(session.hostPage.getByText(/Round 1 \/ 1/)).toBeVisible();
+      await expect(
+        session.hostPage.getByRole('heading', { name: 'Prior set', exact: true })
+      ).toBeVisible();
+      await expect(session.hostPage.getByRole('button', { name: 'Show selected' })).toBeVisible();
+      await expect(
+        session.hostPage.getByRole('button', { name: 'Scout', exact: true })
+      ).toBeVisible();
     } finally {
       await closeSession(session);
     }
@@ -259,16 +263,16 @@ test.describe('Scout via Platform', () => {
       const activePage = hostHasTurn ? hostPage : guestPage;
       const inactivePage = hostHasTurn ? guestPage : hostPage;
 
-      await expect(activePage.getByRole('button', { name: 'Play selected' })).toBeVisible();
+      await expect(activePage.getByRole('button', { name: 'Show selected' })).toBeVisible();
       await expect(playerRow(activePage).getByTestId('scout-row-card-0')).toBeEnabled();
-      await expect(inactivePage.getByRole('button', { name: 'Play selected' })).toBeDisabled();
+      await expect(inactivePage.getByRole('button', { name: 'Show selected' })).toBeDisabled();
       await expect(playerRow(inactivePage).getByTestId('scout-row-card-0')).toBeDisabled();
     } finally {
       await closeSession(session);
     }
   });
 
-  test('run, scout response, and game over score flow', async ({ browser }) => {
+  test('run, scout response, and official all-scouted scoring flow', async ({ browser }) => {
     const session = await createTwoPlayerScoutSession(browser);
     const { hostPage, guestPage } = session;
 
@@ -280,16 +284,12 @@ test.describe('Scout via Platform', () => {
       expect(openingValues.slice(0, 2)).toEqual(['1', '2']);
 
       await playSelectedRowCards(hostPage, [0, 1]);
-      await expect(hostPage.getByText('Beat sum 3 · 2 cards · high 2')).toBeVisible();
+      await expect(hostPage.getByText('Beat run · 2 card(s) · low 1')).toBeVisible();
       await expect(guestPage.getByRole('heading', { name: 'Your turn' })).toBeVisible({
         timeout: 10_000,
       });
 
-      await scoutFromShowPile(guestPage);
-      await expect(hostPage.getByText('Trick 2')).toBeVisible({ timeout: 10_000 });
-      await expect(hostPage.getByRole('heading', { name: 'Your turn' })).toBeVisible();
-
-      await playSelectedRowCards(hostPage, [0]);
+      await scoutFromPriorSet(guestPage);
 
       await expect(hostPage.getByText('Game over', { exact: true })).toBeVisible({
         timeout: 10_000,
@@ -297,12 +297,10 @@ test.describe('Scout via Platform', () => {
       await expect(guestPage.getByText('Game over', { exact: true })).toBeVisible({
         timeout: 10_000,
       });
-      await expect(
-        hostPage.getByText('Scores count scout points from collected tricks.')
-      ).toBeVisible();
+      await expect(hostPage.getByText(/Official scoring:/)).toBeVisible();
 
       const aliceScoreRow = hostPage.getByRole('listitem').filter({ hasText: /#1 Alice/ });
-      await expect(aliceScoreRow).toContainText('15');
+      await expect(aliceScoreRow).toContainText('0');
       await expect(hostPage.getByRole('button', { name: 'Play Again' }).first()).toBeVisible();
 
       await expect(hostPage.getByText('Game Over!')).toBeVisible({ timeout: 5_000 });

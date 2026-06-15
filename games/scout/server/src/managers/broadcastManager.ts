@@ -17,6 +17,9 @@ function toPlayerViews(room: Room, viewerId: string): PlayerView[] {
       takenCount: player.takenPile.length,
       setupConfirmed: player.setupConfirmed,
       score: player.score,
+      roundScore: player.roundScore,
+      scoutTokens: player.scoutTokens,
+      scoutAndShowTokens: player.scoutAndShowTokens,
       row: player.id === viewerId ? [...player.row] : null,
     };
   });
@@ -29,11 +32,12 @@ function toTrickView(room: Room): TrickView | null {
     trickNumber: trick.trickNumber,
     leaderId: trick.leaderId,
     currentTurnPlayerId: room.phase === 'playing' ? currentTurnPlayerId(trick) : null,
-    passedPlayerIds: [...trick.passedPlayerIds],
+    scoutedPlayerIds: [...trick.scoutedPlayerIds],
     plays: trick.plays.map((play) => ({ ...play, cards: [...play.cards] })),
     currentPlay: trick.currentPlay
       ? { ...trick.currentPlay, cards: [...trick.currentPlay.cards] }
       : null,
+    priorSetOwnerId: trick.priorSetOwnerId,
   };
 }
 
@@ -48,6 +52,9 @@ export function toRoomView(room: Room, viewerId: string): RoomView {
     setupComplete: setupComplete(room),
     trick: toTrickView(room),
     trickHistory: [...room.trickHistory],
+    roundHistory: [...room.roundHistory],
+    roundNumber: room.roundNumber,
+    totalRounds: room.totalRounds,
     winnerIds: [...room.winnerIds],
     gameEndReason: room.gameEndReason,
   };
