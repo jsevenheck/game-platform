@@ -25,6 +25,20 @@ async function launchGame(hostPage: Page, gameName: string): Promise<void> {
   await hostPage.waitForURL(/\/game\//);
 }
 
+async function countPagesWithHitStayControls(pages: Page[]): Promise<number> {
+  const visibleStates = await Promise.all(
+    pages.map(async (page) => {
+      const [hitVisible, stayVisible] = await Promise.all([
+        page.getByRole('button', { name: /Hit/ }).isVisible(),
+        page.getByRole('button', { name: /Stay/ }).isVisible(),
+      ]);
+      return hitVisible && stayVisible;
+    })
+  );
+
+  return visibleStates.filter(Boolean).length;
+}
+
 // ── Tests ─────────────────────────────────────────────────────────────────────
 
 test.describe('Flip 7 via Platform', () => {
@@ -114,16 +128,16 @@ test.describe('Flip 7 via Platform', () => {
     await page3.waitForURL(/\/game\/flip7/, { timeout: 15_000 });
 
     await page1.getByRole('button', { name: 'Start Game' }).click();
-    await expect(page1.getByText(/Deck:/)).toBeVisible({ timeout: 10_000 });
 
-    // Exactly one player should see "Hit" and "Stay" buttons at any given moment
-    const hitButtons = await Promise.all([
-      page1.getByRole('button', { name: /Hit/ }).isVisible(),
-      page2.getByRole('button', { name: /Hit/ }).isVisible(),
-      page3.getByRole('button', { name: /Hit/ }).isVisible(),
-    ]);
-    const activePlayers = hitButtons.filter(Boolean);
-    expect(activePlayers).toHaveLength(1);
+    const playerPages = [page1, page2, page3];
+    await Promise.all(
+      playerPages.map((page) => expect(page.getByText(/Deck:/)).toBeVisible({ timeout: 10_000 }))
+    );
+
+    // Exactly one player should see "Hit" and "Stay" buttons at any given moment.
+    await expect
+      .poll(() => countPagesWithHitStayControls(playerPages), { timeout: 10_000 })
+      .toBe(1);
 
     await ctx1.close();
     await ctx2.close();

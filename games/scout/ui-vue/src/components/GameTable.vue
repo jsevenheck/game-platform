@@ -96,12 +96,11 @@ function handleScout(payload: {
           </p>
         </div>
         <div>
-          <article
-            v-if="currentPlay"
-            class="rounded-xl border border-border bg-card p-3"
-          >
+          <article v-if="currentPlay" class="rounded-xl border border-border bg-card p-3">
             <div class="mb-2 flex justify-between text-sm">
-              <span class="font-semibold text-foreground">{{ playerName(currentPlay.playerId) }}</span>
+              <span class="font-semibold text-foreground">{{
+                playerName(currentPlay.playerId)
+              }}</span>
               <span class="text-muted"
                 >{{ currentPlay.sum }} / {{ currentPlay.count }} / {{ currentPlay.highCard }}</span
               >
@@ -110,9 +109,7 @@ function handleScout(payload: {
               <Card v-for="card in currentPlay.cards" :key="card.id" :card="card" compact />
             </div>
           </article>
-          <p v-else class="text-muted">
-            Leader chooses the opening run.
-          </p>
+          <p v-else class="text-muted">Leader chooses the opening run.</p>
         </div>
       </section>
 
