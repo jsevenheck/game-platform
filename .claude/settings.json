@@ -94,5 +94,17 @@
       "Bash(sudo*)",
       "Bash(su*)"
     ]
+  },
+   "hooks": {
+    "UserPromptSubmit": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "python ${CLAUDE_PROJECT_DIR}/.claude/hooks/graphify_hint.py"
+          }
+        ]
+      }
+    ]
   }
 }

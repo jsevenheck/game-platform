@@ -1,0 +1,113 @@
+# .graphifyignore
+# Ziel: den Graph auf den relevanten Quellcode dieses pnpm-Monorepos begrenzen.
+# Das Repo enthält eine Platform-App unter apps/platform/ und fünf interne Spiele unter games/*/.
+# Strategie: alles ignorieren, nur Traversal in Projektverzeichnisse erlauben und gezielt Code,
+# Tests sowie Build-/Tooling-Konfiguration wieder einschließen.
+
+# Standardmäßig alles ignorieren.
+*
+
+# Traversal in die relevanten Workspace-Bereiche erlauben.
+!apps/
+!apps/platform/
+!apps/platform/**/
+!games/
+!games/*/
+!games/*/**/
+
+# === Root Workspace / Tooling ===
+!package.json
+!tsconfig.json
+!tsconfig.base.json
+!vitest.config.ts
+!vitest.projects.ts
+!eslint.config.mjs
+!playwright.config.ts
+
+# === Platform-App: Express/Socket.IO Server + Vue Client ===
+!apps/platform/package.json
+!apps/platform/env.d.ts
+!apps/platform/tsconfig.json
+!apps/platform/tsconfig.server.json
+!apps/platform/vite.config.ts
+!apps/platform/scripts/**/*.cjs
+!apps/platform/server/**/*.ts
+!apps/platform/src/**/*.ts
+!apps/platform/src/**/*.d.ts
+!apps/platform/src/**/*.vue
+!apps/platform/src/**/*.css
+!apps/platform/__tests__/**/*.ts
+!apps/platform/e2e/**/*.ts
+
+# === Game-Module: Core, Server, Vue UI, Tests ===
+!games/*/package.json
+!games/*/vitest.config.ts
+!games/*/scripts/**/*.mjs
+!games/*/core/src/**/*.ts
+!games/*/server/src/**/*.ts
+!games/*/ui-vue/env.d.ts
+!games/*/ui-vue/tsconfig.json
+!games/*/ui-vue/src/**/*.ts
+!games/*/ui-vue/src/**/*.d.ts
+!games/*/ui-vue/src/**/*.vue
+!games/*/ui-vue/src/**/*.css
+!games/*/__tests__/**/*.ts
+!games/*/e2e/**/*.ts
+
+# === Explizit ausgeschlossen: Dependencies, Builds, Caches, Reports ===
+node_modules/
+**/node_modules/
+dist/
+**/dist/
+dist-lib/
+build/
+**/build/
+coverage/
+**/coverage/
+.vite/
+**/.vite/
+.eslintcache
+playwright-report/
+test-results/
+
+# === Explizit ausgeschlossen: Nicht-Code-Artefakte, Assets, Docs ===
+docs/
+**/docs/
+README.md
+CLAUDE.md
+*.md
+*.html
+*.sql
+*.txt
+*.csv
+*.log
+*.pdf
+*.png
+*.jpg
+*.jpeg
+*.gif
+*.svg
+*.webp
+*.mp3
+*.wav
+*.ogg
+**/public/
+**/assets/
+**/*.sqlite*
+
+# === Explizit ausgeschlossen: Agent-/Editor-/VCS-Dateien ===
+.git/
+.github/
+.agents/
+.claude/
+.pi/
+.vscode/
+.idea/
+
+# === Explizit ausgeschlossen: Secrets und lokale Umgebung ===
+.env
+.env.*
+*.local
+
+# === Graphify Output selbst nicht einlesen ===
+graphify-out/

@@ -115,6 +115,8 @@ const BASH_DENY = [
   /^sudo\b/,
   /^su\b/,
 
+  /^graphify\s+add\b/,
+
   // Netzwerk-Exfiltration / Tunneling
   /\bcurl\b.*\|\s*(ba)?sh/,
   /\bwget\b.*\|\s*(ba)?sh/,
@@ -249,6 +251,7 @@ const BASH_ALLOW = [
   /^touch\b/,
   /^diff\b/,
   /^patch\b/,
+  /^graphify\b/,
 
   // Linting & Formatierung
   /^eslint\b/,

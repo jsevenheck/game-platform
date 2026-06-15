@@ -192,6 +192,15 @@ Each entry maps a game ID to its `PlatformAdapter.vue` via lazy `import('@{game}
 
 See [docs/adding-a-new-game.md](docs/adding-a-new-game.md) for the full guide: folder structure, server module contract, `PlatformAdapter.vue` pattern, platform registration points, design system usage, and the integration checklist.
 
+### Graphify
+
+Graphify is available for codebase architecture and relationship queries.
+
+- Use `graphify .` to build the project graph for the current repository.
+- Use `graphify update .` to re-extract changed code files and update the existing graph without requiring an LLM API key.
+- Use `graphify query "..."` for architecture, file relationship, or call-graph questions before broad grep/read searches.
+- If `graphify-out/graph.json` exists, prefer a targeted Graphify query for high-level codebase context.
+
 ## Skills
 
 Skills are split across two directories depending on which agent uses them:
