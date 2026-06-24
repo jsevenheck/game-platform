@@ -52,11 +52,11 @@ must be set or the admin API stays disabled (returns `503`); the rest of the app
 runs normally without them. See
 [`server/admin.ts`](../apps/platform/server/admin.ts).
 
-| Variable              | Purpose                                                  |
-| --------------------- | -------------------------------------------------------- |
-| `ADMIN_USERNAME`      | Admin login username                                     |
-| `ADMIN_PASSWORD_HASH` | bcrypt hash of the admin password (never the plaintext)  |
-| `ADMIN_JWT_SECRET`    | Secret signing admin session JWTs (≥ 32 chars)           |
+| Variable              | Purpose                                                 |
+| --------------------- | ------------------------------------------------------- |
+| `ADMIN_USERNAME`      | Admin login username                                    |
+| `ADMIN_PASSWORD_HASH` | bcrypt hash of the admin password (never the plaintext) |
+| `ADMIN_JWT_SECRET`    | Secret signing admin session JWTs (≥ 32 chars)          |
 
 Generate the values locally:
 
@@ -77,14 +77,14 @@ Use **different** values for local dev and production.
 
 Set these under repo **Settings → Secrets and variables → Actions**:
 
-| Secret / variable          | Type     | Used by      | Notes                                   |
-| -------------------------- | -------- | ------------ | --------------------------------------- |
-| `HOSTINGER_API_KEY`        | secret   | deploy       | Hostinger VPS API key                   |
-| `HOSTINGER_VM_ID`          | variable | deploy       | Target VM id (`vars`, not `secrets`)    |
-| `ADMIN_USERNAME`           | secret   | deploy       | Admin login username                    |
-| `ADMIN_PASSWORD_HASH`      | secret   | deploy       | bcrypt hash (production value)          |
-| `ADMIN_JWT_SECRET`         | secret   | deploy       | Production JWT secret, ≥ 32 chars       |
-| `GITHUB_TOKEN`             | built-in | publish-image | Provided automatically for GHCR push   |
+| Secret / variable     | Type     | Used by       | Notes                                |
+| --------------------- | -------- | ------------- | ------------------------------------ |
+| `HOSTINGER_API_KEY`   | secret   | deploy        | Hostinger VPS API key                |
+| `HOSTINGER_VM_ID`     | variable | deploy        | Target VM id (`vars`, not `secrets`) |
+| `ADMIN_USERNAME`      | secret   | deploy        | Admin login username                 |
+| `ADMIN_PASSWORD_HASH` | secret   | deploy        | bcrypt hash (production value)       |
+| `ADMIN_JWT_SECRET`    | secret   | deploy        | Production JWT secret, ≥ 32 chars    |
+| `GITHUB_TOKEN`        | built-in | publish-image | Provided automatically for GHCR push |
 
 Never commit real admin credentials. If a hash or secret leaks, rotate it:
 generate a new one, update the GitHub secret, and redeploy.

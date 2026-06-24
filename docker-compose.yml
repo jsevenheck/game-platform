@@ -7,7 +7,7 @@ services:
     image: ghcr.io/jsevenheck/game-platform:${IMAGE_TAG:-latest}
     restart: unless-stopped
     ports:
-      - "3002:3002"
+      - '3002:3002'
     env_file:
       - path: ./.env
         required: false

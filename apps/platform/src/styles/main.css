@@ -190,11 +190,11 @@
   }
 
   /* Strip platform gradient when a game override colour is applied */
-  .ui-btn-primary[class*="bg-blackout"],
-  .ui-btn-primary[class*="bg-imposter"],
-  .ui-btn-primary[class*="bg-signals"],
-  .ui-btn-primary[class*="bg-flip7"],
-  .ui-btn-primary[class*="bg-scout"] {
+  .ui-btn-primary[class*='bg-blackout'],
+  .ui-btn-primary[class*='bg-imposter'],
+  .ui-btn-primary[class*='bg-signals'],
+  .ui-btn-primary[class*='bg-flip7'],
+  .ui-btn-primary[class*='bg-scout'] {
     background-image: none !important;
   }
 
