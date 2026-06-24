@@ -153,6 +153,7 @@ See [docs/adding-a-new-game.md](docs/adding-a-new-game.md) for the full integrat
 
 ## Documentation
 
+- [docs/deployment.md](docs/deployment.md) - CI → GHCR → VPS image pipeline, runtime env vars, and required GitHub secrets
 - [docs/adding-a-new-game.md](docs/adding-a-new-game.md) - how to add a new game to the platform
 - [docs/observability-metrics.md](docs/observability-metrics.md) - metrics contract, scrape config, and alert/dashboard seeds
 - [games/blackout/docs/](games/blackout/docs/) - Blackout API and architecture
