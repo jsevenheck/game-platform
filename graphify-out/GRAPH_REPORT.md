@@ -1,16 +1,16 @@
-# Graph Report - game-platform  (2026-06-15)
+# Graph Report - game-platform  (2026-06-27)
 
 ## Corpus Check
-- 232 files · ~83,898 words
+- 233 files · ~84,981 words
 - Verdict: corpus is large enough that graph structure adds value.
 
 ## Summary
-- 1461 nodes · 2518 edges · 156 communities (134 shown, 22 thin omitted)
+- 1466 nodes · 2529 edges · 159 communities (136 shown, 23 thin omitted)
 - Extraction: 99% EXTRACTED · 1% INFERRED · 0% AMBIGUOUS · INFERRED: 36 edges (avg confidence: 0.8)
 - Token cost: 0 input · 0 output
 
 ## Graph Freshness
-- Built from commit: `95b3a0f6`
+- Built from commit: `1eb37653`
 - Run `git rev-parse HEAD` and compare to check if the graph is stale.
 - Run `graphify update .` after code changes (no API cost).
 
@@ -54,7 +54,6 @@
 - [[_COMMUNITY_Community 36|Community 36]]
 - [[_COMMUNITY_Community 37|Community 37]]
 - [[_COMMUNITY_Community 38|Community 38]]
-- [[_COMMUNITY_Community 39|Community 39]]
 - [[_COMMUNITY_Community 40|Community 40]]
 - [[_COMMUNITY_Community 41|Community 41]]
 - [[_COMMUNITY_Community 42|Community 42]]
@@ -123,6 +122,8 @@
 - [[_COMMUNITY_Community 150|Community 150]]
 - [[_COMMUNITY_Community 151|Community 151]]
 - [[_COMMUNITY_Community 152|Community 152]]
+- [[_COMMUNITY_Community 156|Community 156]]
+- [[_COMMUNITY_Community 158|Community 158]]
 
 ## God Nodes (most connected - your core abstractions)
 1. `Room` - 41 edges
@@ -138,40 +139,40 @@
 
 ## Surprising Connections (you probably didn't know these)
 - `useSocket()` --calls--> `io`  [INFERRED]
-  games/imposter/ui-vue/src/composables/useSocket.ts → apps/platform/server/index.ts
-- `useSocket()` --calls--> `io`  [INFERRED]
-  games/scout/ui-vue/src/composables/useSocket.ts → apps/platform/server/index.ts
-- `useSocket()` --calls--> `io`  [INFERRED]
   games/secret-signals/ui-vue/src/composables/useSocket.ts → apps/platform/server/index.ts
-- `usePartySocket()` --calls--> `io`  [INFERRED]
-  apps/platform/src/composables/usePartySocket.ts → apps/platform/server/index.ts
 - `useSocket()` --calls--> `io`  [INFERRED]
   games/blackout/ui-vue/src/composables/useSocket.ts → apps/platform/server/index.ts
+- `useSocket()` --calls--> `io`  [INFERRED]
+  games/imposter/ui-vue/src/composables/useSocket.ts → apps/platform/server/index.ts
+- `registerFlip7()` --calls--> `readLoggingConfig()`  [INFERRED]
+  games/flip7/server/src/socketHandlers.ts → apps/platform/server/logging/logger.ts
+- `registerFlip7()` --calls--> `createComponentLogger()`  [INFERRED]
+  games/flip7/server/src/socketHandlers.ts → apps/platform/server/logging/logger.ts
 
 ## Import Cycles
 - None detected.
 
-## Communities (156 total, 22 thin omitted)
+## Communities (159 total, 23 thin omitted)
 
 ### Community 0 - "Community 0"
-Cohesion: 0.07
-Nodes (57): Player, PlayerView, Room, RoomView, RoundHistoryEntry, StoredSession, advanceTurn(), allOtherPlayersScouted() (+49 more)
+Cohesion: 0.10
+Nodes (41): advanceTurn(), allOtherPlayersScouted(), beatsCurrentPlay(), beginFirstTrickIfReady(), buildE2EDeck(), buildPlayerCountDeck(), cardHasValue(), commitPlay() (+33 more)
 
 ### Community 1 - "Community 1"
 Cohesion: 0.06
 Nodes (48): Phase, Player, PlayerView, Room, RoomView, RoundHistoryEntry, RoundView, StoredSession (+40 more)
 
 ### Community 2 - "Community 2"
-Cohesion: 0.05
-Nodes (38): Phase, Player, PlayerView, Room, RoomView, RoundResult, RoundView, StoredSession (+30 more)
+Cohesion: 0.15
+Nodes (11): cleanupInterval, clearRoomCleanup(), createRoom(), deleteRoom(), generateRoomCode(), rooms, RoomStoreSnapshot, roomTimers (+3 more)
 
 ### Community 3 - "Community 3"
 Cohesion: 0.07
 Nodes (34): parseBooleanEnv(), MetricsHttpConfig, metricsScrapeTotal, readBearerToken(), readMetricsAccessToken(), readMetricsHttpConfig(), registerMetricsRoutes(), incrementPartyLifecycle() (+26 more)
 
 ### Community 4 - "Community 4"
-Cohesion: 0.07
-Nodes (31): counts, db, dbLogger, finalCounts, hasColumn(), needsSchemaReset(), parseCsv(), readCsvRows() (+23 more)
+Cohesion: 0.17
+Nodes (11): counts, db, dbLogger, finalCounts, hasColumn(), needsSchemaReset(), parseCsv(), readCsvRows() (+3 more)
 
 ### Community 5 - "Community 5"
 Cohesion: 0.06
@@ -179,27 +180,27 @@ Nodes (15): app, router, actionMessage, autoRefresh, componentFilter, errorMessa
 
 ### Community 6 - "Community 6"
 Cohesion: 0.13
-Nodes (28): assignHost(), bindPlayerToSocket(), detachIndexedSocket(), verifyIsHost(), sendRoomToPlayer(), flipPlayerRow(), keepPlayerRow(), resetToLobby() (+20 more)
+Nodes (28): assignHost(), bindPlayerToSocket(), detachIndexedSocket(), verifyIsHost(), flipPlayerRow(), keepPlayerRow(), resetToLobby(), getRoomSession() (+20 more)
 
 ### Community 7 - "Community 7"
-Cohesion: 0.10
-Nodes (27): unregisterSocket(), getGame(), AdminJwtPayload, adminLogger, AdminPartyMemberView, authenticateAdmin(), checkRateLimit(), chooseNextHost() (+19 more)
+Cohesion: 0.12
+Nodes (20): AdminJwtPayload, adminLogger, AdminPartyMemberView, authenticateAdmin(), checkRateLimit(), getAdminTokenFromCookie(), getCsrfTokenFromRequest(), isAdminEnabled() (+12 more)
 
 ### Community 8 - "Community 8"
-Cohesion: 0.06
-Nodes (6): socketIndex, socketIndex, socketIndex, socketIndex, socketIndex, Player
+Cohesion: 0.15
+Nodes (3): socketIndex, socketIndex, Player
 
 ### Community 9 - "Community 9"
-Cohesion: 0.12
-Nodes (19): bindPlayerToSocket(), detachIndexedSocket(), HandlerMap, bindPlayerToSocket(), detachIndexedSocket(), verifyIsHost(), verifyPlayerInRoom(), broadcastRoom() (+11 more)
+Cohesion: 0.15
+Nodes (16): bindPlayerToSocket(), detachIndexedSocket(), bindPlayerToSocket(), detachIndexedSocket(), verifyIsHost(), verifyPlayerInRoom(), deleteSocketIndex(), getSocketIndex() (+8 more)
 
 ### Community 10 - "Community 10"
-Cohesion: 0.12
-Nodes (25): toLoggableError(), broadcastParty(), PartyClientToServerEvents, PartyServerToClientEvents, PartySocket, scheduleReturnCleanup(), ActivePartyMatch, ClearAllPartiesResult (+17 more)
+Cohesion: 0.15
+Nodes (14): ActivePartyMatch, ClearAllPartiesResult, clearPartyCleanup(), getActivePartyMatches(), getAllParties(), getPartyBySocket(), inviteCodeToParty, matchTimeoutTimers (+6 more)
 
 ### Community 11 - "Community 11"
-Cohesion: 0.10
-Nodes (22): definition, GameDefinition, gameLogger, handler, register(), definition, GameDefinition, gameLogger (+14 more)
+Cohesion: 0.13
+Nodes (17): definition, GameDefinition, gameLogger, handler, register(), registerGame(), definition, GameDefinition (+9 more)
 
 ### Community 12 - "Community 12"
 Cohesion: 0.07
@@ -210,24 +211,24 @@ Cohesion: 0.07
 Nodes (27): dependencies, pinia, vue, vue-router, devDependencies, concurrently, socket.io-client, tsx (+19 more)
 
 ### Community 14 - "Community 14"
-Cohesion: 0.14
-Nodes (14): HandlerMap, createPlayer(), deleteSocketIndexesForRoom(), setSocketIndex(), socketIndex, cleanupInterval, createRoom(), deleteRoom() (+6 more)
+Cohesion: 0.12
+Nodes (16): HandlerMap, HandlerMap, createPlayer(), deleteSocketIndexesForRoom(), setSocketIndex(), socketIndex, cleanupInterval, createRoom() (+8 more)
 
 ### Community 15 - "Community 15"
-Cohesion: 0.12
-Nodes (16): ClientToServerEvents, ServerToClientEvents, useGameStore, useGameStore, ClientToServerEvents, ServerToClientEvents, useGameStore, useGameStore (+8 more)
+Cohesion: 0.22
+Nodes (6): useGameStore, useGameStore, useGameStore, StoredSession, ActionAnnouncement, DrawnCardInfo
 
 ### Community 16 - "Community 16"
 Cohesion: 0.20
 Nodes (20): cardPlayValues(), cardScoutValues(), closeSession(), confirmSetupKeep(), createParty(), createTwoPlayerScoutSession(), hostStartsFromLobby(), isMyTurn() (+12 more)
 
 ### Community 17 - "Community 17"
-Cohesion: 0.14
-Nodes (11): manifest, app, GameSocket, manifest, app, GameSocket, manifest, app (+3 more)
+Cohesion: 0.10
+Nodes (21): ClientToServerEvents, ServerToClientEvents, manifest, app, GameSocket, manifest, app, useGameStore (+13 more)
 
 ### Community 18 - "Community 18"
-Cohesion: 0.12
-Nodes (16): registerProcessLogging(), requestLogger, activeConnectionsGauge, initializeMetrics(), partiesActiveGauge, partyMembersConnectedGauge, roomPlayersConnectedGauge, roomsActiveGauge (+8 more)
+Cohesion: 0.09
+Nodes (26): createRequestId(), registerProcessLogging(), createRequestLogger(), httpLogger, isStaticAssetRequest(), normalizeRequestPath(), requestLogger, resolveHttpLogLevel() (+18 more)
 
 ### Community 19 - "Community 19"
 Cohesion: 0.11
@@ -250,16 +251,16 @@ Cohesion: 0.11
 Nodes (18): compilerOptions, baseUrl, esModuleInterop, forceConsistentCasingInFileNames, isolatedModules, jsx, lib, module (+10 more)
 
 ### Community 24 - "Community 24"
-Cohesion: 0.25
-Nodes (17): addWordToLibrary(), advanceDescriptionTurn(), allDescriptionsSubmitted(), allVotesSubmitted(), getConnectedPlayerOrder(), getDescriptionOrder(), getRandomDescriptionOrder(), selectRandomInfiltrators() (+9 more)
+Cohesion: 0.05
+Nodes (59): GameSocket, verifyPlayer(), cleanupMatch(), transitionToLobby(), clearRoomCleanup(), createRoom(), generateRoomCode(), roomCleanupTimers (+51 more)
 
 ### Community 25 - "Community 25"
-Cohesion: 0.14
-Nodes (11): clearRoomCleanup(), createRoom(), generateRoomCode(), roomCleanupTimers, rooms, RoomStoreSnapshot, scheduleRoomCleanup(), sessionToRoom (+3 more)
+Cohesion: 0.17
+Nodes (17): toLoggableError(), broadcastParty(), PartyClientToServerEvents, PartyServerToClientEvents, PartySocket, scheduleReturnCleanup(), clearMatchTimeout(), deleteParty() (+9 more)
 
 ### Community 26 - "Community 26"
-Cohesion: 0.14
-Nodes (14): makeIo(), makeNamespace(), getAllRooms(), clearAllParties(), createParty(), generateInviteCode(), PartyMatch, PartyMember (+6 more)
+Cohesion: 0.21
+Nodes (9): makeIo(), makeNamespace(), getAllRooms(), clearAllParties(), createParty(), generateInviteCode(), setupParty(), setupScoutServer() (+1 more)
 
 ### Community 27 - "Community 27"
 Cohesion: 0.12
@@ -270,16 +271,16 @@ Cohesion: 0.15
 Nodes (10): cleanupInterval, clearRoomCleanup(), createRoom(), deleteRoom(), generateRoomCode(), rooms, RoomStoreSnapshot, roomTimers (+2 more)
 
 ### Community 29 - "Community 29"
-Cohesion: 0.23
-Nodes (8): WORD_LIST, transitionToLobby(), transitionToPlaying(), generateBoard(), validateTeamSetup(), getActiveTeamColors(), getCardDistribution(), makePlayingRoom()
+Cohesion: 0.06
+Nodes (45): WORD_LIST, ClientToServerEvents, ServerToClientEvents, Phase, Player, PlayerView, Room, RoomView (+37 more)
 
 ### Community 30 - "Community 30"
-Cohesion: 0.17
-Nodes (13): AutoJoinRoomData, AutoJoinRoomResponse, ClientToServerEvents, ErrorResponse, ServerToClientEvents, broadcastRoom(), sendRoomToPlayer(), toPlayerViews() (+5 more)
+Cohesion: 0.39
+Nodes (7): broadcastRoom(), sendRoomToPlayer(), toPlayerViews(), toRoomView(), toRoundView(), broadcastActionResolved(), Flip7Namespace
 
 ### Community 31 - "Community 31"
-Cohesion: 0.19
-Nodes (13): GameSocket, verifyPlayer(), cleanupMatch(), clearDiscussionTimer(), clearGuessTimer(), clearRoomTimers(), discussionTimers, guessTimers (+5 more)
+Cohesion: 0.12
+Nodes (8): ClientToServerEvents, ServerToClientEvents, GamePhase, RoundEndReason, RoundHistoryEntry, TrickHistoryEntry, TrickState, TrickView
 
 ### Community 32 - "Community 32"
 Cohesion: 0.18
@@ -306,32 +307,32 @@ Cohesion: 0.19
 Nodes (10): PartyClientToServerEvents, PartyServerToClientEvents, PartySocket, usePartySocket(), PartyMatchView, PartyMemberView, PartyStatus, PartyView (+2 more)
 
 ### Community 38 - "Community 38"
-Cohesion: 0.21
-Nodes (11): BlackoutSocket, Flip7Socket, normalizeNamespace(), resolveSocketUrl(), useSocket(), normalizeNamespace(), resolveSocketUrl(), useSocket() (+3 more)
+Cohesion: 0.23
+Nodes (10): Flip7Socket, ScoutSocket, normalizeNamespace(), resolveSocketUrl(), useSocket(), useSocket(), normalizeNamespace(), resolveSocketUrl() (+2 more)
 
 ### Community 40 - "Community 40"
-Cohesion: 0.23
-Nodes (6): GameSocket, attachSocketEventDebugLogging(), createSocketLogger(), readSocketString(), SocketLike, summarizeSocketArg()
+Cohesion: 0.15
+Nodes (18): appendLogEntry(), BufferedLogEntry, getRecentLogs(), logBuffer, ALWAYS_REDACT_PATHS, buildLoggerOptions(), createLogBufferStream(), createRootLogger() (+10 more)
 
 ### Community 41 - "Community 41"
 Cohesion: 0.15
 Nodes (7): args, dataRows, db, headers, raw, rows, schemaSql
 
 ### Community 42 - "Community 42"
-Cohesion: 0.17
-Nodes (7): definition, gameLogger, handler, definition, gameLogger, handler, getSessionRoom()
+Cohesion: 0.33
+Nodes (3): definition, gameLogger, handler
 
 ### Community 43 - "Community 43"
-Cohesion: 0.20
-Nodes (9): CARD_HEX_BY_TYPE, ASSASSIN_PENALTY_MODES, getMinimumPlayersForTeamCount(), LEGACY_CARD_DISTRIBUTION, TEAM_COLORS, TEAM_HEX_BY_COLOR, TEAM_NAME_BY_COLOR, TEAM_TEXT_HEX_BY_COLOR (+1 more)
+Cohesion: 0.23
+Nodes (12): Player, PlayerView, Room, RoomView, RoundHistoryEntry, StoredSession, comparePlayAnalyses(), PlayAnalysis (+4 more)
 
 ### Community 44 - "Community 44"
-Cohesion: 0.17
-Nodes (11): Phase, Player, PlayerView, Room, RoomView, StoredSession, FocusMarker, LogEntry (+3 more)
+Cohesion: 0.21
+Nodes (11): getAvailableLetters(), getUnusedPrompt(), randomItem(), getNextReader(), getRandomReader(), isLastRound(), rerollCurrentPrompt(), revealCategory() (+3 more)
 
 ### Community 45 - "Community 45"
-Cohesion: 0.30
-Nodes (9): advanceToNextTeam(), checkWinCondition(), clearFocusedCard(), clearFocusedCardAtIndex(), giveSignal(), GuessResult, outcomeToEndReason(), processGuess() (+1 more)
+Cohesion: 0.18
+Nodes (10): Phase, Player, PlayerView, Room, RoomView, RoundResult, RoundView, StoredSession (+2 more)
 
 ### Community 46 - "Community 46"
 Cohesion: 0.20
@@ -342,8 +343,8 @@ Cohesion: 0.29
 Nodes (8): findCurrentTurnPage(), playFullRound(), setupThreePlayers(), submitDescription(), submitDescriptionsInTurnOrder(), createParty(), joinParty(), launchGame()
 
 ### Community 48 - "Community 48"
-Cohesion: 0.33
-Nodes (9): broadcastRoom(), sendRoomToPlayer(), toPlayerViews(), toRoomView(), ScoutNamespace, toPlayerViews(), toRoomView(), toTrickView() (+1 more)
+Cohesion: 0.30
+Nodes (10): broadcastRoom(), sendRoomToPlayer(), toPlayerViews(), toRoomView(), broadcastRoom(), ScoutNamespace, sendRoomToPlayer(), toPlayerViews() (+2 more)
 
 ### Community 49 - "Community 49"
 Cohesion: 0.18
@@ -358,8 +359,8 @@ Cohesion: 0.20
 Nodes (9): compilerOptions, module, moduleResolution, noEmit, resolveJsonModule, types, exclude, extends (+1 more)
 
 ### Community 52 - "Community 52"
-Cohesion: 0.28
-Nodes (5): DEFAULT_WORD_LIBRARY, getGlobalWordLibrary(), loadFromFile(), persistWord(), WORDS_FILE
+Cohesion: 0.25
+Nodes (6): getCategoriesByLanguage, getDefaultExcludedLettersStmt, getTasksByLanguage, DEFAULT_EXCLUDED_LETTERS, Category, TaskRule
 
 ### Community 53 - "Community 53"
 Cohesion: 0.22
@@ -379,7 +380,7 @@ Nodes (7): AutoJoinRoomData, AutoJoinRoomResponse, ClientToServerEvents, ErrorRe
 
 ### Community 57 - "Community 57"
 Cohesion: 0.36
-Nodes (7): getParty(), connectSocket(), createNamespace(), createPartyViaSocket(), createSocket(), Handler, setup()
+Nodes (7): getPartyByInviteCode(), connectSocket(), createNamespace(), createPartyViaSocket(), createSocket(), Handler, setup()
 
 ### Community 58 - "Community 58"
 Cohesion: 0.25
@@ -414,8 +415,8 @@ Cohesion: 0.48
 Nodes (4): addPoint(), getLeaderboard(), getWinners(), resetScores()
 
 ### Community 66 - "Community 66"
-Cohesion: 0.38
-Nodes (4): transitionToLobby(), resetForLobby(), resetForNewRound(), transitionToNextRound()
+Cohesion: 0.29
+Nodes (6): AutoJoinRoomData, AutoJoinRoomResponse, ClientToServerEvents, ErrorResponse, ServerToClientEvents, ActionResolvedEvent
 
 ### Community 67 - "Community 67"
 Cohesion: 0.29
@@ -438,12 +439,12 @@ Cohesion: 0.53
 Nodes (5): broadcastRoom(), GameNamespace, sendRoomToPlayer(), toPlayerView(), toRoomViewForPlayer()
 
 ### Community 72 - "Community 72"
-Cohesion: 0.53
-Nodes (5): ClientToServerEvents, ServerToClientEvents, AssassinPenaltyMode, PlayerRole, TeamColor
+Cohesion: 0.33
+Nodes (5): definition, GameDefinition, gameLogger, register(), registerFlip7()
 
 ### Community 73 - "Community 73"
-Cohesion: 0.53
-Nodes (6): finalizeRound(), getVotedOutIds(), handleInfiltratorGuess(), isMatchOver(), resolveVotes(), skipGuess()
+Cohesion: 0.33
+Nodes (5): getParty(), registerAdminRoutes(), HttpResponse, login(), request()
 
 ### Community 74 - "Community 74"
 Cohesion: 0.40
@@ -457,21 +458,9 @@ Nodes (4): showControls, sortedPlayers, store, winners
 Cohesion: 0.40
 Nodes (3): error, number, word
 
-### Community 78 - "Community 78"
-Cohesion: 0.60
-Nodes (4): ScoutSocket, normalizeNamespace(), resolveSocketUrl(), useSocket()
-
 ### Community 81 - "Community 81"
 Cohesion: 0.40
 Nodes (3): clientGameRegistry, PlatformGameMeta, PlatformGameModule
-
-### Community 82 - "Community 82"
-Cohesion: 0.60
-Nodes (4): broadcastRoom(), GameNamespace, sendRoomToPlayer(), toRoomView()
-
-### Community 83 - "Community 83"
-Cohesion: 0.70
-Nodes (4): findNearestEnvFile(), loadLocalEnvFile(), parseEnvFile(), stripOptionalQuotes()
 
 ### Community 84 - "Community 84"
 Cohesion: 0.50
@@ -489,6 +478,10 @@ Nodes (3): parseExcludedLetters(), saveExcludedLetters(), updateLanguage()
 Cohesion: 0.50
 Nodes (3): PLAYER_ID, RESUME_TOKEN, ROOM_CODE
 
+### Community 90 - "Community 90"
+Cohesion: 0.33
+Nodes (5): PartyMatch, PartyMember, PartySession, PartyStatus, AdminPartyView
+
 ### Community 91 - "Community 91"
 Cohesion: 0.50
 Nodes (3): PLAYER_ID, RESUME_TOKEN, ROOM_CODE
@@ -497,25 +490,33 @@ Nodes (3): PLAYER_ID, RESUME_TOKEN, ROOM_CODE
 Cohesion: 0.50
 Nodes (3): Database, DatabaseConstructor, Statement
 
+### Community 156 - "Community 156"
+Cohesion: 0.60
+Nodes (4): BlackoutSocket, normalizeNamespace(), resolveSocketUrl(), useSocket()
+
+### Community 158 - "Community 158"
+Cohesion: 0.40
+Nodes (3): definition, gameLogger, handler
+
 ## Knowledge Gaps
-- **555 isolated node(s):** `Handler`, `name`, `version`, `private`, `dev` (+550 more)
+- **556 isolated node(s):** `HttpResponse`, `Handler`, `name`, `version`, `private` (+551 more)
   These have ≤1 connection - possible missing edges or undocumented components.
-- **22 thin communities (<3 nodes) omitted from report** — run `graphify query` to explore isolated nodes.
+- **23 thin communities (<3 nodes) omitted from report** — run `graphify query` to explore isolated nodes.
 
 ## Suggested Questions
 _Questions this graph is uniquely positioned to answer:_
 
-- **Why does `createComponentLogger()` connect `Community 11` to `Community 3`, `Community 4`, `Community 6`, `Community 7`, `Community 40`, `Community 9`, `Community 42`, `Community 10`, `Community 18`, `Community 31`?**
-  _High betweenness centrality (0.042) - this node is a cross-community bridge._
-- **Why does `Room` connect `Community 39` to `Community 0`, `Community 1`, `Community 2`, `Community 6`, `Community 9`, `Community 14`, `Community 15`, `Community 24`, `Community 25`, `Community 28`, `Community 29`, `Community 30`, `Community 31`, `Community 32`, `Community 33`, `Community 40`, `Community 45`, `Community 48`, `Community 52`, `Community 64`, `Community 65`, `Community 66`, `Community 71`, `Community 82`?**
-  _High betweenness centrality (0.036) - this node is a cross-community bridge._
-- **Why does `io` connect `Community 38` to `Community 18`, `Community 37`, `Community 78`?**
-  _High betweenness centrality (0.014) - this node is a cross-community bridge._
+- **Why does `Room` connect `Community 24` to `Community 0`, `Community 1`, `Community 2`, `Community 6`, `Community 9`, `Community 14`, `Community 17`, `Community 28`, `Community 29`, `Community 157`, `Community 30`, `Community 32`, `Community 33`, `Community 31`, `Community 39`, `Community 44`, `Community 48`, `Community 64`, `Community 65`, `Community 71`?**
+  _High betweenness centrality (0.044) - this node is a cross-community bridge._
+- **Why does `createComponentLogger()` connect `Community 11` to `Community 3`, `Community 4`, `Community 6`, `Community 7`, `Community 72`, `Community 9`, `Community 42`, `Community 40`, `Community 18`, `Community 24`, `Community 25`, `Community 29`, `Community 158`?**
+  _High betweenness centrality (0.033) - this node is a cross-community bridge._
 - **Are the 5 inferred relationships involving `createComponentLogger()` (e.g. with `registerGame()` and `registerGame()`) actually correct?**
   _`createComponentLogger()` has 5 INFERRED edges - model-reasoned connections that need verification._
-- **What connects `Handler`, `name`, `version` to the rest of the system?**
-  _555 weakly-connected nodes found - possible documentation gaps or missing edges._
+- **What connects `HttpResponse`, `Handler`, `name` to the rest of the system?**
+  _556 weakly-connected nodes found - possible documentation gaps or missing edges._
 - **Should `Community 0` be split into smaller, more focused modules?**
-  _Cohesion score 0.06874717322478517 - nodes in this community are weakly interconnected._
+  _Cohesion score 0.10175763182238667 - nodes in this community are weakly interconnected._
 - **Should `Community 1` be split into smaller, more focused modules?**
   _Cohesion score 0.06284153005464481 - nodes in this community are weakly interconnected._
+- **Should `Community 2` be split into smaller, more focused modules?**
+  _Cohesion score 0.14705882352941177 - nodes in this community are weakly interconnected._
