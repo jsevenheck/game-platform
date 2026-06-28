@@ -162,7 +162,9 @@ test.describe('home tabs', () => {
     const page = await ctx.newPage();
     try {
       const inviteCode = await createParty(page, 'ResumeHost');
-      // Stored tab is Browse (default; we never switched). Going home resumes.
+      // Explicitly store Browse as the active tab — createParty switched to Host.
+      await page.evaluate(() => sessionStorage.setItem('home.activeTab', 'browse'));
+      // Going home resumes the active match regardless of the stored tab.
       await page.goto('/');
       await page.waitForURL(new RegExp(`/party/${inviteCode}$`), { timeout: 10_000 });
     } finally {

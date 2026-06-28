@@ -2392,7 +2392,7 @@
       "label": "focusedIndex",
       "file_type": "code",
       "source_file": "apps/platform/src/components/home/HomeTabBar.vue",
-      "source_location": "L15",
+      "source_location": "L16",
       "id": "home_hometabbar_focusedindex",
       "community": 82,
       "norm_label": "focusedindex"
@@ -2401,7 +2401,7 @@
       "label": "tabId()",
       "file_type": "code",
       "source_file": "apps/platform/src/components/home/HomeTabBar.vue",
-      "source_location": "L17",
+      "source_location": "L26",
       "id": "home_hometabbar_tabid",
       "community": 82,
       "norm_label": "tabid()"
@@ -2410,7 +2410,7 @@
       "label": "panelId()",
       "file_type": "code",
       "source_file": "apps/platform/src/components/home/HomeTabBar.vue",
-      "source_location": "L21",
+      "source_location": "L30",
       "id": "home_hometabbar_panelid",
       "community": 82,
       "norm_label": "panelid()"
@@ -2419,7 +2419,7 @@
       "label": "activate()",
       "file_type": "code",
       "source_file": "apps/platform/src/components/home/HomeTabBar.vue",
-      "source_location": "L25",
+      "source_location": "L34",
       "id": "home_hometabbar_activate",
       "community": 82,
       "norm_label": "activate()"
@@ -2428,7 +2428,7 @@
       "label": "moveFocus()",
       "file_type": "code",
       "source_file": "apps/platform/src/components/home/HomeTabBar.vue",
-      "source_location": "L29",
+      "source_location": "L38",
       "id": "home_hometabbar_movefocus",
       "community": 82,
       "norm_label": "movefocus()"
@@ -2437,7 +2437,7 @@
       "label": "focusPanelFirstControl()",
       "file_type": "code",
       "source_file": "apps/platform/src/components/home/HomeTabBar.vue",
-      "source_location": "L38",
+      "source_location": "L47",
       "id": "home_hometabbar_focuspanelfirstcontrol",
       "community": 82,
       "norm_label": "focuspanelfirstcontrol()"
@@ -2446,7 +2446,7 @@
       "label": "onKeydown()",
       "file_type": "code",
       "source_file": "apps/platform/src/components/home/HomeTabBar.vue",
-      "source_location": "L52",
+      "source_location": "L61",
       "id": "home_hometabbar_onkeydown",
       "community": 82,
       "norm_label": "onkeydown()"
@@ -13998,9 +13998,9 @@
       "source_file": "apps/platform/__tests__/homeTabs.test.ts",
       "source_location": "L29",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "tests_hometabs_test",
-      "target": "composables_usehometabs",
-      "confidence_score": 1.0
+      "target": "composables_usehometabs"
     },
     {
       "relation": "imports",
@@ -14009,9 +14009,9 @@
       "source_file": "apps/platform/__tests__/homeTabs.test.ts",
       "source_location": "L29",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "tests_hometabs_test",
-      "target": "composables_usehometabs_normalizehometab",
-      "confidence_score": 1.0
+      "target": "composables_usehometabs_normalizehometab"
     },
     {
       "relation": "imports",
@@ -14020,9 +14020,9 @@
       "source_file": "apps/platform/__tests__/homeTabs.test.ts",
       "source_location": "L29",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "tests_hometabs_test",
-      "target": "composables_usehometabs_resolveinitialhometab",
-      "confidence_score": 1.0
+      "target": "composables_usehometabs_resolveinitialhometab"
     },
     {
       "relation": "imports",
@@ -14031,9 +14031,9 @@
       "source_file": "apps/platform/__tests__/homeTabs.test.ts",
       "source_location": "L29",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "tests_hometabs_test",
-      "target": "composables_usehometabs_usehometabs",
-      "confidence_score": 1.0
+      "target": "composables_usehometabs_usehometabs"
     },
     {
       "relation": "contains",
@@ -14041,9 +14041,9 @@
       "source_file": "apps/platform/__tests__/homeTabs.test.ts",
       "source_location": "L4",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "tests_hometabs_test",
-      "target": "tests_hometabs_test_installsessionstorage",
-      "confidence_score": 1.0
+      "target": "tests_hometabs_test_installsessionstorage"
     },
     {
       "relation": "contains",
@@ -14051,9 +14051,9 @@
       "source_file": "apps/platform/__tests__/homeTabs.test.ts",
       "source_location": "L22",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "tests_hometabs_test",
-      "target": "tests_hometabs_test_routerreplace",
-      "confidence_score": 1.0
+      "target": "tests_hometabs_test_routerreplace"
     },
     {
       "relation": "imports_from",
@@ -14879,9 +14879,9 @@
       "source_file": "apps/platform/e2e/home-tabs.spec.ts",
       "source_location": "L3",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "e2e_home_tabs_spec",
-      "target": "e2e_home_tabs_spec_createparty",
-      "confidence_score": 1.0
+      "target": "e2e_home_tabs_spec_createparty"
     },
     {
       "relation": "contains",
@@ -20230,9 +20230,9 @@
       "source_file": "apps/platform/src/components/home/HomeTabBar.vue",
       "source_location": "L25",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "home_hometabbar",
-      "target": "home_hometabbar_activate",
-      "confidence_score": 1.0
+      "target": "home_hometabbar_activate"
     },
     {
       "relation": "contains",
@@ -20240,9 +20240,9 @@
       "source_file": "apps/platform/src/components/home/HomeTabBar.vue",
       "source_location": "L15",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "home_hometabbar",
-      "target": "home_hometabbar_focusedindex",
-      "confidence_score": 1.0
+      "target": "home_hometabbar_focusedindex"
     },
     {
       "relation": "contains",
@@ -20250,9 +20250,9 @@
       "source_file": "apps/platform/src/components/home/HomeTabBar.vue",
       "source_location": "L38",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "home_hometabbar",
-      "target": "home_hometabbar_focuspanelfirstcontrol",
-      "confidence_score": 1.0
+      "target": "home_hometabbar_focuspanelfirstcontrol"
     },
     {
       "relation": "contains",
@@ -20260,9 +20260,9 @@
       "source_file": "apps/platform/src/components/home/HomeTabBar.vue",
       "source_location": "L29",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "home_hometabbar",
-      "target": "home_hometabbar_movefocus",
-      "confidence_score": 1.0
+      "target": "home_hometabbar_movefocus"
     },
     {
       "relation": "contains",
@@ -20270,9 +20270,9 @@
       "source_file": "apps/platform/src/components/home/HomeTabBar.vue",
       "source_location": "L52",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "home_hometabbar",
-      "target": "home_hometabbar_onkeydown",
-      "confidence_score": 1.0
+      "target": "home_hometabbar_onkeydown"
     },
     {
       "relation": "contains",
@@ -20280,9 +20280,9 @@
       "source_file": "apps/platform/src/components/home/HomeTabBar.vue",
       "source_location": "L21",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "home_hometabbar",
-      "target": "home_hometabbar_panelid",
-      "confidence_score": 1.0
+      "target": "home_hometabbar_panelid"
     },
     {
       "relation": "contains",
@@ -20290,9 +20290,9 @@
       "source_file": "apps/platform/src/components/home/HomeTabBar.vue",
       "source_location": "L17",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "home_hometabbar",
-      "target": "home_hometabbar_tabid",
-      "confidence_score": 1.0
+      "target": "home_hometabbar_tabid"
     },
     {
       "relation": "calls",
@@ -20301,9 +20301,9 @@
       "source_file": "apps/platform/src/components/home/HomeTabBar.vue",
       "source_location": "L31",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "home_hometabbar_movefocus",
-      "target": "home_hometabbar_tabid",
-      "confidence_score": 1.0
+      "target": "home_hometabbar_tabid"
     },
     {
       "relation": "calls",
@@ -20312,9 +20312,9 @@
       "source_file": "apps/platform/src/components/home/HomeTabBar.vue",
       "source_location": "L76",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "home_hometabbar_onkeydown",
-      "target": "home_hometabbar_activate",
-      "confidence_score": 1.0
+      "target": "home_hometabbar_activate"
     },
     {
       "relation": "calls",
@@ -20323,9 +20323,9 @@
       "source_file": "apps/platform/src/components/home/HomeTabBar.vue",
       "source_location": "L58",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "home_hometabbar_onkeydown",
-      "target": "home_hometabbar_movefocus",
-      "confidence_score": 1.0
+      "target": "home_hometabbar_movefocus"
     },
     {
       "relation": "calls",
@@ -20334,9 +20334,9 @@
       "source_file": "apps/platform/src/components/home/HomeTabBar.vue",
       "source_location": "L78",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "home_hometabbar_onkeydown",
-      "target": "home_hometabbar_focuspanelfirstcontrol",
-      "confidence_score": 1.0
+      "target": "home_hometabbar_focuspanelfirstcontrol"
     },
     {
       "relation": "contains",
@@ -20374,9 +20374,9 @@
       "source_file": "apps/platform/src/composables/useHomePartyActions.ts",
       "source_location": "L9",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "composables_usehomepartyactions",
-      "target": "composables_usehomepartyactions_readstr",
-      "confidence_score": 1.0
+      "target": "composables_usehomepartyactions_readstr"
     },
     {
       "relation": "contains",
@@ -20384,9 +20384,9 @@
       "source_file": "apps/platform/src/composables/useHomePartyActions.ts",
       "source_location": "L33",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "composables_usehomepartyactions",
-      "target": "composables_usehomepartyactions_usehomepartyactions",
-      "confidence_score": 1.0
+      "target": "composables_usehomepartyactions_usehomepartyactions"
     },
     {
       "relation": "contains",
@@ -20394,9 +20394,9 @@
       "source_file": "apps/platform/src/composables/useHomePartyActions.ts",
       "source_location": "L17",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "composables_usehomepartyactions",
-      "target": "composables_usehomepartyactions_writestr",
-      "confidence_score": 1.0
+      "target": "composables_usehomepartyactions_writestr"
     },
     {
       "relation": "imports_from",
@@ -20405,9 +20405,9 @@
       "source_file": "apps/platform/src/composables/useHomePartyActions.ts",
       "source_location": "L4",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "composables_usehomepartyactions",
-      "target": "composables_usepartysocket",
-      "confidence_score": 1.0
+      "target": "composables_usepartysocket"
     },
     {
       "relation": "imports",
@@ -20416,9 +20416,9 @@
       "source_file": "apps/platform/src/composables/useHomePartyActions.ts",
       "source_location": "L4",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "composables_usehomepartyactions",
-      "target": "composables_usepartysocket_usepartysocket",
-      "confidence_score": 1.0
+      "target": "composables_usepartysocket_usepartysocket"
     },
     {
       "relation": "imports_from",
@@ -20427,9 +20427,9 @@
       "source_file": "apps/platform/src/composables/useHomePartyActions.ts",
       "source_location": "L3",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "composables_usehomepartyactions",
-      "target": "stores_party",
-      "confidence_score": 1.0
+      "target": "stores_party"
     },
     {
       "relation": "imports",
@@ -20438,9 +20438,9 @@
       "source_file": "apps/platform/src/composables/useHomePartyActions.ts",
       "source_location": "L3",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "composables_usehomepartyactions",
-      "target": "stores_party_usepartystore",
-      "confidence_score": 1.0
+      "target": "stores_party_usepartystore"
     },
     {
       "relation": "calls",
@@ -20449,9 +20449,9 @@
       "source_file": "apps/platform/src/composables/useHomePartyActions.ts",
       "source_location": "L38",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "composables_usehomepartyactions_usehomepartyactions",
-      "target": "composables_usehomepartyactions_readstr",
-      "confidence_score": 1.0
+      "target": "composables_usehomepartyactions_readstr"
     },
     {
       "relation": "calls",
@@ -20481,9 +20481,9 @@
       "source_file": "apps/platform/src/composables/useHomeTabs.ts",
       "source_location": "L12",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "composables_usehometabs",
-      "target": "composables_usehometabs_home_tabs",
-      "confidence_score": 1.0
+      "target": "composables_usehometabs_home_tabs"
     },
     {
       "relation": "contains",
@@ -20491,9 +20491,9 @@
       "source_file": "apps/platform/src/composables/useHomeTabs.ts",
       "source_location": "L6",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "composables_usehometabs",
-      "target": "composables_usehometabs_hometab",
-      "confidence_score": 1.0
+      "target": "composables_usehometabs_hometab"
     },
     {
       "relation": "contains",
@@ -20501,9 +20501,9 @@
       "source_file": "apps/platform/src/composables/useHomeTabs.ts",
       "source_location": "L4",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "composables_usehometabs",
-      "target": "composables_usehometabs_hometabid",
-      "confidence_score": 1.0
+      "target": "composables_usehometabs_hometabid"
     },
     {
       "relation": "contains",
@@ -20511,9 +20511,9 @@
       "source_file": "apps/platform/src/composables/useHomeTabs.ts",
       "source_location": "L22",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "composables_usehometabs",
-      "target": "composables_usehometabs_normalizehometab",
-      "confidence_score": 1.0
+      "target": "composables_usehometabs_normalizehometab"
     },
     {
       "relation": "contains",
@@ -20521,9 +20521,9 @@
       "source_file": "apps/platform/src/composables/useHomeTabs.ts",
       "source_location": "L38",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "composables_usehometabs",
-      "target": "composables_usehometabs_readstoredtab",
-      "confidence_score": 1.0
+      "target": "composables_usehometabs_readstoredtab"
     },
     {
       "relation": "contains",
@@ -20531,9 +20531,9 @@
       "source_file": "apps/platform/src/composables/useHomeTabs.ts",
       "source_location": "L34",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "composables_usehometabs",
-      "target": "composables_usehometabs_resolveinitialhometab",
-      "confidence_score": 1.0
+      "target": "composables_usehometabs_resolveinitialhometab"
     },
     {
       "relation": "contains",
@@ -20541,9 +20541,9 @@
       "source_file": "apps/platform/src/composables/useHomeTabs.ts",
       "source_location": "L63",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "composables_usehometabs",
-      "target": "composables_usehometabs_usehometabs",
-      "confidence_score": 1.0
+      "target": "composables_usehometabs_usehometabs"
     },
     {
       "relation": "contains",
@@ -20551,9 +20551,9 @@
       "source_file": "apps/platform/src/composables/useHomeTabs.ts",
       "source_location": "L18",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "composables_usehometabs",
-      "target": "composables_usehometabs_valid_tabs",
-      "confidence_score": 1.0
+      "target": "composables_usehometabs_valid_tabs"
     },
     {
       "relation": "contains",
@@ -20561,9 +20561,9 @@
       "source_file": "apps/platform/src/composables/useHomeTabs.ts",
       "source_location": "L46",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "composables_usehometabs",
-      "target": "composables_usehometabs_writestoredtab",
-      "confidence_score": 1.0
+      "target": "composables_usehometabs_writestoredtab"
     },
     {
       "relation": "calls",
@@ -20572,9 +20572,9 @@
       "source_file": "apps/platform/src/composables/useHomeTabs.ts",
       "source_location": "L35",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "composables_usehometabs_resolveinitialhometab",
-      "target": "composables_usehometabs_normalizehometab",
-      "confidence_score": 1.0
+      "target": "composables_usehometabs_normalizehometab"
     },
     {
       "relation": "calls",
@@ -20583,9 +20583,9 @@
       "source_file": "apps/platform/src/composables/useHomeTabs.ts",
       "source_location": "L67",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "composables_usehometabs_usehometabs",
-      "target": "composables_usehometabs_resolveinitialhometab",
-      "confidence_score": 1.0
+      "target": "composables_usehometabs_resolveinitialhometab"
     },
     {
       "relation": "calls",
@@ -20594,9 +20594,9 @@
       "source_file": "apps/platform/src/composables/useHomeTabs.ts",
       "source_location": "L67",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "composables_usehometabs_usehometabs",
-      "target": "composables_usehometabs_readstoredtab",
-      "confidence_score": 1.0
+      "target": "composables_usehometabs_readstoredtab"
     },
     {
       "relation": "contains",
@@ -21304,9 +21304,9 @@
       "source_file": "apps/platform/src/views/HomeView.vue",
       "source_location": "L49",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "views_homeview",
-      "target": "views_homeview_handleclearselectedgame",
-      "confidence_score": 1.0
+      "target": "views_homeview_handleclearselectedgame"
     },
     {
       "relation": "contains",
@@ -21314,9 +21314,9 @@
       "source_file": "apps/platform/src/views/HomeView.vue",
       "source_location": "L44",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "views_homeview",
-      "target": "views_homeview_handleselectgame",
-      "confidence_score": 1.0
+      "target": "views_homeview_handleselectgame"
     },
     {
       "relation": "contains",
@@ -21324,9 +21324,9 @@
       "source_file": "apps/platform/src/views/HomeView.vue",
       "source_location": "L38",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "views_homeview",
-      "target": "views_homeview_selectedgamename",
-      "confidence_score": 1.0
+      "target": "views_homeview_selectedgamename"
     },
     {
       "relation": "contains",
@@ -41865,5 +41865,5 @@
     }
   ],
   "hyperedges": [],
-  "built_at_commit": "f1f38a8e9ebff27372a31fc2891122c9a4e8beb3"
+  "built_at_commit": "50811239e21b70106fddd9ea3e189f3e958d16e3"
 }

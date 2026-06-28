@@ -1245,8 +1245,8 @@
     "semantic_hash": ""
   },
   "apps/platform/e2e/home-tabs.spec.ts": {
-    "mtime": 1782665910.3112645,
-    "ast_hash": "d8c52f7af340dfc6b9abb347a5fd5731",
+    "mtime": 1782666964.152578,
+    "ast_hash": "bd73447ff568a5f3a0ac9fadc5d69467",
     "semantic_hash": ""
   },
   "apps/platform/src/components/home/BrowseTabPanel.vue": {
@@ -1255,8 +1255,8 @@
     "semantic_hash": ""
   },
   "apps/platform/src/components/home/HomeTabBar.vue": {
-    "mtime": 1782665797.5707166,
-    "ast_hash": "e3545f1f964854452ea7d5b661f9c2ac",
+    "mtime": 1782666917.3402038,
+    "ast_hash": "9c30a8137f4b87bcf56118c9a76d481a",
     "semantic_hash": ""
   },
   "apps/platform/src/components/home/HostTabPanel.vue": {

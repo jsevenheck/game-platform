@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref } from 'vue';
+import { ref, watch } from 'vue';
 import type { HomeTab, HomeTabId } from '../../composables/useHomeTabs';
 
 const props = defineProps<{
@@ -12,7 +12,16 @@ const emit = defineEmits<{
 }>();
 
 // Index of the tab that currently holds keyboard focus (roving tabindex).
+// Synced to the active tab so only one tab is ever tabbable (tabindex=0).
 const focusedIndex = ref(0);
+
+watch(
+  () => props.modelValue,
+  (next) => {
+    focusedIndex.value = props.tabs.findIndex((t) => t.id === next);
+  },
+  { immediate: true }
+);
 
 function tabId(tab: HomeTabId): string {
   return `home-tab-${tab}`;
@@ -102,7 +111,7 @@ function onKeydown(event: KeyboardEvent, index: number): void {
       :class="{ 'home-tabbar-tab--active': tab.id === modelValue }"
       :aria-selected="tab.id === modelValue ? 'true' : 'false'"
       :aria-controls="panelId(tab.id)"
-      :tabindex="tab.id === modelValue || index === focusedIndex ? 0 : -1"
+      :tabindex="tab.id === modelValue ? 0 : -1"
       @click="activate(tab.id)"
       @focus="focusedIndex = index"
       @keydown="onKeydown($event, index)"
