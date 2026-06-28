@@ -4,6 +4,7 @@ import { expect, test, type Browser, type BrowserContext, type Page } from '@pla
 
 async function createParty(page: Page, name: string): Promise<string> {
   await page.goto('/');
+  await page.getByRole('tab', { name: 'Host a Party' }).click();
   await page.fill('#name', name);
   await page.click('button[type="submit"]');
   await page.waitForURL(/\/party\/[A-Z0-9]+/);
@@ -12,7 +13,7 @@ async function createParty(page: Page, name: string): Promise<string> {
 
 async function joinParty(page: Page, name: string, inviteCode: string): Promise<void> {
   await page.goto('/');
-  await page.getByRole('button', { name: 'Join Party' }).click();
+  await page.getByRole('tab', { name: 'Join with Code' }).click();
   await page.fill('#name', name);
   await page.fill('#code', inviteCode);
   await page.click('button[type="submit"]');
@@ -86,9 +87,10 @@ test.describe('Secret Signals via Platform', () => {
   test('platform home shows Game Platform screen', async ({ page }) => {
     await page.goto('/');
     await expect(page.locator('.home-title')).toBeVisible();
-    // Two tab buttons exist; use class selector to avoid strict-mode violation with the submit button
-    await expect(page.locator('button.ui-tab', { hasText: 'Create Party' })).toBeVisible();
-    await expect(page.locator('button.ui-tab', { hasText: 'Join Party' })).toBeVisible();
+    // Three tabs are present on the home tab bar.
+    await expect(page.getByRole('tab', { name: 'Browse Games' })).toBeVisible();
+    await expect(page.getByRole('tab', { name: 'Host a Party' })).toBeVisible();
+    await expect(page.getByRole('tab', { name: 'Join with Code' })).toBeVisible();
   });
 
   test('host can configure the lobby and complete the opening turn', async ({ browser }) => {

@@ -1,116 +1,70 @@
 <script setup lang="ts">
-import { ref, onMounted, onBeforeUnmount, nextTick } from 'vue';
-import { useRouter } from 'vue-router';
+import { computed, nextTick, onMounted, onBeforeUnmount, ref, watch } from 'vue';
 import { usePartyStore } from '../stores/party';
 import { usePartySocket } from '../composables/usePartySocket';
-import { clientGameRegistry } from '../games';
-import GameLibraryGrid from '../components/home/GameLibraryGrid.vue';
-import PublicLobbiesSection from '../components/home/PublicLobbiesSection.vue';
+import { useHomeTabs, HOME_TABS } from '../composables/useHomeTabs';
+import { useHomePartyActions } from '../composables/useHomePartyActions';
+import { getClientGame } from '../games';
+import HomeTabBar from '../components/home/HomeTabBar.vue';
+import BrowseTabPanel from '../components/home/BrowseTabPanel.vue';
+import HostTabPanel from '../components/home/HostTabPanel.vue';
+import JoinTabPanel from '../components/home/JoinTabPanel.vue';
 
-const router = useRouter();
 const store = usePartyStore();
 const socket = usePartySocket();
+const { activeTab, setTab } = useHomeTabs();
+const actions = useHomePartyActions();
 
-const playerName = ref('');
-const inviteCode = ref('');
-const error = ref('');
-const mode = ref<'create' | 'join'>('create');
+const CTA_KEY = 'home.ctaDismissed';
+const ctaDismissed = ref(readCtaDismissed());
 
-function handleCreate() {
-  const name = playerName.value.trim();
-  if (!name) return;
-  error.value = '';
-
-  socket.emit('createParty', { playerName: name }, (res) => {
-    if (!res.ok) {
-      error.value = res.error;
-      return;
-    }
-    store.setSession({
-      playerId: res.playerId,
-      playerName: name,
-      inviteCode: res.partyView.inviteCode,
-      resumeToken: res.resumeToken,
-    });
-    store.applyPartyUpdate(res.partyView);
-    store.saveSession(res.partyView.inviteCode);
-    router.push(`/party/${res.partyView.inviteCode}`);
-  });
+function readCtaDismissed(): boolean {
+  try {
+    return sessionStorage.getItem(CTA_KEY) === '1';
+  } catch {
+    return false;
+  }
 }
 
-function handleJoin() {
-  const name = playerName.value.trim();
-  const code = inviteCode.value.trim().toUpperCase();
-  if (!name || !code) return;
-  error.value = '';
+watch(ctaDismissed, (v) => {
+  try {
+    if (v) sessionStorage.setItem(CTA_KEY, '1');
+    else sessionStorage.removeItem(CTA_KEY);
+  } catch {
+    /* ignore */
+  }
+});
 
-  socket.emit('joinParty', { playerName: name, inviteCode: code }, (res) => {
-    if (!res.ok) {
-      error.value = res.error;
-      return;
-    }
-    store.setSession({
-      playerId: res.playerId,
-      playerName: name,
-      inviteCode: res.partyView.inviteCode,
-      resumeToken: res.resumeToken,
-    });
-    store.applyPartyUpdate(res.partyView);
-    store.saveSession(res.partyView.inviteCode);
-    router.push(`/party/${res.partyView.inviteCode}`);
-  });
+const selectedGameName = computed(() =>
+  actions.selectedGameId.value
+    ? (getClientGame(actions.selectedGameId.value)?.definition.name ?? null)
+    : null
+);
+
+function handleSelectGame(gameId: string): void {
+  actions.selectedGameId.value = gameId;
+  setTab('host');
 }
 
-// A public lobby card pre-fills the existing Join form with the invite code.
-// Joining still requires the user to enter a name and submit — no silent join.
-async function handlePublicLobbyClick(payload: { inviteCode: string }) {
-  mode.value = 'join';
-  inviteCode.value = payload.inviteCode;
-  error.value = '';
+function handleClearSelectedGame(): void {
+  actions.selectedGameId.value = null;
+}
+
+async function handleJoinRoom(payload: { inviteCode: string }): Promise<void> {
+  actions.inviteCode.value = payload.inviteCode;
+  actions.clearError();
+  setTab('join');
   await nextTick();
-  const selector = playerName.value.trim() ? '#code' : '#name';
+  const selector = actions.playerName.value.trim() ? '#code' : '#name';
   document.querySelector<HTMLInputElement>(selector)?.focus();
-}
-
-function tryResume() {
-  const session = store.loadSession();
-  if (!session) return;
-
-  socket.emit(
-    'resumeParty',
-    {
-      inviteCode: session.inviteCode,
-      playerId: session.playerId,
-      resumeToken: session.resumeToken,
-    },
-    (res) => {
-      if (!res.ok) {
-        store.clearSession();
-        return;
-      }
-      store.setSession({
-        playerId: session.playerId,
-        playerName: session.playerName,
-        inviteCode: session.inviteCode,
-        resumeToken: session.resumeToken,
-      });
-      store.applyPartyUpdate(res.partyView);
-
-      if (res.partyView.activeMatch) {
-        router.push(`/party/${session.inviteCode}/game/${res.partyView.activeMatch.gameId}`);
-      } else {
-        router.push(`/party/${session.inviteCode}`);
-      }
-    }
-  );
 }
 
 onMounted(() => {
   socket.on('partyUpdate', store.applyPartyUpdate);
-  socket.on('connect', tryResume);
+  socket.on('connect', actions.tryResume);
 
   if (socket.connected) {
-    tryResume();
+    actions.tryResume();
   } else {
     socket.connect();
   }
@@ -118,13 +72,13 @@ onMounted(() => {
 
 onBeforeUnmount(() => {
   socket.off('partyUpdate', store.applyPartyUpdate);
-  socket.off('connect', tryResume);
+  socket.off('connect', actions.tryResume);
 });
 </script>
 
 <template>
   <div class="home-root">
-    <div class="home-card">
+    <div class="home-card" :class="activeTab === 'browse' ? 'home-card-wide' : 'home-card-compact'">
       <!-- Top accent line -->
       <div class="home-top-line" />
 
@@ -134,72 +88,74 @@ onBeforeUnmount(() => {
           <span class="home-logo-icon">⚡</span>
         </div>
         <h1 class="home-title">Game Platform</h1>
-        <p class="home-sub">Create a party or join your friends</p>
+        <p class="home-sub">Browse games, host a party, or join your friends</p>
       </div>
 
-      <!-- Tab switcher -->
-      <div class="ui-tab-group mb-6">
-        <button
-          v-for="tab in ['create', 'join'] as const"
-          :key="tab"
-          class="ui-tab"
-          :class="{ 'ui-tab-active': mode === tab }"
-          @click="mode = tab"
+      <!-- Tab bar -->
+      <HomeTabBar
+        :model-value="activeTab"
+        :tabs="HOME_TABS"
+        class="mb-6"
+        @update:model-value="setTab"
+      />
+
+      <!-- Panels -->
+      <Transition name="fade" mode="out-in">
+        <div
+          v-if="activeTab === 'browse'"
+          id="home-panel-browse"
+          key="browse"
+          role="tabpanel"
+          aria-labelledby="home-tab-browse"
+          data-testid="home-panel-browse"
         >
-          {{ tab === 'create' ? 'Create Party' : 'Join Party' }}
-        </button>
-      </div>
-
-      <!-- Form -->
-      <form
-        class="flex flex-col gap-4"
-        @submit.prevent="mode === 'create' ? handleCreate() : handleJoin()"
-      >
-        <div class="flex flex-col gap-1.5">
-          <label for="name" class="home-label">Your Name</label>
-          <input
-            id="name"
-            v-model="playerName"
-            class="ui-input"
-            type="text"
-            placeholder="Enter your name"
-            maxlength="20"
-            autocomplete="off"
+          <BrowseTabPanel
+            :cta-dismissed="ctaDismissed"
+            @select-game="handleSelectGame"
+            @join-room="handleJoinRoom"
+            @host-requested="setTab('host')"
+            @dismiss-cta="ctaDismissed = true"
           />
         </div>
 
-        <Transition name="slide-up">
-          <div v-if="mode === 'join'" class="flex flex-col gap-1.5">
-            <label for="code" class="home-label">Invite Code</label>
-            <input
-              id="code"
-              v-model="inviteCode"
-              class="ui-input home-code-input uppercase"
-              type="text"
-              placeholder="ABC123"
-              maxlength="6"
-              autocomplete="off"
-            />
-          </div>
-        </Transition>
+        <div
+          v-else-if="activeTab === 'host'"
+          id="home-panel-host"
+          key="host"
+          role="tabpanel"
+          aria-labelledby="home-tab-host"
+          data-testid="home-panel-host"
+        >
+          <HostTabPanel
+            :player-name="actions.playerName.value"
+            :error="actions.error.value"
+            :submitting="actions.submitting.value"
+            :selected-game-name="selectedGameName"
+            @update:player-name="actions.playerName.value = $event"
+            @submit="actions.handleCreate()"
+            @clear-selected-game="handleClearSelectedGame"
+          />
+        </div>
 
-        <Transition name="fade">
-          <p v-if="error" class="home-error" role="alert" aria-live="polite">{{ error }}</p>
-        </Transition>
-
-        <button type="submit" class="ui-btn-primary home-submit">
-          {{ mode === 'create' ? 'Create Party' : 'Join Party' }}
-        </button>
-      </form>
-    </div>
-
-    <section class="home-library" aria-labelledby="home-library-heading">
-      <h2 id="home-library-heading" class="ui-section-label">Game Library</h2>
-      <GameLibraryGrid :games="clientGameRegistry" />
-    </section>
-
-    <div class="home-public-lobbies">
-      <PublicLobbiesSection @join-room="handlePublicLobbyClick" />
+        <div
+          v-else
+          id="home-panel-join"
+          key="join"
+          role="tabpanel"
+          aria-labelledby="home-tab-join"
+          data-testid="home-panel-join"
+        >
+          <JoinTabPanel
+            :player-name="actions.playerName.value"
+            :invite-code="actions.inviteCode.value"
+            :error="actions.error.value"
+            :submitting="actions.submitting.value"
+            @update:player-name="actions.playerName.value = $event"
+            @update:invite-code="actions.inviteCode.value = $event"
+            @submit="actions.handleJoin()"
+          />
+        </div>
+      </Transition>
     </div>
   </div>
 </template>
@@ -208,16 +164,13 @@ onBeforeUnmount(() => {
 .home-root {
   min-height: 100dvh;
   display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: flex-start;
-  gap: 2rem;
-  padding: clamp(1.5rem, 4vw, 3rem);
+  align-items: flex-start;
+  justify-content: center;
+  padding: clamp(1.25rem, 4vw, 3rem);
 }
 
 .home-card {
-  width: 100%;
-  max-width: 400px;
+  width: min(100%, 1040px);
   background: var(--color-panel);
   border: 1px solid var(--color-border-strong);
   border-radius: var(--radius-xl);
@@ -227,6 +180,14 @@ onBeforeUnmount(() => {
     0 0 0 1px rgba(255, 255, 255, 0.03) inset;
   position: relative;
   overflow: hidden;
+}
+
+.home-card-compact {
+  max-width: 440px;
+}
+
+.home-card-wide {
+  max-width: 1040px;
 }
 
 .home-top-line {
@@ -277,45 +238,5 @@ onBeforeUnmount(() => {
   font-size: 0.875rem;
   color: var(--color-muted-foreground);
   font-weight: 400;
-}
-
-.home-label {
-  font-size: 0.8rem;
-  font-weight: 600;
-  color: var(--color-muted);
-  letter-spacing: 0.02em;
-}
-
-.home-code-input {
-  text-align: center;
-  letter-spacing: 0.2em;
-  font-family: 'JetBrains Mono', monospace;
-  font-size: 1.125rem;
-}
-
-.home-error {
-  font-size: 0.875rem;
-  color: var(--color-danger);
-  background: var(--color-danger-muted);
-  border: 1px solid rgba(239, 68, 68, 0.2);
-  border-radius: var(--radius-md);
-  padding: 0.5rem 0.75rem;
-}
-
-.home-submit {
-  width: 100%;
-  font-size: 1rem;
-  margin-top: 0.25rem;
-  padding: 0.875rem 1.5rem;
-}
-
-.home-library {
-  width: 100%;
-  max-width: 960px;
-}
-
-.home-public-lobbies {
-  width: 100%;
-  max-width: 960px;
 }
 </style>

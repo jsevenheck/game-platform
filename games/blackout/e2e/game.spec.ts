@@ -4,6 +4,7 @@ import { test, expect, type Page } from '@playwright/test';
 
 async function createParty(page: Page, name: string): Promise<string> {
   await page.goto('/');
+  await page.getByRole('tab', { name: 'Host a Party' }).click();
   await page.fill('#name', name);
   await page.click('button[type="submit"]');
   await page.waitForURL(/\/party\/[A-Z0-9]+/);
@@ -12,7 +13,7 @@ async function createParty(page: Page, name: string): Promise<string> {
 
 async function joinParty(page: Page, name: string, inviteCode: string): Promise<void> {
   await page.goto('/');
-  await page.getByRole('button', { name: 'Join Party' }).click();
+  await page.getByRole('tab', { name: 'Join with Code' }).click();
   await page.fill('#name', name);
   await page.fill('#code', inviteCode);
   await page.click('button[type="submit"]');

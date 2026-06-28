@@ -19,6 +19,7 @@ test.describe('home library', () => {
 
   test('does not block creating a party', async ({ page }) => {
     await page.goto('/');
+    await page.getByRole('tab', { name: 'Host a Party' }).click();
     await page.fill('#name', 'Alice');
     await page.click('button[type="submit"]');
     await page.waitForURL(/\/party\/[A-Z0-9]+/);

@@ -2,6 +2,7 @@ import { expect, test, type Page } from '@playwright/test';
 
 async function createParty(page: Page, name: string): Promise<string> {
   await page.goto('/');
+  await page.getByRole('tab', { name: 'Host a Party' }).click();
   await page.fill('#name', name);
   await page.click('button[type="submit"]');
   await page.waitForURL(/\/party\/[A-Z0-9]+/);
@@ -10,7 +11,7 @@ async function createParty(page: Page, name: string): Promise<string> {
 
 async function joinParty(page: Page, name: string, inviteCode: string): Promise<void> {
   await page.goto('/');
-  await page.getByRole('button', { name: 'Join Party' }).click();
+  await page.getByRole('tab', { name: 'Join with Code' }).click();
   await page.fill('#name', name);
   await page.fill('#code', inviteCode);
   await page.click('button[type="submit"]');
@@ -31,9 +32,12 @@ test.describe('live rooms / public lobby discovery', () => {
       // 1. Host creates a party.
       const inviteCode = await createParty(host, 'Alice');
 
-      // 2. Observer opens home and sees empty Live Rooms.
+      // 2. Observer opens home (Browse); the Live Rooms feed loads.
+      //    (Don't assert strict emptiness — the shared server may expose other
+      //    concurrent tests' public lobbies; the card assertions below are
+      //    filtered by this party's invite code and thus resilient.)
       await observer.goto('/');
-      await expect(observer.getByTestId('public-lobbies-empty')).toBeVisible({ timeout: 10_000 });
+      await expect(observer.getByText('Live Rooms')).toBeVisible({ timeout: 10_000 });
 
       // 3. Host toggles "List this room publicly".
       await host.getByTestId('party-public-toggle').check();
@@ -42,11 +46,17 @@ test.describe('live rooms / public lobby discovery', () => {
       const card = observer.getByTestId('public-lobby-card').filter({ hasText: inviteCode });
       await expect(card).toBeVisible({ timeout: 5_000 });
 
-      // 5. Observer clicks the card; the Join form opens with the code pre-filled.
+      // 5. Observer clicks the card; the Join tab opens with the code pre-filled.
+      //    Clicking the card switches the observer away from Browse (unmounting the
+      //    live-rooms feed), so afterwards we return to Browse to keep watching.
       await card.click();
-      await expect(observer.locator('.ui-tab-group .ui-tab-active')).toContainText('Join Party');
+      await expect(observer.getByTestId('home-panel-join')).toBeVisible();
       await expect(observer.locator('#code')).toBeVisible();
       await expect(observer.locator('#code')).toHaveValue(inviteCode);
+      await observer.getByRole('tab', { name: 'Browse Games' }).click();
+      await expect(observer.getByTestId('home-panel-browse')).toBeVisible();
+      // Re-subscribed feed should still show the public lobby (still in lobby).
+      await expect(card).toBeVisible({ timeout: 5_000 });
 
       // 6. A second player joins the public lobby.
       await joinParty(p3, 'Carol', inviteCode);
@@ -60,8 +70,6 @@ test.describe('live rooms / public lobby discovery', () => {
       // 8. Host returns to lobby; observer sees the card reappear.
       //    Navigate to PartyView via the in-game Leave flow (client-side, no reload,
       //    so PartyView keeps the in-match state and does not auto-redirect back).
-      //    Both host (PartyView) and p3 (GameView) ACK the return, so the lobby
-      //    transition finalizes promptly and the card reappears.
       await host.getByRole('button', { name: /leave/i }).click();
       await host.locator('.ui-dialog').getByRole('button', { name: 'Leave' }).click();
       await host.waitForURL(/\/party\/[A-Z0-9]+$/);

@@ -1,8 +1,8 @@
 {
   "eslint.config.mjs": {
-    "mtime": 1779722381.6072536,
-    "ast_hash": "416a74a20f611812be1e1c43b0b4061f",
-    "semantic_hash": "416a74a20f611812be1e1c43b0b4061f"
+    "mtime": 1782666052.7911751,
+    "ast_hash": "805d86863bfb60c9d6ad67a3b9187d3e",
+    "semantic_hash": ""
   },
   "package.json": {
     "mtime": 1782559856.3800404,
@@ -65,9 +65,9 @@
     "semantic_hash": "af57bc4540798d5d6cb7346581510937"
   },
   "apps/platform/e2e/party-resume.spec.ts": {
-    "mtime": 1777839788.502331,
-    "ast_hash": "41dc87934d59b5c1e66d9aaafb75f3a6",
-    "semantic_hash": "41dc87934d59b5c1e66d9aaafb75f3a6"
+    "mtime": 1782665045.386048,
+    "ast_hash": "9573e1dbd91684bba242904cb189120e",
+    "semantic_hash": ""
   },
   "apps/platform/env.d.ts": {
     "mtime": 1779724295.3299098,
@@ -210,8 +210,8 @@
     "semantic_hash": "6c63c7513c33dcb2bac75cb3084b23c7"
   },
   "apps/platform/src/views/HomeView.vue": {
-    "mtime": 1782663224.20489,
-    "ast_hash": "aab97a51b0a74105345f2dda39f07dfb",
+    "mtime": 1782665161.1354003,
+    "ast_hash": "f44862d7bbc1f25437d6b54193c3d3c3",
     "semantic_hash": ""
   },
   "apps/platform/src/views/PartyView.vue": {
@@ -275,9 +275,9 @@
     "semantic_hash": "05b48975a2847244fff7fc926702470a"
   },
   "games/blackout/e2e/game.spec.ts": {
-    "mtime": 1777839788.550617,
-    "ast_hash": "bb672b6a663c88e4198ba060bd94fb8e",
-    "semantic_hash": "bb672b6a663c88e4198ba060bd94fb8e"
+    "mtime": 1782665092.561958,
+    "ast_hash": "b3d3e2c190022d002c771075706c60f3",
+    "semantic_hash": ""
   },
   "games/blackout/package.json": {
     "mtime": 1774974691.7753904,
@@ -475,9 +475,9 @@
     "semantic_hash": "5d948bb3234f90e536e82b5ddcea5170"
   },
   "games/flip7/e2e/game.spec.ts": {
-    "mtime": 1781507787.998552,
-    "ast_hash": "9c9af96a3595654e11d49afbde00a417",
-    "semantic_hash": "9c9af96a3595654e11d49afbde00a417"
+    "mtime": 1782665098.9267802,
+    "ast_hash": "1fc08d9223330ef41e19f58914c3e9f2",
+    "semantic_hash": ""
   },
   "games/flip7/package.json": {
     "mtime": 1776776479.6832902,
@@ -650,9 +650,9 @@
     "semantic_hash": "8ac8df6aa17c9a299b8190bc85c42dc1"
   },
   "games/imposter/e2e/game.spec.ts": {
-    "mtime": 1777839788.5731378,
-    "ast_hash": "9d0f46a988645ac95a314c5568240209",
-    "semantic_hash": "9d0f46a988645ac95a314c5568240209"
+    "mtime": 1782665589.720155,
+    "ast_hash": "7499df927f3b92204b333d98d703783b",
+    "semantic_hash": ""
   },
   "games/imposter/package.json": {
     "mtime": 1774974691.8234003,
@@ -840,9 +840,9 @@
     "semantic_hash": "1d2f4bede31df0716222eafac0cedcaf"
   },
   "games/scout/e2e/game.spec.ts": {
-    "mtime": 1781533976.2914805,
-    "ast_hash": "92b35f9d83c0f03dc3b701532346dfe6",
-    "semantic_hash": "92b35f9d83c0f03dc3b701532346dfe6"
+    "mtime": 1782665122.7742317,
+    "ast_hash": "54a70cb7b064836bfc19880dedd4ee24",
+    "semantic_hash": ""
   },
   "games/scout/package.json": {
     "mtime": 1779724295.4115162,
@@ -990,9 +990,9 @@
     "semantic_hash": "ebcd090ce8deb171fee27ee34fe2bf92"
   },
   "games/secret-signals/e2e/game.spec.ts": {
-    "mtime": 1777839788.6144352,
-    "ast_hash": "03b6c9167f716fd2d5cb6bace0e43569",
-    "semantic_hash": "03b6c9167f716fd2d5cb6bace0e43569"
+    "mtime": 1782665569.805564,
+    "ast_hash": "f3a33df7c1236f343beaf45e8b1f687a",
+    "semantic_hash": ""
   },
   "games/secret-signals/package.json": {
     "mtime": 1774974691.856692,
@@ -1185,8 +1185,8 @@
     "semantic_hash": ""
   },
   "apps/platform/e2e/home-library.spec.ts": {
-    "mtime": 1782661737.4879827,
-    "ast_hash": "314dad2b23da719f65ea180d7d559f86",
+    "mtime": 1782665160.6814058,
+    "ast_hash": "8b51fa0149771e81978c7c3fa7832db9",
     "semantic_hash": ""
   },
   "apps/platform/src/components/home/GameLibraryGrid.vue": {
@@ -1205,8 +1205,8 @@
     "semantic_hash": ""
   },
   "apps/platform/e2e/live-rooms.spec.ts": {
-    "mtime": 1782664251.4233432,
-    "ast_hash": "beef9c0a0049fe790582534fda8ef49b",
+    "mtime": 1782665923.9033966,
+    "ast_hash": "d9110d7d4343e58259bcc238c1b3bd82",
     "semantic_hash": ""
   },
   "apps/platform/server/observability/rateLimit.ts": {
@@ -1237,6 +1237,46 @@
   "apps/platform/src/stores/publicLobbies.ts": {
     "mtime": 1782663281.3298473,
     "ast_hash": "cb053c0eaccbfc71c386e73f6862460f",
+    "semantic_hash": ""
+  },
+  "apps/platform/__tests__/homeTabs.test.ts": {
+    "mtime": 1782665160.5990825,
+    "ast_hash": "05f4c14674bdf5e917e362a6bbaf2809",
+    "semantic_hash": ""
+  },
+  "apps/platform/e2e/home-tabs.spec.ts": {
+    "mtime": 1782665910.3112645,
+    "ast_hash": "d8c52f7af340dfc6b9abb347a5fd5731",
+    "semantic_hash": ""
+  },
+  "apps/platform/src/components/home/BrowseTabPanel.vue": {
+    "mtime": 1782665160.878564,
+    "ast_hash": "b80cae69ab3ccd167e7cf338e89d4736",
+    "semantic_hash": ""
+  },
+  "apps/platform/src/components/home/HomeTabBar.vue": {
+    "mtime": 1782665797.5707166,
+    "ast_hash": "e3545f1f964854452ea7d5b661f9c2ac",
+    "semantic_hash": ""
+  },
+  "apps/platform/src/components/home/HostTabPanel.vue": {
+    "mtime": 1782665160.9327395,
+    "ast_hash": "6f67886566fbf9a7b15cff06866dc6d0",
+    "semantic_hash": ""
+  },
+  "apps/platform/src/components/home/JoinTabPanel.vue": {
+    "mtime": 1782665160.9447396,
+    "ast_hash": "3a5afa7ecd105caf5b42b37fb083dfa9",
+    "semantic_hash": ""
+  },
+  "apps/platform/src/composables/useHomePartyActions.ts": {
+    "mtime": 1782665160.982121,
+    "ast_hash": "341bdcafc62d8ea0360c9e78853f4648",
+    "semantic_hash": ""
+  },
+  "apps/platform/src/composables/useHomeTabs.ts": {
+    "mtime": 1782665160.9901197,
+    "ast_hash": "2ffba4f72c803ed929bf0e893bb46982",
     "semantic_hash": ""
   }
 }

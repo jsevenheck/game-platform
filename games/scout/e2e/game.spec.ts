@@ -18,6 +18,7 @@ interface ScoutSession {
 
 async function createParty(page: Page, name: string): Promise<string> {
   await page.goto('/');
+  await page.getByRole('tab', { name: 'Host a Party' }).click();
   const form = page.locator('form');
   await form.getByLabel('Your Name').fill(name);
   await form.getByRole('button', { name: 'Create Party', exact: true }).click();
@@ -27,7 +28,7 @@ async function createParty(page: Page, name: string): Promise<string> {
 
 async function joinParty(page: Page, name: string, inviteCode: string): Promise<void> {
   await page.goto('/');
-  await page.getByRole('button', { name: 'Join Party', exact: true }).click();
+  await page.getByRole('tab', { name: 'Join with Code' }).click();
 
   const form = page.locator('form');
   await form.getByLabel('Your Name').fill(name);
