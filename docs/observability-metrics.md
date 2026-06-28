@@ -40,11 +40,12 @@ Metric names use the `platform_` prefix and Prometheus naming conventions (`_tot
 
 ### Party lifecycle
 
-| Metric                             | Type    | Labels                      | Description                                                                                                                                                 |
-| ---------------------------------- | ------- | --------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `platform_parties_active`          | Gauge   | _none_                      | Current number of active parties in memory.                                                                                                                 |
-| `platform_party_members_connected` | Gauge   | _none_                      | Current number of connected party members.                                                                                                                  |
-| `platform_party_lifecycle_total`   | Counter | `event`, `result`, `reason` | Unified party lifecycle counter. `event` values include `createParty`, `joinParty`, `resumeParty`, `launchGame`, `returnToLobby`, `selectGame`, and others. |
+| Metric                             | Type    | Labels                      | Description                                                                                                                                                                                                                                                                                                                                |
+| ---------------------------------- | ------- | --------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| `platform_parties_active`          | Gauge   | _none_                      | Current number of active parties in memory.                                                                                                                                                                                                                                                                                                |
+| `platform_party_members_connected` | Gauge   | _none_                      | Current number of connected party members.                                                                                                                                                                                                                                                                                                 |
+| `platform_public_lobbies`          | Gauge   | _none_                      | Current number of publicly listed joinable lobbies (host opt-in, lobby status, >0 connected members). Process-local/in-memory.                                                                                                                                                                                                             |
+| `platform_party_lifecycle_total`   | Counter | `event`, `result`, `reason` | Unified party lifecycle counter. `event` values include `createParty`, `joinParty`, `resumeParty`, `launchGame`, `returnToLobby`, `selectGame`, `setPartyPublic`, `listJoinableParties`, and others. `listJoinableParties` uses `reason='rate_limited'`; `setPartyPublic` uses `reason='not_host'`, `'stale_client'`, `'invalid_request'`. |
 
 ### Match/game lifecycle
 
@@ -65,8 +66,8 @@ Use these rules to avoid high-cardinality metrics that degrade Prometheus and Gr
 
 ### Allowed labels (low cardinality)
 
-- `game_id`: one of `blackout`, `imposter`, `secret-signals`, `flip7`
-- `namespace`: `/party`, `/g/blackout`, `/g/imposter`, `/g/secret-signals`, `/g/flip7`
+- `game_id`: one of `blackout`, `imposter`, `secret-signals`, `flip7`, `scout`
+- `namespace`: `/party`, `/g/blackout`, `/g/imposter`, `/g/secret-signals`, `/g/flip7`, `/g/scout`
 - `result`: bounded enums such as `ok`, `rejected`, `failed`, `unauthorized`
 - `reason` / `end_reason`: bounded enums controlled by server code
 - `status_class`: `2xx`, `3xx`, `4xx`, `5xx`
@@ -94,6 +95,10 @@ Never use these as metric labels:
 # HELP platform_parties_active Current number of active parties in this server process.
 # TYPE platform_parties_active gauge
 platform_parties_active 42
+
+# HELP platform_public_lobbies Current number of publicly listed joinable lobbies in this server process.
+# TYPE platform_public_lobbies gauge
+platform_public_lobbies 7
 
 # HELP platform_socket_events_total Total number of explicitly recorded namespace-level socket events.
 # TYPE platform_socket_events_total counter

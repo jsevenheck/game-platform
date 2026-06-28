@@ -5,6 +5,8 @@ export interface PlatformGameMeta {
   gradFrom: string;
   gradTo: string;
   description: string;
+  /** Short catalog/category label, e.g. "Social deduction". */
+  category?: string;
 }
 
 export interface PlatformGameModule {
@@ -31,6 +33,7 @@ export const clientGameRegistry: PlatformGameModule[] = [
       gradFrom: '#2d1b69',
       gradTo: '#120b2e',
       description: 'A word game of deception and darkness',
+      category: 'Word · Deception',
     },
     loadClient: () => import('@blackout-ui/PlatformAdapter.vue'),
   },
@@ -46,6 +49,7 @@ export const clientGameRegistry: PlatformGameModule[] = [
       gradFrom: '#5a0a1e',
       gradTo: '#1a0a10',
       description: 'Find the imposter among you',
+      category: 'Social deduction',
     },
     loadClient: () => import('@imposter-ui/PlatformAdapter.vue'),
   },
@@ -61,6 +65,7 @@ export const clientGameRegistry: PlatformGameModule[] = [
       gradFrom: '#063a4a',
       gradTo: '#051520',
       description: 'Decode the signals, outsmart your team',
+      category: 'Team · Strategy',
     },
     loadClient: () => import('@secret-signals-ui/PlatformAdapter.vue'),
   },
@@ -76,8 +81,25 @@ export const clientGameRegistry: PlatformGameModule[] = [
       gradFrom: '#3d2800',
       gradTo: '#1a1200',
       description: 'Race to flip exactly 7 — no more, no less',
+      category: 'Push your luck',
     },
     loadClient: () => import('@flip7-ui/PlatformAdapter.vue'),
+  },
+  {
+    definition: {
+      id: 'scout',
+      name: 'Scout',
+      minPlayers: 2,
+      maxPlayers: 5,
+    },
+    platformMeta: {
+      icon: '🎯',
+      gradFrom: '#065f46',
+      gradTo: '#022c22',
+      description: 'Outwit your friends in this ladder-climbing card trick game',
+      category: 'Card tactics',
+    },
+    loadClient: () => import('@scout-ui/PlatformAdapter.vue'),
   },
 ];
 

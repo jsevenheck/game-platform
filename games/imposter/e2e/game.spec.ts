@@ -4,6 +4,7 @@ import { test, expect, type Browser, type BrowserContext, type Page } from '@pla
 
 async function createParty(page: Page, name: string): Promise<string> {
   await page.goto('/');
+  await page.getByRole('tab', { name: 'Host a Party' }).click();
   await page.fill('#name', name);
   await page.click('button[type="submit"]');
   await page.waitForURL(/\/party\/[A-Z0-9]+/);
@@ -12,7 +13,7 @@ async function createParty(page: Page, name: string): Promise<string> {
 
 async function joinParty(page: Page, name: string, inviteCode: string): Promise<void> {
   await page.goto('/');
-  await page.getByRole('button', { name: 'Join Party' }).click();
+  await page.getByRole('tab', { name: 'Join with Code' }).click();
   await page.fill('#name', name);
   await page.fill('#code', inviteCode);
   await page.click('button[type="submit"]');
@@ -133,7 +134,7 @@ test.describe('Imposter via Platform', () => {
     const inviteCode = await createParty(hostPage, 'Host');
     // Try to join with the same name
     await joinPage.goto('/');
-    await joinPage.getByRole('button', { name: 'Join Party' }).click();
+    await joinPage.getByRole('tab', { name: 'Join with Code' }).click();
     await joinPage.fill('#name', 'Host');
     await joinPage.fill('#code', inviteCode);
     await joinPage.click('button[type="submit"]');

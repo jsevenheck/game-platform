@@ -7,6 +7,7 @@ defineProps<{
   playerId: string;
   playerName: string;
   namespace: string;
+  joinToken?: string;
   isHost?: boolean;
   onReplayGame?: () => void;
   onReturnToLobby?: () => void;

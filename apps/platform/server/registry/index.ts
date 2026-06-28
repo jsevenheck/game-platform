@@ -77,6 +77,22 @@ const flip7Module: GameServerModule = {
   cleanupMatch: flip7Cleanup,
 };
 
+// ─── Scout ────────────────────────────────────────────────────────────────────
+
+import {
+  definition as scoutDef,
+  register as scoutRegister,
+  cleanupMatch as scoutCleanup,
+} from '../../../../games/scout/server/src/index';
+
+const scoutModule: GameServerModule = {
+  definition: scoutDef,
+  registerServer(io: Server, namespacePath: string) {
+    scoutRegister(io, namespacePath);
+  },
+  cleanupMatch: scoutCleanup,
+};
+
 // ─── Registry ─────────────────────────────────────────────────────────────────
 
 export const gameRegistry = new Map<string, GameServerModule>([
@@ -84,6 +100,7 @@ export const gameRegistry = new Map<string, GameServerModule>([
   ['imposter', imposterModule],
   ['secret-signals', secretSignalsModule],
   ['flip7', flip7Module],
+  ['scout', scoutModule],
 ]);
 
 export function getGame(gameId: string): GameServerModule | undefined {

@@ -1,4 +1,6 @@
+import './env';
 import express from 'express';
+import cookieParser from 'cookie-parser';
 import { createServer } from 'http';
 import { Server } from 'socket.io';
 import { requestLogger } from './logging/requestLogger';
@@ -6,6 +8,7 @@ import { createComponentLogger, registerProcessLogging } from './logging/logger'
 import { registerPartyHandlers } from './party/partyHandlers';
 import { gameRegistry } from './registry/index';
 import { registerHttpRoutes } from './httpRoutes';
+import { registerAdminRoutes } from './admin';
 import { initializeMetrics, setActiveConnections } from './metrics/collectors';
 import { registerMetricsRoutes } from './metrics/httpMetrics';
 
@@ -14,6 +17,8 @@ const httpServer = createServer(app);
 const serverLogger = createComponentLogger('platform-server');
 
 registerProcessLogging(serverLogger);
+app.use(express.json());
+app.use(cookieParser());
 app.use(requestLogger);
 registerMetricsRoutes(app, serverLogger);
 
@@ -50,6 +55,7 @@ io.engine.on('connection', (engineSocket) => {
 registerPartyHandlers(io);
 serverLogger.info({ namespace: '/party' }, 'registered party namespace');
 
+registerAdminRoutes(app, io);
 registerHttpRoutes(app);
 
 httpServer.on('error', (error) => {

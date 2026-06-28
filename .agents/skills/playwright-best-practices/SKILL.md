@@ -290,6 +290,18 @@ What are you doing?
    └─ Project-specific filtering → core/test-tags.md, core/configuration.md
 ```
 
+## Project Patterns: Platform Game E2E
+
+When writing Playwright E2E tests for platform-integrated games in this repository:
+
+- Drive the real platform flow: create party → join party → launch game → game lobby/setup/gameplay/end state. Do not deep-link directly into game internals unless the test explicitly targets routing.
+- Use one `BrowserContext` per player to avoid shared storage/session state. Close all contexts in `finally` blocks.
+- Prefer accessible locators (`getByRole`, `getByLabel`) for platform forms and buttons. Use `exact: true` when duplicate labels like “Join Party” exist.
+- Add and use stable `data-testid` attributes for game-only visual elements that lack durable semantics (cards, rows, per-card values). Avoid class selectors and text coupled to styling.
+- Coordinate multi-user transitions with `Promise.all` when one action navigates multiple pages, and assert each page reaches the expected URL/state.
+- For card/deck games, add an explicit deterministic E2E mode (for example `E2E_TESTS=1`) with small scripted deals so tests can assert exact card values and reach game-over quickly. Ensure scripted hands are assigned from the resolved platform host, not join order.
+- Assert real terminal states instead of “prepared” UI branches when deterministic data makes the flow reachable.
+
 ## Test Validation Loop
 
 After writing or modifying tests:

@@ -1,6 +1,8 @@
 import { randomUUID } from 'crypto';
 import { createRequire } from 'module';
+import { Writable } from 'stream';
 import pino, { type Bindings, type Logger, type LoggerOptions } from 'pino';
+import { appendLogEntry } from './logBuffer';
 
 export interface LoggingConfig {
   level: string;
@@ -22,9 +24,11 @@ const ALWAYS_REDACT_PATHS = [
   'token',
   'joinToken',
   'resumeToken',
+  'csrfToken',
   '*.token',
   '*.joinToken',
   '*.resumeToken',
+  '*.csrfToken',
 ];
 
 // Operational join data — redacted in production where logs may be aggregated
@@ -69,6 +73,7 @@ export function buildLoggerOptions(config: LoggingConfig = readLoggingConfig()):
         host: bindings.hostname,
       }),
     },
+
     redact: {
       paths: config.production
         ? [...ALWAYS_REDACT_PATHS, ...PRODUCTION_REDACT_PATHS]
@@ -103,8 +108,39 @@ export function resolvePrettyTransportTarget(
   }
 }
 
+function createLogBufferStream(): Writable {
+  return new Writable({
+    write(chunk, _encoding, callback) {
+      const line = typeof chunk === 'string' ? chunk : chunk.toString();
+      try {
+        const entry = JSON.parse(line);
+        appendLogEntry({
+          timestamp: entry.time ? new Date(entry.time).toISOString() : new Date().toISOString(),
+          level: pino.levels.labels[entry.level] ?? 'info',
+          msg: typeof entry.msg === 'string' ? entry.msg : '',
+          component: typeof entry.component === 'string' ? entry.component : undefined,
+          namespace: typeof entry.namespace === 'string' ? entry.namespace : undefined,
+          requestId: typeof entry.requestId === 'string' ? entry.requestId : undefined,
+        });
+      } catch {
+        // Ignore non-JSON lines.
+      }
+      callback();
+    },
+  });
+}
+
 export function createRootLogger(config: LoggingConfig = readLoggingConfig()): Logger {
-  return pino(buildLoggerOptions(config));
+  const options = buildLoggerOptions(config);
+  const { transport, ...loggerOptions } = options;
+  const outputStream = transport ? pino.transport(transport) : pino.destination({ sync: false });
+
+  // Feed the admin in-memory log buffer from the redacted JSON stream in every
+  // mode, while the visible output can still be pretty-printed in development.
+  return pino(
+    loggerOptions,
+    pino.multistream([{ stream: outputStream }, { stream: createLogBufferStream() }])
+  );
 }
 
 export const logger = createRootLogger();

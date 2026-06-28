@@ -67,6 +67,18 @@ describe('math', () => {
 
 **DO NOT load all files at once.** Load only what's relevant to your current task.
 
+## Project Patterns: Socket.IO Game Unit Tests
+
+When testing platform game Socket.IO server modules in this repository:
+
+- Prefer lightweight in-process namespace/socket fakes for handler logic instead of starting a real Socket.IO server when transport behavior is not under test.
+- Mock a namespace with `use`, `on('connection')`, `to().emit`, and a `sockets` map; capture middleware and the connection handler so tests can call `connect(fakeSocket)` deterministically.
+- Fake sockets should expose `id`, `data`, `handshake.auth`, `join/leave/disconnect/emit` spies, and an `on()` method that stores handlers in `socket.handlers`. Invoke `socket.handlers.<event>(payload, cb)` directly for assertions.
+- For ack-based handlers, assert callbacks are called exactly once with `{ ok: ... }`. Also cover malformed payloads and missing-callback/no-callback paths when instrumentation depends on callback wrapping.
+- Build regression tests around lifecycle edge cases: host disconnect/reconnect, platform host changes, stale socket indexes, room deletion cleanup, and active-match authorization.
+- Reset global in-memory state in `afterEach` (`deleteRoom`/`clearAllParties`/mock cleanup). If a test mutates `process.env` (for deterministic E2E deals, timers, or feature flags), restore or delete the variable in `finally`.
+- When deterministic card/deck behavior is needed, assert the resolved host receives the scripted opening hand even if join order differs from host order.
+
 ## Cross-Skill References
 
 - **Vue component testing** → Use `vue` skill for component patterns

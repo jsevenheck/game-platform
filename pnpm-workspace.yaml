@@ -1,3 +1,11 @@
 packages:
   - 'apps/*'
   - 'games/*'
+
+allowBuilds:
+  better-sqlite3: true
+  esbuild: true
+
+minimumReleaseAgeExclude:
+  - '@vue/language-core@3.3.2'
+  - vue-tsc@3.3.2

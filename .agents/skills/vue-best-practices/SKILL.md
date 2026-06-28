@@ -102,6 +102,7 @@ Entry/root and route view rule:
 - Extract logic into composables when it is reused, stateful, or side-effect heavy.
 - Keep composable APIs small, typed, and predictable.
 - Separate feature logic from presentational components.
+- Make side-effect ownership explicit. If a composable creates a long-lived external resource such as a Socket.IO client, either return a typed cleanup/disconnect function or document that the owning component must clean it up; do not hide `onUnmounted()` cleanup in a composable when the resource lifetime is controlled by a parent component.
 
 ## 3) Consider optional features only when requirements call for them
 
@@ -139,7 +140,16 @@ Performance work is a post-functionality pass. Do not optimize before core behav
 - Over-abstraction in hot list paths -> [perf-avoid-component-abstraction-in-lists](references/perf-avoid-component-abstraction-in-lists.md)
 - Expensive updates triggered too often -> [updated-hook-performance](references/updated-hook-performance.md)
 
-## 5) Final self-check before finishing
+## 5) Project Patterns: Platform Game Vue UIs
+
+For game UIs embedded in this repository's platform:
+
+- `PlatformAdapter.vue` is the boundary with the platform. Keep its prop contract typed and forward platform-owned values (`matchKey` → `sessionId`, `namespace` → `wsNamespace`, `playerId`, `playerName`, optional `joinToken`, `isHost`, replay/return callbacks) to the game app.
+- Do not add standalone create/join flows inside game UIs. PlatformAdapter/App should assume lifecycle and navigation are owned by the platform party flow.
+- Socket composables should not automatically disconnect via hidden lifecycle hooks when the socket is assigned/managed in `App.vue`; perform `socket.disconnect()` in the owning component's `onBeforeUnmount()` or expose an explicit cleanup function.
+- Pass auth/session data through props and socket auth deliberately; never derive host authority solely from client-side props.
+
+## 6) Final self-check before finishing
 
 - Core behavior works and matches requirements.
 - All must-read references were read and applied.

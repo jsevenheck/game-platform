@@ -12,6 +12,7 @@ const socket = usePartySocket();
 
 const error = ref('');
 const launching = ref(false);
+const publicTogglePending = ref(false);
 
 const gameInProgress = computed(
   () => store.party?.status === 'in-match' && !!store.party?.activeMatch
@@ -69,6 +70,25 @@ function handleEndGame() {
   });
 }
 
+// Host opt-in to list this lobby publicly. No optimistic local mutation: we
+// wait for the resulting `partyUpdate` to update `store.party.isPublic`.
+function handlePublicToggle(event: Event) {
+  if (!store.isHost || !store.playerId) return;
+  const target = event.target as HTMLInputElement;
+  const isPublic = target.checked;
+  publicTogglePending.value = true;
+  error.value = '';
+  socket.emit('setPartyPublic', { playerId: store.playerId, isPublic }, (res) => {
+    publicTogglePending.value = false;
+    if (!res.ok) {
+      // Revert the checkbox to the authoritative store value.
+      target.checked = !!store.party?.isPublic;
+      error.value = res.error;
+    }
+    // On success, `partyUpdate` will update store.party.isPublic.
+  });
+}
+
 function handleLeave() {
   if (!store.playerId) return;
   socket.emit('leaveParty', { playerId: store.playerId });
@@ -92,6 +112,12 @@ function handlePartyUpdate(view: Parameters<typeof store.applyPartyUpdate>[0]) {
   if (view.status === 'returning' && store.playerId) {
     socket.emit('ackReturnedToLobby', { playerId: store.playerId });
   }
+}
+
+function handlePartyKicked(data: { reason: string }): void {
+  store.clearSession();
+  error.value = data.reason || 'You were removed from the party.';
+  router.push('/');
 }
 
 // Hoisted so it can be registered for reconnects as well as initial mount.
@@ -128,6 +154,7 @@ function doResume() {
 
 onMounted(() => {
   socket.on('partyUpdate', handlePartyUpdate);
+  socket.on('partyKicked', handlePartyKicked);
   // Re-bind to party on every reconnect (network drop → new socket ID on server)
   socket.on('connect', doResume);
 
@@ -144,6 +171,7 @@ onMounted(() => {
 
 onBeforeUnmount(() => {
   socket.off('partyUpdate', handlePartyUpdate);
+  socket.off('partyKicked', handlePartyKicked);
   socket.off('connect', doResume);
 });
 </script>
@@ -268,6 +296,23 @@ onBeforeUnmount(() => {
       <Transition name="fade">
         <p v-if="error" class="party-error" role="alert" aria-live="polite">{{ error }}</p>
       </Transition>
+
+      <!-- Host public-listing toggle -->
+      <label v-if="store.isHost && !gameInProgress" class="party-public-toggle">
+        <span class="party-public-toggle-row">
+          <input
+            type="checkbox"
+            :checked="!!store.party?.isPublic"
+            :disabled="publicTogglePending"
+            data-testid="party-public-toggle"
+            @change="handlePublicToggle"
+          />
+          <span>List this room publicly</span>
+        </span>
+        <span class="party-public-toggle-hint"
+          >Anyone on the home page can see and join this code.</span
+        >
+      </label>
 
       <!-- Launch button (host) -->
       <button
@@ -450,6 +495,41 @@ onBeforeUnmount(() => {
   border: 1px solid rgba(239, 68, 68, 0.2);
   border-radius: var(--radius-md);
   padding: 0.5rem 0.75rem;
+}
+
+/* ── Public listing toggle ── */
+.party-public-toggle {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+  padding: 0.75rem 0.875rem;
+  background: var(--color-panel);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  cursor: pointer;
+  user-select: none;
+}
+
+.party-public-toggle input {
+  width: 1rem;
+  height: 1rem;
+  accent-color: var(--color-accent);
+  cursor: pointer;
+}
+
+.party-public-toggle-row {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: var(--color-foreground);
+}
+
+.party-public-toggle-hint {
+  font-size: 0.72rem;
+  color: var(--color-muted-foreground);
+  line-height: 1.4;
 }
 
 /* ── Launch button ── */

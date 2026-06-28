@@ -157,6 +157,18 @@ function sendMessage(roomId, text) {
 - Forget to handle connection cleanup (presence records, room membership, in-flight timers)
 - Skip load testing before production — connection-count spikes behave differently from HTTP traffic spikes
 
+## Game Platform Socket.IO Patterns
+
+Apply these rules when implementing platform-integrated games in this repository:
+
+- Treat party state as the source of truth for host identity. Never trust a client-provided `isHost`; sync room host from the active party on join/reconnect/disconnect and before host-only actions.
+- Host reassignment must account for stale host ids. If `room.hostId` points at a disconnected/missing player, fall back to the first connected player; if no connected player exists, clear all `isHost` flags.
+- Host-only checks should verify the socket index, room code, player id, `player.connected === true`, and `player.socketId === socket.id` after re-syncing host state.
+- Type Socket.IO handler input as `unknown` and validate payload shape before reading fields. Normalize required strings, validate enums/booleans/integers, and return `{ ok: false, error: 'Invalid request' }` for malformed payloads.
+- Socket acknowledgments are optional. Wrap callbacks through instrumentation even when the client did not provide an ack by using a safe no-op callback; this keeps no-callback events visible in metrics.
+- Do not `throw` from socket event handlers for expected request failures. Finish instrumentation and respond/log with a sanitized error instead.
+- On room deletion or cleanup, remove socket indexes/session mappings in addition to room state so stale sockets cannot pass later authorization checks.
+
 ## Output Templates
 
 When implementing WebSocket features, provide:

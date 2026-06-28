@@ -9,6 +9,9 @@ import {
   schedulePartyCleanup,
   clearPartyCleanup,
   partyToView,
+  setPartyPublic,
+  connectedMemberCount,
+  isJoinablePublicParty,
 } from '../server/party/partyStore';
 
 vi.mock('nanoid', () => {
@@ -151,6 +154,66 @@ describe('partyStore', () => {
       vi.advanceTimersByTime(30 * 60 * 1000 + 1);
 
       expect(getParty(partyId)).toBeDefined();
+    });
+  });
+
+  // ────────────────────────────────────────────────────────────────
+  // Public listing helpers
+  // ────────────────────────────────────────────────────────────────
+  describe('public listing', () => {
+    it('new party defaults to private with null publicListedAt', () => {
+      const { party } = createTestParty();
+      expect(party.isPublic).toBe(false);
+      expect(party.publicListedAt).toBeNull();
+      expect(partyToView(party).isPublic).toBe(false);
+      expect(partyToView(party).publicListedAt).toBeNull();
+    });
+
+    it('setPartyPublic(true) sets a timestamp; setPartyPublic(false) clears it', () => {
+      const { party } = createTestParty();
+      setPartyPublic(party, true);
+      expect(party.isPublic).toBe(true);
+      expect(party.publicListedAt).toBeTypeOf('number');
+      const ts = party.publicListedAt!;
+      setPartyPublic(party, false);
+      expect(party.isPublic).toBe(false);
+      expect(party.publicListedAt).toBeNull();
+      // Re-listing updates the timestamp.
+      setPartyPublic(party, true);
+      expect(party.publicListedAt!).toBeGreaterThanOrEqual(ts);
+    });
+
+    it('setPartyPublic is a no-op when the value is unchanged', () => {
+      const { party } = createTestParty();
+      setPartyPublic(party, true);
+      const ts = party.publicListedAt!;
+      setPartyPublic(party, true);
+      expect(party.publicListedAt).toBe(ts);
+    });
+
+    it('isJoinablePublicParty requires opt-in, lobby status, and connected members', () => {
+      const { party } = createTestParty();
+      // Private lobby with a connected host: not joinable.
+      expect(isJoinablePublicParty(party)).toBe(false);
+
+      setPartyPublic(party, true);
+      expect(isJoinablePublicParty(party)).toBe(true);
+
+      // No connected members: not joinable.
+      party.members.get('player-1')!.connected = false;
+      expect(isJoinablePublicParty(party)).toBe(false);
+
+      // Back online but not in lobby: not joinable.
+      party.members.get('player-1')!.connected = true;
+      party.status = 'in-match';
+      expect(isJoinablePublicParty(party)).toBe(false);
+    });
+
+    it('connectedMemberCount counts only connected members', () => {
+      const { party } = createTestParty();
+      expect(connectedMemberCount(party)).toBe(1);
+      party.members.get('player-1')!.connected = false;
+      expect(connectedMemberCount(party)).toBe(0);
     });
   });
 });

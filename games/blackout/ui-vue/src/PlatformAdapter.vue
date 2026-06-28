@@ -14,6 +14,7 @@ defineProps<{
   playerId: string;
   playerName: string;
   namespace: string;
+  joinToken?: string;
   isHost?: boolean;
   onReplayGame?: () => void;
   onReturnToLobby?: () => void;
@@ -36,6 +37,7 @@ function onPhaseChange(phase: string) {
       :player-name="playerName"
       :session-id="matchKey"
       :ws-namespace="namespace"
+      :join-token="joinToken"
       :is-host="isHost"
       @phase-change="onPhaseChange"
     />

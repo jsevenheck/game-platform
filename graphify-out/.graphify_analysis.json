@@ -1,0 +1,2017 @@
+{
+  "communities": {
+    "0": [
+      "data_words",
+      "data_words_word_list",
+      "games_secret_signals_core_src_constants_ts_src_constants",
+      "games_secret_signals_core_src_events_ts_src_events",
+      "games_secret_signals_core_src_events_ts_src_events_clienttoserverevents",
+      "games_secret_signals_core_src_events_ts_src_events_servertoclientevents",
+      "games_secret_signals_core_src_types_ts_src_types",
+      "games_secret_signals_core_src_types_ts_src_types_phase",
+      "games_secret_signals_core_src_types_ts_src_types_player",
+      "games_secret_signals_core_src_types_ts_src_types_playerview",
+      "games_secret_signals_core_src_types_ts_src_types_room",
+      "games_secret_signals_core_src_types_ts_src_types_roomview",
+      "games_secret_signals_core_src_types_ts_src_types_storedsession",
+      "games_secret_signals_server_src_handlers_sockethandlers_ts_handlers_sockethandlers",
+      "games_secret_signals_server_src_handlers_sockethandlers_ts_handlers_sockethandlers_gamesocket",
+      "games_secret_signals_server_src_handlers_sockethandlers_ts_handlers_sockethandlers_removeplayerfromroom",
+      "games_secret_signals_server_src_handlers_sockethandlers_ts_handlers_sockethandlers_verifyplayer",
+      "games_secret_signals_server_src_managers_broadcastmanager_ts_managers_broadcastmanager",
+      "games_secret_signals_server_src_managers_broadcastmanager_ts_managers_broadcastmanager_broadcastroom",
+      "games_secret_signals_server_src_managers_broadcastmanager_ts_managers_broadcastmanager_gamenamespace",
+      "games_secret_signals_server_src_managers_broadcastmanager_ts_managers_broadcastmanager_sendroomtoplayer",
+      "games_secret_signals_server_src_managers_broadcastmanager_ts_managers_broadcastmanager_toroomview",
+      "games_secret_signals_server_src_managers_phasemanager_ts_managers_phasemanager",
+      "games_secret_signals_server_src_managers_phasemanager_ts_managers_phasemanager_transitiontoended",
+      "games_secret_signals_server_src_managers_phasemanager_ts_managers_phasemanager_transitiontolobby",
+      "games_secret_signals_server_src_managers_phasemanager_ts_managers_phasemanager_transitiontoplaying",
+      "games_secret_signals_tests_phasemanager_test_ts_tests_phasemanager_test",
+      "games_secret_signals_tests_phasemanager_test_ts_tests_phasemanager_test_makeroom",
+      "games_secret_signals_ui_vue_src_stores_game_ts_stores_game",
+      "games_secret_signals_ui_vue_src_stores_game_ts_stores_game_usegamestore",
+      "handlers_sockethandlers_addlogentry",
+      "handlers_sockethandlers_reassignhost",
+      "lib_teamtheme",
+      "lib_teamtheme_card_hex_by_type",
+      "lib_teamtheme_getcardtexthex",
+      "managers_boardmanager",
+      "managers_boardmanager_generateboard",
+      "managers_phasemanager_validateteamsetup",
+      "managers_turnmanager",
+      "managers_turnmanager_advancetonextteam",
+      "managers_turnmanager_checkwincondition",
+      "managers_turnmanager_clearfocusedcard",
+      "managers_turnmanager_clearfocusedcardatindex",
+      "managers_turnmanager_givesignal",
+      "managers_turnmanager_guessresult",
+      "managers_turnmanager_outcometoendreason",
+      "managers_turnmanager_processguess",
+      "src_constants_getactiveteamcolors",
+      "src_constants_getcarddistribution",
+      "src_constants_getminimumplayersforteamcount",
+      "src_constants_legacy_card_distribution",
+      "src_constants_team_colors",
+      "src_constants_team_hex_by_color",
+      "src_constants_team_name_by_color",
+      "src_constants_team_text_hex_by_color",
+      "src_types_assassinpenaltymode",
+      "src_types_card",
+      "src_types_cardtype",
+      "src_types_cardview",
+      "src_types_focusmarker",
+      "src_types_logentry",
+      "src_types_playerrole",
+      "src_types_signal",
+      "src_types_teamcolor",
+      "src_types_teamconfig",
+      "src_types_turnphase",
+      "tests_boardmanager_test",
+      "tests_turnmanager_test",
+      "tests_turnmanager_test_findcardindex",
+      "tests_turnmanager_test_makeplayingroom"
+    ],
+    "1": [
+      "games_flip7_core_src_constants_ts_src_constants",
+      "games_flip7_core_src_deck_ts_src_deck",
+      "games_flip7_core_src_deck_ts_src_deck_builddeck",
+      "games_flip7_core_src_types_ts_src_types",
+      "games_flip7_core_src_types_ts_src_types_phase",
+      "games_flip7_core_src_types_ts_src_types_player",
+      "games_flip7_core_src_types_ts_src_types_room",
+      "games_flip7_core_src_types_ts_src_types_roomview",
+      "games_flip7_core_src_types_ts_src_types_roundview",
+      "games_flip7_core_src_types_ts_src_types_storedsession",
+      "games_flip7_server_src_managers_roundmanager_ts_managers_roundmanager",
+      "games_flip7_server_src_managers_roundmanager_ts_managers_roundmanager_finalizeround",
+      "games_flip7_server_src_managers_scoremanager_ts_managers_scoremanager",
+      "games_flip7_server_src_sockethandlers_ts_src_sockethandlers",
+      "games_flip7_server_src_sockethandlers_ts_src_sockethandlers_assignhost",
+      "games_flip7_server_src_sockethandlers_ts_src_sockethandlers_bindplayertosocket",
+      "games_flip7_server_src_sockethandlers_ts_src_sockethandlers_detachindexedsocket",
+      "games_flip7_server_src_sockethandlers_ts_src_sockethandlers_normalizestableplayerid",
+      "games_flip7_server_src_sockethandlers_ts_src_sockethandlers_verifyishost",
+      "games_flip7_server_src_sockethandlers_ts_src_sockethandlers_verifyplayerinroom",
+      "games_flip7_tests_deck_test_ts_tests_deck_test",
+      "games_flip7_tests_roundmanager_test_ts_tests_roundmanager_test",
+      "games_flip7_tests_roundmanager_test_ts_tests_roundmanager_test_makeroom",
+      "games_flip7_tests_scoremanager_test_ts_tests_scoremanager_test",
+      "managers_deckmanager",
+      "managers_deckmanager_draw",
+      "managers_deckmanager_reshufflefromdiscard",
+      "managers_deckmanager_shuffle",
+      "managers_roundmanager_advanceturnorfinalize",
+      "managers_roundmanager_applynumbercard",
+      "managers_roundmanager_builde2edeck",
+      "managers_roundmanager_chooseactiontarget",
+      "managers_roundmanager_computewinners",
+      "managers_roundmanager_continueinitialdeal",
+      "managers_roundmanager_getactiveplayers",
+      "managers_roundmanager_getcurrentturnplayer",
+      "managers_roundmanager_getnextactiveindex",
+      "managers_roundmanager_openpendingaction",
+      "managers_roundmanager_playerhit",
+      "managers_roundmanager_playerneedsinitialcard",
+      "managers_roundmanager_playerstay",
+      "managers_roundmanager_popresolvedaction",
+      "managers_roundmanager_processflipthreedraw",
+      "managers_roundmanager_resolveaction",
+      "managers_roundmanager_resolvedactionrecord",
+      "managers_roundmanager_resolvedactions",
+      "managers_roundmanager_startround",
+      "managers_scoremanager_calculateplayerroundscore",
+      "src_constants_modifier_add_values",
+      "src_deck_actioncard",
+      "src_deck_card",
+      "src_deck_modifieradd",
+      "src_deck_modifierx2",
+      "src_deck_numbercard",
+      "src_sockethandlers_flip7socket",
+      "src_types_deferredaction",
+      "src_types_pendingaction",
+      "src_types_pendingactionview",
+      "src_types_roundhistoryentry",
+      "src_types_roundphase",
+      "src_types_roundplayer",
+      "src_types_roundplayerstatus",
+      "src_types_roundstate",
+      "tests_roundmanager_test_injectdeck",
+      "tests_roundmanager_test_startroundready",
+      "tests_scoremanager_test_makeroundplayer"
+    ],
+    "2": [
+      "apps_platform_src_main_ts_src_main",
+      "apps_platform_src_main_ts_src_main_app",
+      "router_index",
+      "router_index_router",
+      "views_adminview",
+      "views_adminview_actionmessage",
+      "views_adminview_autorefresh",
+      "views_adminview_buildqueryparams",
+      "views_adminview_componentfilter",
+      "views_adminview_errormessage",
+      "views_adminview_filteredlogs",
+      "views_adminview_formatstartedat",
+      "views_adminview_if",
+      "views_adminview_kickingplayerid",
+      "views_adminview_levelbadgeclass",
+      "views_adminview_levelfilter",
+      "views_adminview_loadinglogs",
+      "views_adminview_loadingparties",
+      "views_adminview_memberstatusclass",
+      "views_adminview_searchquery",
+      "views_adminview_selectedparty",
+      "views_adminview_statusbadgeclass",
+      "views_adminview_uniquelevels",
+      "views_gameview",
+      "views_gameview_handlepartykicked",
+      "views_gameview_handlepartyupdate",
+      "views_gameview_onleavegame",
+      "views_gameview_onreplaygame",
+      "views_gameview_onreturntolobby",
+      "views_gameview_resumepartybinding",
+      "views_homeview",
+      "views_partyview"
+    ],
+    "3": [
+      "composables_usepartysocket",
+      "composables_usepartysocket_disconnectpartysocket",
+      "composables_usepartysocket_partyclienttoserverevents",
+      "composables_usepartysocket_partyservertoclientevents",
+      "composables_usepartysocket_partysocket",
+      "composables_usesocket_blackoutsocket",
+      "composables_usesocket_flip7socket",
+      "composables_usesocket_scoutsocket",
+      "games_blackout_ui_vue_src_composables_usesocket_ts_composables_usesocket_normalizenamespace",
+      "games_blackout_ui_vue_src_composables_usesocket_ts_composables_usesocket_resolvesocketurl",
+      "games_flip7_ui_vue_src_composables_usesocket_ts_composables_usesocket",
+      "games_flip7_ui_vue_src_composables_usesocket_ts_composables_usesocket_normalizenamespace",
+      "games_flip7_ui_vue_src_composables_usesocket_ts_composables_usesocket_resolvesocketurl",
+      "games_flip7_ui_vue_src_composables_usesocket_ts_composables_usesocket_usesocket",
+      "games_imposter_ui_vue_src_composables_usesocket_ts_composables_usesocket",
+      "games_imposter_ui_vue_src_composables_usesocket_ts_composables_usesocket_gamesocket",
+      "games_imposter_ui_vue_src_composables_usesocket_ts_composables_usesocket_usesocket",
+      "games_scout_ui_vue_src_composables_usesocket_ts_composables_usesocket",
+      "games_scout_ui_vue_src_composables_usesocket_ts_composables_usesocket_normalizenamespace",
+      "games_scout_ui_vue_src_composables_usesocket_ts_composables_usesocket_resolvesocketurl",
+      "games_scout_ui_vue_src_composables_usesocket_ts_composables_usesocket_usesocket",
+      "games_secret_signals_ui_vue_src_composables_usesocket_ts_composables_usesocket",
+      "games_secret_signals_ui_vue_src_composables_usesocket_ts_composables_usesocket_gamesocket",
+      "games_secret_signals_ui_vue_src_composables_usesocket_ts_composables_usesocket_usesocket",
+      "server_index_io",
+      "stores_party",
+      "stores_party_partymatchview",
+      "stores_party_partymemberview",
+      "stores_party_partystatus",
+      "stores_party_partyview",
+      "stores_party_persistedsession",
+      "stores_party_usepartystore"
+    ],
+    "4": [
+      "package_devdependencies",
+      "package_devdependencies_concurrently",
+      "package_devdependencies_eslint",
+      "package_devdependencies_eslint_config_prettier",
+      "package_devdependencies_eslint_js",
+      "package_devdependencies_eslint_plugin_prettier",
+      "package_devdependencies_eslint_plugin_vue",
+      "package_devdependencies_pinia",
+      "package_devdependencies_pino_pretty",
+      "package_devdependencies_playwright_test",
+      "package_devdependencies_prettier",
+      "package_devdependencies_socket_io_client",
+      "package_devdependencies_tailwindcss",
+      "package_devdependencies_tailwindcss_vite",
+      "package_devdependencies_tsx",
+      "package_devdependencies_types_better_sqlite3",
+      "package_devdependencies_types_cookie_parser",
+      "package_devdependencies_types_express",
+      "package_devdependencies_types_jsonwebtoken",
+      "package_devdependencies_types_node",
+      "package_devdependencies_typescript",
+      "package_devdependencies_typescript_eslint",
+      "package_devdependencies_vite",
+      "package_devdependencies_vitejs_plugin_vue",
+      "package_devdependencies_vitest",
+      "package_devdependencies_vue",
+      "package_devdependencies_vue_eslint_parser",
+      "package_devdependencies_vue_tsc"
+    ],
+    "5": [
+      "platform_package",
+      "platform_package_dependencies",
+      "platform_package_dependencies_pinia",
+      "platform_package_dependencies_vue",
+      "platform_package_dependencies_vue_router",
+      "platform_package_devdependencies",
+      "platform_package_devdependencies_concurrently",
+      "platform_package_devdependencies_socket_io_client",
+      "platform_package_devdependencies_tsx",
+      "platform_package_devdependencies_types_express",
+      "platform_package_devdependencies_types_node",
+      "platform_package_devdependencies_typescript",
+      "platform_package_devdependencies_vite",
+      "platform_package_devdependencies_vitejs_plugin_vue",
+      "platform_package_devdependencies_vue_tsc",
+      "platform_package_name",
+      "platform_package_private",
+      "platform_package_scripts",
+      "platform_package_scripts_build",
+      "platform_package_scripts_build_client",
+      "platform_package_scripts_build_server",
+      "platform_package_scripts_dev",
+      "platform_package_scripts_dev_client",
+      "platform_package_scripts_dev_server",
+      "platform_package_scripts_lint",
+      "platform_package_scripts_start",
+      "platform_package_scripts_typecheck",
+      "platform_package_version"
+    ],
+    "6": [
+      "games_scout_server_src_sockethandlers_ts_src_sockethandlers",
+      "games_scout_server_src_sockethandlers_ts_src_sockethandlers_assignhost",
+      "games_scout_server_src_sockethandlers_ts_src_sockethandlers_bindplayertosocket",
+      "games_scout_server_src_sockethandlers_ts_src_sockethandlers_detachindexedsocket",
+      "games_scout_server_src_sockethandlers_ts_src_sockethandlers_normalizestableplayerid",
+      "games_scout_server_src_sockethandlers_ts_src_sockethandlers_verifyishost",
+      "games_scout_server_src_sockethandlers_ts_src_sockethandlers_verifyplayerinroom",
+      "managers_trickmanager_flipplayerrow",
+      "models_room_getroomsession",
+      "party_partystore_getpartybyactivematch",
+      "src_sockethandlers_authorizepartyjoin",
+      "src_sockethandlers_callbackerrormessage",
+      "src_sockethandlers_clearhost",
+      "src_sockethandlers_createinstrumentedresponder",
+      "src_sockethandlers_isconnectedplayer",
+      "src_sockethandlers_isobjectpayload",
+      "src_sockethandlers_isscoutside",
+      "src_sockethandlers_isscoutsource",
+      "src_sockethandlers_normalizejointoken",
+      "src_sockethandlers_normalizerequiredstring",
+      "src_sockethandlers_restorehosttofirstconnectedplayer",
+      "src_sockethandlers_scoutside",
+      "src_sockethandlers_scoutsocket",
+      "src_sockethandlers_scoutsource",
+      "src_sockethandlers_syncroomhostafterjoin",
+      "src_sockethandlers_syncroomhostfromactiveparty",
+      "src_sockethandlers_syncroomhostfromparty"
+    ],
+    "7": [
+      "logging_logbuffer",
+      "logging_logbuffer_bufferedlogentry",
+      "logging_logbuffer_getrecentlogs",
+      "server_admin",
+      "server_admin_adminjwtpayload",
+      "server_admin_adminlogger",
+      "server_admin_authenticateadmin",
+      "server_admin_checkloginratelimit",
+      "server_admin_checkratelimit",
+      "server_admin_clearadmincookies",
+      "server_admin_getadmintokenfromcookie",
+      "server_admin_getcsrftokenfromrequest",
+      "server_admin_isadminenabled",
+      "server_admin_isadminjwtpayload",
+      "server_admin_kickpartymemberresult",
+      "server_admin_loginratelimitmap",
+      "server_admin_pruneexpiredratelimitentries",
+      "server_admin_ratelimitmap",
+      "server_admin_ratelimitpruneinterval",
+      "server_admin_ratelimitrecord",
+      "server_admin_readadminpasswordhash",
+      "server_admin_readadminusername",
+      "server_admin_readjwtsecret",
+      "server_admin_requireadmincsrf",
+      "server_admin_setadmincookies",
+      "server_admin_signadminjwt",
+      "server_admin_verifyadminjwt"
+    ],
+    "8": [
+      "managers_trickmanager",
+      "managers_trickmanager_activeplayercount",
+      "managers_trickmanager_advanceturn",
+      "managers_trickmanager_beginfirsttrickifready",
+      "managers_trickmanager_builde2edeck",
+      "managers_trickmanager_collectcardsfromtrick",
+      "managers_trickmanager_computescore",
+      "managers_trickmanager_currentturnplayerid",
+      "managers_trickmanager_findnextactiveturnindex",
+      "managers_trickmanager_finishgame",
+      "managers_trickmanager_firstavailableturnindex",
+      "managers_trickmanager_hand_sizes",
+      "managers_trickmanager_handleplayerdisconnected",
+      "managers_trickmanager_isavailableforturn",
+      "managers_trickmanager_keepplayerrow",
+      "managers_trickmanager_passandscout",
+      "managers_trickmanager_playcards",
+      "managers_trickmanager_playerorderstartingfrom",
+      "managers_trickmanager_resettolobby",
+      "managers_trickmanager_resolvetrick",
+      "managers_trickmanager_shuffle",
+      "managers_trickmanager_skipdisconnectedcurrentturn",
+      "managers_trickmanager_startgame",
+      "managers_trickmanager_starttrick",
+      "tests_trickmanager_test_card",
+      "tests_trickmanager_test_room"
+    ],
+    "9": [
+      "games_blackout_server_src_managers_broadcastmanager_ts_managers_broadcastmanager",
+      "games_blackout_server_src_managers_broadcastmanager_ts_managers_broadcastmanager_broadcastroom",
+      "games_blackout_server_src_managers_broadcastmanager_ts_managers_broadcastmanager_sendroomtoplayer",
+      "games_blackout_server_src_managers_broadcastmanager_ts_managers_broadcastmanager_toroomview",
+      "games_blackout_server_src_managers_broadcastmanager_ts_managers_broadcastmanager_toroundview",
+      "games_flip7_core_src_events_ts_src_events",
+      "games_flip7_core_src_events_ts_src_events_autojoinroomdata",
+      "games_flip7_core_src_events_ts_src_events_autojoinroomresponse",
+      "games_flip7_core_src_events_ts_src_events_clienttoserverevents",
+      "games_flip7_core_src_events_ts_src_events_errorresponse",
+      "games_flip7_core_src_events_ts_src_events_servertoclientevents",
+      "games_flip7_core_src_types_ts_src_types_playerview",
+      "games_flip7_server_src_managers_broadcastmanager_ts_managers_broadcastmanager",
+      "games_flip7_server_src_managers_broadcastmanager_ts_managers_broadcastmanager_broadcastroom",
+      "games_flip7_server_src_managers_broadcastmanager_ts_managers_broadcastmanager_sendroomtoplayer",
+      "games_flip7_server_src_managers_broadcastmanager_ts_managers_broadcastmanager_toroomview",
+      "games_flip7_server_src_managers_broadcastmanager_ts_managers_broadcastmanager_toroundview",
+      "managers_broadcastmanager_blackoutnamespace",
+      "managers_broadcastmanager_broadcastactionresolved",
+      "managers_broadcastmanager_flip7namespace",
+      "src_events_actionresolvedevent"
+    ],
+    "10": [
+      "games_blackout_server_src_managers_roundmanager_ts_managers_roundmanager",
+      "games_blackout_server_src_managers_roundmanager_ts_managers_roundmanager_finalizeround",
+      "games_blackout_server_src_sockethandlers_ts_src_sockethandlers",
+      "games_blackout_server_src_sockethandlers_ts_src_sockethandlers_bindplayertosocket",
+      "games_blackout_server_src_sockethandlers_ts_src_sockethandlers_detachindexedsocket",
+      "games_blackout_server_src_sockethandlers_ts_src_sockethandlers_normalizestableplayerid",
+      "games_blackout_tests_roundmanager_test_ts_tests_roundmanager_test",
+      "games_blackout_tests_roundmanager_test_ts_tests_roundmanager_test_makeroom",
+      "managers_categorymanager_getunusedprompt",
+      "managers_roundmanager_getnextreader",
+      "managers_roundmanager_getrandomreader",
+      "managers_roundmanager_islastround",
+      "managers_roundmanager_rerollcurrentprompt",
+      "managers_roundmanager_revealcategory",
+      "managers_roundmanager_selectwinner",
+      "managers_roundmanager_startnewround",
+      "src_sockethandlers_blackoutsocket",
+      "src_sockethandlers_islanguage",
+      "src_sockethandlers_normalizeexcludedletters",
+      "src_sockethandlers_verifyplayer",
+      "tests_roundmanager_test_mockedgetunusedprompt"
+    ],
+    "11": [
+      "games_scout_server_src_models_player_ts_models_player",
+      "games_scout_server_src_models_player_ts_models_player_createplayer",
+      "games_scout_server_src_models_player_ts_models_player_deletesocketindex",
+      "games_scout_server_src_models_player_ts_models_player_getsocketindex",
+      "games_scout_server_src_models_player_ts_models_player_setsocketindex",
+      "games_scout_server_src_models_player_ts_models_player_socketindex",
+      "games_scout_server_src_models_room_ts_models_room",
+      "games_scout_server_src_models_room_ts_models_room_cleanupinterval",
+      "games_scout_server_src_models_room_ts_models_room_clearroomcleanup",
+      "games_scout_server_src_models_room_ts_models_room_createroom",
+      "games_scout_server_src_models_room_ts_models_room_deleteroom",
+      "games_scout_server_src_models_room_ts_models_room_generateroomcode",
+      "games_scout_server_src_models_room_ts_models_room_getallrooms",
+      "games_scout_server_src_models_room_ts_models_room_getroom",
+      "games_scout_server_src_models_room_ts_models_room_getsessionroom",
+      "games_scout_server_src_models_room_ts_models_room_rooms",
+      "games_scout_server_src_models_room_ts_models_room_roomtimers",
+      "games_scout_server_src_models_room_ts_models_room_scheduleroomcleanup",
+      "games_scout_server_src_models_room_ts_models_room_sessiontoroom",
+      "games_scout_server_src_models_room_ts_models_room_setsessiontoroom",
+      "models_player_deletesocketindexesforroom"
+    ],
+    "12": [
+      "logging_logger_tologgableerror",
+      "party_partyhandlers",
+      "party_partyhandlers_broadcastparty",
+      "party_partyhandlers_connectedmembercount",
+      "party_partyhandlers_partyclienttoserverevents",
+      "party_partyhandlers_partyservertoclientevents",
+      "party_partyhandlers_partysocket",
+      "party_partyhandlers_schedulereturncleanup",
+      "party_partystore_clearmatchtimeout",
+      "party_partystore_clearpartycleanup",
+      "party_partystore_deleteparty",
+      "party_partystore_getpartybysocket",
+      "party_partystore_partytoview",
+      "party_partystore_registersocket",
+      "party_partystore_schedulematchtimeout",
+      "party_partystore_schedulepartycleanup",
+      "registry_index_getgame",
+      "server_admin_choosenexthost",
+      "server_admin_cleanupactivematch",
+      "server_admin_disconnectactivematchsockets",
+      "server_admin_kickpartymember"
+    ],
+    "13": [
+      "games_imposter_server_src_handlers_sockethandlers_ts_handlers_sockethandlers",
+      "games_imposter_server_src_handlers_sockethandlers_ts_handlers_sockethandlers_gamesocket",
+      "games_imposter_server_src_handlers_sockethandlers_ts_handlers_sockethandlers_removeplayerfromroom",
+      "games_imposter_server_src_handlers_sockethandlers_ts_handlers_sockethandlers_verifyplayer",
+      "games_imposter_server_src_index_ts_src_index",
+      "games_imposter_server_src_index_ts_src_index_cleanupmatch",
+      "games_imposter_server_src_index_ts_src_index_definition",
+      "games_imposter_server_src_index_ts_src_index_gamelogger",
+      "games_imposter_server_src_index_ts_src_index_handler",
+      "games_imposter_server_src_index_ts_src_index_register",
+      "handlers_sockethandlers_cleardiscussiontimer",
+      "handlers_sockethandlers_clearguesstimer",
+      "handlers_sockethandlers_clearroomtimers",
+      "handlers_sockethandlers_discussiontimers",
+      "handlers_sockethandlers_guesstimers",
+      "handlers_sockethandlers_handlevoluntarydisconnect",
+      "handlers_sockethandlers_reassignhostafterdeparture",
+      "handlers_sockethandlers_restoreownerashost",
+      "managers_gamemanager_startvoting",
+      "models_room_sethost"
+    ],
+    "14": [
+      "e2e_game_spec_cardplayvalues",
+      "e2e_game_spec_cardscoutvalues",
+      "e2e_game_spec_closesession",
+      "e2e_game_spec_confirmsetupkeep",
+      "e2e_game_spec_createtwoplayerscoutsession",
+      "e2e_game_spec_hoststartsfromlobby",
+      "e2e_game_spec_ismyturn",
+      "e2e_game_spec_launchscout",
+      "e2e_game_spec_playerrow",
+      "e2e_game_spec_playselectedrowcards",
+      "e2e_game_spec_scoutfromshowpile",
+      "e2e_game_spec_scoutsession",
+      "e2e_game_spec_startscoutandcompletesetup",
+      "e2e_game_spec_waitforgametable",
+      "e2e_game_spec_waitforscoutlobby",
+      "e2e_game_spec_waitforsetup",
+      "games_scout_e2e_game_spec_ts_e2e_game_spec",
+      "games_scout_e2e_game_spec_ts_e2e_game_spec_createparty",
+      "games_scout_e2e_game_spec_ts_e2e_game_spec_joinparty"
+    ],
+    "15": [
+      "games_blackout_ui_vue_tsconfig_json_ui_vue_tsconfig",
+      "games_blackout_ui_vue_tsconfig_json_ui_vue_tsconfig_compileroptions",
+      "games_blackout_ui_vue_tsconfig_json_ui_vue_tsconfig_compileroptions_baseurl",
+      "games_blackout_ui_vue_tsconfig_json_ui_vue_tsconfig_compileroptions_esmoduleinterop",
+      "games_blackout_ui_vue_tsconfig_json_ui_vue_tsconfig_compileroptions_forceconsistentcasinginfilenames",
+      "games_blackout_ui_vue_tsconfig_json_ui_vue_tsconfig_compileroptions_isolatedmodules",
+      "games_blackout_ui_vue_tsconfig_json_ui_vue_tsconfig_compileroptions_jsx",
+      "games_blackout_ui_vue_tsconfig_json_ui_vue_tsconfig_compileroptions_lib",
+      "games_blackout_ui_vue_tsconfig_json_ui_vue_tsconfig_compileroptions_module",
+      "games_blackout_ui_vue_tsconfig_json_ui_vue_tsconfig_compileroptions_moduleresolution",
+      "games_blackout_ui_vue_tsconfig_json_ui_vue_tsconfig_compileroptions_noemit",
+      "games_blackout_ui_vue_tsconfig_json_ui_vue_tsconfig_compileroptions_paths",
+      "games_blackout_ui_vue_tsconfig_json_ui_vue_tsconfig_compileroptions_resolvejsonmodule",
+      "games_blackout_ui_vue_tsconfig_json_ui_vue_tsconfig_compileroptions_skiplibcheck",
+      "games_blackout_ui_vue_tsconfig_json_ui_vue_tsconfig_compileroptions_strict",
+      "games_blackout_ui_vue_tsconfig_json_ui_vue_tsconfig_compileroptions_target",
+      "games_blackout_ui_vue_tsconfig_json_ui_vue_tsconfig_include",
+      "games_blackout_ui_vue_tsconfig_json_ui_vue_tsconfig_paths",
+      "games_blackout_ui_vue_tsconfig_json_ui_vue_tsconfig_paths_shared"
+    ],
+    "16": [
+      "games_flip7_ui_vue_tsconfig_json_ui_vue_tsconfig",
+      "games_flip7_ui_vue_tsconfig_json_ui_vue_tsconfig_compileroptions",
+      "games_flip7_ui_vue_tsconfig_json_ui_vue_tsconfig_compileroptions_baseurl",
+      "games_flip7_ui_vue_tsconfig_json_ui_vue_tsconfig_compileroptions_esmoduleinterop",
+      "games_flip7_ui_vue_tsconfig_json_ui_vue_tsconfig_compileroptions_forceconsistentcasinginfilenames",
+      "games_flip7_ui_vue_tsconfig_json_ui_vue_tsconfig_compileroptions_isolatedmodules",
+      "games_flip7_ui_vue_tsconfig_json_ui_vue_tsconfig_compileroptions_jsx",
+      "games_flip7_ui_vue_tsconfig_json_ui_vue_tsconfig_compileroptions_lib",
+      "games_flip7_ui_vue_tsconfig_json_ui_vue_tsconfig_compileroptions_module",
+      "games_flip7_ui_vue_tsconfig_json_ui_vue_tsconfig_compileroptions_moduleresolution",
+      "games_flip7_ui_vue_tsconfig_json_ui_vue_tsconfig_compileroptions_noemit",
+      "games_flip7_ui_vue_tsconfig_json_ui_vue_tsconfig_compileroptions_paths",
+      "games_flip7_ui_vue_tsconfig_json_ui_vue_tsconfig_compileroptions_resolvejsonmodule",
+      "games_flip7_ui_vue_tsconfig_json_ui_vue_tsconfig_compileroptions_skiplibcheck",
+      "games_flip7_ui_vue_tsconfig_json_ui_vue_tsconfig_compileroptions_strict",
+      "games_flip7_ui_vue_tsconfig_json_ui_vue_tsconfig_compileroptions_target",
+      "games_flip7_ui_vue_tsconfig_json_ui_vue_tsconfig_include",
+      "games_flip7_ui_vue_tsconfig_json_ui_vue_tsconfig_paths",
+      "games_flip7_ui_vue_tsconfig_json_ui_vue_tsconfig_paths_shared"
+    ],
+    "17": [
+      "games_imposter_ui_vue_tsconfig_json_ui_vue_tsconfig",
+      "games_imposter_ui_vue_tsconfig_json_ui_vue_tsconfig_compileroptions",
+      "games_imposter_ui_vue_tsconfig_json_ui_vue_tsconfig_compileroptions_baseurl",
+      "games_imposter_ui_vue_tsconfig_json_ui_vue_tsconfig_compileroptions_esmoduleinterop",
+      "games_imposter_ui_vue_tsconfig_json_ui_vue_tsconfig_compileroptions_forceconsistentcasinginfilenames",
+      "games_imposter_ui_vue_tsconfig_json_ui_vue_tsconfig_compileroptions_isolatedmodules",
+      "games_imposter_ui_vue_tsconfig_json_ui_vue_tsconfig_compileroptions_jsx",
+      "games_imposter_ui_vue_tsconfig_json_ui_vue_tsconfig_compileroptions_lib",
+      "games_imposter_ui_vue_tsconfig_json_ui_vue_tsconfig_compileroptions_module",
+      "games_imposter_ui_vue_tsconfig_json_ui_vue_tsconfig_compileroptions_moduleresolution",
+      "games_imposter_ui_vue_tsconfig_json_ui_vue_tsconfig_compileroptions_noemit",
+      "games_imposter_ui_vue_tsconfig_json_ui_vue_tsconfig_compileroptions_paths",
+      "games_imposter_ui_vue_tsconfig_json_ui_vue_tsconfig_compileroptions_resolvejsonmodule",
+      "games_imposter_ui_vue_tsconfig_json_ui_vue_tsconfig_compileroptions_skiplibcheck",
+      "games_imposter_ui_vue_tsconfig_json_ui_vue_tsconfig_compileroptions_strict",
+      "games_imposter_ui_vue_tsconfig_json_ui_vue_tsconfig_compileroptions_target",
+      "games_imposter_ui_vue_tsconfig_json_ui_vue_tsconfig_include",
+      "games_imposter_ui_vue_tsconfig_json_ui_vue_tsconfig_paths",
+      "games_imposter_ui_vue_tsconfig_json_ui_vue_tsconfig_paths_shared"
+    ],
+    "18": [
+      "games_scout_ui_vue_tsconfig_json_ui_vue_tsconfig",
+      "games_scout_ui_vue_tsconfig_json_ui_vue_tsconfig_compileroptions",
+      "games_scout_ui_vue_tsconfig_json_ui_vue_tsconfig_compileroptions_baseurl",
+      "games_scout_ui_vue_tsconfig_json_ui_vue_tsconfig_compileroptions_esmoduleinterop",
+      "games_scout_ui_vue_tsconfig_json_ui_vue_tsconfig_compileroptions_forceconsistentcasinginfilenames",
+      "games_scout_ui_vue_tsconfig_json_ui_vue_tsconfig_compileroptions_isolatedmodules",
+      "games_scout_ui_vue_tsconfig_json_ui_vue_tsconfig_compileroptions_jsx",
+      "games_scout_ui_vue_tsconfig_json_ui_vue_tsconfig_compileroptions_lib",
+      "games_scout_ui_vue_tsconfig_json_ui_vue_tsconfig_compileroptions_module",
+      "games_scout_ui_vue_tsconfig_json_ui_vue_tsconfig_compileroptions_moduleresolution",
+      "games_scout_ui_vue_tsconfig_json_ui_vue_tsconfig_compileroptions_noemit",
+      "games_scout_ui_vue_tsconfig_json_ui_vue_tsconfig_compileroptions_paths",
+      "games_scout_ui_vue_tsconfig_json_ui_vue_tsconfig_compileroptions_resolvejsonmodule",
+      "games_scout_ui_vue_tsconfig_json_ui_vue_tsconfig_compileroptions_skiplibcheck",
+      "games_scout_ui_vue_tsconfig_json_ui_vue_tsconfig_compileroptions_strict",
+      "games_scout_ui_vue_tsconfig_json_ui_vue_tsconfig_compileroptions_target",
+      "games_scout_ui_vue_tsconfig_json_ui_vue_tsconfig_include",
+      "games_scout_ui_vue_tsconfig_json_ui_vue_tsconfig_paths",
+      "games_scout_ui_vue_tsconfig_json_ui_vue_tsconfig_paths_shared"
+    ],
+    "19": [
+      "games_secret_signals_ui_vue_tsconfig_json_ui_vue_tsconfig",
+      "games_secret_signals_ui_vue_tsconfig_json_ui_vue_tsconfig_compileroptions",
+      "games_secret_signals_ui_vue_tsconfig_json_ui_vue_tsconfig_compileroptions_baseurl",
+      "games_secret_signals_ui_vue_tsconfig_json_ui_vue_tsconfig_compileroptions_esmoduleinterop",
+      "games_secret_signals_ui_vue_tsconfig_json_ui_vue_tsconfig_compileroptions_forceconsistentcasinginfilenames",
+      "games_secret_signals_ui_vue_tsconfig_json_ui_vue_tsconfig_compileroptions_isolatedmodules",
+      "games_secret_signals_ui_vue_tsconfig_json_ui_vue_tsconfig_compileroptions_jsx",
+      "games_secret_signals_ui_vue_tsconfig_json_ui_vue_tsconfig_compileroptions_lib",
+      "games_secret_signals_ui_vue_tsconfig_json_ui_vue_tsconfig_compileroptions_module",
+      "games_secret_signals_ui_vue_tsconfig_json_ui_vue_tsconfig_compileroptions_moduleresolution",
+      "games_secret_signals_ui_vue_tsconfig_json_ui_vue_tsconfig_compileroptions_noemit",
+      "games_secret_signals_ui_vue_tsconfig_json_ui_vue_tsconfig_compileroptions_paths",
+      "games_secret_signals_ui_vue_tsconfig_json_ui_vue_tsconfig_compileroptions_resolvejsonmodule",
+      "games_secret_signals_ui_vue_tsconfig_json_ui_vue_tsconfig_compileroptions_skiplibcheck",
+      "games_secret_signals_ui_vue_tsconfig_json_ui_vue_tsconfig_compileroptions_strict",
+      "games_secret_signals_ui_vue_tsconfig_json_ui_vue_tsconfig_compileroptions_target",
+      "games_secret_signals_ui_vue_tsconfig_json_ui_vue_tsconfig_include",
+      "games_secret_signals_ui_vue_tsconfig_json_ui_vue_tsconfig_paths",
+      "games_secret_signals_ui_vue_tsconfig_json_ui_vue_tsconfig_paths_shared"
+    ],
+    "20": [
+      "logging_logbuffer_appendlogentry",
+      "logging_logger",
+      "logging_logger_always_redact_paths",
+      "logging_logger_buildloggeroptions",
+      "logging_logger_createlogbufferstream",
+      "logging_logger_createrequestid",
+      "logging_logger_createrootlogger",
+      "logging_logger_logger",
+      "logging_logger_loggingconfig",
+      "logging_logger_noderequire",
+      "logging_logger_production_redact_paths",
+      "logging_logger_resolveprettytransporttarget",
+      "logging_socketlogger",
+      "logging_socketlogger_attachsocketeventdebuglogging",
+      "logging_socketlogger_createsocketlogger",
+      "logging_socketlogger_readsocketstring",
+      "logging_socketlogger_socketlike",
+      "logging_socketlogger_summarizesocketarg",
+      "tests_logging_test"
+    ],
+    "21": [
+      "managers_gamemanager",
+      "managers_gamemanager_addwordtolibrary",
+      "managers_gamemanager_advancedescriptionturn",
+      "managers_gamemanager_alldescriptionssubmitted",
+      "managers_gamemanager_allvotessubmitted",
+      "managers_gamemanager_getconnectedplayerorder",
+      "managers_gamemanager_getdescriptionorder",
+      "managers_gamemanager_getrandomdescriptionorder",
+      "managers_gamemanager_selectrandominfiltrators",
+      "managers_gamemanager_setdiscussionduration",
+      "managers_gamemanager_setinfiltratorcount",
+      "managers_gamemanager_settargetscore",
+      "managers_gamemanager_skipcurrentdescription",
+      "managers_gamemanager_startdiscussion",
+      "managers_gamemanager_startround",
+      "managers_gamemanager_submitdescription",
+      "managers_gamemanager_submitvote",
+      "managers_gamemanager_syncdescriptionturn",
+      "tests_gamemanager_test"
+    ],
+    "22": [
+      "games_imposter_server_src_models_room_ts_models_room",
+      "games_imposter_server_src_models_room_ts_models_room_clearroomcleanup",
+      "games_imposter_server_src_models_room_ts_models_room_createroom",
+      "games_imposter_server_src_models_room_ts_models_room_deleteroom",
+      "games_imposter_server_src_models_room_ts_models_room_generateroomcode",
+      "games_imposter_server_src_models_room_ts_models_room_getroom",
+      "games_imposter_server_src_models_room_ts_models_room_getroomsnapshot",
+      "games_imposter_server_src_models_room_ts_models_room_getsessionroom",
+      "games_imposter_server_src_models_room_ts_models_room_roomcleanuptimers",
+      "games_imposter_server_src_models_room_ts_models_room_rooms",
+      "games_imposter_server_src_models_room_ts_models_room_roomstoresnapshot",
+      "games_imposter_server_src_models_room_ts_models_room_scheduleroomcleanup",
+      "games_imposter_server_src_models_room_ts_models_room_sessiontoroom",
+      "games_imposter_server_src_models_room_ts_models_room_setsessiontoroom",
+      "managers_gamemanager_initgamestate",
+      "tests_example_test",
+      "tests_example_test_makeroom",
+      "tests_gamemanager_test_makeroom"
+    ],
+    "23": [
+      "games_scout_core_src_constants_ts_src_constants",
+      "games_scout_core_src_deck_ts_src_deck",
+      "games_scout_core_src_deck_ts_src_deck_builddeck",
+      "games_scout_core_src_types_ts_src_types",
+      "games_scout_core_src_types_ts_src_types_player",
+      "games_scout_core_src_types_ts_src_types_playerview",
+      "games_scout_core_src_types_ts_src_types_room",
+      "games_scout_core_src_types_ts_src_types_roomview",
+      "games_scout_core_src_types_ts_src_types_storedsession",
+      "games_scout_tests_deck_test_ts_tests_deck_test",
+      "src_constants_card_values",
+      "src_deck_flipcard",
+      "src_deck_scoutcard",
+      "src_types_gamephase",
+      "src_types_playedset",
+      "src_types_playedsetview",
+      "src_types_trickhistoryentry",
+      "src_types_trickstate"
+    ],
+    "24": [
+      "party_partystore",
+      "party_partystore_activepartymatch",
+      "party_partystore_clearallpartiesresult",
+      "party_partystore_getactivepartymatches",
+      "party_partystore_getallparties",
+      "party_partystore_invitecodetoparty",
+      "party_partystore_matchtimeouttimers",
+      "party_partystore_parties",
+      "party_partystore_partycleanuptimers",
+      "party_partystore_partystoresnapshot",
+      "party_partystore_sockettoparty",
+      "party_types",
+      "party_types_partymatch",
+      "party_types_partymember",
+      "party_types_partysession",
+      "party_types_partystatus",
+      "server_admin_adminpartyview",
+      "tests_partystore_test_createtestparty"
+    ],
+    "25": [
+      "games_blackout_server_src_models_room_ts_models_room",
+      "games_blackout_server_src_models_room_ts_models_room_cleanupinterval",
+      "games_blackout_server_src_models_room_ts_models_room_clearroomcleanup",
+      "games_blackout_server_src_models_room_ts_models_room_createroom",
+      "games_blackout_server_src_models_room_ts_models_room_deleteroom",
+      "games_blackout_server_src_models_room_ts_models_room_generateroomcode",
+      "games_blackout_server_src_models_room_ts_models_room_getallrooms",
+      "games_blackout_server_src_models_room_ts_models_room_getroom",
+      "games_blackout_server_src_models_room_ts_models_room_getroomsnapshot",
+      "games_blackout_server_src_models_room_ts_models_room_getsessionroom",
+      "games_blackout_server_src_models_room_ts_models_room_rooms",
+      "games_blackout_server_src_models_room_ts_models_room_roomstoresnapshot",
+      "games_blackout_server_src_models_room_ts_models_room_roomtimers",
+      "games_blackout_server_src_models_room_ts_models_room_scheduleroomcleanup",
+      "games_blackout_server_src_models_room_ts_models_room_sessiontoroom",
+      "games_blackout_server_src_models_room_ts_models_room_setsessiontoroom",
+      "managers_categorymanager_getdefaultexcludedletters"
+    ],
+    "26": [
+      "package_scripts",
+      "package_scripts_build",
+      "package_scripts_dev",
+      "package_scripts_format",
+      "package_scripts_format_check",
+      "package_scripts_lint",
+      "package_scripts_lint_fix",
+      "package_scripts_start",
+      "package_scripts_test",
+      "package_scripts_test_blackout",
+      "package_scripts_test_e2e",
+      "package_scripts_test_flip7",
+      "package_scripts_test_imposter",
+      "package_scripts_test_scout",
+      "package_scripts_test_secret_signals",
+      "package_scripts_test_watch",
+      "package_scripts_typecheck"
+    ],
+    "27": [
+      "db_database",
+      "db_database_counts",
+      "db_database_db",
+      "db_database_dblogger",
+      "db_database_finalcounts",
+      "db_database_hascolumn",
+      "db_database_needsschemareset",
+      "db_database_normalizeletter",
+      "db_database_parsecsv",
+      "db_database_readcsvrows",
+      "db_database_readsqlfile",
+      "db_database_resolvedefaultdbpath",
+      "db_database_schemasql",
+      "db_database_seeddefaultsfromcsv",
+      "db_database_tableexists",
+      "db_database_tobooleannumber"
+    ],
+    "28": [
+      "games_flip7_server_src_models_room_ts_models_room",
+      "games_flip7_server_src_models_room_ts_models_room_cleanupinterval",
+      "games_flip7_server_src_models_room_ts_models_room_clearroomcleanup",
+      "games_flip7_server_src_models_room_ts_models_room_createroom",
+      "games_flip7_server_src_models_room_ts_models_room_deleteroom",
+      "games_flip7_server_src_models_room_ts_models_room_generateroomcode",
+      "games_flip7_server_src_models_room_ts_models_room_getallrooms",
+      "games_flip7_server_src_models_room_ts_models_room_getroom",
+      "games_flip7_server_src_models_room_ts_models_room_getroomsnapshot",
+      "games_flip7_server_src_models_room_ts_models_room_getsessionroom",
+      "games_flip7_server_src_models_room_ts_models_room_rooms",
+      "games_flip7_server_src_models_room_ts_models_room_roomstoresnapshot",
+      "games_flip7_server_src_models_room_ts_models_room_roomtimers",
+      "games_flip7_server_src_models_room_ts_models_room_scheduleroomcleanup",
+      "games_flip7_server_src_models_room_ts_models_room_sessiontoroom",
+      "games_flip7_server_src_models_room_ts_models_room_setsessiontoroom"
+    ],
+    "29": [
+      "metrics_metrics",
+      "metrics_metrics_incrementpartylifecycle",
+      "metrics_metrics_namespaceconnectionsgauge",
+      "metrics_metrics_partylifecycletotal",
+      "metrics_metrics_socketeventdurationseconds",
+      "metrics_metrics_socketeventend",
+      "metrics_metrics_socketeventmetriclabels",
+      "metrics_metrics_socketeventstart",
+      "metrics_metrics_socketeventstotal",
+      "metrics_registry",
+      "metrics_registry_metricsregistry",
+      "observability_sockethandlermetrics",
+      "observability_sockethandlermetrics_sockethandlerduration",
+      "observability_sockethandlermetrics_sockethandlerinstrumentation",
+      "observability_sockethandlermetrics_sockethandlerresult",
+      "observability_sockethandlermetrics_sockethandlertotal"
+    ],
+    "30": [
+      "games_blackout_server_src_index_ts_src_index",
+      "games_blackout_server_src_index_ts_src_index_cleanupmatch",
+      "games_blackout_server_src_index_ts_src_index_definition",
+      "games_blackout_server_src_index_ts_src_index_gamedefinition",
+      "games_blackout_server_src_index_ts_src_index_gamelogger",
+      "games_blackout_server_src_index_ts_src_index_handler",
+      "games_blackout_server_src_index_ts_src_index_register",
+      "games_blackout_tests_sockethandlers_test_ts_tests_sockethandlers_test",
+      "games_blackout_tests_sockethandlers_test_ts_tests_sockethandlers_test_handlermap",
+      "games_blackout_tests_sockethandlers_test_ts_tests_sockethandlers_test_makenamespace",
+      "games_blackout_tests_sockethandlers_test_ts_tests_sockethandlers_test_makeroom",
+      "games_blackout_tests_sockethandlers_test_ts_tests_sockethandlers_test_makesocket",
+      "src_index_gamehandler",
+      "src_sockethandlers_registerblackout"
+    ],
+    "31": [
+      "games_secret_signals_server_src_models_room_ts_models_room",
+      "games_secret_signals_server_src_models_room_ts_models_room_clearroomcleanup",
+      "games_secret_signals_server_src_models_room_ts_models_room_createroom",
+      "games_secret_signals_server_src_models_room_ts_models_room_deleteroom",
+      "games_secret_signals_server_src_models_room_ts_models_room_generateroomcode",
+      "games_secret_signals_server_src_models_room_ts_models_room_getroom",
+      "games_secret_signals_server_src_models_room_ts_models_room_getroomsnapshot",
+      "games_secret_signals_server_src_models_room_ts_models_room_getsessionroom",
+      "games_secret_signals_server_src_models_room_ts_models_room_roomcleanuptimers",
+      "games_secret_signals_server_src_models_room_ts_models_room_rooms",
+      "games_secret_signals_server_src_models_room_ts_models_room_roomstoresnapshot",
+      "games_secret_signals_server_src_models_room_ts_models_room_scheduleroomcleanup",
+      "games_secret_signals_server_src_models_room_ts_models_room_sessiontoroom",
+      "games_secret_signals_server_src_models_room_ts_models_room_setsessiontoroom"
+    ],
+    "32": [
+      "platform_tsconfig",
+      "platform_tsconfig_compileroptions",
+      "platform_tsconfig_compileroptions_baseurl",
+      "platform_tsconfig_compileroptions_isolatedmodules",
+      "platform_tsconfig_compileroptions_jsx",
+      "platform_tsconfig_compileroptions_lib",
+      "platform_tsconfig_compileroptions_module",
+      "platform_tsconfig_compileroptions_moduleresolution",
+      "platform_tsconfig_compileroptions_target",
+      "platform_tsconfig_compileroptions_types",
+      "platform_tsconfig_compileroptions_usedefineforclassfields",
+      "platform_tsconfig_compileroptions_verbatimmodulesyntax",
+      "platform_tsconfig_extends",
+      "platform_tsconfig_include"
+    ],
+    "33": [
+      "platform_tsconfig_server",
+      "platform_tsconfig_server_compileroptions",
+      "platform_tsconfig_server_compileroptions_baseurl",
+      "platform_tsconfig_server_compileroptions_module",
+      "platform_tsconfig_server_compileroptions_moduleresolution",
+      "platform_tsconfig_server_compileroptions_outdir",
+      "platform_tsconfig_server_compileroptions_paths",
+      "platform_tsconfig_server_compileroptions_target",
+      "platform_tsconfig_server_extends",
+      "platform_tsconfig_server_include",
+      "platform_tsconfig_server_paths_blackout",
+      "platform_tsconfig_server_paths_flip7",
+      "platform_tsconfig_server_paths_imposter",
+      "registry_index_secretsignalsmodule"
+    ],
+    "34": [
+      "blackout_vitest_config",
+      "imposter_vitest_config",
+      "secret_signals_vitest_config",
+      "vitest_config",
+      "vitest_projects",
+      "vitest_projects_allprojects",
+      "vitest_projects_blackoutproject",
+      "vitest_projects_flip7project",
+      "vitest_projects_games_root",
+      "vitest_projects_imposterproject",
+      "vitest_projects_platformproject",
+      "vitest_projects_scoutproject",
+      "vitest_projects_secretsignalsproject"
+    ],
+    "35": [
+      "games_flip7_server_src_index_ts_src_index",
+      "games_flip7_server_src_index_ts_src_index_cleanupmatch",
+      "games_flip7_server_src_index_ts_src_index_definition",
+      "games_flip7_server_src_index_ts_src_index_gamedefinition",
+      "games_flip7_server_src_index_ts_src_index_gamelogger",
+      "games_flip7_server_src_index_ts_src_index_register",
+      "games_flip7_tests_sockethandlers_test_ts_tests_sockethandlers_test",
+      "games_flip7_tests_sockethandlers_test_ts_tests_sockethandlers_test_handlermap",
+      "games_flip7_tests_sockethandlers_test_ts_tests_sockethandlers_test_makeio",
+      "games_flip7_tests_sockethandlers_test_ts_tests_sockethandlers_test_makenamespace",
+      "games_flip7_tests_sockethandlers_test_ts_tests_sockethandlers_test_makeroom",
+      "games_flip7_tests_sockethandlers_test_ts_tests_sockethandlers_test_makesocket",
+      "src_sockethandlers_registerflip7"
+    ],
+    "36": [
+      "metrics_metrics_metricresult",
+      "metrics_metrics_recordsocketeventend",
+      "metrics_metrics_recordsocketeventstart",
+      "metrics_metrics_setnamespaceconnectioncount",
+      "observability_sockethandlermetrics_startsockethandlerinstrumentation",
+      "observability_socketnamespacemetrics",
+      "observability_socketnamespacemetrics_getnamespacesocketcount",
+      "observability_socketnamespacemetrics_namespacelike",
+      "observability_socketnamespacemetrics_namespacemetriclabels",
+      "observability_socketnamespacemetrics_recordnamespaceconnection",
+      "observability_socketnamespacemetrics_recordnamespacedisconnect",
+      "observability_socketnamespacemetrics_updatenamespaceconnectionmetric",
+      "tests_metrics_test_importsocketnamespacemetrics"
+    ],
+    "37": [
+      "scripts_import_db_csv",
+      "scripts_import_db_csv_args",
+      "scripts_import_db_csv_datarows",
+      "scripts_import_db_csv_db",
+      "scripts_import_db_csv_headers",
+      "scripts_import_db_csv_normalizeletter",
+      "scripts_import_db_csv_parseargs",
+      "scripts_import_db_csv_parsecsv",
+      "scripts_import_db_csv_raw",
+      "scripts_import_db_csv_readsqlfromproject",
+      "scripts_import_db_csv_rows",
+      "scripts_import_db_csv_schemasql",
+      "scripts_import_db_csv_tobooleannumber"
+    ],
+    "38": [
+      "components_teamsetup",
+      "components_teamsetup_activeteams",
+      "components_teamsetup_currentplayer",
+      "components_teamsetup_currentplayerteam",
+      "components_teamsetup_isdirectorunavailable",
+      "components_teamsetup_issetupvalid",
+      "components_teamsetup_pickrole",
+      "components_teamsetup_pickteam",
+      "components_teamsetup_teamcountoptions",
+      "components_teamsetup_teamplayers",
+      "components_teamsetup_unassigned"
+    ],
+    "39": [
+      "e2e_game_spec_castvote",
+      "e2e_game_spec_findcurrentturnpage",
+      "e2e_game_spec_handleguessphase",
+      "e2e_game_spec_playfullround",
+      "e2e_game_spec_setupthreeplayers",
+      "e2e_game_spec_submitdescription",
+      "e2e_game_spec_submitdescriptionsinturnorder",
+      "games_imposter_e2e_game_spec_ts_e2e_game_spec",
+      "games_imposter_e2e_game_spec_ts_e2e_game_spec_createparty",
+      "games_imposter_e2e_game_spec_ts_e2e_game_spec_joinparty",
+      "games_imposter_e2e_game_spec_ts_e2e_game_spec_launchgame"
+    ],
+    "40": [
+      "games_imposter_server_src_handlers_sockethandlers_ts_handlers_sockethandlers_registergame",
+      "games_scout_server_src_index_ts_src_index",
+      "games_scout_server_src_index_ts_src_index_cleanupmatch",
+      "games_scout_server_src_index_ts_src_index_definition",
+      "games_scout_server_src_index_ts_src_index_gamedefinition",
+      "games_scout_server_src_index_ts_src_index_gamelogger",
+      "games_scout_server_src_index_ts_src_index_register",
+      "games_secret_signals_server_src_handlers_sockethandlers_ts_handlers_sockethandlers_registergame",
+      "logging_logger_createcomponentlogger",
+      "logging_logger_readloggingconfig",
+      "src_sockethandlers_registerscout"
+    ],
+    "41": [
+      "games_scout_tests_sockethandlers_test_ts_tests_sockethandlers_test",
+      "games_scout_tests_sockethandlers_test_ts_tests_sockethandlers_test_autojoin",
+      "games_scout_tests_sockethandlers_test_ts_tests_sockethandlers_test_makeio",
+      "games_scout_tests_sockethandlers_test_ts_tests_sockethandlers_test_makenamespace",
+      "games_scout_tests_sockethandlers_test_ts_tests_sockethandlers_test_makesocket",
+      "party_partystore_clearallparties",
+      "party_partystore_createparty",
+      "party_partystore_generateinvitecode",
+      "tests_sockethandlers_test_setupparty",
+      "tests_sockethandlers_test_setupscoutserver",
+      "tests_sockethandlers_test_testsocket"
+    ],
+    "42": [
+      "logging_logger_registerprocesslogging",
+      "server_admin_registeradminroutes",
+      "server_httproutes",
+      "server_httproutes_registerhttproutes",
+      "server_index",
+      "server_index_app",
+      "server_index_httpserver",
+      "server_index_port",
+      "server_index_serverlogger",
+      "server_index_shutdown",
+      "tests_serverroutes_test"
+    ],
+    "43": [
+      "package",
+      "package_engines",
+      "package_engines_node",
+      "package_engines_pnpm",
+      "package_name",
+      "package_overrides",
+      "package_overrides_diff",
+      "package_overrides_esbuild",
+      "package_packagemanager",
+      "package_private",
+      "package_version"
+    ],
+    "44": [
+      "games_blackout_core_src_types_ts_src_types",
+      "games_blackout_core_src_types_ts_src_types_phase",
+      "games_blackout_core_src_types_ts_src_types_player",
+      "games_blackout_core_src_types_ts_src_types_room",
+      "games_blackout_core_src_types_ts_src_types_roomview",
+      "games_blackout_core_src_types_ts_src_types_roundresult",
+      "games_blackout_core_src_types_ts_src_types_roundview",
+      "games_blackout_core_src_types_ts_src_types_storedsession",
+      "src_types_language",
+      "src_types_rounddata"
+    ],
+    "45": [
+      "games_blackout_server_src_models_player_ts_models_player",
+      "games_blackout_server_src_models_player_ts_models_player_createplayer",
+      "games_blackout_server_src_models_player_ts_models_player_deletesocketindex",
+      "games_blackout_server_src_models_player_ts_models_player_socketindex",
+      "games_flip7_server_src_models_player_ts_models_player",
+      "games_flip7_server_src_models_player_ts_models_player_createplayer",
+      "games_flip7_server_src_models_player_ts_models_player_deletesocketindex",
+      "games_flip7_server_src_models_player_ts_models_player_getsocketindex",
+      "games_flip7_server_src_models_player_ts_models_player_setsocketindex",
+      "games_flip7_server_src_models_player_ts_models_player_socketindex"
+    ],
+    "46": [
+      "managers_trickmanager_beatscurrentplay",
+      "managers_trickmanager_compareplays",
+      "managers_trickmanager_removecardfromtable",
+      "managers_trickmanager_summarizeplay",
+      "src_analyzeplay",
+      "src_analyzeplay_cardcolor",
+      "src_analyzeplay_playanalysis",
+      "src_analyzeplay_playkind",
+      "tests_analyzeplay_test",
+      "tests_analyzeplay_test_card"
+    ],
+    "47": [
+      "package_dependencies",
+      "package_dependencies_bcryptjs",
+      "package_dependencies_cookie_parser",
+      "package_dependencies_express",
+      "package_dependencies_jsonwebtoken",
+      "package_dependencies_nanoid",
+      "package_dependencies_pino",
+      "package_dependencies_pino_http",
+      "package_dependencies_prom_client",
+      "package_dependencies_socket_io"
+    ],
+    "48": [
+      "party_partyhandlers_registerpartyhandlers",
+      "party_partystore_getparty",
+      "party_partystore_getpartybyinvitecode",
+      "tests_partyhandlers_test",
+      "tests_partyhandlers_test_connectsocket",
+      "tests_partyhandlers_test_createnamespace",
+      "tests_partyhandlers_test_createpartyviasocket",
+      "tests_partyhandlers_test_createsocket",
+      "tests_partyhandlers_test_handler",
+      "tests_partyhandlers_test_setup"
+    ],
+    "49": [
+      "tsconfig",
+      "tsconfig_compileroptions",
+      "tsconfig_compileroptions_module",
+      "tsconfig_compileroptions_moduleresolution",
+      "tsconfig_compileroptions_noemit",
+      "tsconfig_compileroptions_resolvejsonmodule",
+      "tsconfig_compileroptions_types",
+      "tsconfig_exclude",
+      "tsconfig_extends",
+      "tsconfig_include"
+    ],
+    "50": [
+      "games_blackout_core_src_constants_ts_src_constants",
+      "managers_categorymanager",
+      "managers_categorymanager_getavailableletters",
+      "managers_categorymanager_getcategoriesbylanguage",
+      "managers_categorymanager_gettasksbylanguage",
+      "managers_categorymanager_randomitem",
+      "src_constants_default_excluded_letters",
+      "src_types_category",
+      "src_types_taskrule"
+    ],
+    "51": [
+      "games_imposter_core_src_constants_ts_src_constants",
+      "games_imposter_tests_phasemanager_test_ts_tests_phasemanager_test",
+      "games_imposter_tests_phasemanager_test_ts_tests_phasemanager_test_makeroom",
+      "src_constants_default_word_library",
+      "utils_wordlibrary",
+      "utils_wordlibrary_getglobalwordlibrary",
+      "utils_wordlibrary_loadfromfile",
+      "utils_wordlibrary_persistword",
+      "utils_wordlibrary_words_file"
+    ],
+    "52": [
+      "games_scout_server_src_managers_broadcastmanager_ts_managers_broadcastmanager",
+      "games_scout_server_src_managers_broadcastmanager_ts_managers_broadcastmanager_broadcastroom",
+      "games_scout_server_src_managers_broadcastmanager_ts_managers_broadcastmanager_sendroomtoplayer",
+      "games_scout_server_src_managers_broadcastmanager_ts_managers_broadcastmanager_toplayerviews",
+      "games_scout_server_src_managers_broadcastmanager_ts_managers_broadcastmanager_toroomview",
+      "managers_broadcastmanager_scoutnamespace",
+      "managers_broadcastmanager_totrickview",
+      "managers_trickmanager_setupcomplete",
+      "src_types_trickview"
+    ],
+    "53": [
+      "metrics_collectors",
+      "metrics_collectors_activeconnectionsgauge",
+      "metrics_collectors_initializemetrics",
+      "metrics_collectors_partiesactivegauge",
+      "metrics_collectors_partymembersconnectedgauge",
+      "metrics_collectors_roomplayersconnectedgauge",
+      "metrics_collectors_roomsactivegauge",
+      "metrics_collectors_setactiveconnections",
+      "party_partystore_getpartysnapshot"
+    ],
+    "54": [
+      "scripts_copy_db_assets",
+      "scripts_copy_db_assets_dbpath",
+      "scripts_copy_db_assets_dirname",
+      "scripts_copy_db_assets_filename",
+      "scripts_copy_db_assets_gamedir",
+      "scripts_copy_db_assets_legacyseedpath",
+      "scripts_copy_db_assets_sourcedir",
+      "scripts_copy_db_assets_targetdir",
+      "scripts_copy_db_assets_workspaceroot"
+    ],
+    "55": [
+      "games_imposter_core_src_types_ts_src_types",
+      "games_imposter_core_src_types_ts_src_types_phase",
+      "games_imposter_core_src_types_ts_src_types_player",
+      "games_imposter_core_src_types_ts_src_types_playerview",
+      "games_imposter_core_src_types_ts_src_types_room",
+      "games_imposter_core_src_types_ts_src_types_roomview",
+      "games_imposter_core_src_types_ts_src_types_roundresult",
+      "games_imposter_core_src_types_ts_src_types_storedsession"
+    ],
+    "56": [
+      "logging_logger_parsebooleanenv",
+      "metrics_httpmetrics",
+      "metrics_httpmetrics_metricshttpconfig",
+      "metrics_httpmetrics_metricsscrapetotal",
+      "metrics_httpmetrics_readbearertoken",
+      "metrics_httpmetrics_readmetricsaccesstoken",
+      "metrics_httpmetrics_readmetricshttpconfig",
+      "metrics_httpmetrics_registermetricsroutes"
+    ],
+    "57": [
+      "logging_requestlogger",
+      "logging_requestlogger_createrequestlogger",
+      "logging_requestlogger_httplogger",
+      "logging_requestlogger_isstaticassetrequest",
+      "logging_requestlogger_normalizerequestpath",
+      "logging_requestlogger_resolvehttploglevel",
+      "logging_requestlogger_shouldignorehttprequest",
+      "tests_requestlogger_test"
+    ],
+    "58": [
+      "tsconfig_base",
+      "tsconfig_base_compileroptions",
+      "tsconfig_base_compileroptions_esmoduleinterop",
+      "tsconfig_base_compileroptions_forceconsistentcasinginfilenames",
+      "tsconfig_base_compileroptions_lib",
+      "tsconfig_base_compileroptions_skiplibcheck",
+      "tsconfig_base_compileroptions_strict",
+      "tsconfig_base_compileroptions_target"
+    ],
+    "59": [
+      "blackout_package",
+      "blackout_package_name",
+      "blackout_package_private",
+      "blackout_package_scripts",
+      "blackout_package_scripts_test",
+      "blackout_package_type",
+      "blackout_package_version"
+    ],
+    "60": [
+      "components_gameplay",
+      "components_gameplay_confirmcard",
+      "components_gameplay_handlecardpress",
+      "components_gameplay_handleconfirmreveal",
+      "components_gameplay_leftrosterteams",
+      "components_gameplay_rightrosterteams",
+      "components_gameplay_rosterteams"
+    ],
+    "61": [
+      "components_gametable_canstay",
+      "components_gametable_playermap",
+      "components_gametable_round",
+      "components_gametable_showflipthreeprompt",
+      "components_gametable_showhitstay",
+      "components_gametable_store",
+      "games_flip7_ui_vue_src_components_gametable_vue_components_gametable"
+    ],
+    "62": [
+      "e2e_game_spec_chooserole",
+      "e2e_game_spec_chooseteam",
+      "e2e_game_spec_setupfourplayers",
+      "games_secret_signals_e2e_game_spec_ts_e2e_game_spec",
+      "games_secret_signals_e2e_game_spec_ts_e2e_game_spec_createparty",
+      "games_secret_signals_e2e_game_spec_ts_e2e_game_spec_joinparty",
+      "games_secret_signals_e2e_game_spec_ts_e2e_game_spec_launchgame"
+    ],
+    "63": [
+      "flip7_package",
+      "flip7_package_name",
+      "flip7_package_private",
+      "flip7_package_scripts",
+      "flip7_package_scripts_test",
+      "flip7_package_type",
+      "flip7_package_version"
+    ],
+    "64": [
+      "games_blackout_server_src_managers_scoremanager_ts_managers_scoremanager",
+      "games_blackout_tests_scoremanager_test_ts_tests_scoremanager_test",
+      "managers_scoremanager_addpoint",
+      "managers_scoremanager_getleaderboard",
+      "managers_scoremanager_getwinners",
+      "managers_scoremanager_resetscores",
+      "tests_scoremanager_test_makeroom"
+    ],
+    "65": [
+      "games_imposter_server_src_managers_phasemanager_ts_managers_phasemanager",
+      "games_imposter_server_src_managers_phasemanager_ts_managers_phasemanager_transitiontoended",
+      "games_imposter_server_src_managers_phasemanager_ts_managers_phasemanager_transitiontolobby",
+      "games_imposter_server_src_managers_phasemanager_ts_managers_phasemanager_transitiontoplaying",
+      "managers_gamemanager_resetforlobby",
+      "managers_gamemanager_resetfornewround",
+      "managers_phasemanager_transitiontonextround"
+    ],
+    "66": [
+      "games_scout_core_src_events_ts_src_events",
+      "games_scout_core_src_events_ts_src_events_autojoinroomdata",
+      "games_scout_core_src_events_ts_src_events_autojoinroomresponse",
+      "games_scout_core_src_events_ts_src_events_clienttoserverevents",
+      "games_scout_core_src_events_ts_src_events_errorresponse",
+      "games_scout_core_src_events_ts_src_events_servertoclientevents",
+      "src_events_basicresponse"
+    ],
+    "67": [
+      "imposter_package",
+      "imposter_package_name",
+      "imposter_package_private",
+      "imposter_package_scripts",
+      "imposter_package_scripts_test",
+      "imposter_package_type",
+      "imposter_package_version"
+    ],
+    "68": [
+      "registry_index",
+      "registry_index_blackoutmodule",
+      "registry_index_flip7module",
+      "registry_index_gameregistry",
+      "registry_index_gameservermodule",
+      "registry_index_impostermodule",
+      "registry_index_scoutmodule"
+    ],
+    "69": [
+      "scout_package",
+      "scout_package_name",
+      "scout_package_private",
+      "scout_package_scripts",
+      "scout_package_scripts_test",
+      "scout_package_type",
+      "scout_package_version"
+    ],
+    "70": [
+      "secret_signals_package",
+      "secret_signals_package_name",
+      "secret_signals_package_private",
+      "secret_signals_package_scripts",
+      "secret_signals_package_scripts_test",
+      "secret_signals_package_type",
+      "secret_signals_package_version"
+    ],
+    "71": [
+      "tests_metrics_test",
+      "tests_metrics_test_createexpressappmock",
+      "tests_metrics_test_createresponsemock",
+      "tests_metrics_test_importhttpmetrics",
+      "tests_metrics_test_importmetrics",
+      "tests_metrics_test_importsockethandlermetrics",
+      "tests_metrics_test_metricsregistry"
+    ],
+    "72": [
+      "components_gameround",
+      "components_gameround_canskip",
+      "components_gameround_iscategoryreused",
+      "components_gameround_isreader",
+      "components_gameround_selectableplayers",
+      "components_gameround_tasktext"
+    ],
+    "73": [
+      "games_imposter_server_src_managers_broadcastmanager_ts_managers_broadcastmanager",
+      "games_imposter_server_src_managers_broadcastmanager_ts_managers_broadcastmanager_broadcastroom",
+      "games_imposter_server_src_managers_broadcastmanager_ts_managers_broadcastmanager_gamenamespace",
+      "games_imposter_server_src_managers_broadcastmanager_ts_managers_broadcastmanager_sendroomtoplayer",
+      "games_imposter_server_src_managers_broadcastmanager_ts_managers_broadcastmanager_toplayerview",
+      "managers_broadcastmanager_toroomviewforplayer"
+    ],
+    "74": [
+      "games_imposter_server_src_models_player_ts_models_player",
+      "games_imposter_server_src_models_player_ts_models_player_createplayer",
+      "games_imposter_server_src_models_player_ts_models_player_deletesocketindex",
+      "games_imposter_server_src_models_player_ts_models_player_getsocketindex",
+      "games_imposter_server_src_models_player_ts_models_player_setsocketindex",
+      "games_imposter_server_src_models_player_ts_models_player_socketindex"
+    ],
+    "75": [
+      "games_secret_signals_server_src_index_ts_src_index",
+      "games_secret_signals_server_src_index_ts_src_index_cleanupmatch",
+      "games_secret_signals_server_src_index_ts_src_index_definition",
+      "games_secret_signals_server_src_index_ts_src_index_gamelogger",
+      "games_secret_signals_server_src_index_ts_src_index_handler",
+      "games_secret_signals_server_src_index_ts_src_index_register"
+    ],
+    "76": [
+      "games_secret_signals_server_src_models_player_ts_models_player",
+      "games_secret_signals_server_src_models_player_ts_models_player_createplayer",
+      "games_secret_signals_server_src_models_player_ts_models_player_deletesocketindex",
+      "games_secret_signals_server_src_models_player_ts_models_player_getsocketindex",
+      "games_secret_signals_server_src_models_player_ts_models_player_setsocketindex",
+      "games_secret_signals_server_src_models_player_ts_models_player_socketindex"
+    ],
+    "77": [
+      "managers_gamemanager_finalizeround",
+      "managers_gamemanager_getvotedoutids",
+      "managers_gamemanager_handleinfiltratorguess",
+      "managers_gamemanager_ismatchover",
+      "managers_gamemanager_resolvevotes",
+      "managers_gamemanager_skipguess"
+    ],
+    "78": [
+      "components_descriptionphase",
+      "components_descriptionphase_currentdescriber",
+      "components_descriptionphase_handlesubmit",
+      "components_descriptionphase_ismyturn",
+      "components_descriptionphase_wasskipped"
+    ],
+    "79": [
+      "components_gameover_showcontrols",
+      "components_gameover_sortedplayers",
+      "components_gameover_store",
+      "components_gameover_winners",
+      "games_flip7_ui_vue_src_components_gameover_vue_components_gameover"
+    ],
+    "80": [
+      "components_revealphase",
+      "components_revealphase_getplayername",
+      "components_revealphase_handleguess",
+      "components_revealphase_result",
+      "components_revealphase_votetally"
+    ],
+    "81": [
+      "components_signalinput",
+      "components_signalinput_error",
+      "components_signalinput_number",
+      "components_signalinput_submit",
+      "components_signalinput_word"
+    ],
+    "82": [
+      "e2e_game_spec_countpageswithhitstaycontrols",
+      "games_flip7_e2e_game_spec_ts_e2e_game_spec",
+      "games_flip7_e2e_game_spec_ts_e2e_game_spec_createparty",
+      "games_flip7_e2e_game_spec_ts_e2e_game_spec_joinparty",
+      "games_flip7_e2e_game_spec_ts_e2e_game_spec_launchgame"
+    ],
+    "83": [
+      "games_blackout_server_src_managers_phasemanager_ts_managers_phasemanager",
+      "games_blackout_server_src_managers_phasemanager_ts_managers_phasemanager_transitiontoended",
+      "games_blackout_server_src_managers_phasemanager_ts_managers_phasemanager_transitiontolobby",
+      "games_blackout_server_src_managers_phasemanager_ts_managers_phasemanager_transitiontoplaying",
+      "games_blackout_server_src_managers_phasemanager_ts_managers_phasemanager_transitiontoroundend"
+    ],
+    "84": [
+      "games_blackout_ui_vue_src_app_vue_src_app",
+      "src_app_clearembeddedretrytimer",
+      "src_app_handleroomupdate",
+      "src_app_handleupdatemaxrounds",
+      "src_app_initsocket"
+    ],
+    "85": [
+      "games_flip7_server_src_managers_phasemanager_ts_managers_phasemanager",
+      "games_flip7_server_src_managers_phasemanager_ts_managers_phasemanager_transitiontoended",
+      "games_flip7_server_src_managers_phasemanager_ts_managers_phasemanager_transitiontolobby",
+      "games_flip7_server_src_managers_phasemanager_ts_managers_phasemanager_transitiontoplaying",
+      "games_flip7_server_src_managers_phasemanager_ts_managers_phasemanager_transitiontoroundend"
+    ],
+    "86": [
+      "games_imposter_tests_sockethandlers_test_ts_tests_sockethandlers_test",
+      "games_imposter_tests_sockethandlers_test_ts_tests_sockethandlers_test_autojoin",
+      "tests_sockethandlers_test_createnamespace",
+      "tests_sockethandlers_test_createsocket",
+      "tests_sockethandlers_test_handler"
+    ],
+    "87": [
+      "games_index",
+      "games_index_clientgameregistry",
+      "games_index_getclientgame",
+      "games_index_platformgamemeta",
+      "games_index_platformgamemodule"
+    ],
+    "88": [
+      "server_env",
+      "server_env_findnearestenvfile",
+      "server_env_loadlocalenvfile",
+      "server_env_parseenvfile",
+      "server_env_stripoptionalquotes"
+    ],
+    "89": [
+      "components_actionannouncement",
+      "games_flip7_ui_vue_src_stores_game_ts_stores_game",
+      "games_flip7_ui_vue_src_stores_game_ts_stores_game_usegamestore",
+      "stores_game_drawncardinfo"
+    ],
+    "90": [
+      "components_carddrawtoast",
+      "components_carddrawtoast_accentclasses",
+      "components_carddrawtoast_cardsubtext",
+      "components_carddrawtoast_cardtext"
+    ],
+    "91": [
+      "components_lobby_canstart",
+      "components_lobby_connectedcount",
+      "components_lobby_ishost",
+      "games_secret_signals_ui_vue_src_components_lobby_vue_components_lobby"
+    ],
+    "92": [
+      "components_lobby_parseexcludedletters",
+      "components_lobby_saveexcludedletters",
+      "components_lobby_updatelanguage",
+      "games_blackout_ui_vue_src_components_lobby_vue_components_lobby"
+    ],
+    "93": [
+      "e2e_party_resume_spec",
+      "e2e_party_resume_spec_createparty",
+      "e2e_party_resume_spec_joinparty",
+      "e2e_party_resume_spec_launchgame"
+    ],
+    "94": [
+      "games_blackout_e2e_game_spec_ts_e2e_game_spec",
+      "games_blackout_e2e_game_spec_ts_e2e_game_spec_createparty",
+      "games_blackout_e2e_game_spec_ts_e2e_game_spec_joinparty",
+      "games_blackout_e2e_game_spec_ts_e2e_game_spec_launchgame"
+    ],
+    "95": [
+      "games_imposter_server_src_config_constants_ts_config_constants",
+      "games_imposter_server_src_config_constants_ts_config_constants_player_id",
+      "games_imposter_server_src_config_constants_ts_config_constants_resume_token",
+      "games_imposter_server_src_config_constants_ts_config_constants_room_code"
+    ],
+    "96": [
+      "games_imposter_server_src_utils_helpers_ts_utils_helpers",
+      "games_imposter_server_src_utils_helpers_ts_utils_helpers_sanitizename",
+      "games_imposter_server_src_utils_helpers_ts_utils_helpers_shuffle",
+      "utils_helpers_getrandomint"
+    ],
+    "97": [
+      "games_secret_signals_server_src_config_constants_ts_config_constants",
+      "games_secret_signals_server_src_config_constants_ts_config_constants_player_id",
+      "games_secret_signals_server_src_config_constants_ts_config_constants_resume_token",
+      "games_secret_signals_server_src_config_constants_ts_config_constants_room_code"
+    ],
+    "98": [
+      "types_better_sqlite3_d",
+      "types_better_sqlite3_d_database",
+      "types_better_sqlite3_d_databaseconstructor",
+      "types_better_sqlite3_d_statement"
+    ],
+    "99": [
+      "games_blackout_core_src_events_ts_src_events",
+      "games_blackout_core_src_events_ts_src_events_clienttoserverevents",
+      "games_blackout_core_src_events_ts_src_events_servertoclientevents"
+    ],
+    "100": [
+      "games_blackout_ui_vue_src_types_config_ts_types_config",
+      "games_blackout_ui_vue_src_types_config_ts_types_config_gamecomponentprops",
+      "games_blackout_ui_vue_src_types_config_ts_types_config_hubintegrationprops"
+    ],
+    "101": [
+      "games_flip7_ui_vue_src_app_vue_src_app",
+      "games_flip7_ui_vue_src_app_vue_src_app_if",
+      "src_app_commitroomupdate"
+    ],
+    "102": [
+      "games_imposter_core_src_events_ts_src_events",
+      "games_imposter_core_src_events_ts_src_events_clienttoserverevents",
+      "games_imposter_core_src_events_ts_src_events_servertoclientevents"
+    ],
+    "103": [
+      "games_imposter_ui_vue_src_types_config_ts_types_config",
+      "games_imposter_ui_vue_src_types_config_ts_types_config_gamecomponentprops",
+      "games_imposter_ui_vue_src_types_config_ts_types_config_hubintegrationprops"
+    ],
+    "104": [
+      "games_secret_signals_server_src_utils_helpers_ts_utils_helpers",
+      "games_secret_signals_server_src_utils_helpers_ts_utils_helpers_sanitizename",
+      "games_secret_signals_server_src_utils_helpers_ts_utils_helpers_shuffle"
+    ],
+    "105": [
+      "games_secret_signals_ui_vue_src_types_config_ts_types_config",
+      "games_secret_signals_ui_vue_src_types_config_ts_types_config_gamecomponentprops",
+      "games_secret_signals_ui_vue_src_types_config_ts_types_config_hubintegrationprops"
+    ],
+    "106": [
+      "games_secret_signals_ui_vue_src_vite_env_d_ts_src_vite_env_d",
+      "games_secret_signals_ui_vue_src_vite_env_d_ts_src_vite_env_d_importmeta",
+      "games_secret_signals_ui_vue_src_vite_env_d_ts_src_vite_env_d_importmetaenv"
+    ],
+    "107": [
+      "platform_vite_config",
+      "platform_vite_config_games_root",
+      "platform_vite_config_sharedaliasplugin"
+    ],
+    "108": [
+      "src_embedded_test",
+      "src_embedded_test_app",
+      "src_embedded_test_params"
+    ],
+    "109": [
+      "components_gameover_singlewinner",
+      "games_imposter_ui_vue_src_components_gameover_vue_components_gameover"
+    ],
+    "110": [
+      "components_teamrosterpanel",
+      "components_teamrosterpanel_agents"
+    ],
+    "111": [
+      "games_blackout_tests_phasemanager_test_ts_tests_phasemanager_test",
+      "games_blackout_tests_phasemanager_test_ts_tests_phasemanager_test_makeroom"
+    ],
+    "112": [
+      "games_blackout_ui_vue_src_index_ts_src_index",
+      "games_blackout_ui_vue_src_index_ts_src_index_manifest"
+    ],
+    "113": [
+      "games_blackout_ui_vue_src_main_ts_src_main",
+      "games_blackout_ui_vue_src_main_ts_src_main_app"
+    ],
+    "114": [
+      "games_blackout_ui_vue_src_stores_game_ts_stores_game",
+      "games_blackout_ui_vue_src_stores_game_ts_stores_game_usegamestore"
+    ],
+    "115": [
+      "games_flip7_ui_vue_src_types_config_ts_types_config",
+      "games_flip7_ui_vue_src_types_config_ts_types_config_hubintegrationprops"
+    ],
+    "116": [
+      "games_imposter_ui_vue_src_index_ts_src_index",
+      "games_imposter_ui_vue_src_index_ts_src_index_manifest"
+    ],
+    "117": [
+      "games_imposter_ui_vue_src_main_ts_src_main",
+      "games_imposter_ui_vue_src_main_ts_src_main_app"
+    ],
+    "118": [
+      "games_imposter_ui_vue_src_stores_game_ts_stores_game",
+      "games_imposter_ui_vue_src_stores_game_ts_stores_game_usegamestore"
+    ],
+    "119": [
+      "games_imposter_ui_vue_src_vite_env_d_ts_src_vite_env_d",
+      "games_imposter_ui_vue_src_vite_env_d_ts_src_vite_env_d_importmeta"
+    ],
+    "120": [
+      "games_scout_ui_vue_src_app_vue_src_app",
+      "games_scout_ui_vue_src_app_vue_src_app_if"
+    ],
+    "121": [
+      "games_scout_ui_vue_src_stores_game_ts_stores_game",
+      "games_scout_ui_vue_src_stores_game_ts_stores_game_usegamestore"
+    ],
+    "122": [
+      "games_scout_ui_vue_src_types_config_ts_types_config",
+      "games_scout_ui_vue_src_types_config_ts_types_config_hubintegrationprops"
+    ],
+    "123": [
+      "games_secret_signals_ui_vue_src_index_ts_src_index",
+      "games_secret_signals_ui_vue_src_index_ts_src_index_manifest"
+    ],
+    "124": [
+      "games_secret_signals_ui_vue_src_main_ts_src_main",
+      "games_secret_signals_ui_vue_src_main_ts_src_main_app"
+    ],
+    "125": [
+      "apps_platform_src_app_vue_src_app"
+    ],
+    "126": [
+      "components_actiontargetpicker"
+    ],
+    "127": [
+      "components_card"
+    ],
+    "128": [
+      "components_cardcell"
+    ],
+    "129": [
+      "components_gameboard"
+    ],
+    "130": [
+      "components_gamelog"
+    ],
+    "131": [
+      "components_hitstaycontrols"
+    ],
+    "132": [
+      "components_playcontrols"
+    ],
+    "133": [
+      "components_playerboard"
+    ],
+    "134": [
+      "components_roundsummary"
+    ],
+    "135": [
+      "components_scoreboard"
+    ],
+    "136": [
+      "components_scoutdialog"
+    ],
+    "137": [
+      "components_setupflip"
+    ],
+    "138": [
+      "components_trickhistory"
+    ],
+    "139": [
+      "components_turnindicator"
+    ],
+    "140": [
+      "components_votingphase"
+    ],
+    "141": [
+      "eslint_config"
+    ],
+    "142": [
+      "games_blackout_tests_roommodel_test_ts_tests_roommodel_test"
+    ],
+    "143": [
+      "games_blackout_ui_vue_env_d_ts_ui_vue_env_d"
+    ],
+    "144": [
+      "games_blackout_ui_vue_src_components_gameover_vue_components_gameover"
+    ],
+    "145": [
+      "games_blackout_ui_vue_src_platformadapter_vue_src_platformadapter"
+    ],
+    "146": [
+      "games_flip7_ui_vue_env_d_ts_ui_vue_env_d"
+    ],
+    "147": [
+      "games_flip7_ui_vue_src_components_lobby_vue_components_lobby"
+    ],
+    "148": [
+      "games_flip7_ui_vue_src_platformadapter_vue_src_platformadapter"
+    ],
+    "149": [
+      "games_imposter_core_src_index_ts_src_index"
+    ],
+    "150": [
+      "games_imposter_server_src_config_constants_ts_config_constants_max_players"
+    ],
+    "151": [
+      "games_imposter_server_src_config_constants_ts_config_constants_min_players"
+    ],
+    "152": [
+      "games_imposter_ui_vue_env_d_ts_ui_vue_env_d"
+    ],
+    "153": [
+      "games_imposter_ui_vue_src_app_vue_src_app"
+    ],
+    "154": [
+      "games_imposter_ui_vue_src_components_lobby_vue_components_lobby"
+    ],
+    "155": [
+      "games_imposter_ui_vue_src_platformadapter_vue_src_platformadapter"
+    ],
+    "156": [
+      "games_scout_tests_roommodel_test_ts_tests_roommodel_test"
+    ],
+    "157": [
+      "games_scout_ui_vue_env_d_ts_ui_vue_env_d"
+    ],
+    "158": [
+      "games_scout_ui_vue_src_components_gameover_vue_components_gameover"
+    ],
+    "159": [
+      "games_scout_ui_vue_src_components_gametable_vue_components_gametable"
+    ],
+    "160": [
+      "games_scout_ui_vue_src_components_lobby_vue_components_lobby"
+    ],
+    "161": [
+      "games_scout_ui_vue_src_platformadapter_vue_src_platformadapter"
+    ],
+    "162": [
+      "games_secret_signals_core_src_index_ts_src_index"
+    ],
+    "163": [
+      "games_secret_signals_server_src_config_constants_ts_config_constants_max_players"
+    ],
+    "164": [
+      "games_secret_signals_server_src_config_constants_ts_config_constants_min_players"
+    ],
+    "165": [
+      "games_secret_signals_ui_vue_env_d_ts_ui_vue_env_d"
+    ],
+    "166": [
+      "games_secret_signals_ui_vue_src_app_vue_src_app"
+    ],
+    "167": [
+      "games_secret_signals_ui_vue_src_components_gameover_vue_components_gameover"
+    ],
+    "168": [
+      "games_secret_signals_ui_vue_src_platformadapter_vue_src_platformadapter"
+    ],
+    "169": [
+      "lib_teamtheme_team_hex"
+    ],
+    "170": [
+      "lib_teamtheme_team_name"
+    ],
+    "171": [
+      "lib_teamtheme_team_text_hex"
+    ],
+    "172": [
+      "panels_playerspanel"
+    ],
+    "173": [
+      "platform_env_d"
+    ],
+    "174": [
+      "playwright_config"
+    ]
+  },
+  "cohesion": {
+    "0": 0.05217391304347826,
+    "1": 0.05780885780885781,
+    "2": 0.0625,
+    "3": 0.07862903225806452,
+    "4": 0.07142857142857142,
+    "5": 0.07142857142857142,
+    "6": 0.1168091168091168,
+    "7": 0.10826210826210826,
+    "8": 0.18153846153846154,
+    "9": 0.13333333333333333,
+    "10": 0.16666666666666666,
+    "11": 0.11428571428571428,
+    "12": 0.1619047619047619,
+    "13": 0.1368421052631579,
+    "14": 0.15789473684210525,
+    "15": 0.10526315789473684,
+    "16": 0.10526315789473684,
+    "17": 0.10526315789473684,
+    "18": 0.10526315789473684,
+    "19": 0.10526315789473684,
+    "20": 0.18128654970760233,
+    "21": 0.25146198830409355,
+    "22": 0.13725490196078433,
+    "23": 0.1503267973856209,
+    "24": 0.12418300653594772,
+    "25": 0.14705882352941177,
+    "26": 0.11764705882352941,
+    "27": 0.16666666666666666,
+    "28": 0.15,
+    "29": 0.15833333333333333,
+    "30": 0.15384615384615385,
+    "31": 0.17582417582417584,
+    "32": 0.14285714285714285,
+    "33": 0.14285714285714285,
+    "34": 0.20512820512820512,
+    "35": 0.16666666666666666,
+    "36": 0.2564102564102564,
+    "37": 0.15384615384615385,
+    "38": 0.2,
+    "39": 0.2909090909090909,
+    "40": 0.2545454545454545,
+    "41": 0.23636363636363636,
+    "42": 0.21818181818181817,
+    "43": 0.18181818181818182,
+    "44": 0.2,
+    "45": 0.2,
+    "46": 0.24444444444444444,
+    "47": 0.2,
+    "48": 0.28888888888888886,
+    "49": 0.2,
+    "50": 0.2222222222222222,
+    "51": 0.2777777777777778,
+    "52": 0.3611111111111111,
+    "53": 0.25,
+    "54": 0.2222222222222222,
+    "55": 0.25,
+    "56": 0.32142857142857145,
+    "57": 0.5357142857142857,
+    "58": 0.25,
+    "59": 0.2857142857142857,
+    "60": 0.2857142857142857,
+    "61": 0.2857142857142857,
+    "62": 0.5238095238095238,
+    "63": 0.2857142857142857,
+    "64": 0.47619047619047616,
+    "65": 0.38095238095238093,
+    "66": 0.2857142857142857,
+    "67": 0.2857142857142857,
+    "68": 0.2857142857142857,
+    "69": 0.2857142857142857,
+    "70": 0.2857142857142857,
+    "71": 0.2857142857142857,
+    "72": 0.3333333333333333,
+    "73": 0.5333333333333333,
+    "74": 0.3333333333333333,
+    "75": 0.3333333333333333,
+    "76": 0.3333333333333333,
+    "77": 0.5333333333333333,
+    "78": 0.4,
+    "79": 0.4,
+    "80": 0.4,
+    "81": 0.4,
+    "82": 0.4,
+    "83": 0.4,
+    "84": 0.5,
+    "85": 0.4,
+    "86": 0.4,
+    "87": 0.4,
+    "88": 0.7,
+    "89": 0.5,
+    "90": 0.5,
+    "91": 0.5,
+    "92": 0.8333333333333334,
+    "93": 0.5,
+    "94": 0.5,
+    "95": 0.5,
+    "96": 0.6666666666666666,
+    "97": 0.5,
+    "98": 0.5,
+    "99": 0.6666666666666666,
+    "100": 0.6666666666666666,
+    "101": 0.6666666666666666,
+    "102": 0.6666666666666666,
+    "103": 0.6666666666666666,
+    "104": 0.6666666666666666,
+    "105": 0.6666666666666666,
+    "106": 0.6666666666666666,
+    "107": 0.6666666666666666,
+    "108": 0.6666666666666666,
+    "109": 1.0,
+    "110": 1.0,
+    "111": 1.0,
+    "112": 1.0,
+    "113": 1.0,
+    "114": 1.0,
+    "115": 1.0,
+    "116": 1.0,
+    "117": 1.0,
+    "118": 1.0,
+    "119": 1.0,
+    "120": 1.0,
+    "121": 1.0,
+    "122": 1.0,
+    "123": 1.0,
+    "124": 1.0,
+    "125": 1.0,
+    "126": 1.0,
+    "127": 1.0,
+    "128": 1.0,
+    "129": 1.0,
+    "130": 1.0,
+    "131": 1.0,
+    "132": 1.0,
+    "133": 1.0,
+    "134": 1.0,
+    "135": 1.0,
+    "136": 1.0,
+    "137": 1.0,
+    "138": 1.0,
+    "139": 1.0,
+    "140": 1.0,
+    "141": 1.0,
+    "142": 1.0,
+    "143": 1.0,
+    "144": 1.0,
+    "145": 1.0,
+    "146": 1.0,
+    "147": 1.0,
+    "148": 1.0,
+    "149": 1.0,
+    "150": 1.0,
+    "151": 1.0,
+    "152": 1.0,
+    "153": 1.0,
+    "154": 1.0,
+    "155": 1.0,
+    "156": 1.0,
+    "157": 1.0,
+    "158": 1.0,
+    "159": 1.0,
+    "160": 1.0,
+    "161": 1.0,
+    "162": 1.0,
+    "163": 1.0,
+    "164": 1.0,
+    "165": 1.0,
+    "166": 1.0,
+    "167": 1.0,
+    "168": 1.0,
+    "169": 1.0,
+    "170": 1.0,
+    "171": 1.0,
+    "172": 1.0,
+    "173": 1.0,
+    "174": 1.0
+  },
+  "gods": [
+    {
+      "id": "logging_logger_createcomponentlogger",
+      "label": "createComponentLogger()",
+      "degree": 23
+    },
+    {
+      "id": "package_scripts",
+      "label": "scripts",
+      "degree": 17
+    },
+    {
+      "id": "logging_logger_readloggingconfig",
+      "label": "readLoggingConfig()",
+      "degree": 16
+    },
+    {
+      "id": "games_blackout_ui_vue_tsconfig_json_ui_vue_tsconfig_compileroptions",
+      "label": "compilerOptions",
+      "degree": 15
+    },
+    {
+      "id": "games_flip7_ui_vue_tsconfig_json_ui_vue_tsconfig_compileroptions",
+      "label": "compilerOptions",
+      "degree": 15
+    },
+    {
+      "id": "games_imposter_ui_vue_tsconfig_json_ui_vue_tsconfig_compileroptions",
+      "label": "compilerOptions",
+      "degree": 15
+    },
+    {
+      "id": "games_scout_ui_vue_tsconfig_json_ui_vue_tsconfig_compileroptions",
+      "label": "compilerOptions",
+      "degree": 15
+    },
+    {
+      "id": "games_secret_signals_ui_vue_tsconfig_json_ui_vue_tsconfig_compileroptions",
+      "label": "compilerOptions",
+      "degree": 15
+    },
+    {
+      "id": "platform_tsconfig_compileroptions",
+      "label": "compilerOptions",
+      "degree": 11
+    },
+    {
+      "id": "managers_roundmanager_advanceturnorfinalize",
+      "label": "advanceTurnOrFinalize()",
+      "degree": 11
+    }
+  ],
+  "surprises": [
+    {
+      "source": "useSocket()",
+      "target": "io",
+      "source_files": [
+        "games/imposter/ui-vue/src/composables/useSocket.ts",
+        "apps/platform/server/index.ts"
+      ],
+      "confidence": "INFERRED",
+      "relation": "calls",
+      "why": "inferred connection - not explicitly stated in source; connects across different repos/directories; peripheral node `useSocket()` unexpectedly reaches hub `io`"
+    },
+    {
+      "source": "useSocket()",
+      "target": "io",
+      "source_files": [
+        "games/secret-signals/ui-vue/src/composables/useSocket.ts",
+        "apps/platform/server/index.ts"
+      ],
+      "confidence": "INFERRED",
+      "relation": "calls",
+      "why": "inferred connection - not explicitly stated in source; connects across different repos/directories; peripheral node `useSocket()` unexpectedly reaches hub `io`"
+    },
+    {
+      "source": "registerBlackout()",
+      "target": "readLoggingConfig()",
+      "source_files": [
+        "games/blackout/server/src/socketHandlers.ts",
+        "apps/platform/server/logging/logger.ts"
+      ],
+      "confidence": "INFERRED",
+      "relation": "calls",
+      "why": "inferred connection - not explicitly stated in source; connects across different repos/directories; bridges separate communities"
+    },
+    {
+      "source": "registerFlip7()",
+      "target": "readLoggingConfig()",
+      "source_files": [
+        "games/flip7/server/src/socketHandlers.ts",
+        "apps/platform/server/logging/logger.ts"
+      ],
+      "confidence": "INFERRED",
+      "relation": "calls",
+      "why": "inferred connection - not explicitly stated in source; connects across different repos/directories; bridges separate communities"
+    },
+    {
+      "source": "registerBlackout()",
+      "target": "createComponentLogger()",
+      "source_files": [
+        "games/blackout/server/src/socketHandlers.ts",
+        "apps/platform/server/logging/logger.ts"
+      ],
+      "confidence": "INFERRED",
+      "relation": "calls",
+      "why": "inferred connection - not explicitly stated in source; connects across different repos/directories; bridges separate communities"
+    }
+  ],
+  "tokens": {
+    "input": 0,
+    "output": 0
+  }
+}

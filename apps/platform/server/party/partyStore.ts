@@ -49,6 +49,8 @@ export function createParty(
     status: 'lobby',
     returnAcks: new Set(),
     pendingCleanupMatchKey: null,
+    isPublic: false,
+    publicListedAt: null,
   };
 
   parties.set(partyId, party);
@@ -70,6 +72,27 @@ export function getPartyByInviteCode(inviteCode: string): PartySession | undefin
 export function getPartyBySocket(socketId: string): PartySession | undefined {
   const partyId = socketToParty.get(socketId);
   return partyId ? parties.get(partyId) : undefined;
+}
+
+export function getPartyByActiveMatch(matchKey: string, gameId?: string): PartySession | undefined {
+  const normalizedMatchKey = matchKey.trim();
+  if (!normalizedMatchKey) return undefined;
+
+  for (const party of parties.values()) {
+    if (
+      party.status === 'in-match' &&
+      party.activeMatch?.matchKey === normalizedMatchKey &&
+      (!gameId || party.activeMatch.gameId === gameId)
+    ) {
+      return party;
+    }
+  }
+
+  return undefined;
+}
+
+export function getAllParties(): PartySession[] {
+  return Array.from(parties.values());
 }
 
 export function registerSocket(socketId: string, partyId: string): void {
@@ -175,5 +198,74 @@ export function partyToView(party: PartySession) {
     selectedGameId: party.selectedGameId,
     activeMatch: party.activeMatch,
     status: party.status,
+    isPublic: party.isPublic,
+    publicListedAt: party.publicListedAt,
   };
+}
+
+/**
+ * Toggle a party's public-listing opt-in. No-op when the value is unchanged.
+ * Updates `publicListedAt` to mark when the party most recently became public.
+ */
+export function setPartyPublic(party: PartySession, isPublic: boolean): void {
+  if (party.isPublic === isPublic) return;
+  party.isPublic = isPublic;
+  party.publicListedAt = isPublic ? Date.now() : null;
+}
+
+/** Number of currently connected members in a party. */
+export function connectedMemberCount(party: PartySession): number {
+  return Array.from(party.members.values()).filter((m) => m.connected).length;
+}
+
+/**
+ * Whether a party should appear in the public, joinable lobby snapshot.
+ * Requires host opt-in, lobby status, and at least one connected member.
+ */
+export function isJoinablePublicParty(party: PartySession): boolean {
+  return party.isPublic && party.status === 'lobby' && connectedMemberCount(party) > 0;
+}
+
+export interface ActivePartyMatch {
+  gameId: string;
+  matchKey: string;
+}
+
+export function getActivePartyMatches(): ActivePartyMatch[] {
+  const matches: ActivePartyMatch[] = [];
+
+  for (const party of parties.values()) {
+    if (party.status === 'in-match' && party.activeMatch) {
+      matches.push({
+        gameId: party.activeMatch.gameId,
+        matchKey: party.activeMatch.matchKey,
+      });
+    }
+  }
+
+  return matches;
+}
+
+export interface ClearAllPartiesResult {
+  partiesRemoved: number;
+  membersRemoved: number;
+}
+
+export function clearAllParties(): ClearAllPartiesResult {
+  let membersRemoved = 0;
+  for (const party of parties.values()) {
+    membersRemoved += party.members.size;
+  }
+
+  for (const timer of partyCleanupTimers.values()) clearTimeout(timer);
+  for (const timer of matchTimeoutTimers.values()) clearTimeout(timer);
+
+  const partiesRemoved = parties.size;
+  parties.clear();
+  inviteCodeToParty.clear();
+  socketToParty.clear();
+  partyCleanupTimers.clear();
+  matchTimeoutTimers.clear();
+
+  return { partiesRemoved, membersRemoved };
 }

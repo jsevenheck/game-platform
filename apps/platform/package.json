@@ -4,7 +4,7 @@
   "private": true,
   "scripts": {
     "dev": "concurrently \"pnpm run dev:server\" \"pnpm run dev:client\"",
-    "dev:server": "tsx watch server/index.ts",
+    "dev:server": "node scripts/dev-server.cjs",
     "dev:client": "vite",
     "build": "pnpm run build:client && pnpm run build:server",
     "build:client": "vue-tsc --noEmit && vite build",

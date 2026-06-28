@@ -13,7 +13,20 @@ import {
   clearPartyCleanup,
   scheduleMatchTimeout,
   clearMatchTimeout,
+  setPartyPublic,
+  connectedMemberCount,
 } from './partyStore';
+import {
+  broadcastJoinableParties,
+  getJoinablePublicPartiesSnapshot,
+  PUBLIC_LOBBIES_ROOM,
+  type JoinablePartyView,
+} from './publicLobbies';
+import {
+  checkFixedWindowRateLimit,
+  pruneExpiredRateLimitEntries,
+  type RateLimitRecord,
+} from '../observability/rateLimit';
 import type { PartySession } from './types';
 import { createComponentLogger, readLoggingConfig, toLoggableError } from '../logging/logger';
 import { attachSocketEventDebugLogging, createSocketLogger } from '../logging/socketLogger';
@@ -76,10 +89,23 @@ interface PartyClientToServerEvents {
     cb: (res: { ok: true } | { ok: false; error: string }) => void
   ) => void;
   ackReturnedToLobby: (data: { playerId: string }) => void;
+  listJoinableParties: (cb: (res: JoinableListResponse) => void) => void;
+  subscribeJoinableParties: () => void;
+  unsubscribeJoinableParties: () => void;
+  setPartyPublic: (
+    data: { playerId: string; isPublic: boolean },
+    cb: (res: SetPartyPublicResponse) => void
+  ) => void;
 }
+
+type JoinableListResponse =
+  { ok: true; parties: JoinablePartyView[] } | { ok: false; error: string };
+
+type SetPartyPublicResponse = { ok: true; isPublic: boolean } | { ok: false; error: string };
 
 interface PartyServerToClientEvents {
   partyUpdate: (partyView: ReturnType<typeof partyToView>) => void;
+  joinablePartiesUpdate: (parties: JoinablePartyView[]) => void;
 }
 
 type PartySocket = Socket<PartyClientToServerEvents, PartyServerToClientEvents>;
@@ -88,9 +114,21 @@ function broadcastParty(io: Server, party: PartySession): void {
   io.of('/party').to(party.partyId).emit('partyUpdate', partyToView(party));
 }
 
-function connectedMemberCount(party: PartySession): number {
-  return Array.from(party.members.values()).filter((m) => m.connected).length;
+/** Broadcast the public lobby snapshot, then the party update (when given). */
+function broadcastPartyAndLobbies(io: Server, party?: PartySession): void {
+  if (party) broadcastParty(io, party);
+  broadcastJoinableParties(io);
 }
+
+// Rate limiter for the manual `listJoinableParties` refresh (subscribe is not limited).
+const joinableListRateLimit = new Map<string, RateLimitRecord>();
+const JOINABLE_LIST_RATE_LIMIT_WINDOW_MS = 3000;
+const JOINABLE_LIST_RATE_LIMIT_MAX = 1;
+const joinableListPruneInterval = setInterval(
+  () => pruneExpiredRateLimitEntries(joinableListRateLimit),
+  60_000
+);
+joinableListPruneInterval.unref?.();
 
 export function registerPartyHandlers(io: Server): void {
   const nsp = io.of('/party');
@@ -223,7 +261,7 @@ export function registerPartyHandlers(io: Server): void {
         registerSocket(socket.id, party.partyId);
         clearPartyCleanup(party.partyId);
         socket.join(party.partyId);
-        broadcastParty(io, party);
+        broadcastPartyAndLobbies(io, party);
 
         socketLogger.info(
           {
@@ -302,7 +340,7 @@ export function registerPartyHandlers(io: Server): void {
         registerSocket(socket.id, party.partyId);
         clearPartyCleanup(party.partyId);
         socket.join(party.partyId);
-        broadcastParty(io, party);
+        broadcastPartyAndLobbies(io, party);
 
         socketLogger.info(
           {
@@ -365,6 +403,7 @@ export function registerPartyHandlers(io: Server): void {
               },
               'deleted party after last host left'
             );
+            broadcastJoinableParties(io);
             instrumentation.finishSuccess();
             return;
           }
@@ -380,6 +419,7 @@ export function registerPartyHandlers(io: Server): void {
             },
             'deleted empty party after leave'
           );
+          broadcastJoinableParties(io);
           instrumentation.finishSuccess();
           return;
         }
@@ -395,7 +435,7 @@ export function registerPartyHandlers(io: Server): void {
           );
         }
 
-        broadcastParty(io, party);
+        broadcastPartyAndLobbies(io, party);
         socketLogger.info(
           {
             partyId: party.partyId,
@@ -436,7 +476,7 @@ export function registerPartyHandlers(io: Server): void {
         }
 
         party.selectedGameId = data.gameId;
-        broadcastParty(io, party);
+        broadcastPartyAndLobbies(io, party);
         socketLogger.info(
           {
             partyId: party.partyId,
@@ -507,7 +547,7 @@ export function registerPartyHandlers(io: Server): void {
         party.pendingCleanupMatchKey = null;
         scheduleMatchTimeout(party.partyId, () => triggerMatchTimeout(party));
 
-        broadcastParty(io, party);
+        broadcastPartyAndLobbies(io, party);
         socketLogger.info(
           {
             partyId: party.partyId,
@@ -693,7 +733,7 @@ export function registerPartyHandlers(io: Server): void {
       if (allAcked && party.status === 'returning') {
         party.status = 'lobby';
         party.returnAcks = new Set();
-        broadcastParty(io, party);
+        broadcastPartyAndLobbies(io, party);
         socketLogger.info(
           {
             partyId: party.partyId,
@@ -702,6 +742,124 @@ export function registerPartyHandlers(io: Server): void {
           },
           'all connected players acknowledged lobby return'
         );
+      }
+    });
+
+    socket.on('subscribeJoinableParties', () => {
+      const instrumentation = startSocketHandlerInstrumentation(
+        '/party',
+        'subscribeJoinableParties'
+      );
+      try {
+        socket.join(PUBLIC_LOBBIES_ROOM);
+        // Immediately push a fresh snapshot so the client can first-paint.
+        socket.emit('joinablePartiesUpdate', getJoinablePublicPartiesSnapshot());
+        socketLogger.debug({ room: PUBLIC_LOBBIES_ROOM }, 'client subscribed to public lobbies');
+        instrumentation.finishSuccess();
+      } catch (err) {
+        instrumentation.finishError();
+        throw err;
+      }
+    });
+
+    socket.on('unsubscribeJoinableParties', () => {
+      const instrumentation = startSocketHandlerInstrumentation(
+        '/party',
+        'unsubscribeJoinableParties'
+      );
+      try {
+        socket.leave(PUBLIC_LOBBIES_ROOM);
+        instrumentation.finishSuccess();
+      } catch (err) {
+        instrumentation.finishError();
+        throw err;
+      }
+    });
+
+    socket.on('listJoinableParties', (cb) => {
+      const instrumentation = startSocketHandlerInstrumentation('/party', 'listJoinableParties');
+      const respond = instrumentation.wrapCallback(cb);
+      try {
+        if (
+          !checkFixedWindowRateLimit(joinableListRateLimit, socket.id, {
+            windowMs: JOINABLE_LIST_RATE_LIMIT_WINDOW_MS,
+            max: JOINABLE_LIST_RATE_LIMIT_MAX,
+          })
+        ) {
+          incrementPartyLifecycle({
+            event: 'listJoinableParties',
+            result: 'rejected',
+            reason: 'rate_limited',
+          });
+          return respond({ ok: false, error: 'rate_limited' });
+        }
+        respond({ ok: true, parties: getJoinablePublicPartiesSnapshot() });
+        incrementPartyLifecycle({ event: 'listJoinableParties', result: 'ok' });
+      } catch (err) {
+        instrumentation.finishError();
+        throw err;
+      }
+    });
+
+    socket.on('setPartyPublic', (data, cb) => {
+      const instrumentation = startSocketHandlerInstrumentation('/party', 'setPartyPublic');
+      const respond = instrumentation.wrapCallback(cb);
+      try {
+        if (!data || typeof data !== 'object') {
+          incrementPartyLifecycle({
+            event: 'setPartyPublic',
+            result: 'rejected',
+            reason: 'invalid_request',
+          });
+          return respond({ ok: false, error: 'Invalid request' });
+        }
+        const playerId = typeof data.playerId === 'string' ? data.playerId.trim() : '';
+        const isPublic = data.isPublic;
+        if (!playerId || typeof isPublic !== 'boolean') {
+          incrementPartyLifecycle({
+            event: 'setPartyPublic',
+            result: 'rejected',
+            reason: 'invalid_request',
+          });
+          return respond({ ok: false, error: 'Invalid request' });
+        }
+
+        const party = getPartyBySocket(socket.id);
+        if (!party) return respond({ ok: false, error: 'Not in a party' });
+        const actor = Array.from(party.members.values()).find((m) => m.socketId === socket.id);
+        if (!actor || !actor.connected || actor.playerId !== party.hostPlayerId) {
+          socketLogger.warn(
+            { partyId: party.partyId, playerId, isPublic },
+            'setPartyPublic rejected: actor is not party host'
+          );
+          incrementPartyLifecycle({
+            event: 'setPartyPublic',
+            result: 'rejected',
+            reason: 'not_host',
+          });
+          return respond({ ok: false, error: 'Only the host can change public listing' });
+        }
+        // Stale-client rejection: the actor must match the claimed playerId.
+        if (actor.playerId !== playerId) {
+          incrementPartyLifecycle({
+            event: 'setPartyPublic',
+            result: 'rejected',
+            reason: 'stale_client',
+          });
+          return respond({ ok: false, error: 'Invalid request' });
+        }
+
+        setPartyPublic(party, isPublic);
+        broadcastPartyAndLobbies(io, party);
+        socketLogger.info(
+          { partyId: party.partyId, isPublic, connectedPlayers: connectedMemberCount(party) },
+          'host toggled public listing'
+        );
+        incrementPartyLifecycle({ event: 'setPartyPublic', result: 'ok' });
+        respond({ ok: true, isPublic: party.isPublic });
+      } catch (err) {
+        instrumentation.finishError();
+        throw err;
       }
     });
 
@@ -743,7 +901,7 @@ export function registerPartyHandlers(io: Server): void {
           );
         }
 
-        broadcastParty(io, party);
+        broadcastPartyAndLobbies(io, party);
         socketLogger.info(
           {
             reason,
@@ -775,7 +933,7 @@ function scheduleReturnCleanup(
     if (party.status === 'returning') {
       party.status = 'lobby';
       party.returnAcks = new Set();
-      broadcastParty(io, party);
+      broadcastPartyAndLobbies(io, party);
       logger.info(
         {
           partyId: party.partyId,

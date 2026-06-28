@@ -23,3 +23,9 @@ declare module '@flip7-ui/PlatformAdapter.vue' {
   const component: DefineComponent;
   export default component;
 }
+
+declare module '@scout-ui/PlatformAdapter.vue' {
+  import type { DefineComponent } from 'vue';
+  const component: DefineComponent;
+  export default component;
+}

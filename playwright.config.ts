@@ -8,6 +8,7 @@ import { defineConfig, devices } from '@playwright/test';
  * The webServer below starts the full platform (server + client).
  */
 const pnpmCommand = process.platform === 'win32' ? 'pnpm.cmd' : 'pnpm';
+const nodeCommand = process.platform === 'win32' ? `"${process.execPath}"` : process.execPath;
 
 export default defineConfig({
   testDir: '.',
@@ -31,7 +32,7 @@ export default defineConfig({
   ],
   webServer: [
     {
-      command: `${pnpmCommand} -C apps/platform dev:server`,
+      command: `${nodeCommand} apps/platform/scripts/dev-server.cjs`,
       port: 3000,
       reuseExistingServer: false,
       env: { E2E_TESTS: '1' },

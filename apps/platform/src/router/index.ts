@@ -2,6 +2,7 @@ import { createRouter, createWebHistory } from 'vue-router';
 import HomeView from '../views/HomeView.vue';
 import PartyView from '../views/PartyView.vue';
 import GameView from '../views/GameView.vue';
+import AdminView from '../views/AdminView.vue';
 
 const router = createRouter({
   history: createWebHistory(),
@@ -16,6 +17,12 @@ const router = createRouter({
       name: 'party',
       component: PartyView,
       props: true,
+    },
+    {
+      path: '/admin/:section(logs|parties)?',
+      name: 'admin',
+      component: AdminView,
+      props: (route) => ({ section: route.params.section ?? 'logs' }),
     },
     {
       path: '/party/:inviteCode/game/:gameId',

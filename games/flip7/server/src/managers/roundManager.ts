@@ -26,6 +26,19 @@ export function popResolvedAction(roomCode: string): ResolvedActionRecord | unde
 
 // ─── Round initialisation ─────────────────────────────────────────────────────
 
+function buildE2EDeck(): Card[] {
+  const source = buildDeck();
+  const scriptedDraws = source
+    .filter((card): card is NumberCard => card.kind === 'number')
+    .slice(0, 18);
+  const scriptedSet = new Set<Card>(scriptedDraws);
+  const remaining = source.filter((card) => !scriptedSet.has(card));
+
+  // draw() pops from the end, so reverse the scripted opening to deal safe
+  // number cards during the initial deal in platform E2E runs.
+  return [...remaining, ...scriptedDraws.reverse()];
+}
+
 export function startRound(room: Room): void {
   const playerIds = Object.keys(room.players);
   const roundNumber = room.roundHistory.length + 1;
@@ -56,7 +69,7 @@ export function startRound(room: Room): void {
     };
   }
 
-  const deck = shuffle(buildDeck());
+  const deck = process.env.E2E_TESTS === '1' ? buildE2EDeck() : shuffle(buildDeck());
 
   room.currentRound = {
     roundNumber,

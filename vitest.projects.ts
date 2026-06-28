@@ -64,10 +64,24 @@ export const flip7Project = {
   },
 };
 
+export const scoutProject = {
+  resolve: {
+    alias: [{ find: '@shared', replacement: resolve(GAMES_ROOT, 'scout/core/src') }],
+  },
+  test: {
+    name: 'scout',
+    include: ['games/scout/__tests__/**/*.test.ts'],
+    environment: 'node',
+    globals: true,
+    clearMocks: true,
+  },
+};
+
 export const allProjects = [
   platformProject,
   blackoutProject,
   imposterProject,
   secretSignalsProject,
   flip7Project,
+  scoutProject,
 ];
