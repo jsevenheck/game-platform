@@ -3,6 +3,8 @@ import { ref, onMounted, onBeforeUnmount } from 'vue';
 import { useRouter } from 'vue-router';
 import { usePartyStore } from '../stores/party';
 import { usePartySocket } from '../composables/usePartySocket';
+import { clientGameRegistry } from '../games';
+import GameLibraryGrid from '../components/home/GameLibraryGrid.vue';
 
 const router = useRouter();
 const store = usePartyStore();
@@ -178,6 +180,11 @@ onBeforeUnmount(() => {
         </button>
       </form>
     </div>
+
+    <section class="home-library" aria-labelledby="home-library-heading">
+      <h2 id="home-library-heading" class="ui-section-label">Game Library</h2>
+      <GameLibraryGrid :games="clientGameRegistry" />
+    </section>
   </div>
 </template>
 
@@ -185,9 +192,11 @@ onBeforeUnmount(() => {
 .home-root {
   min-height: 100dvh;
   display: flex;
+  flex-direction: column;
   align-items: center;
-  justify-content: center;
-  padding: 1.5rem;
+  justify-content: flex-start;
+  gap: 2rem;
+  padding: clamp(1.5rem, 4vw, 3rem);
 }
 
 .home-card {
@@ -282,5 +291,10 @@ onBeforeUnmount(() => {
   font-size: 1rem;
   margin-top: 0.25rem;
   padding: 0.875rem 1.5rem;
+}
+
+.home-library {
+  width: 100%;
+  max-width: 960px;
 }
 </style>

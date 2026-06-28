@@ -180,9 +180,9 @@
     "semantic_hash": "746bd8a8f6edd04e26d5e44fb3e9c0ec"
   },
   "apps/platform/src/games/index.ts": {
-    "mtime": 1779724295.3472085,
-    "ast_hash": "eb7ae72f51480c6563684f71db269f73",
-    "semantic_hash": "eb7ae72f51480c6563684f71db269f73"
+    "mtime": 1782661677.5360603,
+    "ast_hash": "36a902ad90a3b696f77e248dab951ca2",
+    "semantic_hash": ""
   },
   "apps/platform/src/main.ts": {
     "mtime": 1774140342.7760496,
@@ -210,9 +210,9 @@
     "semantic_hash": "6c63c7513c33dcb2bac75cb3084b23c7"
   },
   "apps/platform/src/views/HomeView.vue": {
-    "mtime": 1777839788.5321085,
-    "ast_hash": "1824d4271f0f227f6ed8899a23c1a968",
-    "semantic_hash": "1824d4271f0f227f6ed8899a23c1a968"
+    "mtime": 1782661717.9922595,
+    "ast_hash": "3aa4ca35541cfffdcb6edece661829af",
+    "semantic_hash": ""
   },
   "apps/platform/src/views/PartyView.vue": {
     "mtime": 1780504155.7910194,
@@ -1182,6 +1182,16 @@
   "apps/platform/__tests__/admin.test.ts": {
     "mtime": 1782318791.5706904,
     "ast_hash": "cbe4a2a030043bc05e5ff083583b962d",
+    "semantic_hash": ""
+  },
+  "apps/platform/e2e/home-library.spec.ts": {
+    "mtime": 1782661737.4879827,
+    "ast_hash": "314dad2b23da719f65ea180d7d559f86",
+    "semantic_hash": ""
+  },
+  "apps/platform/src/components/home/GameLibraryGrid.vue": {
+    "mtime": 1782662378.231836,
+    "ast_hash": "64a50e73e59737432ef58e2e1f04897f",
     "semantic_hash": ""
   }
 }
