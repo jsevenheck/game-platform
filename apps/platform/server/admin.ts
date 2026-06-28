@@ -18,13 +18,14 @@ import {
 import type { PartyMember, PartySession } from './party/types';
 import { getRecentLogs } from './logging/logBuffer';
 import { gameRegistry, getGame } from './registry/index';
+import {
+  checkFixedWindowRateLimit,
+  pruneExpiredRateLimitEntries,
+  type RateLimitRecord,
+} from './observability/rateLimit';
+import { broadcastJoinableParties } from './party/publicLobbies';
 
 const adminLogger = createComponentLogger('admin-http');
-
-interface RateLimitRecord {
-  count: number;
-  resetAt: number;
-}
 
 // Simple in-memory rate limiting for admin endpoints
 const rateLimitMap = new Map<string, RateLimitRecord>();
@@ -221,47 +222,24 @@ function kickPartyMember(
   };
 }
 
-function pruneExpiredRateLimitEntries(map: Map<string, RateLimitRecord>, now = Date.now()): void {
-  for (const [ip, record] of map) {
-    if (now > record.resetAt) {
-      map.delete(ip);
-    }
-  }
-}
-
 const rateLimitPruneInterval = setInterval(() => {
-  const now = Date.now();
-  pruneExpiredRateLimitEntries(rateLimitMap, now);
-  pruneExpiredRateLimitEntries(loginRateLimitMap, now);
+  pruneExpiredRateLimitEntries(rateLimitMap);
+  pruneExpiredRateLimitEntries(loginRateLimitMap);
 }, RATE_LIMIT_PRUNE_INTERVAL_MS);
 rateLimitPruneInterval.unref?.();
 
 function checkRateLimit(ip: string): boolean {
-  const now = Date.now();
-  const record = rateLimitMap.get(ip);
-  if (!record || now > record.resetAt) {
-    rateLimitMap.set(ip, { count: 1, resetAt: now + RATE_LIMIT_WINDOW_MS });
-    return true;
-  }
-  if (record.count >= RATE_LIMIT_MAX) {
-    return false;
-  }
-  record.count++;
-  return true;
+  return checkFixedWindowRateLimit(rateLimitMap, ip, {
+    windowMs: RATE_LIMIT_WINDOW_MS,
+    max: RATE_LIMIT_MAX,
+  });
 }
 
 function checkLoginRateLimit(ip: string): boolean {
-  const now = Date.now();
-  const record = loginRateLimitMap.get(ip);
-  if (!record || now > record.resetAt) {
-    loginRateLimitMap.set(ip, { count: 1, resetAt: now + LOGIN_RATE_LIMIT_WINDOW_MS });
-    return true;
-  }
-  if (record.count >= LOGIN_RATE_LIMIT_MAX) {
-    return false;
-  }
-  record.count++;
-  return true;
+  return checkFixedWindowRateLimit(loginRateLimitMap, ip, {
+    windowMs: LOGIN_RATE_LIMIT_WINDOW_MS,
+    max: LOGIN_RATE_LIMIT_MAX,
+  });
 }
 
 function readAdminPasswordHash(): string | null {
@@ -548,6 +526,8 @@ export function registerAdminRoutes(app: Express, io?: Server): void {
         'admin kicked party member'
       );
 
+      if (io) broadcastJoinableParties(io);
+
       res.json({ ok: true, ...result });
     }
   );
@@ -593,6 +573,9 @@ export function registerAdminRoutes(app: Express, io?: Server): void {
     }
 
     adminLogger.warn({ ...result, matchesCleaned, matchCleanupFailures }, 'admin cleanup executed');
+
+    if (io) broadcastJoinableParties(io);
+
     res.json({ ok: true, ...result, matchesCleaned, matchCleanupFailures });
   });
 }

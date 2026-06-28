@@ -1,6 +1,7 @@
 import { Gauge } from 'prom-client';
 import { metricsRegistry } from './registry';
 import { getPartySnapshot } from '../party/partyStore';
+import { getJoinablePublicPartiesSnapshot } from '../party/publicLobbies';
 import { getRoomSnapshot as getBlackoutRoomSnapshot } from '../../../../games/blackout/server/src/models/room';
 import { getRoomSnapshot as getImposterRoomSnapshot } from '../../../../games/imposter/server/src/models/room';
 import { getRoomSnapshot as getSecretSignalsRoomSnapshot } from '../../../../games/secret-signals/server/src/models/room';
@@ -62,6 +63,15 @@ const activeConnectionsGauge = new Gauge({
   registers: [metricsRegistry],
 });
 
+const publicLobbiesGauge = new Gauge({
+  name: 'platform_public_lobbies',
+  help: 'Current number of publicly listed joinable lobbies in this server process.',
+  registers: [metricsRegistry],
+  collect() {
+    this.set(getJoinablePublicPartiesSnapshot().length);
+  },
+});
+
 export function setActiveConnections(count: number): void {
   activeConnectionsGauge.set(count);
 }
@@ -72,5 +82,6 @@ export function initializeMetrics(): void {
   void partyMembersConnectedGauge;
   void roomsActiveGauge;
   void roomPlayersConnectedGauge;
+  void publicLobbiesGauge;
   setActiveConnections(0);
 }

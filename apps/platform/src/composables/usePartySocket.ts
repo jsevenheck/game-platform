@@ -1,5 +1,12 @@
 import { io, type Socket } from 'socket.io-client';
 import type { PartyView } from '../stores/party';
+import type { JoinablePartyView } from '../stores/publicLobbies';
+
+export type JoinableListResponse =
+  | { ok: true; parties: JoinablePartyView[] }
+  | { ok: false; error: string };
+
+export type SetPartyPublicResponse = { ok: true; isPublic: boolean } | { ok: false; error: string };
 
 interface PartyClientToServerEvents {
   createParty: (
@@ -40,11 +47,19 @@ interface PartyClientToServerEvents {
     cb: (res: { ok: true } | { ok: false; error: string }) => void
   ) => void;
   ackReturnedToLobby: (data: { playerId: string }) => void;
+  listJoinableParties: (cb: (res: JoinableListResponse) => void) => void;
+  subscribeJoinableParties: () => void;
+  unsubscribeJoinableParties: () => void;
+  setPartyPublic: (
+    data: { playerId: string; isPublic: boolean },
+    cb: (res: SetPartyPublicResponse) => void
+  ) => void;
 }
 
 interface PartyServerToClientEvents {
   partyUpdate: (partyView: PartyView) => void;
   partyKicked: (data: { reason: string }) => void;
+  joinablePartiesUpdate: (parties: JoinablePartyView[]) => void;
 }
 
 export type PartySocket = Socket<PartyServerToClientEvents, PartyClientToServerEvents>;

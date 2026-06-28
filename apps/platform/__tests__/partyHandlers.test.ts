@@ -6,6 +6,10 @@ import {
   deleteParty,
   clearPartyCleanup,
 } from '../server/party/partyStore';
+import {
+  getJoinablePublicPartiesSnapshot,
+  PUBLIC_LOBBIES_ROOM,
+} from '../server/party/publicLobbies';
 
 vi.mock('nanoid', () => {
   let counter = 0;
@@ -31,12 +35,18 @@ type Handler = (...args: any[]) => void;
 
 function createNamespace() {
   let connectionHandler: ((socket: any) => void) | undefined;
+  // Stable per-room emit mocks so tests can assert broadcasts to specific rooms.
+  const toMocks = new Map<string, { emit: ReturnType<typeof vi.fn> }>();
   return {
     on: vi.fn((event: string, handler: (socket: any) => void) => {
       if (event === 'connection') connectionHandler = handler;
     }),
-    to: vi.fn(() => ({ emit: vi.fn() })),
+    to: vi.fn((room: string) => {
+      if (!toMocks.has(room)) toMocks.set(room, { emit: vi.fn() });
+      return toMocks.get(room)!;
+    }),
     getConnectionHandler: () => connectionHandler,
+    toMocks,
   };
 }
 
@@ -66,6 +76,10 @@ function connectSocket(ctx: ReturnType<typeof setup>, socketId: string) {
   const socket = createSocket(socketId);
   ctx.connectionHandler(socket);
   return socket;
+}
+
+function watchersEmit(ctx: ReturnType<typeof setup>) {
+  return ctx.namespace.toMocks.get(PUBLIC_LOBBIES_ROOM)!.emit;
 }
 
 describe('partyHandlers', () => {
@@ -473,5 +487,149 @@ describe('partyHandlers', () => {
     // Joiner ACKs for themselves — should work
     joiner.handlers.ackReturnedToLobby({ playerId: joinerId });
     expect(party.returnAcks.has(joinerId)).toBe(true);
+  });
+
+  // ────────────────────────────────────────────────────────────────
+  // Public lobby discovery
+  // ────────────────────────────────────────────────────────────────
+  describe('public lobbies', () => {
+    it('subscribe joins the watcher room and pushes an initial snapshot', () => {
+      const ctx = setup();
+      const socket = connectSocket(ctx, 'sock-sub');
+      socket.handlers.subscribeJoinableParties();
+      expect(socket.join).toHaveBeenCalledWith(PUBLIC_LOBBIES_ROOM);
+      expect(socket.emit).toHaveBeenCalledWith('joinablePartiesUpdate', expect.any(Array));
+    });
+
+    it('unsubscribe leaves the watcher room', () => {
+      const ctx = setup();
+      const socket = connectSocket(ctx, 'sock-unsub');
+      socket.handlers.unsubscribeJoinableParties();
+      expect(socket.leave).toHaveBeenCalledWith(PUBLIC_LOBBIES_ROOM);
+    });
+
+    it('list returns the current snapshot via callback', () => {
+      const ctx = setup();
+      const socket = connectSocket(ctx, 'sock-list');
+      const cb = vi.fn();
+      socket.handlers.listJoinableParties(cb);
+      expect(cb.mock.calls[0][0].ok).toBe(true);
+      expect(Array.isArray(cb.mock.calls[0][0].parties)).toBe(true);
+    });
+
+    it('list is rate-limited after repeated calls within 3s', () => {
+      const ctx = setup();
+      const socket = connectSocket(ctx, 'sock-rl');
+      const cb1 = vi.fn();
+      socket.handlers.listJoinableParties(cb1);
+      expect(cb1.mock.calls[0][0].ok).toBe(true);
+      const cb2 = vi.fn();
+      socket.handlers.listJoinableParties(cb2);
+      expect(cb2.mock.calls[0][0]).toEqual({ ok: false, error: 'rate_limited' });
+    });
+
+    it('non-host cannot toggle public listing', () => {
+      const ctx = setup();
+      const { res: hostRes } = createPartyViaSocket(ctx, 'sock-host');
+      const joiner = connectSocket(ctx, 'sock-join');
+      const joinCb = vi.fn();
+      joiner.handlers.joinParty(
+        { inviteCode: hostRes.partyView.inviteCode, playerName: 'P2' },
+        joinCb
+      );
+      const joinerId = joinCb.mock.calls[0][0].playerId;
+      const cb = vi.fn();
+      joiner.handlers.setPartyPublic({ playerId: joinerId, isPublic: true }, cb);
+      expect(cb.mock.calls[0][0].ok).toBe(false);
+      expect(cb.mock.calls[0][0].error).toContain('host');
+    });
+
+    it('host toggle broadcasts partyUpdate and joinablePartiesUpdate', () => {
+      const ctx = setup();
+      const { socket: hostSocket, res: hostRes } = createPartyViaSocket(ctx, 'sock-host');
+      const partyId = hostRes.partyView.partyId;
+      const cb = vi.fn();
+      hostSocket.handlers.setPartyPublic({ playerId: hostRes.playerId, isPublic: true }, cb);
+      expect(cb.mock.calls[0][0]).toEqual({ ok: true, isPublic: true });
+      expect(ctx.namespace.toMocks.get(partyId)!.emit).toHaveBeenCalledWith(
+        'partyUpdate',
+        expect.objectContaining({ isPublic: true })
+      );
+      expect(watchersEmit(ctx)).toHaveBeenCalledWith(
+        'joinablePartiesUpdate',
+        expect.arrayContaining([
+          expect.objectContaining({ inviteCode: hostRes.partyView.inviteCode }),
+        ])
+      );
+      const snap = getJoinablePublicPartiesSnapshot();
+      expect(snap.find((p) => p.inviteCode === hostRes.partyView.inviteCode)).toBeDefined();
+    });
+
+    it('join updates the public snapshot and broadcasts to watchers', () => {
+      const ctx = setup();
+      const { socket: hostSocket, res: hostRes } = createPartyViaSocket(ctx, 'sock-host');
+      hostSocket.handlers.setPartyPublic({ playerId: hostRes.playerId, isPublic: true }, vi.fn());
+      watchersEmit(ctx).mockClear();
+      const joiner = connectSocket(ctx, 'sock-join');
+      joiner.handlers.joinParty(
+        { inviteCode: hostRes.partyView.inviteCode, playerName: 'P2' },
+        vi.fn()
+      );
+      const entry = getJoinablePublicPartiesSnapshot().find(
+        (p) => p.inviteCode === hostRes.partyView.inviteCode
+      );
+      expect(entry?.connectedPlayers).toBe(2);
+      expect(watchersEmit(ctx)).toHaveBeenCalledWith('joinablePartiesUpdate', expect.any(Array));
+    });
+
+    it('launch removes the party from the public snapshot', () => {
+      const ctx = setup();
+      const { socket: hostSocket, res: hostRes } = createPartyViaSocket(ctx, 'sock-host');
+      const party = getPartyByInviteCode(hostRes.partyView.inviteCode)!;
+      party.selectedGameId = 'test-game';
+      // test-game requires minPlayers=2; add a joiner so launch can succeed.
+      const joiner = connectSocket(ctx, 'sock-join');
+      joiner.handlers.joinParty(
+        { inviteCode: hostRes.partyView.inviteCode, playerName: 'P2' },
+        vi.fn()
+      );
+      hostSocket.handlers.setPartyPublic({ playerId: hostRes.playerId, isPublic: true }, vi.fn());
+      const launchCb = vi.fn();
+      hostSocket.handlers.launchGame({ playerId: hostRes.playerId }, launchCb);
+      expect(launchCb.mock.calls[0][0].ok).toBe(true);
+      const snap = getJoinablePublicPartiesSnapshot();
+      expect(snap.find((p) => p.inviteCode === hostRes.partyView.inviteCode)).toBeUndefined();
+    });
+
+    it('leave broadcasts an updated snapshot when the party survives', () => {
+      const ctx = setup();
+      const { socket: hostSocket, res: hostRes } = createPartyViaSocket(ctx, 'sock-host');
+      const joiner = connectSocket(ctx, 'sock-join');
+      const joinCb = vi.fn();
+      joiner.handlers.joinParty(
+        { inviteCode: hostRes.partyView.inviteCode, playerName: 'P2' },
+        joinCb
+      );
+      const joinerId = joinCb.mock.calls[0][0].playerId;
+      hostSocket.handlers.setPartyPublic({ playerId: hostRes.playerId, isPublic: true }, vi.fn());
+      watchersEmit(ctx).mockClear();
+      joiner.handlers.leaveParty({ playerId: joinerId });
+      const entry = getJoinablePublicPartiesSnapshot().find(
+        (p) => p.inviteCode === hostRes.partyView.inviteCode
+      );
+      expect(entry?.connectedPlayers).toBe(1);
+      expect(watchersEmit(ctx)).toHaveBeenCalledWith('joinablePartiesUpdate', expect.any(Array));
+    });
+
+    it('disconnect drops the party from the public snapshot when no one is connected', () => {
+      const ctx = setup();
+      const { socket: hostSocket, res: hostRes } = createPartyViaSocket(ctx, 'sock-host');
+      hostSocket.handlers.setPartyPublic({ playerId: hostRes.playerId, isPublic: true }, vi.fn());
+      hostSocket.handlers.disconnect();
+      const snap = getJoinablePublicPartiesSnapshot();
+      expect(snap.find((p) => p.inviteCode === hostRes.partyView.inviteCode)).toBeUndefined();
+      // Party is scheduled for cleanup, not deleted; clear it in afterEach via partyIds.
+      clearPartyCleanup(hostRes.partyView.partyId);
+    });
   });
 });

@@ -54,7 +54,7 @@
       "source_file": "apps/platform/__tests__/logging.test.ts",
       "source_location": "L1",
       "id": "tests_logging_test",
-      "community": 40,
+      "community": 18,
       "norm_label": "logging.test.ts"
     },
     {
@@ -142,7 +142,7 @@
       "label": "Handler",
       "file_type": "code",
       "source_file": "apps/platform/__tests__/partyHandlers.test.ts",
-      "source_location": "L30",
+      "source_location": "L34",
       "id": "tests_partyhandlers_test_handler",
       "community": 57,
       "norm_label": "handler"
@@ -151,7 +151,7 @@
       "label": "createNamespace()",
       "file_type": "code",
       "source_file": "apps/platform/__tests__/partyHandlers.test.ts",
-      "source_location": "L32",
+      "source_location": "L36",
       "id": "tests_partyhandlers_test_createnamespace",
       "community": 57,
       "norm_label": "createnamespace()"
@@ -160,7 +160,7 @@
       "label": "createSocket()",
       "file_type": "code",
       "source_file": "apps/platform/__tests__/partyHandlers.test.ts",
-      "source_location": "L43",
+      "source_location": "L53",
       "id": "tests_partyhandlers_test_createsocket",
       "community": 57,
       "norm_label": "createsocket()"
@@ -169,7 +169,7 @@
       "label": "setup()",
       "file_type": "code",
       "source_file": "apps/platform/__tests__/partyHandlers.test.ts",
-      "source_location": "L57",
+      "source_location": "L67",
       "id": "tests_partyhandlers_test_setup",
       "community": 57,
       "norm_label": "setup()"
@@ -178,16 +178,25 @@
       "label": "connectSocket()",
       "file_type": "code",
       "source_file": "apps/platform/__tests__/partyHandlers.test.ts",
-      "source_location": "L65",
+      "source_location": "L75",
       "id": "tests_partyhandlers_test_connectsocket",
       "community": 57,
       "norm_label": "connectsocket()"
     },
     {
+      "label": "watchersEmit()",
+      "file_type": "code",
+      "source_file": "apps/platform/__tests__/partyHandlers.test.ts",
+      "source_location": "L81",
+      "id": "tests_partyhandlers_test_watchersemit",
+      "community": 57,
+      "norm_label": "watchersemit()"
+    },
+    {
       "label": "createPartyViaSocket()",
       "file_type": "code",
       "source_file": "apps/platform/__tests__/partyHandlers.test.ts",
-      "source_location": "L83",
+      "source_location": "L97",
       "id": "tests_partyhandlers_test_createpartyviasocket",
       "community": 57,
       "norm_label": "createpartyviasocket()"
@@ -198,17 +207,53 @@
       "source_file": "apps/platform/__tests__/partyStore.test.ts",
       "source_location": "L1",
       "id": "tests_partystore_test",
-      "community": 25,
+      "community": 10,
       "norm_label": "partystore.test.ts"
     },
     {
       "label": "createTestParty()",
       "file_type": "code",
       "source_file": "apps/platform/__tests__/partyStore.test.ts",
-      "source_location": "L25",
+      "source_location": "L28",
       "id": "tests_partystore_test_createtestparty",
-      "community": 25,
+      "community": 10,
       "norm_label": "createtestparty()"
+    },
+    {
+      "label": "publicLobbies.test.ts",
+      "file_type": "code",
+      "source_file": "apps/platform/__tests__/publicLobbies.test.ts",
+      "source_location": "L1",
+      "id": "tests_publiclobbies_test",
+      "community": 10,
+      "norm_label": "publiclobbies.test.ts"
+    },
+    {
+      "label": "createTestParty()",
+      "file_type": "code",
+      "source_file": "apps/platform/__tests__/publicLobbies.test.ts",
+      "source_location": "L32",
+      "id": "tests_publiclobbies_test_createtestparty",
+      "community": 10,
+      "norm_label": "createtestparty()"
+    },
+    {
+      "label": "publicLobbiesStore.test.ts",
+      "file_type": "code",
+      "source_file": "apps/platform/__tests__/publicLobbiesStore.test.ts",
+      "source_location": "L1",
+      "id": "tests_publiclobbiesstore_test",
+      "community": 37,
+      "norm_label": "publiclobbiesstore.test.ts"
+    },
+    {
+      "label": "makeParty()",
+      "file_type": "code",
+      "source_file": "apps/platform/__tests__/publicLobbiesStore.test.ts",
+      "source_location": "L4",
+      "id": "tests_publiclobbiesstore_test_makeparty",
+      "community": 37,
+      "norm_label": "makeparty()"
     },
     {
       "label": "requestLogger.test.ts",
@@ -245,6 +290,33 @@
       "id": "e2e_home_library_spec_gamenames",
       "community": 166,
       "norm_label": "gamenames"
+    },
+    {
+      "label": "live-rooms.spec.ts",
+      "file_type": "code",
+      "source_file": "apps/platform/e2e/live-rooms.spec.ts",
+      "source_location": "L1",
+      "id": "e2e_live_rooms_spec",
+      "community": 160,
+      "norm_label": "live-rooms.spec.ts"
+    },
+    {
+      "label": "createParty()",
+      "file_type": "code",
+      "source_file": "apps/platform/e2e/live-rooms.spec.ts",
+      "source_location": "L3",
+      "id": "e2e_live_rooms_spec_createparty",
+      "community": 160,
+      "norm_label": "createparty()"
+    },
+    {
+      "label": "joinParty()",
+      "file_type": "code",
+      "source_file": "apps/platform/e2e/live-rooms.spec.ts",
+      "source_location": "L11",
+      "id": "e2e_live_rooms_spec_joinparty",
+      "community": 160,
+      "norm_label": "joinparty()"
     },
     {
       "label": "party-resume.spec.ts",
@@ -556,25 +628,16 @@
       "label": "adminLogger",
       "file_type": "code",
       "source_file": "apps/platform/server/admin.ts",
-      "source_location": "L22",
+      "source_location": "L28",
       "id": "server_admin_adminlogger",
       "community": 7,
       "norm_label": "adminlogger"
     },
     {
-      "label": "RateLimitRecord",
-      "file_type": "code",
-      "source_file": "apps/platform/server/admin.ts",
-      "source_location": "L24",
-      "id": "server_admin_ratelimitrecord",
-      "community": 7,
-      "norm_label": "ratelimitrecord"
-    },
-    {
       "label": "rateLimitMap",
       "file_type": "code",
       "source_file": "apps/platform/server/admin.ts",
-      "source_location": "L30",
+      "source_location": "L31",
       "id": "server_admin_ratelimitmap",
       "community": 7,
       "norm_label": "ratelimitmap"
@@ -583,7 +646,7 @@
       "label": "loginRateLimitMap",
       "file_type": "code",
       "source_file": "apps/platform/server/admin.ts",
-      "source_location": "L34",
+      "source_location": "L35",
       "id": "server_admin_loginratelimitmap",
       "community": 7,
       "norm_label": "loginratelimitmap"
@@ -592,7 +655,7 @@
       "label": "AdminPartyMemberView",
       "file_type": "code",
       "source_file": "apps/platform/server/admin.ts",
-      "source_location": "L39",
+      "source_location": "L40",
       "id": "server_admin_adminpartymemberview",
       "community": 7,
       "norm_label": "adminpartymemberview"
@@ -601,52 +664,52 @@
       "label": "AdminPartyView",
       "file_type": "code",
       "source_file": "apps/platform/server/admin.ts",
-      "source_location": "L46",
+      "source_location": "L47",
       "id": "server_admin_adminpartyview",
-      "community": 10,
+      "community": 26,
       "norm_label": "adminpartyview"
     },
     {
       "label": "toAdminPartyView()",
       "file_type": "code",
       "source_file": "apps/platform/server/admin.ts",
-      "source_location": "L58",
+      "source_location": "L59",
       "id": "server_admin_toadminpartyview",
-      "community": 25,
+      "community": 7,
       "norm_label": "toadminpartyview()"
     },
     {
       "label": "chooseNextHost()",
       "file_type": "code",
       "source_file": "apps/platform/server/admin.ts",
-      "source_location": "L79",
+      "source_location": "L80",
       "id": "server_admin_choosenexthost",
-      "community": 25,
+      "community": 7,
       "norm_label": "choosenexthost()"
     },
     {
       "label": "disconnectActiveMatchSockets()",
       "file_type": "code",
       "source_file": "apps/platform/server/admin.ts",
-      "source_location": "L86",
+      "source_location": "L87",
       "id": "server_admin_disconnectactivematchsockets",
-      "community": 25,
+      "community": 7,
       "norm_label": "disconnectactivematchsockets()"
     },
     {
       "label": "cleanupActiveMatch()",
       "file_type": "code",
       "source_file": "apps/platform/server/admin.ts",
-      "source_location": "L103",
+      "source_location": "L104",
       "id": "server_admin_cleanupactivematch",
-      "community": 25,
+      "community": 7,
       "norm_label": "cleanupactivematch()"
     },
     {
       "label": "KickPartyMemberResult",
       "file_type": "code",
       "source_file": "apps/platform/server/admin.ts",
-      "source_location": "L119",
+      "source_location": "L120",
       "id": "server_admin_kickpartymemberresult",
       "community": 7,
       "norm_label": "kickpartymemberresult"
@@ -655,25 +718,16 @@
       "label": "kickPartyMember()",
       "file_type": "code",
       "source_file": "apps/platform/server/admin.ts",
-      "source_location": "L127",
+      "source_location": "L128",
       "id": "server_admin_kickpartymember",
-      "community": 25,
-      "norm_label": "kickpartymember()"
-    },
-    {
-      "label": "pruneExpiredRateLimitEntries()",
-      "file_type": "code",
-      "source_file": "apps/platform/server/admin.ts",
-      "source_location": "L224",
-      "id": "server_admin_pruneexpiredratelimitentries",
       "community": 7,
-      "norm_label": "pruneexpiredratelimitentries()"
+      "norm_label": "kickpartymember()"
     },
     {
       "label": "rateLimitPruneInterval",
       "file_type": "code",
       "source_file": "apps/platform/server/admin.ts",
-      "source_location": "L232",
+      "source_location": "L225",
       "id": "server_admin_ratelimitpruneinterval",
       "community": 7,
       "norm_label": "ratelimitpruneinterval"
@@ -682,7 +736,7 @@
       "label": "checkRateLimit()",
       "file_type": "code",
       "source_file": "apps/platform/server/admin.ts",
-      "source_location": "L239",
+      "source_location": "L231",
       "id": "server_admin_checkratelimit",
       "community": 7,
       "norm_label": "checkratelimit()"
@@ -691,7 +745,7 @@
       "label": "checkLoginRateLimit()",
       "file_type": "code",
       "source_file": "apps/platform/server/admin.ts",
-      "source_location": "L253",
+      "source_location": "L238",
       "id": "server_admin_checkloginratelimit",
       "community": 7,
       "norm_label": "checkloginratelimit()"
@@ -700,7 +754,7 @@
       "label": "readAdminPasswordHash()",
       "file_type": "code",
       "source_file": "apps/platform/server/admin.ts",
-      "source_location": "L267",
+      "source_location": "L245",
       "id": "server_admin_readadminpasswordhash",
       "community": 7,
       "norm_label": "readadminpasswordhash()"
@@ -709,7 +763,7 @@
       "label": "readAdminUsername()",
       "file_type": "code",
       "source_file": "apps/platform/server/admin.ts",
-      "source_location": "L272",
+      "source_location": "L250",
       "id": "server_admin_readadminusername",
       "community": 7,
       "norm_label": "readadminusername()"
@@ -718,7 +772,7 @@
       "label": "readJwtSecret()",
       "file_type": "code",
       "source_file": "apps/platform/server/admin.ts",
-      "source_location": "L277",
+      "source_location": "L255",
       "id": "server_admin_readjwtsecret",
       "community": 7,
       "norm_label": "readjwtsecret()"
@@ -727,7 +781,7 @@
       "label": "isAdminEnabled()",
       "file_type": "code",
       "source_file": "apps/platform/server/admin.ts",
-      "source_location": "L282",
+      "source_location": "L260",
       "id": "server_admin_isadminenabled",
       "community": 7,
       "norm_label": "isadminenabled()"
@@ -736,7 +790,7 @@
       "label": "AdminJwtPayload",
       "file_type": "code",
       "source_file": "apps/platform/server/admin.ts",
-      "source_location": "L288",
+      "source_location": "L266",
       "id": "server_admin_adminjwtpayload",
       "community": 7,
       "norm_label": "adminjwtpayload"
@@ -745,7 +799,7 @@
       "label": "isAdminJwtPayload()",
       "file_type": "code",
       "source_file": "apps/platform/server/admin.ts",
-      "source_location": "L293",
+      "source_location": "L271",
       "id": "server_admin_isadminjwtpayload",
       "community": 7,
       "norm_label": "isadminjwtpayload()"
@@ -754,7 +808,7 @@
       "label": "signAdminJwt()",
       "file_type": "code",
       "source_file": "apps/platform/server/admin.ts",
-      "source_location": "L302",
+      "source_location": "L280",
       "id": "server_admin_signadminjwt",
       "community": 7,
       "norm_label": "signadminjwt()"
@@ -763,7 +817,7 @@
       "label": "verifyAdminJwt()",
       "file_type": "code",
       "source_file": "apps/platform/server/admin.ts",
-      "source_location": "L307",
+      "source_location": "L285",
       "id": "server_admin_verifyadminjwt",
       "community": 7,
       "norm_label": "verifyadminjwt()"
@@ -772,7 +826,7 @@
       "label": "getAdminTokenFromCookie()",
       "file_type": "code",
       "source_file": "apps/platform/server/admin.ts",
-      "source_location": "L318",
+      "source_location": "L296",
       "id": "server_admin_getadmintokenfromcookie",
       "community": 7,
       "norm_label": "getadmintokenfromcookie()"
@@ -781,7 +835,7 @@
       "label": "authenticateAdmin()",
       "file_type": "code",
       "source_file": "apps/platform/server/admin.ts",
-      "source_location": "L323",
+      "source_location": "L301",
       "id": "server_admin_authenticateadmin",
       "community": 7,
       "norm_label": "authenticateadmin()"
@@ -790,7 +844,7 @@
       "label": "setAdminCookies()",
       "file_type": "code",
       "source_file": "apps/platform/server/admin.ts",
-      "source_location": "L351",
+      "source_location": "L329",
       "id": "server_admin_setadmincookies",
       "community": 7,
       "norm_label": "setadmincookies()"
@@ -799,7 +853,7 @@
       "label": "clearAdminCookies()",
       "file_type": "code",
       "source_file": "apps/platform/server/admin.ts",
-      "source_location": "L369",
+      "source_location": "L347",
       "id": "server_admin_clearadmincookies",
       "community": 7,
       "norm_label": "clearadmincookies()"
@@ -808,7 +862,7 @@
       "label": "getCsrfTokenFromRequest()",
       "file_type": "code",
       "source_file": "apps/platform/server/admin.ts",
-      "source_location": "L385",
+      "source_location": "L363",
       "id": "server_admin_getcsrftokenfromrequest",
       "community": 7,
       "norm_label": "getcsrftokenfromrequest()"
@@ -817,7 +871,7 @@
       "label": "requireAdminCsrf()",
       "file_type": "code",
       "source_file": "apps/platform/server/admin.ts",
-      "source_location": "L397",
+      "source_location": "L375",
       "id": "server_admin_requireadmincsrf",
       "community": 7,
       "norm_label": "requireadmincsrf()"
@@ -826,7 +880,7 @@
       "label": "registerAdminRoutes()",
       "file_type": "code",
       "source_file": "apps/platform/server/admin.ts",
-      "source_location": "L413",
+      "source_location": "L391",
       "id": "server_admin_registeradminroutes",
       "community": 73,
       "norm_label": "registeradminroutes()"
@@ -936,7 +990,7 @@
       "source_file": "apps/platform/server/index.ts",
       "source_location": "L25",
       "id": "server_index_io",
-      "community": 38,
+      "community": 37,
       "norm_label": "io"
     },
     {
@@ -963,7 +1017,7 @@
       "source_file": "apps/platform/server/logging/logBuffer.ts",
       "source_location": "L1",
       "id": "logging_logbuffer",
-      "community": 40,
+      "community": 18,
       "norm_label": "logbuffer.ts"
     },
     {
@@ -972,7 +1026,7 @@
       "source_file": "apps/platform/server/logging/logBuffer.ts",
       "source_location": "L1",
       "id": "logging_logbuffer_bufferedlogentry",
-      "community": 40,
+      "community": 18,
       "norm_label": "bufferedlogentry"
     },
     {
@@ -981,7 +1035,7 @@
       "source_file": "apps/platform/server/logging/logBuffer.ts",
       "source_location": "L11",
       "id": "logging_logbuffer_logbuffer",
-      "community": 40,
+      "community": 18,
       "norm_label": "logbuffer"
     },
     {
@@ -990,7 +1044,7 @@
       "source_file": "apps/platform/server/logging/logBuffer.ts",
       "source_location": "L15",
       "id": "logging_logbuffer_appendlogentry",
-      "community": 40,
+      "community": 18,
       "norm_label": "appendlogentry()"
     },
     {
@@ -999,7 +1053,7 @@
       "source_file": "apps/platform/server/logging/logBuffer.ts",
       "source_location": "L23",
       "id": "logging_logbuffer_getrecentlogs",
-      "community": 40,
+      "community": 18,
       "norm_label": "getrecentlogs()"
     },
     {
@@ -1008,7 +1062,7 @@
       "source_file": "apps/platform/server/logging/logger.ts",
       "source_location": "L1",
       "id": "logging_logger",
-      "community": 40,
+      "community": 18,
       "norm_label": "logger.ts"
     },
     {
@@ -1017,7 +1071,7 @@
       "source_file": "apps/platform/server/logging/logger.ts",
       "source_location": "L7",
       "id": "logging_logger_loggingconfig",
-      "community": 40,
+      "community": 18,
       "norm_label": "loggingconfig"
     },
     {
@@ -1026,7 +1080,7 @@
       "source_file": "apps/platform/server/logging/logger.ts",
       "source_location": "L15",
       "id": "logging_logger_always_redact_paths",
-      "community": 40,
+      "community": 18,
       "norm_label": "always_redact_paths"
     },
     {
@@ -1035,7 +1089,7 @@
       "source_file": "apps/platform/server/logging/logger.ts",
       "source_location": "L36",
       "id": "logging_logger_production_redact_paths",
-      "community": 40,
+      "community": 18,
       "norm_label": "production_redact_paths"
     },
     {
@@ -1044,7 +1098,7 @@
       "source_file": "apps/platform/server/logging/logger.ts",
       "source_location": "L41",
       "id": "logging_logger_noderequire",
-      "community": 40,
+      "community": 18,
       "norm_label": "noderequire"
     },
     {
@@ -1053,7 +1107,7 @@
       "source_file": "apps/platform/server/logging/logger.ts",
       "source_location": "L43",
       "id": "logging_logger_parsebooleanenv",
-      "community": 3,
+      "community": 18,
       "norm_label": "parsebooleanenv()"
     },
     {
@@ -1071,7 +1125,7 @@
       "source_file": "apps/platform/server/logging/logger.ts",
       "source_location": "L66",
       "id": "logging_logger_buildloggeroptions",
-      "community": 40,
+      "community": 18,
       "norm_label": "buildloggeroptions()"
     },
     {
@@ -1080,7 +1134,7 @@
       "source_file": "apps/platform/server/logging/logger.ts",
       "source_location": "L100",
       "id": "logging_logger_resolveprettytransporttarget",
-      "community": 40,
+      "community": 18,
       "norm_label": "resolveprettytransporttarget()"
     },
     {
@@ -1089,7 +1143,7 @@
       "source_file": "apps/platform/server/logging/logger.ts",
       "source_location": "L111",
       "id": "logging_logger_createlogbufferstream",
-      "community": 40,
+      "community": 18,
       "norm_label": "createlogbufferstream()"
     },
     {
@@ -1098,7 +1152,7 @@
       "source_file": "apps/platform/server/logging/logger.ts",
       "source_location": "L133",
       "id": "logging_logger_createrootlogger",
-      "community": 40,
+      "community": 18,
       "norm_label": "createrootlogger()"
     },
     {
@@ -1107,7 +1161,7 @@
       "source_file": "apps/platform/server/logging/logger.ts",
       "source_location": "L146",
       "id": "logging_logger_logger",
-      "community": 40,
+      "community": 18,
       "norm_label": "logger"
     },
     {
@@ -1224,7 +1278,7 @@
       "source_file": "apps/platform/server/logging/socketLogger.ts",
       "source_location": "L1",
       "id": "logging_socketlogger",
-      "community": 40,
+      "community": 158,
       "norm_label": "socketlogger.ts"
     },
     {
@@ -1233,7 +1287,7 @@
       "source_file": "apps/platform/server/logging/socketLogger.ts",
       "source_location": "L4",
       "id": "logging_socketlogger_socketlike",
-      "community": 40,
+      "community": 158,
       "norm_label": "socketlike"
     },
     {
@@ -1242,7 +1296,7 @@
       "source_file": "apps/platform/server/logging/socketLogger.ts",
       "source_location": "L10",
       "id": "logging_socketlogger_readsocketstring",
-      "community": 40,
+      "community": 158,
       "norm_label": "readsocketstring()"
     },
     {
@@ -1251,7 +1305,7 @@
       "source_file": "apps/platform/server/logging/socketLogger.ts",
       "source_location": "L21",
       "id": "logging_socketlogger_createsocketlogger",
-      "community": 40,
+      "community": 158,
       "norm_label": "createsocketlogger()"
     },
     {
@@ -1260,7 +1314,7 @@
       "source_file": "apps/platform/server/logging/socketLogger.ts",
       "source_location": "L44",
       "id": "logging_socketlogger_summarizesocketarg",
-      "community": 40,
+      "community": 18,
       "norm_label": "summarizesocketarg()"
     },
     {
@@ -1269,7 +1323,7 @@
       "source_file": "apps/platform/server/logging/socketLogger.ts",
       "source_location": "L71",
       "id": "logging_socketlogger_attachsocketeventdebuglogging",
-      "community": 40,
+      "community": 158,
       "norm_label": "attachsocketeventdebuglogging()"
     },
     {
@@ -1285,7 +1339,7 @@
       "label": "partiesActiveGauge",
       "file_type": "code",
       "source_file": "apps/platform/server/metrics/collectors.ts",
-      "source_location": "L15",
+      "source_location": "L16",
       "id": "metrics_collectors_partiesactivegauge",
       "community": 18,
       "norm_label": "partiesactivegauge"
@@ -1294,7 +1348,7 @@
       "label": "partyMembersConnectedGauge",
       "file_type": "code",
       "source_file": "apps/platform/server/metrics/collectors.ts",
-      "source_location": "L24",
+      "source_location": "L25",
       "id": "metrics_collectors_partymembersconnectedgauge",
       "community": 18,
       "norm_label": "partymembersconnectedgauge"
@@ -1303,7 +1357,7 @@
       "label": "roomsActiveGauge",
       "file_type": "code",
       "source_file": "apps/platform/server/metrics/collectors.ts",
-      "source_location": "L33",
+      "source_location": "L34",
       "id": "metrics_collectors_roomsactivegauge",
       "community": 18,
       "norm_label": "roomsactivegauge"
@@ -1312,7 +1366,7 @@
       "label": "roomPlayersConnectedGauge",
       "file_type": "code",
       "source_file": "apps/platform/server/metrics/collectors.ts",
-      "source_location": "L46",
+      "source_location": "L47",
       "id": "metrics_collectors_roomplayersconnectedgauge",
       "community": 18,
       "norm_label": "roomplayersconnectedgauge"
@@ -1321,16 +1375,25 @@
       "label": "activeConnectionsGauge",
       "file_type": "code",
       "source_file": "apps/platform/server/metrics/collectors.ts",
-      "source_location": "L59",
+      "source_location": "L60",
       "id": "metrics_collectors_activeconnectionsgauge",
       "community": 18,
       "norm_label": "activeconnectionsgauge"
     },
     {
+      "label": "publicLobbiesGauge",
+      "file_type": "code",
+      "source_file": "apps/platform/server/metrics/collectors.ts",
+      "source_location": "L66",
+      "id": "metrics_collectors_publiclobbiesgauge",
+      "community": 18,
+      "norm_label": "publiclobbiesgauge"
+    },
+    {
       "label": "setActiveConnections()",
       "file_type": "code",
       "source_file": "apps/platform/server/metrics/collectors.ts",
-      "source_location": "L65",
+      "source_location": "L75",
       "id": "metrics_collectors_setactiveconnections",
       "community": 18,
       "norm_label": "setactiveconnections()"
@@ -1339,7 +1402,7 @@
       "label": "initializeMetrics()",
       "file_type": "code",
       "source_file": "apps/platform/server/metrics/collectors.ts",
-      "source_location": "L69",
+      "source_location": "L79",
       "id": "metrics_collectors_initializemetrics",
       "community": 18,
       "norm_label": "initializemetrics()"
@@ -1350,7 +1413,7 @@
       "source_file": "apps/platform/server/metrics/httpMetrics.ts",
       "source_location": "L1",
       "id": "metrics_httpmetrics",
-      "community": 3,
+      "community": 18,
       "norm_label": "httpmetrics.ts"
     },
     {
@@ -1359,7 +1422,7 @@
       "source_file": "apps/platform/server/metrics/httpMetrics.ts",
       "source_location": "L7",
       "id": "metrics_httpmetrics_metricshttpconfig",
-      "community": 3,
+      "community": 18,
       "norm_label": "metricshttpconfig"
     },
     {
@@ -1368,7 +1431,7 @@
       "source_file": "apps/platform/server/metrics/httpMetrics.ts",
       "source_location": "L13",
       "id": "metrics_httpmetrics_metricsscrapetotal",
-      "community": 3,
+      "community": 18,
       "norm_label": "metricsscrapetotal"
     },
     {
@@ -1377,7 +1440,7 @@
       "source_file": "apps/platform/server/metrics/httpMetrics.ts",
       "source_location": "L20",
       "id": "metrics_httpmetrics_readmetricshttpconfig",
-      "community": 3,
+      "community": 18,
       "norm_label": "readmetricshttpconfig()"
     },
     {
@@ -1386,7 +1449,7 @@
       "source_file": "apps/platform/server/metrics/httpMetrics.ts",
       "source_location": "L32",
       "id": "metrics_httpmetrics_readbearertoken",
-      "community": 3,
+      "community": 18,
       "norm_label": "readbearertoken()"
     },
     {
@@ -1395,7 +1458,7 @@
       "source_file": "apps/platform/server/metrics/httpMetrics.ts",
       "source_location": "L46",
       "id": "metrics_httpmetrics_readmetricsaccesstoken",
-      "community": 3,
+      "community": 18,
       "norm_label": "readmetricsaccesstoken()"
     },
     {
@@ -1404,7 +1467,7 @@
       "source_file": "apps/platform/server/metrics/httpMetrics.ts",
       "source_location": "L59",
       "id": "metrics_httpmetrics_registermetricsroutes",
-      "community": 3,
+      "community": 18,
       "norm_label": "registermetricsroutes()"
     },
     {
@@ -1543,6 +1606,42 @@
       "norm_label": "metricsregistry"
     },
     {
+      "label": "rateLimit.ts",
+      "file_type": "code",
+      "source_file": "apps/platform/server/observability/rateLimit.ts",
+      "source_location": "L1",
+      "id": "observability_ratelimit",
+      "community": 25,
+      "norm_label": "ratelimit.ts"
+    },
+    {
+      "label": "RateLimitRecord",
+      "file_type": "code",
+      "source_file": "apps/platform/server/observability/rateLimit.ts",
+      "source_location": "L1",
+      "id": "observability_ratelimit_ratelimitrecord",
+      "community": 25,
+      "norm_label": "ratelimitrecord"
+    },
+    {
+      "label": "checkFixedWindowRateLimit()",
+      "file_type": "code",
+      "source_file": "apps/platform/server/observability/rateLimit.ts",
+      "source_location": "L14",
+      "id": "observability_ratelimit_checkfixedwindowratelimit",
+      "community": 7,
+      "norm_label": "checkfixedwindowratelimit()"
+    },
+    {
+      "label": "pruneExpiredRateLimitEntries()",
+      "file_type": "code",
+      "source_file": "apps/platform/server/observability/rateLimit.ts",
+      "source_location": "L33",
+      "id": "observability_ratelimit_pruneexpiredratelimitentries",
+      "community": 25,
+      "norm_label": "pruneexpiredratelimitentries()"
+    },
+    {
       "label": "socketHandlerMetrics.ts",
       "file_type": "code",
       "source_file": "apps/platform/server/observability/socketHandlerMetrics.ts",
@@ -1672,16 +1771,34 @@
       "label": "PartyClientToServerEvents",
       "file_type": "code",
       "source_file": "apps/platform/server/party/partyHandlers.ts",
-      "source_location": "L28",
+      "source_location": "L41",
       "id": "party_partyhandlers_partyclienttoserverevents",
       "community": 25,
       "norm_label": "partyclienttoserverevents"
     },
     {
+      "label": "JoinableListResponse",
+      "file_type": "code",
+      "source_file": "apps/platform/server/party/partyHandlers.ts",
+      "source_location": "L101",
+      "id": "party_partyhandlers_joinablelistresponse",
+      "community": 25,
+      "norm_label": "joinablelistresponse"
+    },
+    {
+      "label": "SetPartyPublicResponse",
+      "file_type": "code",
+      "source_file": "apps/platform/server/party/partyHandlers.ts",
+      "source_location": "L105",
+      "id": "party_partyhandlers_setpartypublicresponse",
+      "community": 25,
+      "norm_label": "setpartypublicresponse"
+    },
+    {
       "label": "PartyServerToClientEvents",
       "file_type": "code",
       "source_file": "apps/platform/server/party/partyHandlers.ts",
-      "source_location": "L81",
+      "source_location": "L107",
       "id": "party_partyhandlers_partyservertoclientevents",
       "community": 25,
       "norm_label": "partyservertoclientevents"
@@ -1690,7 +1807,7 @@
       "label": "PartySocket",
       "file_type": "code",
       "source_file": "apps/platform/server/party/partyHandlers.ts",
-      "source_location": "L85",
+      "source_location": "L112",
       "id": "party_partyhandlers_partysocket",
       "community": 25,
       "norm_label": "partysocket"
@@ -1699,25 +1816,43 @@
       "label": "broadcastParty()",
       "file_type": "code",
       "source_file": "apps/platform/server/party/partyHandlers.ts",
-      "source_location": "L87",
+      "source_location": "L114",
       "id": "party_partyhandlers_broadcastparty",
       "community": 25,
       "norm_label": "broadcastparty()"
     },
     {
-      "label": "connectedMemberCount()",
+      "label": "broadcastPartyAndLobbies()",
       "file_type": "code",
       "source_file": "apps/platform/server/party/partyHandlers.ts",
-      "source_location": "L91",
-      "id": "party_partyhandlers_connectedmembercount",
+      "source_location": "L119",
+      "id": "party_partyhandlers_broadcastpartyandlobbies",
       "community": 25,
-      "norm_label": "connectedmembercount()"
+      "norm_label": "broadcastpartyandlobbies()"
+    },
+    {
+      "label": "joinableListRateLimit",
+      "file_type": "code",
+      "source_file": "apps/platform/server/party/partyHandlers.ts",
+      "source_location": "L125",
+      "id": "party_partyhandlers_joinablelistratelimit",
+      "community": 25,
+      "norm_label": "joinablelistratelimit"
+    },
+    {
+      "label": "joinableListPruneInterval",
+      "file_type": "code",
+      "source_file": "apps/platform/server/party/partyHandlers.ts",
+      "source_location": "L128",
+      "id": "party_partyhandlers_joinablelistpruneinterval",
+      "community": 25,
+      "norm_label": "joinablelistpruneinterval"
     },
     {
       "label": "registerPartyHandlers()",
       "file_type": "code",
       "source_file": "apps/platform/server/party/partyHandlers.ts",
-      "source_location": "L95",
+      "source_location": "L134",
       "id": "party_partyhandlers_registerpartyhandlers",
       "community": 57,
       "norm_label": "registerpartyhandlers()"
@@ -1726,7 +1861,7 @@
       "label": "scheduleReturnCleanup()",
       "file_type": "code",
       "source_file": "apps/platform/server/party/partyHandlers.ts",
-      "source_location": "L767",
+      "source_location": "L926",
       "id": "party_partyhandlers_schedulereturncleanup",
       "community": 25,
       "norm_label": "schedulereturncleanup()"
@@ -1791,7 +1926,7 @@
       "source_file": "apps/platform/server/party/partyStore.ts",
       "source_location": "L13",
       "id": "party_partystore_generateinvitecode",
-      "community": 26,
+      "community": 10,
       "norm_label": "generateinvitecode()"
     },
     {
@@ -1800,14 +1935,14 @@
       "source_file": "apps/platform/server/party/partyStore.ts",
       "source_location": "L25",
       "id": "party_partystore_createparty",
-      "community": 26,
+      "community": 10,
       "norm_label": "createparty()"
     },
     {
       "label": "getParty()",
       "file_type": "code",
       "source_file": "apps/platform/server/party/partyStore.ts",
-      "source_location": "L61",
+      "source_location": "L63",
       "id": "party_partystore_getparty",
       "community": 73,
       "norm_label": "getparty()"
@@ -1816,7 +1951,7 @@
       "label": "getPartyByInviteCode()",
       "file_type": "code",
       "source_file": "apps/platform/server/party/partyStore.ts",
-      "source_location": "L65",
+      "source_location": "L67",
       "id": "party_partystore_getpartybyinvitecode",
       "community": 57,
       "norm_label": "getpartybyinvitecode()"
@@ -1825,16 +1960,16 @@
       "label": "getPartyBySocket()",
       "file_type": "code",
       "source_file": "apps/platform/server/party/partyStore.ts",
-      "source_location": "L70",
+      "source_location": "L72",
       "id": "party_partystore_getpartybysocket",
-      "community": 25,
+      "community": 10,
       "norm_label": "getpartybysocket()"
     },
     {
       "label": "getPartyByActiveMatch()",
       "file_type": "code",
       "source_file": "apps/platform/server/party/partyStore.ts",
-      "source_location": "L75",
+      "source_location": "L77",
       "id": "party_partystore_getpartybyactivematch",
       "community": 6,
       "norm_label": "getpartybyactivematch()"
@@ -1843,79 +1978,79 @@
       "label": "getAllParties()",
       "file_type": "code",
       "source_file": "apps/platform/server/party/partyStore.ts",
-      "source_location": "L92",
+      "source_location": "L94",
       "id": "party_partystore_getallparties",
-      "community": 10,
+      "community": 58,
       "norm_label": "getallparties()"
     },
     {
       "label": "registerSocket()",
       "file_type": "code",
       "source_file": "apps/platform/server/party/partyStore.ts",
-      "source_location": "L96",
+      "source_location": "L98",
       "id": "party_partystore_registersocket",
-      "community": 25,
+      "community": 10,
       "norm_label": "registersocket()"
     },
     {
       "label": "unregisterSocket()",
       "file_type": "code",
       "source_file": "apps/platform/server/party/partyStore.ts",
-      "source_location": "L100",
+      "source_location": "L102",
       "id": "party_partystore_unregistersocket",
-      "community": 25,
+      "community": 7,
       "norm_label": "unregistersocket()"
     },
     {
       "label": "deleteParty()",
       "file_type": "code",
       "source_file": "apps/platform/server/party/partyStore.ts",
-      "source_location": "L104",
+      "source_location": "L106",
       "id": "party_partystore_deleteparty",
-      "community": 25,
+      "community": 10,
       "norm_label": "deleteparty()"
     },
     {
       "label": "schedulePartyCleanup()",
       "file_type": "code",
       "source_file": "apps/platform/server/party/partyStore.ts",
-      "source_location": "L119",
+      "source_location": "L121",
       "id": "party_partystore_schedulepartycleanup",
-      "community": 25,
+      "community": 7,
       "norm_label": "schedulepartycleanup()"
     },
     {
       "label": "clearPartyCleanup()",
       "file_type": "code",
       "source_file": "apps/platform/server/party/partyStore.ts",
-      "source_location": "L135",
+      "source_location": "L137",
       "id": "party_partystore_clearpartycleanup",
-      "community": 25,
+      "community": 10,
       "norm_label": "clearpartycleanup()"
     },
     {
       "label": "scheduleMatchTimeout()",
       "file_type": "code",
       "source_file": "apps/platform/server/party/partyStore.ts",
-      "source_location": "L143",
+      "source_location": "L145",
       "id": "party_partystore_schedulematchtimeout",
-      "community": 25,
+      "community": 7,
       "norm_label": "schedulematchtimeout()"
     },
     {
       "label": "clearMatchTimeout()",
       "file_type": "code",
       "source_file": "apps/platform/server/party/partyStore.ts",
-      "source_location": "L154",
+      "source_location": "L156",
       "id": "party_partystore_clearmatchtimeout",
-      "community": 25,
+      "community": 7,
       "norm_label": "clearmatchtimeout()"
     },
     {
       "label": "PartyStoreSnapshot",
       "file_type": "code",
       "source_file": "apps/platform/server/party/partyStore.ts",
-      "source_location": "L162",
+      "source_location": "L164",
       "id": "party_partystore_partystoresnapshot",
       "community": 10,
       "norm_label": "partystoresnapshot"
@@ -1924,7 +2059,7 @@
       "label": "getPartySnapshot()",
       "file_type": "code",
       "source_file": "apps/platform/server/party/partyStore.ts",
-      "source_location": "L168",
+      "source_location": "L170",
       "id": "party_partystore_getpartysnapshot",
       "community": 18,
       "norm_label": "getpartysnapshot()"
@@ -1933,16 +2068,43 @@
       "label": "partyToView()",
       "file_type": "code",
       "source_file": "apps/platform/server/party/partyStore.ts",
-      "source_location": "L190",
+      "source_location": "L192",
       "id": "party_partystore_partytoview",
       "community": 25,
       "norm_label": "partytoview()"
     },
     {
+      "label": "setPartyPublic()",
+      "file_type": "code",
+      "source_file": "apps/platform/server/party/partyStore.ts",
+      "source_location": "L210",
+      "id": "party_partystore_setpartypublic",
+      "community": 10,
+      "norm_label": "setpartypublic()"
+    },
+    {
+      "label": "connectedMemberCount()",
+      "file_type": "code",
+      "source_file": "apps/platform/server/party/partyStore.ts",
+      "source_location": "L217",
+      "id": "party_partystore_connectedmembercount",
+      "community": 58,
+      "norm_label": "connectedmembercount()"
+    },
+    {
+      "label": "isJoinablePublicParty()",
+      "file_type": "code",
+      "source_file": "apps/platform/server/party/partyStore.ts",
+      "source_location": "L225",
+      "id": "party_partystore_isjoinablepublicparty",
+      "community": 58,
+      "norm_label": "isjoinablepublicparty()"
+    },
+    {
       "label": "ActivePartyMatch",
       "file_type": "code",
       "source_file": "apps/platform/server/party/partyStore.ts",
-      "source_location": "L202",
+      "source_location": "L229",
       "id": "party_partystore_activepartymatch",
       "community": 10,
       "norm_label": "activepartymatch"
@@ -1951,7 +2113,7 @@
       "label": "getActivePartyMatches()",
       "file_type": "code",
       "source_file": "apps/platform/server/party/partyStore.ts",
-      "source_location": "L207",
+      "source_location": "L234",
       "id": "party_partystore_getactivepartymatches",
       "community": 10,
       "norm_label": "getactivepartymatches()"
@@ -1960,7 +2122,7 @@
       "label": "ClearAllPartiesResult",
       "file_type": "code",
       "source_file": "apps/platform/server/party/partyStore.ts",
-      "source_location": "L222",
+      "source_location": "L249",
       "id": "party_partystore_clearallpartiesresult",
       "community": 10,
       "norm_label": "clearallpartiesresult"
@@ -1969,10 +2131,55 @@
       "label": "clearAllParties()",
       "file_type": "code",
       "source_file": "apps/platform/server/party/partyStore.ts",
-      "source_location": "L227",
+      "source_location": "L254",
       "id": "party_partystore_clearallparties",
       "community": 26,
       "norm_label": "clearallparties()"
+    },
+    {
+      "label": "publicLobbies.ts",
+      "file_type": "code",
+      "source_file": "apps/platform/server/party/publicLobbies.ts",
+      "source_location": "L1",
+      "id": "party_publiclobbies",
+      "community": 58,
+      "norm_label": "publiclobbies.ts"
+    },
+    {
+      "label": "JoinablePartyView",
+      "file_type": "code",
+      "source_file": "apps/platform/server/party/publicLobbies.ts",
+      "source_location": "L16",
+      "id": "party_publiclobbies_joinablepartyview",
+      "community": 25,
+      "norm_label": "joinablepartyview"
+    },
+    {
+      "label": "toJoinablePartyView()",
+      "file_type": "code",
+      "source_file": "apps/platform/server/party/publicLobbies.ts",
+      "source_location": "L27",
+      "id": "party_publiclobbies_tojoinablepartyview",
+      "community": 58,
+      "norm_label": "tojoinablepartyview()"
+    },
+    {
+      "label": "getJoinablePublicPartiesSnapshot()",
+      "file_type": "code",
+      "source_file": "apps/platform/server/party/publicLobbies.ts",
+      "source_location": "L45",
+      "id": "party_publiclobbies_getjoinablepublicpartiessnapshot",
+      "community": 58,
+      "norm_label": "getjoinablepublicpartiessnapshot()"
+    },
+    {
+      "label": "broadcastJoinableParties()",
+      "file_type": "code",
+      "source_file": "apps/platform/server/party/publicLobbies.ts",
+      "source_location": "L56",
+      "id": "party_publiclobbies_broadcastjoinableparties",
+      "community": 25,
+      "norm_label": "broadcastjoinableparties()"
     },
     {
       "label": "types.ts",
@@ -1980,7 +2187,7 @@
       "source_file": "apps/platform/server/party/types.ts",
       "source_location": "L1",
       "id": "party_types",
-      "community": 10,
+      "community": 26,
       "norm_label": "types.ts"
     },
     {
@@ -1989,7 +2196,7 @@
       "source_file": "apps/platform/server/party/types.ts",
       "source_location": "L1",
       "id": "party_types_partystatus",
-      "community": 10,
+      "community": 26,
       "norm_label": "partystatus"
     },
     {
@@ -2007,7 +2214,7 @@
       "source_file": "apps/platform/server/party/types.ts",
       "source_location": "L12",
       "id": "party_types_partymatch",
-      "community": 10,
+      "community": 26,
       "norm_label": "partymatch"
     },
     {
@@ -2016,7 +2223,7 @@
       "source_file": "apps/platform/server/party/types.ts",
       "source_location": "L19",
       "id": "party_types_partysession",
-      "community": 10,
+      "community": 26,
       "norm_label": "partysession"
     },
     {
@@ -2097,7 +2304,7 @@
       "source_file": "apps/platform/server/registry/index.ts",
       "source_location": "L106",
       "id": "registry_index_getgame",
-      "community": 25,
+      "community": 58,
       "norm_label": "getgame()"
     },
     {
@@ -2119,6 +2326,51 @@
       "norm_label": "gamelibrarygrid.vue"
     },
     {
+      "label": "PublicLobbiesList.vue",
+      "file_type": "code",
+      "source_file": "apps/platform/src/components/home/PublicLobbiesList.vue",
+      "source_location": "L1",
+      "id": "home_publiclobbieslist",
+      "community": 162,
+      "norm_label": "publiclobbieslist.vue"
+    },
+    {
+      "label": "PublicLobbiesSection.vue",
+      "file_type": "code",
+      "source_file": "apps/platform/src/components/home/PublicLobbiesSection.vue",
+      "source_location": "L1",
+      "id": "home_publiclobbiessection",
+      "community": 159,
+      "norm_label": "publiclobbiessection.vue"
+    },
+    {
+      "label": "isLoading",
+      "file_type": "code",
+      "source_file": "apps/platform/src/components/home/PublicLobbiesSection.vue",
+      "source_location": "L22",
+      "id": "home_publiclobbiessection_isloading",
+      "community": 159,
+      "norm_label": "isloading"
+    },
+    {
+      "label": "isReady",
+      "file_type": "code",
+      "source_file": "apps/platform/src/components/home/PublicLobbiesSection.vue",
+      "source_location": "L23",
+      "id": "home_publiclobbiessection_isready",
+      "community": 159,
+      "norm_label": "isready"
+    },
+    {
+      "label": "handleJoinRoom()",
+      "file_type": "code",
+      "source_file": "apps/platform/src/components/home/PublicLobbiesSection.vue",
+      "source_location": "L27",
+      "id": "home_publiclobbiessection_handlejoinroom",
+      "community": 159,
+      "norm_label": "handlejoinroom()"
+    },
+    {
       "label": "usePartySocket.ts",
       "file_type": "code",
       "source_file": "apps/platform/src/composables/usePartySocket.ts",
@@ -2128,10 +2380,28 @@
       "norm_label": "usepartysocket.ts"
     },
     {
+      "label": "JoinableListResponse",
+      "file_type": "code",
+      "source_file": "apps/platform/src/composables/usePartySocket.ts",
+      "source_location": "L5",
+      "id": "composables_usepartysocket_joinablelistresponse",
+      "community": 37,
+      "norm_label": "joinablelistresponse"
+    },
+    {
+      "label": "SetPartyPublicResponse",
+      "file_type": "code",
+      "source_file": "apps/platform/src/composables/usePartySocket.ts",
+      "source_location": "L9",
+      "id": "composables_usepartysocket_setpartypublicresponse",
+      "community": 37,
+      "norm_label": "setpartypublicresponse"
+    },
+    {
       "label": "PartyClientToServerEvents",
       "file_type": "code",
       "source_file": "apps/platform/src/composables/usePartySocket.ts",
-      "source_location": "L4",
+      "source_location": "L11",
       "id": "composables_usepartysocket_partyclienttoserverevents",
       "community": 37,
       "norm_label": "partyclienttoserverevents"
@@ -2140,7 +2410,7 @@
       "label": "PartyServerToClientEvents",
       "file_type": "code",
       "source_file": "apps/platform/src/composables/usePartySocket.ts",
-      "source_location": "L45",
+      "source_location": "L59",
       "id": "composables_usepartysocket_partyservertoclientevents",
       "community": 37,
       "norm_label": "partyservertoclientevents"
@@ -2149,7 +2419,7 @@
       "label": "PartySocket",
       "file_type": "code",
       "source_file": "apps/platform/src/composables/usePartySocket.ts",
-      "source_location": "L50",
+      "source_location": "L65",
       "id": "composables_usepartysocket_partysocket",
       "community": 37,
       "norm_label": "partysocket"
@@ -2158,7 +2428,7 @@
       "label": "usePartySocket()",
       "file_type": "code",
       "source_file": "apps/platform/src/composables/usePartySocket.ts",
-      "source_location": "L54",
+      "source_location": "L69",
       "id": "composables_usepartysocket_usepartysocket",
       "community": 37,
       "norm_label": "usepartysocket()"
@@ -2167,10 +2437,28 @@
       "label": "disconnectPartySocket()",
       "file_type": "code",
       "source_file": "apps/platform/src/composables/usePartySocket.ts",
-      "source_location": "L64",
+      "source_location": "L79",
       "id": "composables_usepartysocket_disconnectpartysocket",
       "community": 37,
       "norm_label": "disconnectpartysocket()"
+    },
+    {
+      "label": "usePublicLobbies.ts",
+      "file_type": "code",
+      "source_file": "apps/platform/src/composables/usePublicLobbies.ts",
+      "source_location": "L1",
+      "id": "composables_usepubliclobbies",
+      "community": 37,
+      "norm_label": "usepubliclobbies.ts"
+    },
+    {
+      "label": "usePublicLobbies()",
+      "file_type": "code",
+      "source_file": "apps/platform/src/composables/usePublicLobbies.ts",
+      "source_location": "L15",
+      "id": "composables_usepubliclobbies_usepubliclobbies",
+      "community": 37,
+      "norm_label": "usepubliclobbies()"
     },
     {
       "label": "index.ts",
@@ -2302,7 +2590,7 @@
       "label": "PersistedSession",
       "file_type": "code",
       "source_file": "apps/platform/src/stores/party.ts",
-      "source_location": "L32",
+      "source_location": "L34",
       "id": "stores_party_persistedsession",
       "community": 37,
       "norm_label": "persistedsession"
@@ -2311,10 +2599,46 @@
       "label": "usePartyStore",
       "file_type": "code",
       "source_file": "apps/platform/src/stores/party.ts",
-      "source_location": "L39",
+      "source_location": "L41",
       "id": "stores_party_usepartystore",
       "community": 37,
       "norm_label": "usepartystore"
+    },
+    {
+      "label": "publicLobbies.ts",
+      "file_type": "code",
+      "source_file": "apps/platform/src/stores/publicLobbies.ts",
+      "source_location": "L1",
+      "id": "stores_publiclobbies",
+      "community": 37,
+      "norm_label": "publiclobbies.ts"
+    },
+    {
+      "label": "JoinablePartyView",
+      "file_type": "code",
+      "source_file": "apps/platform/src/stores/publicLobbies.ts",
+      "source_location": "L11",
+      "id": "stores_publiclobbies_joinablepartyview",
+      "community": 37,
+      "norm_label": "joinablepartyview"
+    },
+    {
+      "label": "PublicLobbiesLoadState",
+      "file_type": "code",
+      "source_file": "apps/platform/src/stores/publicLobbies.ts",
+      "source_location": "L22",
+      "id": "stores_publiclobbies_publiclobbiesloadstate",
+      "community": 37,
+      "norm_label": "publiclobbiesloadstate"
+    },
+    {
+      "label": "usePublicLobbiesStore",
+      "file_type": "code",
+      "source_file": "apps/platform/src/stores/publicLobbies.ts",
+      "source_location": "L24",
+      "id": "stores_publiclobbies_usepubliclobbiesstore",
+      "community": 37,
+      "norm_label": "usepubliclobbiesstore"
     },
     {
       "label": "AdminView.vue",
@@ -2871,7 +3195,7 @@
       "source_file": "games/blackout/__tests__/phaseManager.test.ts",
       "source_location": "L1",
       "id": "games_blackout_tests_phasemanager_test_ts_tests_phasemanager_test",
-      "community": 31,
+      "community": 165,
       "norm_label": "phasemanager.test.ts"
     },
     {
@@ -2880,7 +3204,7 @@
       "source_file": "games/blackout/__tests__/phaseManager.test.ts",
       "source_location": "L9",
       "id": "games_blackout_tests_phasemanager_test_ts_tests_phasemanager_test_makeroom",
-      "community": 31,
+      "community": 165,
       "norm_label": "makeroom()"
     },
     {
@@ -2898,7 +3222,7 @@
       "source_file": "games/blackout/__tests__/roundManager.test.ts",
       "source_location": "L1",
       "id": "games_blackout_tests_roundmanager_test_ts_tests_roundmanager_test",
-      "community": 2,
+      "community": 9,
       "norm_label": "roundmanager.test.ts"
     },
     {
@@ -2907,7 +3231,7 @@
       "source_file": "games/blackout/__tests__/roundManager.test.ts",
       "source_location": "L24",
       "id": "tests_roundmanager_test_mockedgetunusedprompt",
-      "community": 2,
+      "community": 9,
       "norm_label": "mockedgetunusedprompt"
     },
     {
@@ -2916,7 +3240,7 @@
       "source_file": "games/blackout/__tests__/roundManager.test.ts",
       "source_location": "L26",
       "id": "games_blackout_tests_roundmanager_test_ts_tests_roundmanager_test_makeroom",
-      "community": 2,
+      "community": 9,
       "norm_label": "makeroom()"
     },
     {
@@ -2943,7 +3267,7 @@
       "source_file": "games/blackout/__tests__/socketHandlers.test.ts",
       "source_location": "L1",
       "id": "games_blackout_tests_sockethandlers_test_ts_tests_sockethandlers_test",
-      "community": 9,
+      "community": 14,
       "norm_label": "sockethandlers.test.ts"
     },
     {
@@ -2952,7 +3276,7 @@
       "source_file": "games/blackout/__tests__/socketHandlers.test.ts",
       "source_location": "L33",
       "id": "games_blackout_tests_sockethandlers_test_ts_tests_sockethandlers_test_handlermap",
-      "community": 9,
+      "community": 14,
       "norm_label": "handlermap"
     },
     {
@@ -2961,7 +3285,7 @@
       "source_file": "games/blackout/__tests__/socketHandlers.test.ts",
       "source_location": "L35",
       "id": "games_blackout_tests_sockethandlers_test_ts_tests_sockethandlers_test_makeroom",
-      "community": 9,
+      "community": 14,
       "norm_label": "makeroom()"
     },
     {
@@ -2970,7 +3294,7 @@
       "source_file": "games/blackout/__tests__/socketHandlers.test.ts",
       "source_location": "L61",
       "id": "games_blackout_tests_sockethandlers_test_ts_tests_sockethandlers_test_makenamespace",
-      "community": 9,
+      "community": 14,
       "norm_label": "makenamespace()"
     },
     {
@@ -2979,7 +3303,7 @@
       "source_file": "games/blackout/__tests__/socketHandlers.test.ts",
       "source_location": "L90",
       "id": "games_blackout_tests_sockethandlers_test_ts_tests_sockethandlers_test_makesocket",
-      "community": 9,
+      "community": 14,
       "norm_label": "makesocket()"
     },
     {
@@ -2988,7 +3312,7 @@
       "source_file": "games/blackout/core/src/constants.ts",
       "source_location": "L1",
       "id": "games_blackout_core_src_constants_ts_src_constants",
-      "community": 2,
+      "community": 66,
       "norm_label": "constants.ts"
     },
     {
@@ -2997,7 +3321,7 @@
       "source_file": "games/blackout/core/src/constants.ts",
       "source_location": "L11",
       "id": "src_constants_default_excluded_letters",
-      "community": 2,
+      "community": 66,
       "norm_label": "default_excluded_letters"
     },
     {
@@ -3006,7 +3330,7 @@
       "source_file": "games/blackout/core/src/events.ts",
       "source_location": "L1",
       "id": "games_blackout_core_src_events_ts_src_events",
-      "community": 17,
+      "community": 165,
       "norm_label": "events.ts"
     },
     {
@@ -3015,7 +3339,7 @@
       "source_file": "games/blackout/core/src/events.ts",
       "source_location": "L3",
       "id": "games_blackout_core_src_events_ts_src_events_clienttoserverevents",
-      "community": 17,
+      "community": 165,
       "norm_label": "clienttoserverevents"
     },
     {
@@ -3024,7 +3348,7 @@
       "source_file": "games/blackout/core/src/events.ts",
       "source_location": "L45",
       "id": "games_blackout_core_src_events_ts_src_events_servertoclientevents",
-      "community": 17,
+      "community": 165,
       "norm_label": "servertoclientevents"
     },
     {
@@ -3033,7 +3357,7 @@
       "source_file": "games/blackout/core/src/types.ts",
       "source_location": "L1",
       "id": "games_blackout_core_src_types_ts_src_types",
-      "community": 2,
+      "community": 40,
       "norm_label": "types.ts"
     },
     {
@@ -3042,7 +3366,7 @@
       "source_file": "games/blackout/core/src/types.ts",
       "source_location": "L1",
       "id": "games_blackout_core_src_types_ts_src_types_phase",
-      "community": 2,
+      "community": 40,
       "norm_label": "phase"
     },
     {
@@ -3051,7 +3375,7 @@
       "source_file": "games/blackout/core/src/types.ts",
       "source_location": "L2",
       "id": "src_types_language",
-      "community": 2,
+      "community": 40,
       "norm_label": "language"
     },
     {
@@ -3060,7 +3384,7 @@
       "source_file": "games/blackout/core/src/types.ts",
       "source_location": "L4",
       "id": "src_types_category",
-      "community": 2,
+      "community": 66,
       "norm_label": "category"
     },
     {
@@ -3069,7 +3393,7 @@
       "source_file": "games/blackout/core/src/types.ts",
       "source_location": "L9",
       "id": "src_types_taskrule",
-      "community": 2,
+      "community": 66,
       "norm_label": "taskrule"
     },
     {
@@ -3078,7 +3402,7 @@
       "source_file": "games/blackout/core/src/types.ts",
       "source_location": "L15",
       "id": "src_types_rounddata",
-      "community": 2,
+      "community": 40,
       "norm_label": "rounddata"
     },
     {
@@ -3087,7 +3411,7 @@
       "source_file": "games/blackout/core/src/types.ts",
       "source_location": "L25",
       "id": "games_blackout_core_src_types_ts_src_types_player",
-      "community": 2,
+      "community": 40,
       "norm_label": "player"
     },
     {
@@ -3096,7 +3420,7 @@
       "source_file": "games/blackout/core/src/types.ts",
       "source_location": "L35",
       "id": "games_blackout_core_src_types_ts_src_types_room",
-      "community": 2,
+      "community": 40,
       "norm_label": "room"
     },
     {
@@ -3105,7 +3429,7 @@
       "source_file": "games/blackout/core/src/types.ts",
       "source_location": "L49",
       "id": "games_blackout_core_src_types_ts_src_types_roundresult",
-      "community": 2,
+      "community": 40,
       "norm_label": "roundresult"
     },
     {
@@ -3114,7 +3438,7 @@
       "source_file": "games/blackout/core/src/types.ts",
       "source_location": "L58",
       "id": "games_blackout_core_src_types_ts_src_types_roomview",
-      "community": 2,
+      "community": 40,
       "norm_label": "roomview"
     },
     {
@@ -3123,7 +3447,7 @@
       "source_file": "games/blackout/core/src/types.ts",
       "source_location": "L71",
       "id": "games_blackout_core_src_types_ts_src_types_playerview",
-      "community": 2,
+      "community": 40,
       "norm_label": "playerview"
     },
     {
@@ -3132,7 +3456,7 @@
       "source_file": "games/blackout/core/src/types.ts",
       "source_location": "L79",
       "id": "games_blackout_core_src_types_ts_src_types_roundview",
-      "community": 2,
+      "community": 40,
       "norm_label": "roundview"
     },
     {
@@ -3141,7 +3465,7 @@
       "source_file": "games/blackout/core/src/types.ts",
       "source_location": "L89",
       "id": "games_blackout_core_src_types_ts_src_types_storedsession",
-      "community": 2,
+      "community": 40,
       "norm_label": "storedsession"
     },
     {
@@ -3726,7 +4050,7 @@
       "source_file": "games/blackout/server/src/managers/categoryManager.ts",
       "source_location": "L1",
       "id": "managers_categorymanager",
-      "community": 2,
+      "community": 66,
       "norm_label": "categorymanager.ts"
     },
     {
@@ -3735,7 +4059,7 @@
       "source_file": "games/blackout/server/src/managers/categoryManager.ts",
       "source_location": "L5",
       "id": "managers_categorymanager_getcategoriesbylanguage",
-      "community": 2,
+      "community": 66,
       "norm_label": "getcategoriesbylanguage"
     },
     {
@@ -3744,7 +4068,7 @@
       "source_file": "games/blackout/server/src/managers/categoryManager.ts",
       "source_location": "L14",
       "id": "managers_categorymanager_gettasksbylanguage",
-      "community": 2,
+      "community": 66,
       "norm_label": "gettasksbylanguage"
     },
     {
@@ -3753,7 +4077,7 @@
       "source_file": "games/blackout/server/src/managers/categoryManager.ts",
       "source_location": "L24",
       "id": "managers_categorymanager_getdefaultexcludedlettersstmt",
-      "community": 2,
+      "community": 66,
       "norm_label": "getdefaultexcludedlettersstmt"
     },
     {
@@ -3771,7 +4095,7 @@
       "source_file": "games/blackout/server/src/managers/categoryManager.ts",
       "source_location": "L49",
       "id": "managers_categorymanager_getavailableletters",
-      "community": 2,
+      "community": 9,
       "norm_label": "getavailableletters()"
     },
     {
@@ -3780,7 +4104,7 @@
       "source_file": "games/blackout/server/src/managers/categoryManager.ts",
       "source_location": "L61",
       "id": "managers_categorymanager_randomitem",
-      "community": 2,
+      "community": 9,
       "norm_label": "randomitem()"
     },
     {
@@ -3789,7 +4113,7 @@
       "source_file": "games/blackout/server/src/managers/categoryManager.ts",
       "source_location": "L65",
       "id": "managers_categorymanager_getunusedprompt",
-      "community": 2,
+      "community": 9,
       "norm_label": "getunusedprompt()"
     },
     {
@@ -3843,7 +4167,7 @@
       "source_file": "games/blackout/server/src/managers/roundManager.ts",
       "source_location": "L1",
       "id": "games_blackout_server_src_managers_roundmanager_ts_managers_roundmanager",
-      "community": 2,
+      "community": 9,
       "norm_label": "roundmanager.ts"
     },
     {
@@ -3852,7 +4176,7 @@
       "source_file": "games/blackout/server/src/managers/roundManager.ts",
       "source_location": "L4",
       "id": "managers_roundmanager_startnewround",
-      "community": 2,
+      "community": 9,
       "norm_label": "startnewround()"
     },
     {
@@ -3861,7 +4185,7 @@
       "source_file": "games/blackout/server/src/managers/roundManager.ts",
       "source_location": "L24",
       "id": "managers_roundmanager_revealcategory",
-      "community": 2,
+      "community": 9,
       "norm_label": "revealcategory()"
     },
     {
@@ -3870,7 +4194,7 @@
       "source_file": "games/blackout/server/src/managers/roundManager.ts",
       "source_location": "L29",
       "id": "managers_roundmanager_rerollcurrentprompt",
-      "community": 2,
+      "community": 9,
       "norm_label": "rerollcurrentprompt()"
     },
     {
@@ -3879,7 +4203,7 @@
       "source_file": "games/blackout/server/src/managers/roundManager.ts",
       "source_location": "L47",
       "id": "managers_roundmanager_selectwinner",
-      "community": 2,
+      "community": 9,
       "norm_label": "selectwinner()"
     },
     {
@@ -3888,7 +4212,7 @@
       "source_file": "games/blackout/server/src/managers/roundManager.ts",
       "source_location": "L52",
       "id": "games_blackout_server_src_managers_roundmanager_ts_managers_roundmanager_finalizeround",
-      "community": 2,
+      "community": 9,
       "norm_label": "finalizeround()"
     },
     {
@@ -3897,7 +4221,7 @@
       "source_file": "games/blackout/server/src/managers/roundManager.ts",
       "source_location": "L69",
       "id": "managers_roundmanager_getnextreader",
-      "community": 2,
+      "community": 9,
       "norm_label": "getnextreader()"
     },
     {
@@ -3906,7 +4230,7 @@
       "source_file": "games/blackout/server/src/managers/roundManager.ts",
       "source_location": "L75",
       "id": "managers_roundmanager_getrandomreader",
-      "community": 2,
+      "community": 9,
       "norm_label": "getrandomreader()"
     },
     {
@@ -3915,7 +4239,7 @@
       "source_file": "games/blackout/server/src/managers/roundManager.ts",
       "source_location": "L81",
       "id": "managers_roundmanager_islastround",
-      "community": 2,
+      "community": 9,
       "norm_label": "islastround()"
     },
     {
@@ -3969,7 +4293,7 @@
       "source_file": "games/blackout/server/src/models/player.ts",
       "source_location": "L1",
       "id": "games_blackout_server_src_models_player_ts_models_player",
-      "community": 159,
+      "community": 8,
       "norm_label": "player.ts"
     },
     {
@@ -3978,7 +4302,7 @@
       "source_file": "games/blackout/server/src/models/player.ts",
       "source_location": "L5",
       "id": "games_blackout_server_src_models_player_ts_models_player_socketindex",
-      "community": 159,
+      "community": 8,
       "norm_label": "socketindex"
     },
     {
@@ -3987,7 +4311,7 @@
       "source_file": "games/blackout/server/src/models/player.ts",
       "source_location": "L7",
       "id": "games_blackout_server_src_models_player_ts_models_player_createplayer",
-      "community": 159,
+      "community": 8,
       "norm_label": "createplayer()"
     },
     {
@@ -3996,7 +4320,7 @@
       "source_file": "games/blackout/server/src/models/player.ts",
       "source_location": "L19",
       "id": "games_blackout_server_src_models_player_ts_models_player_setsocketindex",
-      "community": 159,
+      "community": 8,
       "norm_label": "setsocketindex()"
     },
     {
@@ -4005,7 +4329,7 @@
       "source_file": "games/blackout/server/src/models/player.ts",
       "source_location": "L23",
       "id": "games_blackout_server_src_models_player_ts_models_player_getsocketindex",
-      "community": 159,
+      "community": 8,
       "norm_label": "getsocketindex()"
     },
     {
@@ -4014,7 +4338,7 @@
       "source_file": "games/blackout/server/src/models/player.ts",
       "source_location": "L29",
       "id": "games_blackout_server_src_models_player_ts_models_player_deletesocketindex",
-      "community": 159,
+      "community": 8,
       "norm_label": "deletesocketindex()"
     },
     {
@@ -4167,7 +4491,7 @@
       "source_file": "games/blackout/server/src/socketHandlers.ts",
       "source_location": "L1",
       "id": "games_blackout_server_src_sockethandlers_ts_src_sockethandlers",
-      "community": 9,
+      "community": 14,
       "norm_label": "sockethandlers.ts"
     },
     {
@@ -4176,7 +4500,7 @@
       "source_file": "games/blackout/server/src/socketHandlers.ts",
       "source_location": "L53",
       "id": "src_sockethandlers_blackoutsocket",
-      "community": 9,
+      "community": 14,
       "norm_label": "blackoutsocket"
     },
     {
@@ -4185,7 +4509,7 @@
       "source_file": "games/blackout/server/src/socketHandlers.ts",
       "source_location": "L55",
       "id": "src_sockethandlers_islanguage",
-      "community": 9,
+      "community": 14,
       "norm_label": "islanguage()"
     },
     {
@@ -4194,7 +4518,7 @@
       "source_file": "games/blackout/server/src/socketHandlers.ts",
       "source_location": "L59",
       "id": "src_sockethandlers_normalizeexcludedletters",
-      "community": 9,
+      "community": 14,
       "norm_label": "normalizeexcludedletters()"
     },
     {
@@ -4203,7 +4527,7 @@
       "source_file": "games/blackout/server/src/socketHandlers.ts",
       "source_location": "L71",
       "id": "games_blackout_server_src_sockethandlers_ts_src_sockethandlers_assignhost",
-      "community": 9,
+      "community": 14,
       "norm_label": "assignhost()"
     },
     {
@@ -4212,7 +4536,7 @@
       "source_file": "games/blackout/server/src/socketHandlers.ts",
       "source_location": "L86",
       "id": "src_sockethandlers_verifyplayer",
-      "community": 9,
+      "community": 14,
       "norm_label": "verifyplayer()"
     },
     {
@@ -4221,7 +4545,7 @@
       "source_file": "games/blackout/server/src/socketHandlers.ts",
       "source_location": "L91",
       "id": "games_blackout_server_src_sockethandlers_ts_src_sockethandlers_normalizestableplayerid",
-      "community": 9,
+      "community": 14,
       "norm_label": "normalizestableplayerid()"
     },
     {
@@ -4230,7 +4554,7 @@
       "source_file": "games/blackout/server/src/socketHandlers.ts",
       "source_location": "L97",
       "id": "games_blackout_server_src_sockethandlers_ts_src_sockethandlers_detachindexedsocket",
-      "community": 9,
+      "community": 14,
       "norm_label": "detachindexedsocket()"
     },
     {
@@ -4239,7 +4563,7 @@
       "source_file": "games/blackout/server/src/socketHandlers.ts",
       "source_location": "L114",
       "id": "games_blackout_server_src_sockethandlers_ts_src_sockethandlers_bindplayertosocket",
-      "community": 9,
+      "community": 14,
       "norm_label": "bindplayertosocket()"
     },
     {
@@ -4464,7 +4788,7 @@
       "source_file": "games/blackout/ui-vue/src/composables/useSocket.ts",
       "source_location": "L1",
       "id": "games_blackout_ui_vue_src_composables_usesocket_ts_composables_usesocket",
-      "community": 38,
+      "community": 37,
       "norm_label": "usesocket.ts"
     },
     {
@@ -4473,7 +4797,7 @@
       "source_file": "games/blackout/ui-vue/src/composables/useSocket.ts",
       "source_location": "L5",
       "id": "composables_usesocket_blackoutsocket",
-      "community": 38,
+      "community": 37,
       "norm_label": "blackoutsocket"
     },
     {
@@ -4482,7 +4806,7 @@
       "source_file": "games/blackout/ui-vue/src/composables/useSocket.ts",
       "source_location": "L7",
       "id": "games_blackout_ui_vue_src_composables_usesocket_ts_composables_usesocket_normalizenamespace",
-      "community": 38,
+      "community": 37,
       "norm_label": "normalizenamespace()"
     },
     {
@@ -4491,7 +4815,7 @@
       "source_file": "games/blackout/ui-vue/src/composables/useSocket.ts",
       "source_location": "L12",
       "id": "games_blackout_ui_vue_src_composables_usesocket_ts_composables_usesocket_resolvesocketurl",
-      "community": 38,
+      "community": 37,
       "norm_label": "resolvesocketurl()"
     },
     {
@@ -4500,7 +4824,7 @@
       "source_file": "games/blackout/ui-vue/src/composables/useSocket.ts",
       "source_location": "L27",
       "id": "games_blackout_ui_vue_src_composables_usesocket_ts_composables_usesocket_usesocket",
-      "community": 38,
+      "community": 37,
       "norm_label": "usesocket()"
     },
     {
@@ -4509,7 +4833,7 @@
       "source_file": "games/blackout/ui-vue/src/embedded-test.ts",
       "source_location": "L1",
       "id": "src_embedded_test",
-      "community": 101,
+      "community": 17,
       "norm_label": "embedded-test.ts"
     },
     {
@@ -4518,7 +4842,7 @@
       "source_file": "games/blackout/ui-vue/src/embedded-test.ts",
       "source_location": "L5",
       "id": "src_embedded_test_params",
-      "community": 101,
+      "community": 17,
       "norm_label": "params"
     },
     {
@@ -4527,7 +4851,7 @@
       "source_file": "games/blackout/ui-vue/src/embedded-test.ts",
       "source_location": "L7",
       "id": "src_embedded_test_app",
-      "community": 101,
+      "community": 17,
       "norm_label": "app"
     },
     {
@@ -4815,7 +5139,7 @@
       "source_file": "games/flip7/__tests__/roundManager.test.ts",
       "source_location": "L1",
       "id": "games_flip7_tests_roundmanager_test_ts_tests_roundmanager_test",
-      "community": 90,
+      "community": 1,
       "norm_label": "roundmanager.test.ts"
     },
     {
@@ -4824,7 +5148,7 @@
       "source_file": "games/flip7/__tests__/roundManager.test.ts",
       "source_location": "L13",
       "id": "tests_roundmanager_test_injectdeck",
-      "community": 90,
+      "community": 1,
       "norm_label": "injectdeck()"
     },
     {
@@ -4833,7 +5157,7 @@
       "source_file": "games/flip7/__tests__/roundManager.test.ts",
       "source_location": "L19",
       "id": "games_flip7_tests_roundmanager_test_ts_tests_roundmanager_test_makeroom",
-      "community": 90,
+      "community": 1,
       "norm_label": "makeroom()"
     },
     {
@@ -4842,7 +5166,7 @@
       "source_file": "games/flip7/__tests__/roundManager.test.ts",
       "source_location": "L52",
       "id": "tests_roundmanager_test_startroundready",
-      "community": 90,
+      "community": 1,
       "norm_label": "startroundready()"
     },
     {
@@ -4851,7 +5175,7 @@
       "source_file": "games/flip7/__tests__/scoreManager.test.ts",
       "source_location": "L1",
       "id": "games_flip7_tests_scoremanager_test_ts_tests_scoremanager_test",
-      "community": 160,
+      "community": 1,
       "norm_label": "scoremanager.test.ts"
     },
     {
@@ -4860,7 +5184,7 @@
       "source_file": "games/flip7/__tests__/scoreManager.test.ts",
       "source_location": "L5",
       "id": "tests_scoremanager_test_makeroundplayer",
-      "community": 160,
+      "community": 1,
       "norm_label": "makeroundplayer()"
     },
     {
@@ -4923,7 +5247,7 @@
       "source_file": "games/flip7/core/src/constants.ts",
       "source_location": "L1",
       "id": "games_flip7_core_src_constants_ts_src_constants",
-      "community": 156,
+      "community": 1,
       "norm_label": "constants.ts"
     },
     {
@@ -4932,7 +5256,7 @@
       "source_file": "games/flip7/core/src/constants.ts",
       "source_location": "L18",
       "id": "src_constants_modifier_add_values",
-      "community": 156,
+      "community": 1,
       "norm_label": "modifier_add_values"
     },
     {
@@ -4941,7 +5265,7 @@
       "source_file": "games/flip7/core/src/deck.ts",
       "source_location": "L1",
       "id": "games_flip7_core_src_deck_ts_src_deck",
-      "community": 156,
+      "community": 1,
       "norm_label": "deck.ts"
     },
     {
@@ -4950,7 +5274,7 @@
       "source_file": "games/flip7/core/src/deck.ts",
       "source_location": "L3",
       "id": "src_deck_numbercard",
-      "community": 156,
+      "community": 1,
       "norm_label": "numbercard"
     },
     {
@@ -4959,7 +5283,7 @@
       "source_file": "games/flip7/core/src/deck.ts",
       "source_location": "L7",
       "id": "src_deck_modifieradd",
-      "community": 156,
+      "community": 1,
       "norm_label": "modifieradd"
     },
     {
@@ -4968,7 +5292,7 @@
       "source_file": "games/flip7/core/src/deck.ts",
       "source_location": "L8",
       "id": "src_deck_modifierx2",
-      "community": 156,
+      "community": 1,
       "norm_label": "modifierx2"
     },
     {
@@ -4995,7 +5319,7 @@
       "source_file": "games/flip7/core/src/deck.ts",
       "source_location": "L22",
       "id": "games_flip7_core_src_deck_ts_src_deck_builddeck",
-      "community": 156,
+      "community": 1,
       "norm_label": "builddeck()"
     },
     {
@@ -5004,7 +5328,7 @@
       "source_file": "games/flip7/core/src/events.ts",
       "source_location": "L1",
       "id": "games_flip7_core_src_events_ts_src_events",
-      "community": 66,
+      "community": 30,
       "norm_label": "events.ts"
     },
     {
@@ -5013,7 +5337,7 @@
       "source_file": "games/flip7/core/src/events.ts",
       "source_location": "L3",
       "id": "games_flip7_core_src_events_ts_src_events_autojoinroomdata",
-      "community": 66,
+      "community": 30,
       "norm_label": "autojoinroomdata"
     },
     {
@@ -5022,7 +5346,7 @@
       "source_file": "games/flip7/core/src/events.ts",
       "source_location": "L11",
       "id": "games_flip7_core_src_events_ts_src_events_autojoinroomresponse",
-      "community": 66,
+      "community": 30,
       "norm_label": "autojoinroomresponse"
     },
     {
@@ -5031,7 +5355,7 @@
       "source_file": "games/flip7/core/src/events.ts",
       "source_location": "L18",
       "id": "games_flip7_core_src_events_ts_src_events_errorresponse",
-      "community": 66,
+      "community": 30,
       "norm_label": "errorresponse"
     },
     {
@@ -5040,7 +5364,7 @@
       "source_file": "games/flip7/core/src/events.ts",
       "source_location": "L23",
       "id": "src_events_actionresolvedevent",
-      "community": 66,
+      "community": 30,
       "norm_label": "actionresolvedevent"
     },
     {
@@ -5049,7 +5373,7 @@
       "source_file": "games/flip7/core/src/events.ts",
       "source_location": "L29",
       "id": "games_flip7_core_src_events_ts_src_events_clienttoserverevents",
-      "community": 66,
+      "community": 30,
       "norm_label": "clienttoserverevents"
     },
     {
@@ -5058,7 +5382,7 @@
       "source_file": "games/flip7/core/src/events.ts",
       "source_location": "L48",
       "id": "games_flip7_core_src_events_ts_src_events_servertoclientevents",
-      "community": 66,
+      "community": 30,
       "norm_label": "servertoclientevents"
     },
     {
@@ -5112,7 +5436,7 @@
       "source_file": "games/flip7/core/src/types.ts",
       "source_location": "L22",
       "id": "src_types_roundplayer",
-      "community": 160,
+      "community": 1,
       "norm_label": "roundplayer"
     },
     {
@@ -5328,7 +5652,7 @@
       "source_file": "games/flip7/server/src/index.ts",
       "source_location": "L1",
       "id": "games_flip7_server_src_index_ts_src_index",
-      "community": 72,
+      "community": 11,
       "norm_label": "index.ts"
     },
     {
@@ -5337,7 +5661,7 @@
       "source_file": "games/flip7/server/src/index.ts",
       "source_location": "L6",
       "id": "games_flip7_server_src_index_ts_src_index_gamedefinition",
-      "community": 72,
+      "community": 11,
       "norm_label": "gamedefinition"
     },
     {
@@ -5346,7 +5670,7 @@
       "source_file": "games/flip7/server/src/index.ts",
       "source_location": "L13",
       "id": "games_flip7_server_src_index_ts_src_index_definition",
-      "community": 72,
+      "community": 11,
       "norm_label": "definition"
     },
     {
@@ -5355,7 +5679,7 @@
       "source_file": "games/flip7/server/src/index.ts",
       "source_location": "L20",
       "id": "games_flip7_server_src_index_ts_src_index_gamelogger",
-      "community": 72,
+      "community": 11,
       "norm_label": "gamelogger"
     },
     {
@@ -5364,7 +5688,7 @@
       "source_file": "games/flip7/server/src/index.ts",
       "source_location": "L22",
       "id": "games_flip7_server_src_index_ts_src_index_register",
-      "community": 72,
+      "community": 11,
       "norm_label": "register()"
     },
     {
@@ -5373,7 +5697,7 @@
       "source_file": "games/flip7/server/src/index.ts",
       "source_location": "L26",
       "id": "games_flip7_server_src_index_ts_src_index_cleanupmatch",
-      "community": 72,
+      "community": 11,
       "norm_label": "cleanupmatch()"
     },
     {
@@ -5454,7 +5778,7 @@
       "source_file": "games/flip7/server/src/managers/deckManager.ts",
       "source_location": "L1",
       "id": "managers_deckmanager",
-      "community": 164,
+      "community": 1,
       "norm_label": "deckmanager.ts"
     },
     {
@@ -5463,7 +5787,7 @@
       "source_file": "games/flip7/server/src/managers/deckManager.ts",
       "source_location": "L5",
       "id": "managers_deckmanager_shuffle",
-      "community": 164,
+      "community": 1,
       "norm_label": "shuffle()"
     },
     {
@@ -5472,7 +5796,7 @@
       "source_file": "games/flip7/server/src/managers/deckManager.ts",
       "source_location": "L18",
       "id": "managers_deckmanager_draw",
-      "community": 164,
+      "community": 1,
       "norm_label": "draw()"
     },
     {
@@ -5481,7 +5805,7 @@
       "source_file": "games/flip7/server/src/managers/deckManager.ts",
       "source_location": "L31",
       "id": "managers_deckmanager_reshufflefromdiscard",
-      "community": 164,
+      "community": 1,
       "norm_label": "reshufflefromdiscard()"
     },
     {
@@ -5535,7 +5859,7 @@
       "source_file": "games/flip7/server/src/managers/roundManager.ts",
       "source_location": "L1",
       "id": "games_flip7_server_src_managers_roundmanager_ts_managers_roundmanager",
-      "community": 15,
+      "community": 1,
       "norm_label": "roundmanager.ts"
     },
     {
@@ -5544,7 +5868,7 @@
       "source_file": "games/flip7/server/src/managers/roundManager.ts",
       "source_location": "L12",
       "id": "managers_roundmanager_resolvedactionrecord",
-      "community": 15,
+      "community": 1,
       "norm_label": "resolvedactionrecord"
     },
     {
@@ -5553,7 +5877,7 @@
       "source_file": "games/flip7/server/src/managers/roundManager.ts",
       "source_location": "L18",
       "id": "managers_roundmanager_resolvedactions",
-      "community": 15,
+      "community": 1,
       "norm_label": "_resolvedactions"
     },
     {
@@ -5562,7 +5886,7 @@
       "source_file": "games/flip7/server/src/managers/roundManager.ts",
       "source_location": "L21",
       "id": "managers_roundmanager_popresolvedaction",
-      "community": 15,
+      "community": 1,
       "norm_label": "popresolvedaction()"
     },
     {
@@ -5571,7 +5895,7 @@
       "source_file": "games/flip7/server/src/managers/roundManager.ts",
       "source_location": "L29",
       "id": "managers_roundmanager_builde2edeck",
-      "community": 90,
+      "community": 1,
       "norm_label": "builde2edeck()"
     },
     {
@@ -5580,7 +5904,7 @@
       "source_file": "games/flip7/server/src/managers/roundManager.ts",
       "source_location": "L42",
       "id": "managers_roundmanager_startround",
-      "community": 90,
+      "community": 1,
       "norm_label": "startround()"
     },
     {
@@ -5589,7 +5913,7 @@
       "source_file": "games/flip7/server/src/managers/roundManager.ts",
       "source_location": "L99",
       "id": "managers_roundmanager_playerneedsinitialcard",
-      "community": 15,
+      "community": 1,
       "norm_label": "playerneedsinitialcard()"
     },
     {
@@ -5598,7 +5922,7 @@
       "source_file": "games/flip7/server/src/managers/roundManager.ts",
       "source_location": "L109",
       "id": "managers_roundmanager_continueinitialdeal",
-      "community": 15,
+      "community": 1,
       "norm_label": "continueinitialdeal()"
     },
     {
@@ -5607,7 +5931,7 @@
       "source_file": "games/flip7/server/src/managers/roundManager.ts",
       "source_location": "L200",
       "id": "managers_roundmanager_getcurrentturnplayerid",
-      "community": 15,
+      "community": 1,
       "norm_label": "getcurrentturnplayerid()"
     },
     {
@@ -5616,7 +5940,7 @@
       "source_file": "games/flip7/server/src/managers/roundManager.ts",
       "source_location": "L204",
       "id": "managers_roundmanager_getactiveplayers",
-      "community": 15,
+      "community": 1,
       "norm_label": "getactiveplayers()"
     },
     {
@@ -5625,7 +5949,7 @@
       "source_file": "games/flip7/server/src/managers/roundManager.ts",
       "source_location": "L208",
       "id": "managers_roundmanager_getnextactiveindex",
-      "community": 15,
+      "community": 1,
       "norm_label": "getnextactiveindex()"
     },
     {
@@ -5634,7 +5958,7 @@
       "source_file": "games/flip7/server/src/managers/roundManager.ts",
       "source_location": "L225",
       "id": "managers_roundmanager_advanceturnorfinalize",
-      "community": 15,
+      "community": 1,
       "norm_label": "advanceturnorfinalize()"
     },
     {
@@ -5643,7 +5967,7 @@
       "source_file": "games/flip7/server/src/managers/roundManager.ts",
       "source_location": "L275",
       "id": "managers_roundmanager_applynumbercard",
-      "community": 15,
+      "community": 1,
       "norm_label": "applynumbercard()"
     },
     {
@@ -5652,7 +5976,7 @@
       "source_file": "games/flip7/server/src/managers/roundManager.ts",
       "source_location": "L330",
       "id": "managers_roundmanager_openpendingaction",
-      "community": 15,
+      "community": 1,
       "norm_label": "openpendingaction()"
     },
     {
@@ -5661,7 +5985,7 @@
       "source_file": "games/flip7/server/src/managers/roundManager.ts",
       "source_location": "L367",
       "id": "managers_roundmanager_resolveaction",
-      "community": 15,
+      "community": 1,
       "norm_label": "resolveaction()"
     },
     {
@@ -5670,7 +5994,7 @@
       "source_file": "games/flip7/server/src/managers/roundManager.ts",
       "source_location": "L415",
       "id": "managers_roundmanager_processflipthreedraw",
-      "community": 15,
+      "community": 1,
       "norm_label": "processflipthreedraw()"
     },
     {
@@ -5679,7 +6003,7 @@
       "source_file": "games/flip7/server/src/managers/roundManager.ts",
       "source_location": "L466",
       "id": "managers_roundmanager_playerhit",
-      "community": 15,
+      "community": 1,
       "norm_label": "playerhit()"
     },
     {
@@ -5688,7 +6012,7 @@
       "source_file": "games/flip7/server/src/managers/roundManager.ts",
       "source_location": "L505",
       "id": "managers_roundmanager_playerstay",
-      "community": 15,
+      "community": 1,
       "norm_label": "playerstay()"
     },
     {
@@ -5697,7 +6021,7 @@
       "source_file": "games/flip7/server/src/managers/roundManager.ts",
       "source_location": "L527",
       "id": "managers_roundmanager_chooseactiontarget",
-      "community": 90,
+      "community": 1,
       "norm_label": "chooseactiontarget()"
     },
     {
@@ -5706,7 +6030,7 @@
       "source_file": "games/flip7/server/src/managers/roundManager.ts",
       "source_location": "L546",
       "id": "games_flip7_server_src_managers_roundmanager_ts_managers_roundmanager_finalizeround",
-      "community": 160,
+      "community": 1,
       "norm_label": "finalizeround()"
     },
     {
@@ -5715,7 +6039,7 @@
       "source_file": "games/flip7/server/src/managers/roundManager.ts",
       "source_location": "L573",
       "id": "managers_roundmanager_getcurrentturnplayer",
-      "community": 15,
+      "community": 1,
       "norm_label": "getcurrentturnplayer()"
     },
     {
@@ -5724,7 +6048,7 @@
       "source_file": "games/flip7/server/src/managers/roundManager.ts",
       "source_location": "L583",
       "id": "managers_roundmanager_computewinners",
-      "community": 90,
+      "community": 1,
       "norm_label": "computewinners()"
     },
     {
@@ -5733,7 +6057,7 @@
       "source_file": "games/flip7/server/src/managers/scoreManager.ts",
       "source_location": "L1",
       "id": "games_flip7_server_src_managers_scoremanager_ts_managers_scoremanager",
-      "community": 160,
+      "community": 1,
       "norm_label": "scoremanager.ts"
     },
     {
@@ -5742,7 +6066,7 @@
       "source_file": "games/flip7/server/src/managers/scoreManager.ts",
       "source_location": "L15",
       "id": "managers_scoremanager_calculateplayerroundscore",
-      "community": 160,
+      "community": 1,
       "norm_label": "calculateplayerroundscore()"
     },
     {
@@ -5751,7 +6075,7 @@
       "source_file": "games/flip7/server/src/models/player.ts",
       "source_location": "L1",
       "id": "games_flip7_server_src_models_player_ts_models_player",
-      "community": 8,
+      "community": 82,
       "norm_label": "player.ts"
     },
     {
@@ -5760,7 +6084,7 @@
       "source_file": "games/flip7/server/src/models/player.ts",
       "source_location": "L5",
       "id": "games_flip7_server_src_models_player_ts_models_player_socketindex",
-      "community": 8,
+      "community": 82,
       "norm_label": "socketindex"
     },
     {
@@ -5769,7 +6093,7 @@
       "source_file": "games/flip7/server/src/models/player.ts",
       "source_location": "L7",
       "id": "games_flip7_server_src_models_player_ts_models_player_createplayer",
-      "community": 8,
+      "community": 82,
       "norm_label": "createplayer()"
     },
     {
@@ -5778,7 +6102,7 @@
       "source_file": "games/flip7/server/src/models/player.ts",
       "source_location": "L19",
       "id": "games_flip7_server_src_models_player_ts_models_player_setsocketindex",
-      "community": 8,
+      "community": 82,
       "norm_label": "setsocketindex()"
     },
     {
@@ -5787,7 +6111,7 @@
       "source_file": "games/flip7/server/src/models/player.ts",
       "source_location": "L23",
       "id": "games_flip7_server_src_models_player_ts_models_player_getsocketindex",
-      "community": 8,
+      "community": 82,
       "norm_label": "getsocketindex()"
     },
     {
@@ -5796,7 +6120,7 @@
       "source_file": "games/flip7/server/src/models/player.ts",
       "source_location": "L29",
       "id": "games_flip7_server_src_models_player_ts_models_player_deletesocketindex",
-      "community": 8,
+      "community": 82,
       "norm_label": "deletesocketindex()"
     },
     {
@@ -5949,7 +6273,7 @@
       "source_file": "games/flip7/server/src/socketHandlers.ts",
       "source_location": "L1",
       "id": "games_flip7_server_src_sockethandlers_ts_src_sockethandlers",
-      "community": 82,
+      "community": 158,
       "norm_label": "sockethandlers.ts"
     },
     {
@@ -5958,7 +6282,7 @@
       "source_file": "games/flip7/server/src/socketHandlers.ts",
       "source_location": "L52",
       "id": "src_sockethandlers_flip7socket",
-      "community": 82,
+      "community": 158,
       "norm_label": "flip7socket"
     },
     {
@@ -5967,7 +6291,7 @@
       "source_file": "games/flip7/server/src/socketHandlers.ts",
       "source_location": "L54",
       "id": "games_flip7_server_src_sockethandlers_ts_src_sockethandlers_normalizestableplayerid",
-      "community": 82,
+      "community": 158,
       "norm_label": "normalizestableplayerid()"
     },
     {
@@ -5976,7 +6300,7 @@
       "source_file": "games/flip7/server/src/socketHandlers.ts",
       "source_location": "L60",
       "id": "games_flip7_server_src_sockethandlers_ts_src_sockethandlers_assignhost",
-      "community": 82,
+      "community": 158,
       "norm_label": "assignhost()"
     },
     {
@@ -5985,7 +6309,7 @@
       "source_file": "games/flip7/server/src/socketHandlers.ts",
       "source_location": "L71",
       "id": "games_flip7_server_src_sockethandlers_ts_src_sockethandlers_verifyishost",
-      "community": 82,
+      "community": 14,
       "norm_label": "verifyishost()"
     },
     {
@@ -5994,7 +6318,7 @@
       "source_file": "games/flip7/server/src/socketHandlers.ts",
       "source_location": "L76",
       "id": "games_flip7_server_src_sockethandlers_ts_src_sockethandlers_verifyplayerinroom",
-      "community": 82,
+      "community": 14,
       "norm_label": "verifyplayerinroom()"
     },
     {
@@ -6003,7 +6327,7 @@
       "source_file": "games/flip7/server/src/socketHandlers.ts",
       "source_location": "L82",
       "id": "games_flip7_server_src_sockethandlers_ts_src_sockethandlers_detachindexedsocket",
-      "community": 82,
+      "community": 158,
       "norm_label": "detachindexedsocket()"
     },
     {
@@ -6012,7 +6336,7 @@
       "source_file": "games/flip7/server/src/socketHandlers.ts",
       "source_location": "L97",
       "id": "games_flip7_server_src_sockethandlers_ts_src_sockethandlers_bindplayertosocket",
-      "community": 82,
+      "community": 158,
       "norm_label": "bindplayertosocket()"
     },
     {
@@ -6021,7 +6345,7 @@
       "source_file": "games/flip7/server/src/socketHandlers.ts",
       "source_location": "L124",
       "id": "src_sockethandlers_registerflip7",
-      "community": 72,
+      "community": 11,
       "norm_label": "registerflip7()"
     },
     {
@@ -6282,7 +6606,7 @@
       "source_file": "games/flip7/ui-vue/src/composables/useSocket.ts",
       "source_location": "L1",
       "id": "games_flip7_ui_vue_src_composables_usesocket_ts_composables_usesocket",
-      "community": 38,
+      "community": 37,
       "norm_label": "usesocket.ts"
     },
     {
@@ -6291,7 +6615,7 @@
       "source_file": "games/flip7/ui-vue/src/composables/useSocket.ts",
       "source_location": "L5",
       "id": "composables_usesocket_flip7socket",
-      "community": 38,
+      "community": 37,
       "norm_label": "flip7socket"
     },
     {
@@ -6300,7 +6624,7 @@
       "source_file": "games/flip7/ui-vue/src/composables/useSocket.ts",
       "source_location": "L7",
       "id": "games_flip7_ui_vue_src_composables_usesocket_ts_composables_usesocket_normalizenamespace",
-      "community": 38,
+      "community": 37,
       "norm_label": "normalizenamespace()"
     },
     {
@@ -6309,7 +6633,7 @@
       "source_file": "games/flip7/ui-vue/src/composables/useSocket.ts",
       "source_location": "L12",
       "id": "games_flip7_ui_vue_src_composables_usesocket_ts_composables_usesocket_resolvesocketurl",
-      "community": 38,
+      "community": 37,
       "norm_label": "resolvesocketurl()"
     },
     {
@@ -6318,7 +6642,7 @@
       "source_file": "games/flip7/ui-vue/src/composables/useSocket.ts",
       "source_location": "L23",
       "id": "games_flip7_ui_vue_src_composables_usesocket_ts_composables_usesocket_usesocket",
-      "community": 38,
+      "community": 37,
       "norm_label": "usesocket()"
     },
     {
@@ -6552,7 +6876,7 @@
       "source_file": "games/imposter/__tests__/example.test.ts",
       "source_location": "L1",
       "id": "tests_example_test",
-      "community": 24,
+      "community": 15,
       "norm_label": "example.test.ts"
     },
     {
@@ -6561,7 +6885,7 @@
       "source_file": "games/imposter/__tests__/example.test.ts",
       "source_location": "L16",
       "id": "tests_example_test_makeroom",
-      "community": 24,
+      "community": 15,
       "norm_label": "makeroom()"
     },
     {
@@ -6579,7 +6903,7 @@
       "source_file": "games/imposter/__tests__/gameManager.test.ts",
       "source_location": "L28",
       "id": "tests_gamemanager_test_makeroom",
-      "community": 24,
+      "community": 15,
       "norm_label": "makeroom()"
     },
     {
@@ -6588,7 +6912,7 @@
       "source_file": "games/imposter/__tests__/phaseManager.test.ts",
       "source_location": "L1",
       "id": "games_imposter_tests_phasemanager_test_ts_tests_phasemanager_test",
-      "community": 24,
+      "community": 15,
       "norm_label": "phasemanager.test.ts"
     },
     {
@@ -6597,7 +6921,7 @@
       "source_file": "games/imposter/__tests__/phaseManager.test.ts",
       "source_location": "L9",
       "id": "games_imposter_tests_phasemanager_test_ts_tests_phasemanager_test_makeroom",
-      "community": 24,
+      "community": 15,
       "norm_label": "makeroom()"
     },
     {
@@ -6606,7 +6930,7 @@
       "source_file": "games/imposter/__tests__/socketHandlers.test.ts",
       "source_location": "L1",
       "id": "games_imposter_tests_sockethandlers_test_ts_tests_sockethandlers_test",
-      "community": 163,
+      "community": 14,
       "norm_label": "sockethandlers.test.ts"
     },
     {
@@ -6615,7 +6939,7 @@
       "source_file": "games/imposter/__tests__/socketHandlers.test.ts",
       "source_location": "L15",
       "id": "tests_sockethandlers_test_handler",
-      "community": 163,
+      "community": 14,
       "norm_label": "handler"
     },
     {
@@ -6624,7 +6948,7 @@
       "source_file": "games/imposter/__tests__/socketHandlers.test.ts",
       "source_location": "L17",
       "id": "tests_sockethandlers_test_createnamespace",
-      "community": 163,
+      "community": 14,
       "norm_label": "createnamespace()"
     },
     {
@@ -6633,7 +6957,7 @@
       "source_file": "games/imposter/__tests__/socketHandlers.test.ts",
       "source_location": "L36",
       "id": "tests_sockethandlers_test_createsocket",
-      "community": 163,
+      "community": 14,
       "norm_label": "createsocket()"
     },
     {
@@ -6642,7 +6966,7 @@
       "source_file": "games/imposter/__tests__/socketHandlers.test.ts",
       "source_location": "L53",
       "id": "games_imposter_tests_sockethandlers_test_ts_tests_sockethandlers_test_autojoin",
-      "community": 163,
+      "community": 14,
       "norm_label": "autojoin()"
     },
     {
@@ -6651,7 +6975,7 @@
       "source_file": "games/imposter/core/src/constants.ts",
       "source_location": "L1",
       "id": "games_imposter_core_src_constants_ts_src_constants",
-      "community": 24,
+      "community": 15,
       "norm_label": "constants.ts"
     },
     {
@@ -6660,7 +6984,7 @@
       "source_file": "games/imposter/core/src/constants.ts",
       "source_location": "L15",
       "id": "src_constants_default_word_library",
-      "community": 24,
+      "community": 15,
       "norm_label": "default_word_library"
     },
     {
@@ -6696,7 +7020,7 @@
       "source_file": "games/imposter/core/src/index.ts",
       "source_location": "L1",
       "id": "games_imposter_core_src_index_ts_src_index",
-      "community": 31,
+      "community": 43,
       "norm_label": "index.ts"
     },
     {
@@ -6975,7 +7299,7 @@
       "source_file": "games/imposter/server/src/handlers/socketHandlers.ts",
       "source_location": "L1",
       "id": "games_imposter_server_src_handlers_sockethandlers_ts_handlers_sockethandlers",
-      "community": 24,
+      "community": 48,
       "norm_label": "sockethandlers.ts"
     },
     {
@@ -6984,7 +7308,7 @@
       "source_file": "games/imposter/server/src/handlers/socketHandlers.ts",
       "source_location": "L54",
       "id": "games_imposter_server_src_handlers_sockethandlers_ts_handlers_sockethandlers_gamesocket",
-      "community": 24,
+      "community": 48,
       "norm_label": "gamesocket"
     },
     {
@@ -6993,7 +7317,7 @@
       "source_file": "games/imposter/server/src/handlers/socketHandlers.ts",
       "source_location": "L56",
       "id": "handlers_sockethandlers_discussiontimers",
-      "community": 24,
+      "community": 48,
       "norm_label": "discussiontimers"
     },
     {
@@ -7002,7 +7326,7 @@
       "source_file": "games/imposter/server/src/handlers/socketHandlers.ts",
       "source_location": "L57",
       "id": "handlers_sockethandlers_guesstimers",
-      "community": 24,
+      "community": 48,
       "norm_label": "guesstimers"
     },
     {
@@ -7011,7 +7335,7 @@
       "source_file": "games/imposter/server/src/handlers/socketHandlers.ts",
       "source_location": "L59",
       "id": "handlers_sockethandlers_cleardiscussiontimer",
-      "community": 24,
+      "community": 42,
       "norm_label": "cleardiscussiontimer()"
     },
     {
@@ -7020,7 +7344,7 @@
       "source_file": "games/imposter/server/src/handlers/socketHandlers.ts",
       "source_location": "L67",
       "id": "handlers_sockethandlers_clearguesstimer",
-      "community": 24,
+      "community": 42,
       "norm_label": "clearguesstimer()"
     },
     {
@@ -7029,7 +7353,7 @@
       "source_file": "games/imposter/server/src/handlers/socketHandlers.ts",
       "source_location": "L75",
       "id": "handlers_sockethandlers_clearroomtimers",
-      "community": 24,
+      "community": 42,
       "norm_label": "clearroomtimers()"
     },
     {
@@ -7038,7 +7362,7 @@
       "source_file": "games/imposter/server/src/handlers/socketHandlers.ts",
       "source_location": "L80",
       "id": "games_imposter_server_src_handlers_sockethandlers_ts_handlers_sockethandlers_verifyplayer",
-      "community": 24,
+      "community": 48,
       "norm_label": "verifyplayer()"
     },
     {
@@ -7047,7 +7371,7 @@
       "source_file": "games/imposter/server/src/handlers/socketHandlers.ts",
       "source_location": "L85",
       "id": "handlers_sockethandlers_restoreownerashost",
-      "community": 24,
+      "community": 48,
       "norm_label": "restoreownerashost()"
     },
     {
@@ -7056,7 +7380,7 @@
       "source_file": "games/imposter/server/src/handlers/socketHandlers.ts",
       "source_location": "L92",
       "id": "handlers_sockethandlers_reassignhostafterdeparture",
-      "community": 24,
+      "community": 48,
       "norm_label": "reassignhostafterdeparture()"
     },
     {
@@ -7065,7 +7389,7 @@
       "source_file": "games/imposter/server/src/handlers/socketHandlers.ts",
       "source_location": "L101",
       "id": "handlers_sockethandlers_handlevoluntarydisconnect",
-      "community": 24,
+      "community": 48,
       "norm_label": "handlevoluntarydisconnect()"
     },
     {
@@ -7074,7 +7398,7 @@
       "source_file": "games/imposter/server/src/handlers/socketHandlers.ts",
       "source_location": "L118",
       "id": "games_imposter_server_src_handlers_sockethandlers_ts_handlers_sockethandlers_removeplayerfromroom",
-      "community": 24,
+      "community": 48,
       "norm_label": "removeplayerfromroom()"
     },
     {
@@ -7128,7 +7452,7 @@
       "source_file": "games/imposter/server/src/index.ts",
       "source_location": "L23",
       "id": "games_imposter_server_src_index_ts_src_index_cleanupmatch",
-      "community": 24,
+      "community": 42,
       "norm_label": "cleanupmatch()"
     },
     {
@@ -7209,7 +7533,7 @@
       "source_file": "games/imposter/server/src/managers/gameManager.ts",
       "source_location": "L17",
       "id": "managers_gamemanager_initgamestate",
-      "community": 24,
+      "community": 15,
       "norm_label": "initgamestate()"
     },
     {
@@ -7308,7 +7632,7 @@
       "source_file": "games/imposter/server/src/managers/gameManager.ts",
       "source_location": "L188",
       "id": "managers_gamemanager_startvoting",
-      "community": 24,
+      "community": 48,
       "norm_label": "startvoting()"
     },
     {
@@ -7335,7 +7659,7 @@
       "source_file": "games/imposter/server/src/managers/gameManager.ts",
       "source_location": "L224",
       "id": "managers_gamemanager_resolvevotes",
-      "community": 24,
+      "community": 90,
       "norm_label": "resolvevotes()"
     },
     {
@@ -7344,7 +7668,7 @@
       "source_file": "games/imposter/server/src/managers/gameManager.ts",
       "source_location": "L255",
       "id": "managers_gamemanager_handleinfiltratorguess",
-      "community": 24,
+      "community": 90,
       "norm_label": "handleinfiltratorguess()"
     },
     {
@@ -7353,7 +7677,7 @@
       "source_file": "games/imposter/server/src/managers/gameManager.ts",
       "source_location": "L276",
       "id": "managers_gamemanager_skipguess",
-      "community": 24,
+      "community": 90,
       "norm_label": "skipguess()"
     },
     {
@@ -7362,7 +7686,7 @@
       "source_file": "games/imposter/server/src/managers/gameManager.ts",
       "source_location": "L287",
       "id": "managers_gamemanager_ismatchover",
-      "community": 24,
+      "community": 90,
       "norm_label": "ismatchover()"
     },
     {
@@ -7371,7 +7695,7 @@
       "source_file": "games/imposter/server/src/managers/gameManager.ts",
       "source_location": "L291",
       "id": "managers_gamemanager_resetfornewround",
-      "community": 24,
+      "community": 72,
       "norm_label": "resetfornewround()"
     },
     {
@@ -7380,7 +7704,7 @@
       "source_file": "games/imposter/server/src/managers/gameManager.ts",
       "source_location": "L305",
       "id": "managers_gamemanager_resetforlobby",
-      "community": 24,
+      "community": 72,
       "norm_label": "resetforlobby()"
     },
     {
@@ -7434,7 +7758,7 @@
       "source_file": "games/imposter/server/src/managers/gameManager.ts",
       "source_location": "L361",
       "id": "managers_gamemanager_getvotedoutids",
-      "community": 24,
+      "community": 90,
       "norm_label": "getvotedoutids()"
     },
     {
@@ -7443,7 +7767,7 @@
       "source_file": "games/imposter/server/src/managers/gameManager.ts",
       "source_location": "L377",
       "id": "managers_gamemanager_finalizeround",
-      "community": 24,
+      "community": 90,
       "norm_label": "finalizeround()"
     },
     {
@@ -7452,7 +7776,7 @@
       "source_file": "games/imposter/server/src/managers/phaseManager.ts",
       "source_location": "L1",
       "id": "games_imposter_server_src_managers_phasemanager_ts_managers_phasemanager",
-      "community": 24,
+      "community": 72,
       "norm_label": "phasemanager.ts"
     },
     {
@@ -7461,7 +7785,7 @@
       "source_file": "games/imposter/server/src/managers/phaseManager.ts",
       "source_location": "L4",
       "id": "games_imposter_server_src_managers_phasemanager_ts_managers_phasemanager_transitiontoplaying",
-      "community": 24,
+      "community": 72,
       "norm_label": "transitiontoplaying()"
     },
     {
@@ -7470,7 +7794,7 @@
       "source_file": "games/imposter/server/src/managers/phaseManager.ts",
       "source_location": "L8",
       "id": "games_imposter_server_src_managers_phasemanager_ts_managers_phasemanager_transitiontoended",
-      "community": 24,
+      "community": 72,
       "norm_label": "transitiontoended()"
     },
     {
@@ -7479,7 +7803,7 @@
       "source_file": "games/imposter/server/src/managers/phaseManager.ts",
       "source_location": "L12",
       "id": "games_imposter_server_src_managers_phasemanager_ts_managers_phasemanager_transitiontolobby",
-      "community": 24,
+      "community": 72,
       "norm_label": "transitiontolobby()"
     },
     {
@@ -7488,7 +7812,7 @@
       "source_file": "games/imposter/server/src/managers/phaseManager.ts",
       "source_location": "L16",
       "id": "managers_phasemanager_transitiontonextround",
-      "community": 24,
+      "community": 72,
       "norm_label": "transitiontonextround()"
     },
     {
@@ -7551,7 +7875,7 @@
       "source_file": "games/imposter/server/src/models/room.ts",
       "source_location": "L1",
       "id": "games_imposter_server_src_models_room_ts_models_room",
-      "community": 24,
+      "community": 38,
       "norm_label": "room.ts"
     },
     {
@@ -7560,7 +7884,7 @@
       "source_file": "games/imposter/server/src/models/room.ts",
       "source_location": "L8",
       "id": "games_imposter_server_src_models_room_ts_models_room_rooms",
-      "community": 24,
+      "community": 38,
       "norm_label": "rooms"
     },
     {
@@ -7569,7 +7893,7 @@
       "source_file": "games/imposter/server/src/models/room.ts",
       "source_location": "L9",
       "id": "games_imposter_server_src_models_room_ts_models_room_sessiontoroom",
-      "community": 24,
+      "community": 38,
       "norm_label": "sessiontoroom"
     },
     {
@@ -7578,7 +7902,7 @@
       "source_file": "games/imposter/server/src/models/room.ts",
       "source_location": "L11",
       "id": "games_imposter_server_src_models_room_ts_models_room_roomcleanuptimers",
-      "community": 24,
+      "community": 38,
       "norm_label": "roomcleanuptimers"
     },
     {
@@ -7587,7 +7911,7 @@
       "source_file": "games/imposter/server/src/models/room.ts",
       "source_location": "L17",
       "id": "games_imposter_server_src_models_room_ts_models_room_generateroomcode",
-      "community": 24,
+      "community": 38,
       "norm_label": "generateroomcode()"
     },
     {
@@ -7596,7 +7920,7 @@
       "source_file": "games/imposter/server/src/models/room.ts",
       "source_location": "L26",
       "id": "games_imposter_server_src_models_room_ts_models_room_scheduleroomcleanup",
-      "community": 24,
+      "community": 38,
       "norm_label": "scheduleroomcleanup()"
     },
     {
@@ -7605,7 +7929,7 @@
       "source_file": "games/imposter/server/src/models/room.ts",
       "source_location": "L34",
       "id": "games_imposter_server_src_models_room_ts_models_room_clearroomcleanup",
-      "community": 24,
+      "community": 38,
       "norm_label": "clearroomcleanup()"
     },
     {
@@ -7614,7 +7938,7 @@
       "source_file": "games/imposter/server/src/models/room.ts",
       "source_location": "L44",
       "id": "games_imposter_server_src_models_room_ts_models_room_createroom",
-      "community": 24,
+      "community": 38,
       "norm_label": "createroom()"
     },
     {
@@ -7623,7 +7947,7 @@
       "source_file": "games/imposter/server/src/models/room.ts",
       "source_location": "L89",
       "id": "games_imposter_server_src_models_room_ts_models_room_getroom",
-      "community": 24,
+      "community": 38,
       "norm_label": "getroom()"
     },
     {
@@ -7632,7 +7956,7 @@
       "source_file": "games/imposter/server/src/models/room.ts",
       "source_location": "L93",
       "id": "models_room_sethost",
-      "community": 24,
+      "community": 48,
       "norm_label": "sethost()"
     },
     {
@@ -7641,7 +7965,7 @@
       "source_file": "games/imposter/server/src/models/room.ts",
       "source_location": "L100",
       "id": "games_imposter_server_src_models_room_ts_models_room_deleteroom",
-      "community": 24,
+      "community": 38,
       "norm_label": "deleteroom()"
     },
     {
@@ -7650,7 +7974,7 @@
       "source_file": "games/imposter/server/src/models/room.ts",
       "source_location": "L109",
       "id": "games_imposter_server_src_models_room_ts_models_room_roomstoresnapshot",
-      "community": 24,
+      "community": 38,
       "norm_label": "roomstoresnapshot"
     },
     {
@@ -7659,7 +7983,7 @@
       "source_file": "games/imposter/server/src/models/room.ts",
       "source_location": "L114",
       "id": "games_imposter_server_src_models_room_ts_models_room_getroomsnapshot",
-      "community": 24,
+      "community": 38,
       "norm_label": "getroomsnapshot()"
     },
     {
@@ -7668,7 +7992,7 @@
       "source_file": "games/imposter/server/src/models/room.ts",
       "source_location": "L131",
       "id": "games_imposter_server_src_models_room_ts_models_room_setsessiontoroom",
-      "community": 24,
+      "community": 38,
       "norm_label": "setsessiontoroom()"
     },
     {
@@ -7677,7 +8001,7 @@
       "source_file": "games/imposter/server/src/models/room.ts",
       "source_location": "L135",
       "id": "games_imposter_server_src_models_room_ts_models_room_getsessionroom",
-      "community": 24,
+      "community": 38,
       "norm_label": "getsessionroom()"
     },
     {
@@ -7686,7 +8010,7 @@
       "source_file": "games/imposter/server/src/utils/helpers.ts",
       "source_location": "L1",
       "id": "games_imposter_server_src_utils_helpers_ts_utils_helpers",
-      "community": 24,
+      "community": 101,
       "norm_label": "helpers.ts"
     },
     {
@@ -7695,7 +8019,7 @@
       "source_file": "games/imposter/server/src/utils/helpers.ts",
       "source_location": "L5",
       "id": "games_imposter_server_src_utils_helpers_ts_utils_helpers_sanitizename",
-      "community": 24,
+      "community": 101,
       "norm_label": "sanitizename()"
     },
     {
@@ -7704,7 +8028,7 @@
       "source_file": "games/imposter/server/src/utils/helpers.ts",
       "source_location": "L10",
       "id": "utils_helpers_getrandomint",
-      "community": 24,
+      "community": 101,
       "norm_label": "getrandomint()"
     },
     {
@@ -7713,7 +8037,7 @@
       "source_file": "games/imposter/server/src/utils/helpers.ts",
       "source_location": "L18",
       "id": "games_imposter_server_src_utils_helpers_ts_utils_helpers_shuffle",
-      "community": 24,
+      "community": 101,
       "norm_label": "shuffle()"
     },
     {
@@ -7722,7 +8046,7 @@
       "source_file": "games/imposter/server/src/utils/wordLibrary.ts",
       "source_location": "L1",
       "id": "utils_wordlibrary",
-      "community": 24,
+      "community": 15,
       "norm_label": "wordlibrary.ts"
     },
     {
@@ -7731,7 +8055,7 @@
       "source_file": "games/imposter/server/src/utils/wordLibrary.ts",
       "source_location": "L5",
       "id": "utils_wordlibrary_words_file",
-      "community": 24,
+      "community": 15,
       "norm_label": "words_file"
     },
     {
@@ -7740,7 +8064,7 @@
       "source_file": "games/imposter/server/src/utils/wordLibrary.ts",
       "source_location": "L9",
       "id": "utils_wordlibrary_loadfromfile",
-      "community": 24,
+      "community": 15,
       "norm_label": "loadfromfile()"
     },
     {
@@ -7749,7 +8073,7 @@
       "source_file": "games/imposter/server/src/utils/wordLibrary.ts",
       "source_location": "L23",
       "id": "utils_wordlibrary_getglobalwordlibrary",
-      "community": 24,
+      "community": 15,
       "norm_label": "getglobalwordlibrary()"
     },
     {
@@ -7758,7 +8082,7 @@
       "source_file": "games/imposter/server/src/utils/wordLibrary.ts",
       "source_location": "L32",
       "id": "utils_wordlibrary_persistword",
-      "community": 24,
+      "community": 15,
       "norm_label": "persistword()"
     },
     {
@@ -7938,7 +8262,7 @@
       "source_file": "games/imposter/ui-vue/src/composables/useSocket.ts",
       "source_location": "L9",
       "id": "games_imposter_ui_vue_src_composables_usesocket_ts_composables_usesocket_usesocket",
-      "community": 38,
+      "community": 37,
       "norm_label": "usesocket()"
     },
     {
@@ -8325,7 +8649,7 @@
       "source_file": "games/scout/__tests__/socketHandlers.test.ts",
       "source_location": "L78",
       "id": "tests_sockethandlers_test_setupparty",
-      "community": 26,
+      "community": 10,
       "norm_label": "setupparty()"
     },
     {
@@ -8505,7 +8829,7 @@
       "source_file": "games/scout/core/src/events.ts",
       "source_location": "L24",
       "id": "src_events_basicresponse",
-      "community": 56,
+      "community": 6,
       "norm_label": "basicresponse"
     },
     {
@@ -8559,7 +8883,7 @@
       "source_file": "games/scout/core/src/types.ts",
       "source_location": "L5",
       "id": "src_types_roundendreason",
-      "community": 31,
+      "community": 43,
       "norm_label": "roundendreason"
     },
     {
@@ -8586,7 +8910,7 @@
       "source_file": "games/scout/core/src/types.ts",
       "source_location": "L39",
       "id": "src_types_trickstate",
-      "community": 31,
+      "community": 43,
       "norm_label": "trickstate"
     },
     {
@@ -8595,7 +8919,7 @@
       "source_file": "games/scout/core/src/types.ts",
       "source_location": "L53",
       "id": "src_types_trickhistoryentry",
-      "community": 31,
+      "community": 43,
       "norm_label": "trickhistoryentry"
     },
     {
@@ -8640,7 +8964,7 @@
       "source_file": "games/scout/core/src/types.ts",
       "source_location": "L115",
       "id": "src_types_trickview",
-      "community": 31,
+      "community": 43,
       "norm_label": "trickview"
     },
     {
@@ -8955,7 +9279,7 @@
       "source_file": "games/scout/server/src/managers/broadcastManager.ts",
       "source_location": "L1",
       "id": "games_scout_server_src_managers_broadcastmanager_ts_managers_broadcastmanager",
-      "community": 48,
+      "community": 0,
       "norm_label": "broadcastmanager.ts"
     },
     {
@@ -8964,7 +9288,7 @@
       "source_file": "games/scout/server/src/managers/broadcastManager.ts",
       "source_location": "L6",
       "id": "managers_broadcastmanager_scoutnamespace",
-      "community": 48,
+      "community": 0,
       "norm_label": "scoutnamespace"
     },
     {
@@ -8973,7 +9297,7 @@
       "source_file": "games/scout/server/src/managers/broadcastManager.ts",
       "source_location": "L8",
       "id": "games_scout_server_src_managers_broadcastmanager_ts_managers_broadcastmanager_toplayerviews",
-      "community": 48,
+      "community": 0,
       "norm_label": "toplayerviews()"
     },
     {
@@ -8982,7 +9306,7 @@
       "source_file": "games/scout/server/src/managers/broadcastManager.ts",
       "source_location": "L28",
       "id": "managers_broadcastmanager_totrickview",
-      "community": 48,
+      "community": 0,
       "norm_label": "totrickview()"
     },
     {
@@ -8991,7 +9315,7 @@
       "source_file": "games/scout/server/src/managers/broadcastManager.ts",
       "source_location": "L44",
       "id": "games_scout_server_src_managers_broadcastmanager_ts_managers_broadcastmanager_toroomview",
-      "community": 48,
+      "community": 0,
       "norm_label": "toroomview()"
     },
     {
@@ -9000,7 +9324,7 @@
       "source_file": "games/scout/server/src/managers/broadcastManager.ts",
       "source_location": "L63",
       "id": "games_scout_server_src_managers_broadcastmanager_ts_managers_broadcastmanager_broadcastroom",
-      "community": 48,
+      "community": 0,
       "norm_label": "broadcastroom()"
     },
     {
@@ -9009,7 +9333,7 @@
       "source_file": "games/scout/server/src/managers/broadcastManager.ts",
       "source_location": "L71",
       "id": "games_scout_server_src_managers_broadcastmanager_ts_managers_broadcastmanager_sendroomtoplayer",
-      "community": 48,
+      "community": 0,
       "norm_label": "sendroomtoplayer()"
     },
     {
@@ -9117,7 +9441,7 @@
       "source_file": "games/scout/server/src/managers/trickManager.ts",
       "source_location": "L92",
       "id": "managers_trickmanager_setupcomplete",
-      "community": 48,
+      "community": 0,
       "norm_label": "setupcomplete()"
     },
     {
@@ -9873,7 +10197,7 @@
       "source_file": "games/scout/ui-vue/src/composables/useSocket.ts",
       "source_location": "L1",
       "id": "games_scout_ui_vue_src_composables_usesocket_ts_composables_usesocket",
-      "community": 162,
+      "community": 37,
       "norm_label": "usesocket.ts"
     },
     {
@@ -9882,7 +10206,7 @@
       "source_file": "games/scout/ui-vue/src/composables/useSocket.ts",
       "source_location": "L5",
       "id": "composables_usesocket_scoutsocket",
-      "community": 162,
+      "community": 37,
       "norm_label": "scoutsocket"
     },
     {
@@ -9891,7 +10215,7 @@
       "source_file": "games/scout/ui-vue/src/composables/useSocket.ts",
       "source_location": "L7",
       "id": "games_scout_ui_vue_src_composables_usesocket_ts_composables_usesocket_normalizenamespace",
-      "community": 162,
+      "community": 37,
       "norm_label": "normalizenamespace()"
     },
     {
@@ -9900,7 +10224,7 @@
       "source_file": "games/scout/ui-vue/src/composables/useSocket.ts",
       "source_location": "L12",
       "id": "games_scout_ui_vue_src_composables_usesocket_ts_composables_usesocket_resolvesocketurl",
-      "community": 162,
+      "community": 37,
       "norm_label": "resolvesocketurl()"
     },
     {
@@ -9909,7 +10233,7 @@
       "source_file": "games/scout/ui-vue/src/composables/useSocket.ts",
       "source_location": "L23",
       "id": "games_scout_ui_vue_src_composables_usesocket_ts_composables_usesocket_usesocket",
-      "community": 162,
+      "community": 37,
       "norm_label": "usesocket()"
     },
     {
@@ -10134,7 +10458,7 @@
       "source_file": "games/secret-signals/__tests__/phaseManager.test.ts",
       "source_location": "L1",
       "id": "games_secret_signals_tests_phasemanager_test_ts_tests_phasemanager_test",
-      "community": 31,
+      "community": 44,
       "norm_label": "phasemanager.test.ts"
     },
     {
@@ -10143,7 +10467,7 @@
       "source_file": "games/secret-signals/__tests__/phaseManager.test.ts",
       "source_location": "L9",
       "id": "games_secret_signals_tests_phasemanager_test_ts_tests_phasemanager_test_makeroom",
-      "community": 31,
+      "community": 44,
       "norm_label": "makeroom()"
     },
     {
@@ -10251,7 +10575,7 @@
       "source_file": "games/secret-signals/core/src/constants.ts",
       "source_location": "L61",
       "id": "src_constants_getminimumplayersforteamcount",
-      "community": 29,
+      "community": 156,
       "norm_label": "getminimumplayersforteamcount()"
     },
     {
@@ -10296,7 +10620,7 @@
       "source_file": "games/secret-signals/core/src/index.ts",
       "source_location": "L1",
       "id": "games_secret_signals_core_src_index_ts_src_index",
-      "community": 31,
+      "community": 43,
       "norm_label": "index.ts"
     },
     {
@@ -10332,7 +10656,7 @@
       "source_file": "games/secret-signals/core/src/types.ts",
       "source_location": "L5",
       "id": "src_types_cardtype",
-      "community": 52,
+      "community": 44,
       "norm_label": "cardtype"
     },
     {
@@ -10377,7 +10701,7 @@
       "source_file": "games/secret-signals/core/src/types.ts",
       "source_location": "L20",
       "id": "src_types_cardview",
-      "community": 29,
+      "community": 156,
       "norm_label": "cardview"
     },
     {
@@ -10710,7 +11034,7 @@
       "source_file": "games/secret-signals/server/src/index.ts",
       "source_location": "L1",
       "id": "games_secret_signals_server_src_index_ts_src_index",
-      "community": 42,
+      "community": 11,
       "norm_label": "index.ts"
     },
     {
@@ -10719,7 +11043,7 @@
       "source_file": "games/secret-signals/server/src/index.ts",
       "source_location": "L7",
       "id": "games_secret_signals_server_src_index_ts_src_index_definition",
-      "community": 42,
+      "community": 11,
       "norm_label": "definition"
     },
     {
@@ -10728,7 +11052,7 @@
       "source_file": "games/secret-signals/server/src/index.ts",
       "source_location": "L14",
       "id": "games_secret_signals_server_src_index_ts_src_index_gamelogger",
-      "community": 42,
+      "community": 11,
       "norm_label": "gamelogger"
     },
     {
@@ -10737,7 +11061,7 @@
       "source_file": "games/secret-signals/server/src/index.ts",
       "source_location": "L20",
       "id": "games_secret_signals_server_src_index_ts_src_index_register",
-      "community": 42,
+      "community": 11,
       "norm_label": "register()"
     },
     {
@@ -10746,7 +11070,7 @@
       "source_file": "games/secret-signals/server/src/index.ts",
       "source_location": "L24",
       "id": "games_secret_signals_server_src_index_ts_src_index_cleanupmatch",
-      "community": 42,
+      "community": 11,
       "norm_label": "cleanupmatch()"
     },
     {
@@ -10755,7 +11079,7 @@
       "source_file": "games/secret-signals/server/src/index.ts",
       "source_location": "L35",
       "id": "games_secret_signals_server_src_index_ts_src_index_handler",
-      "community": 42,
+      "community": 11,
       "norm_label": "handler"
     },
     {
@@ -11511,7 +11835,7 @@
       "source_file": "games/secret-signals/ui-vue/src/composables/useSocket.ts",
       "source_location": "L9",
       "id": "games_secret_signals_ui_vue_src_composables_usesocket_ts_composables_usesocket_usesocket",
-      "community": 38,
+      "community": 37,
       "norm_label": "usesocket()"
     },
     {
@@ -11583,7 +11907,7 @@
       "source_file": "games/secret-signals/ui-vue/src/stores/game.ts",
       "source_location": "L1",
       "id": "games_secret_signals_ui_vue_src_stores_game_ts_stores_game",
-      "community": 29,
+      "community": 156,
       "norm_label": "game.ts"
     },
     {
@@ -11592,7 +11916,7 @@
       "source_file": "games/secret-signals/ui-vue/src/stores/game.ts",
       "source_location": "L15",
       "id": "games_secret_signals_ui_vue_src_stores_game_ts_stores_game_usegamestore",
-      "community": 29,
+      "community": 156,
       "norm_label": "usegamestore"
     },
     {
@@ -12757,6 +13081,33 @@
       "norm_label": "team_text_hex"
     },
     {
+      "label": "RateLimitRecord",
+      "file_type": "code",
+      "source_file": "apps/platform/server/admin.ts",
+      "source_location": "L24",
+      "community": 7,
+      "norm_label": "ratelimitrecord",
+      "id": "server_admin_ratelimitrecord"
+    },
+    {
+      "label": "pruneExpiredRateLimitEntries()",
+      "file_type": "code",
+      "source_file": "apps/platform/server/admin.ts",
+      "source_location": "L224",
+      "community": 7,
+      "norm_label": "pruneexpiredratelimitentries()",
+      "id": "server_admin_pruneexpiredratelimitentries"
+    },
+    {
+      "label": "connectedMemberCount()",
+      "file_type": "code",
+      "source_file": "apps/platform/server/party/partyHandlers.ts",
+      "source_location": "L91",
+      "community": 25,
+      "norm_label": "connectedmembercount()",
+      "id": "party_partyhandlers_connectedmembercount"
+    },
+    {
       "label": "events.ts",
       "file_type": "code",
       "source_file": "games/scout/core/src/events.ts",
@@ -12815,7 +13166,7 @@
       "file_type": "code",
       "source_file": "games/scout/core/src/types.ts",
       "source_location": "L1",
-      "community": 31,
+      "community": 43,
       "norm_label": "types.ts",
       "id": "src_types"
     },
@@ -12833,7 +13184,7 @@
       "file_type": "code",
       "source_file": "games/scout/core/src/types.ts",
       "source_location": "L60",
-      "community": 31,
+      "community": 43,
       "norm_label": "roundhistoryentry",
       "id": "src_types_roundhistoryentry"
     },
@@ -12842,7 +13193,7 @@
       "file_type": "code",
       "source_file": "games/scout/core/src/types.ts",
       "source_location": "L67",
-      "community": 24,
+      "community": 15,
       "norm_label": "room",
       "id": "src_types_room"
     },
@@ -12905,7 +13256,7 @@
       "file_type": "code",
       "source_file": "games/scout/server/src/managers/broadcastManager.ts",
       "source_location": "L1",
-      "community": 48,
+      "community": 158,
       "norm_label": "broadcastmanager.ts",
       "id": "managers_broadcastmanager"
     },
@@ -12914,7 +13265,7 @@
       "file_type": "code",
       "source_file": "games/scout/server/src/managers/broadcastManager.ts",
       "source_location": "L8",
-      "community": 48,
+      "community": 158,
       "norm_label": "toplayerviews()",
       "id": "managers_broadcastmanager_toplayerviews"
     },
@@ -12923,7 +13274,7 @@
       "file_type": "code",
       "source_file": "games/scout/server/src/managers/broadcastManager.ts",
       "source_location": "L44",
-      "community": 48,
+      "community": 158,
       "norm_label": "toroomview()",
       "id": "managers_broadcastmanager_toroomview"
     },
@@ -12932,7 +13283,7 @@
       "file_type": "code",
       "source_file": "games/scout/server/src/managers/broadcastManager.ts",
       "source_location": "L63",
-      "community": 9,
+      "community": 158,
       "norm_label": "broadcastroom()",
       "id": "managers_broadcastmanager_broadcastroom"
     },
@@ -12941,7 +13292,7 @@
       "file_type": "code",
       "source_file": "games/scout/server/src/managers/broadcastManager.ts",
       "source_location": "L71",
-      "community": 48,
+      "community": 158,
       "norm_label": "sendroomtoplayer()",
       "id": "managers_broadcastmanager_sendroomtoplayer"
     },
@@ -12986,7 +13337,7 @@
       "file_type": "code",
       "source_file": "games/scout/server/src/models/player.ts",
       "source_location": "L29",
-      "community": 9,
+      "community": 14,
       "norm_label": "getsocketindex()",
       "id": "models_player_getsocketindex"
     },
@@ -12995,7 +13346,7 @@
       "file_type": "code",
       "source_file": "games/scout/server/src/models/player.ts",
       "source_location": "L35",
-      "community": 9,
+      "community": 14,
       "norm_label": "deletesocketindex()",
       "id": "models_player_deletesocketindex"
     },
@@ -13049,7 +13400,7 @@
       "file_type": "code",
       "source_file": "games/scout/server/src/models/room.ts",
       "source_location": "L53",
-      "community": 9,
+      "community": 14,
       "norm_label": "getroom()",
       "id": "models_room_getroom"
     },
@@ -13085,7 +13436,7 @@
       "file_type": "code",
       "source_file": "games/scout/server/src/models/room.ts",
       "source_location": "L75",
-      "community": 42,
+      "community": 11,
       "norm_label": "getsessionroom()",
       "id": "models_room_getsessionroom"
     },
@@ -13103,7 +13454,7 @@
       "file_type": "code",
       "source_file": "games/scout/server/src/models/room.ts",
       "source_location": "L88",
-      "community": 9,
+      "community": 14,
       "norm_label": "scheduleroomcleanup()",
       "id": "models_room_scheduleroomcleanup"
     },
@@ -13112,7 +13463,7 @@
       "file_type": "code",
       "source_file": "games/scout/server/src/models/room.ts",
       "source_location": "L99",
-      "community": 9,
+      "community": 14,
       "norm_label": "clearroomcleanup()",
       "id": "models_room_clearroomcleanup"
     },
@@ -13166,7 +13517,7 @@
       "file_type": "code",
       "source_file": "games/scout/server/src/socketHandlers.ts",
       "source_location": "L146",
-      "community": 6,
+      "community": 14,
       "norm_label": "verifyplayerinroom()",
       "id": "src_sockethandlers_verifyplayerinroom"
     },
@@ -13175,7 +13526,7 @@
       "file_type": "code",
       "source_file": "games/scout/server/src/socketHandlers.ts",
       "source_location": "L152",
-      "community": 9,
+      "community": 14,
       "norm_label": "detachindexedsocket()",
       "id": "src_sockethandlers_detachindexedsocket"
     },
@@ -13184,7 +13535,7 @@
       "file_type": "code",
       "source_file": "games/scout/server/src/socketHandlers.ts",
       "source_location": "L167",
-      "community": 9,
+      "community": 14,
       "norm_label": "bindplayertosocket()",
       "id": "src_sockethandlers_bindplayertosocket"
     },
@@ -13645,6 +13996,28 @@
       "target": "party_partystore_getpartybyinvitecode"
     },
     {
+      "relation": "imports_from",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "apps/platform/__tests__/partyHandlers.test.ts",
+      "source_location": "L9",
+      "weight": 1.0,
+      "source": "tests_partyhandlers_test",
+      "target": "party_publiclobbies",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "apps/platform/__tests__/partyHandlers.test.ts",
+      "source_location": "L9",
+      "weight": 1.0,
+      "source": "tests_partyhandlers_test",
+      "target": "party_publiclobbies_getjoinablepublicpartiessnapshot",
+      "confidence_score": 1.0
+    },
+    {
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "apps/platform/__tests__/partyHandlers.test.ts",
@@ -13703,6 +14076,16 @@
       "confidence_score": 1.0,
       "source": "tests_partyhandlers_test",
       "target": "tests_partyhandlers_test_setup"
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "apps/platform/__tests__/partyHandlers.test.ts",
+      "source_location": "L81",
+      "weight": 1.0,
+      "source": "tests_partyhandlers_test",
+      "target": "tests_partyhandlers_test_watchersemit",
+      "confidence_score": 1.0
     },
     {
       "relation": "calls",
@@ -13777,6 +14160,17 @@
       "source_file": "apps/platform/__tests__/partyStore.test.ts",
       "source_location": "L1",
       "weight": 1.0,
+      "source": "tests_partystore_test",
+      "target": "party_partystore_connectedmembercount",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "apps/platform/__tests__/partyStore.test.ts",
+      "source_location": "L1",
+      "weight": 1.0,
       "confidence_score": 1.0,
       "source": "tests_partystore_test",
       "target": "party_partystore_createparty"
@@ -13832,6 +14226,17 @@
       "source_file": "apps/platform/__tests__/partyStore.test.ts",
       "source_location": "L1",
       "weight": 1.0,
+      "source": "tests_partystore_test",
+      "target": "party_partystore_isjoinablepublicparty",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "apps/platform/__tests__/partyStore.test.ts",
+      "source_location": "L1",
+      "weight": 1.0,
       "confidence_score": 1.0,
       "source": "tests_partystore_test",
       "target": "party_partystore_partytoview"
@@ -13865,6 +14270,17 @@
       "source_file": "apps/platform/__tests__/partyStore.test.ts",
       "source_location": "L1",
       "weight": 1.0,
+      "source": "tests_partystore_test",
+      "target": "party_partystore_setpartypublic",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "apps/platform/__tests__/partyStore.test.ts",
+      "source_location": "L1",
+      "weight": 1.0,
       "confidence_score": 1.0,
       "source": "tests_partystore_test",
       "target": "party_partystore_unregistersocket"
@@ -13878,6 +14294,136 @@
       "confidence_score": 1.0,
       "source": "tests_partystore_test",
       "target": "tests_partystore_test_createtestparty"
+    },
+    {
+      "relation": "imports_from",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "apps/platform/__tests__/publicLobbies.test.ts",
+      "source_location": "L1",
+      "weight": 1.0,
+      "source": "tests_publiclobbies_test",
+      "target": "party_partystore",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "apps/platform/__tests__/publicLobbies.test.ts",
+      "source_location": "L1",
+      "weight": 1.0,
+      "source": "tests_publiclobbies_test",
+      "target": "party_partystore_clearpartycleanup",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "apps/platform/__tests__/publicLobbies.test.ts",
+      "source_location": "L1",
+      "weight": 1.0,
+      "source": "tests_publiclobbies_test",
+      "target": "party_partystore_createparty",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "apps/platform/__tests__/publicLobbies.test.ts",
+      "source_location": "L1",
+      "weight": 1.0,
+      "source": "tests_publiclobbies_test",
+      "target": "party_partystore_deleteparty",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "apps/platform/__tests__/publicLobbies.test.ts",
+      "source_location": "L1",
+      "weight": 1.0,
+      "source": "tests_publiclobbies_test",
+      "target": "party_partystore_setpartypublic",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "imports_from",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "apps/platform/__tests__/publicLobbies.test.ts",
+      "source_location": "L7",
+      "weight": 1.0,
+      "source": "tests_publiclobbies_test",
+      "target": "party_publiclobbies",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "apps/platform/__tests__/publicLobbies.test.ts",
+      "source_location": "L7",
+      "weight": 1.0,
+      "source": "tests_publiclobbies_test",
+      "target": "party_publiclobbies_getjoinablepublicpartiessnapshot",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "apps/platform/__tests__/publicLobbies.test.ts",
+      "source_location": "L32",
+      "weight": 1.0,
+      "source": "tests_publiclobbies_test",
+      "target": "tests_publiclobbies_test_createtestparty",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "imports_from",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "apps/platform/__tests__/publicLobbiesStore.test.ts",
+      "source_location": "L2",
+      "weight": 1.0,
+      "source": "tests_publiclobbiesstore_test",
+      "target": "stores_publiclobbies",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "apps/platform/__tests__/publicLobbiesStore.test.ts",
+      "source_location": "L2",
+      "weight": 1.0,
+      "source": "tests_publiclobbiesstore_test",
+      "target": "stores_publiclobbies_joinablepartyview",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "apps/platform/__tests__/publicLobbiesStore.test.ts",
+      "source_location": "L2",
+      "weight": 1.0,
+      "source": "tests_publiclobbiesstore_test",
+      "target": "stores_publiclobbies_usepubliclobbiesstore",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "apps/platform/__tests__/publicLobbiesStore.test.ts",
+      "source_location": "L4",
+      "weight": 1.0,
+      "source": "tests_publiclobbiesstore_test",
+      "target": "tests_publiclobbiesstore_test_makeparty",
+      "confidence_score": 1.0
     },
     {
       "relation": "imports_from",
@@ -13962,8 +14508,28 @@
       "source_file": "apps/platform/e2e/home-library.spec.ts",
       "source_location": "L3",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "e2e_home_library_spec",
-      "target": "e2e_home_library_spec_gamenames",
+      "target": "e2e_home_library_spec_gamenames"
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "apps/platform/e2e/live-rooms.spec.ts",
+      "source_location": "L3",
+      "weight": 1.0,
+      "source": "e2e_live_rooms_spec",
+      "target": "e2e_live_rooms_spec_createparty",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "apps/platform/e2e/live-rooms.spec.ts",
+      "source_location": "L11",
+      "weight": 1.0,
+      "source": "e2e_live_rooms_spec",
+      "target": "e2e_live_rooms_spec_joinparty",
       "confidence_score": 1.0
     },
     {
@@ -14315,6 +14881,50 @@
       "context": "import",
       "confidence": "EXTRACTED",
       "source_file": "apps/platform/server/admin.ts",
+      "source_location": "L21",
+      "weight": 1.0,
+      "source": "server_admin",
+      "target": "observability_ratelimit",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "apps/platform/server/admin.ts",
+      "source_location": "L21",
+      "weight": 1.0,
+      "source": "server_admin",
+      "target": "observability_ratelimit_checkfixedwindowratelimit",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "apps/platform/server/admin.ts",
+      "source_location": "L21",
+      "weight": 1.0,
+      "source": "server_admin",
+      "target": "observability_ratelimit_pruneexpiredratelimitentries",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "apps/platform/server/admin.ts",
+      "source_location": "L21",
+      "weight": 1.0,
+      "source": "server_admin",
+      "target": "observability_ratelimit_ratelimitrecord",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "imports_from",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "apps/platform/server/admin.ts",
       "source_location": "L7",
       "weight": 1.0,
       "confidence_score": 1.0,
@@ -14419,6 +15029,28 @@
       "confidence_score": 1.0,
       "source": "server_admin",
       "target": "party_partystore_unregistersocket"
+    },
+    {
+      "relation": "imports_from",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "apps/platform/server/admin.ts",
+      "source_location": "L26",
+      "weight": 1.0,
+      "source": "server_admin",
+      "target": "party_publiclobbies",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "apps/platform/server/admin.ts",
+      "source_location": "L26",
+      "weight": 1.0,
+      "source": "server_admin",
+      "target": "party_publiclobbies_broadcastjoinableparties",
+      "confidence_score": 1.0
     },
     {
       "relation": "imports_from",
@@ -14949,6 +15581,28 @@
       "confidence_score": 1.0,
       "source": "server_admin_authenticateadmin",
       "target": "server_admin_checkratelimit"
+    },
+    {
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "apps/platform/server/admin.ts",
+      "source_location": "L232",
+      "weight": 1.0,
+      "source": "server_admin_checkratelimit",
+      "target": "observability_ratelimit_checkfixedwindowratelimit",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "apps/platform/server/admin.ts",
+      "source_location": "L239",
+      "weight": 1.0,
+      "source": "server_admin_checkloginratelimit",
+      "target": "observability_ratelimit_checkfixedwindowratelimit",
+      "confidence_score": 1.0
     },
     {
       "relation": "calls",
@@ -16778,6 +17432,16 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "apps/platform/server/metrics/collectors.ts",
+      "source_location": "L66",
+      "weight": 1.0,
+      "source": "metrics_collectors",
+      "target": "metrics_collectors_publiclobbiesgauge",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "apps/platform/server/metrics/collectors.ts",
       "source_location": "L46",
       "weight": 1.0,
       "confidence_score": 1.0,
@@ -16858,6 +17522,28 @@
       "confidence_score": 1.0,
       "source": "metrics_collectors",
       "target": "party_partystore_getpartysnapshot"
+    },
+    {
+      "relation": "imports_from",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "apps/platform/server/metrics/collectors.ts",
+      "source_location": "L4",
+      "weight": 1.0,
+      "source": "metrics_collectors",
+      "target": "party_publiclobbies",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "apps/platform/server/metrics/collectors.ts",
+      "source_location": "L4",
+      "weight": 1.0,
+      "source": "metrics_collectors",
+      "target": "party_publiclobbies_getjoinablepublicpartiessnapshot",
+      "confidence_score": 1.0
     },
     {
       "relation": "calls",
@@ -17323,6 +18009,80 @@
       "confidence_score": 1.0,
       "source": "observability_sockethandlermetrics",
       "target": "metrics_registry_metricsregistry"
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "apps/platform/server/observability/rateLimit.ts",
+      "source_location": "L14",
+      "weight": 1.0,
+      "source": "observability_ratelimit",
+      "target": "observability_ratelimit_checkfixedwindowratelimit",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "apps/platform/server/observability/rateLimit.ts",
+      "source_location": "L33",
+      "weight": 1.0,
+      "source": "observability_ratelimit",
+      "target": "observability_ratelimit_pruneexpiredratelimitentries",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "apps/platform/server/observability/rateLimit.ts",
+      "source_location": "L1",
+      "weight": 1.0,
+      "source": "observability_ratelimit",
+      "target": "observability_ratelimit_ratelimitrecord",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "imports_from",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "apps/platform/server/party/partyHandlers.ts",
+      "source_location": "L25",
+      "weight": 1.0,
+      "source": "party_partyhandlers",
+      "target": "observability_ratelimit",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "apps/platform/server/party/partyHandlers.ts",
+      "source_location": "L25",
+      "weight": 1.0,
+      "source": "party_partyhandlers",
+      "target": "observability_ratelimit_ratelimitrecord",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "apps/platform/server/party/partyHandlers.ts",
+      "source_location": "L25",
+      "weight": 1.0,
+      "source": "party_partyhandlers",
+      "target": "observability_ratelimit_checkfixedwindowratelimit",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "apps/platform/server/party/partyHandlers.ts",
+      "source_location": "L25",
+      "weight": 1.0,
+      "source": "party_partyhandlers",
+      "target": "observability_ratelimit_pruneexpiredratelimitentries",
+      "confidence_score": 1.0
     },
     {
       "relation": "imports_from",
@@ -17844,11 +18604,51 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "apps/platform/server/party/partyHandlers.ts",
+      "source_location": "L119",
+      "weight": 1.0,
+      "source": "party_partyhandlers",
+      "target": "party_partyhandlers_broadcastpartyandlobbies",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "apps/platform/server/party/partyHandlers.ts",
       "source_location": "L91",
       "weight": 1.0,
       "confidence_score": 1.0,
       "source": "party_partyhandlers",
       "target": "party_partyhandlers_connectedmembercount"
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "apps/platform/server/party/partyHandlers.ts",
+      "source_location": "L128",
+      "weight": 1.0,
+      "source": "party_partyhandlers",
+      "target": "party_partyhandlers_joinablelistpruneinterval",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "apps/platform/server/party/partyHandlers.ts",
+      "source_location": "L125",
+      "weight": 1.0,
+      "source": "party_partyhandlers",
+      "target": "party_partyhandlers_joinablelistratelimit",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "apps/platform/server/party/partyHandlers.ts",
+      "source_location": "L101",
+      "weight": 1.0,
+      "source": "party_partyhandlers",
+      "target": "party_partyhandlers_joinablelistresponse",
+      "confidence_score": 1.0
     },
     {
       "relation": "contains",
@@ -17901,6 +18701,16 @@
       "target": "party_partyhandlers_schedulereturncleanup"
     },
     {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "apps/platform/server/party/partyHandlers.ts",
+      "source_location": "L105",
+      "weight": 1.0,
+      "source": "party_partyhandlers",
+      "target": "party_partyhandlers_setpartypublicresponse",
+      "confidence_score": 1.0
+    },
+    {
       "relation": "imports_from",
       "context": "import",
       "confidence": "EXTRACTED",
@@ -17932,6 +18742,17 @@
       "confidence_score": 1.0,
       "source": "party_partyhandlers",
       "target": "party_partystore_clearpartycleanup"
+    },
+    {
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "apps/platform/server/party/partyHandlers.ts",
+      "source_location": "L4",
+      "weight": 1.0,
+      "source": "party_partyhandlers",
+      "target": "party_partystore_connectedmembercount",
+      "confidence_score": 1.0
     },
     {
       "relation": "imports",
@@ -18028,9 +18849,64 @@
       "source_file": "apps/platform/server/party/partyHandlers.ts",
       "source_location": "L4",
       "weight": 1.0,
+      "source": "party_partyhandlers",
+      "target": "party_partystore_setpartypublic",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "apps/platform/server/party/partyHandlers.ts",
+      "source_location": "L4",
+      "weight": 1.0,
       "confidence_score": 1.0,
       "source": "party_partyhandlers",
       "target": "party_partystore_unregistersocket"
+    },
+    {
+      "relation": "imports_from",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "apps/platform/server/party/partyHandlers.ts",
+      "source_location": "L19",
+      "weight": 1.0,
+      "source": "party_partyhandlers",
+      "target": "party_publiclobbies",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "apps/platform/server/party/partyHandlers.ts",
+      "source_location": "L19",
+      "weight": 1.0,
+      "source": "party_partyhandlers",
+      "target": "party_publiclobbies_broadcastjoinableparties",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "apps/platform/server/party/partyHandlers.ts",
+      "source_location": "L19",
+      "weight": 1.0,
+      "source": "party_partyhandlers",
+      "target": "party_publiclobbies_getjoinablepublicpartiessnapshot",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "apps/platform/server/party/partyHandlers.ts",
+      "source_location": "L19",
+      "weight": 1.0,
+      "source": "party_partyhandlers",
+      "target": "party_publiclobbies_joinablepartyview",
+      "confidence_score": 1.0
     },
     {
       "relation": "imports_from",
@@ -18099,6 +18975,17 @@
       "target": "party_partystore_partytoview"
     },
     {
+      "relation": "references",
+      "context": "field",
+      "confidence": "EXTRACTED",
+      "source_file": "apps/platform/server/party/partyHandlers.ts",
+      "source_location": "L109",
+      "weight": 1.0,
+      "source": "party_partyhandlers_partyservertoclientevents",
+      "target": "party_publiclobbies_joinablepartyview",
+      "confidence_score": 1.0
+    },
+    {
       "relation": "calls",
       "context": "call",
       "confidence": "EXTRACTED",
@@ -18108,6 +18995,28 @@
       "confidence_score": 1.0,
       "source": "party_partyhandlers_broadcastparty",
       "target": "party_partystore_partytoview"
+    },
+    {
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "apps/platform/server/party/partyHandlers.ts",
+      "source_location": "L120",
+      "weight": 1.0,
+      "source": "party_partyhandlers_broadcastpartyandlobbies",
+      "target": "party_partyhandlers_broadcastparty",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "apps/platform/server/party/partyHandlers.ts",
+      "source_location": "L121",
+      "weight": 1.0,
+      "source": "party_partyhandlers_broadcastpartyandlobbies",
+      "target": "party_publiclobbies_broadcastjoinableparties",
+      "confidence_score": 1.0
     },
     {
       "relation": "imports_from",
@@ -18180,6 +19089,16 @@
       "confidence_score": 1.0,
       "source": "party_partystore",
       "target": "party_partystore_clearpartycleanup"
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "apps/platform/server/party/partyStore.ts",
+      "source_location": "L217",
+      "weight": 1.0,
+      "source": "party_partystore",
+      "target": "party_partystore_connectedmembercount",
+      "confidence_score": 1.0
     },
     {
       "relation": "contains",
@@ -18295,6 +19214,16 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "apps/platform/server/party/partyStore.ts",
+      "source_location": "L225",
+      "weight": 1.0,
+      "source": "party_partystore",
+      "target": "party_partystore_isjoinablepublicparty",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "apps/platform/server/party/partyStore.ts",
       "source_location": "L11",
       "weight": 1.0,
       "confidence_score": 1.0,
@@ -18375,6 +19304,16 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "apps/platform/server/party/partyStore.ts",
+      "source_location": "L210",
+      "weight": 1.0,
+      "source": "party_partystore",
+      "target": "party_partystore_setpartypublic",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "apps/platform/server/party/partyStore.ts",
       "source_location": "L9",
       "weight": 1.0,
       "confidence_score": 1.0,
@@ -18423,6 +19362,17 @@
       "confidence_score": 1.0,
       "source": "party_partystore",
       "target": "party_types_partysession"
+    },
+    {
+      "relation": "imports_from",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "apps/platform/server/party/publicLobbies.ts",
+      "source_location": "L2",
+      "weight": 1.0,
+      "source": "party_publiclobbies",
+      "target": "party_partystore",
+      "confidence_score": 1.0
     },
     {
       "relation": "calls",
@@ -18502,6 +19452,28 @@
       "target": "party_partystore_getpartybyactivematch"
     },
     {
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "apps/platform/server/party/publicLobbies.ts",
+      "source_location": "L2",
+      "weight": 1.0,
+      "source": "party_publiclobbies",
+      "target": "party_partystore_getallparties",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "apps/platform/server/party/publicLobbies.ts",
+      "source_location": "L46",
+      "weight": 1.0,
+      "source": "party_publiclobbies_getjoinablepublicpartiessnapshot",
+      "target": "party_partystore_getallparties"
+    },
+    {
       "relation": "calls",
       "context": "call",
       "confidence": "EXTRACTED",
@@ -18546,6 +19518,50 @@
       "target": "party_partystore_clearmatchtimeout"
     },
     {
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "apps/platform/server/party/partyStore.ts",
+      "source_location": "L226",
+      "weight": 1.0,
+      "source": "party_partystore_isjoinablepublicparty",
+      "target": "party_partystore_connectedmembercount",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "apps/platform/server/party/publicLobbies.ts",
+      "source_location": "L2",
+      "weight": 1.0,
+      "source": "party_publiclobbies",
+      "target": "party_partystore_connectedmembercount",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "apps/platform/server/party/publicLobbies.ts",
+      "source_location": "L35",
+      "weight": 1.0,
+      "source": "party_publiclobbies_tojoinablepartyview",
+      "target": "party_partystore_connectedmembercount",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "apps/platform/server/party/publicLobbies.ts",
+      "source_location": "L2",
+      "weight": 1.0,
+      "source": "party_publiclobbies",
+      "target": "party_partystore_isjoinablepublicparty",
+      "confidence_score": 1.0
+    },
+    {
       "relation": "imports",
       "context": "import",
       "confidence": "EXTRACTED",
@@ -18555,6 +19571,112 @@
       "confidence_score": 1.0,
       "source": "games_scout_tests_sockethandlers_test_ts_tests_sockethandlers_test",
       "target": "party_partystore_clearallparties"
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "apps/platform/server/party/publicLobbies.ts",
+      "source_location": "L56",
+      "weight": 1.0,
+      "source": "party_publiclobbies",
+      "target": "party_publiclobbies_broadcastjoinableparties",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "apps/platform/server/party/publicLobbies.ts",
+      "source_location": "L45",
+      "weight": 1.0,
+      "source": "party_publiclobbies",
+      "target": "party_publiclobbies_getjoinablepublicpartiessnapshot",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "apps/platform/server/party/publicLobbies.ts",
+      "source_location": "L16",
+      "weight": 1.0,
+      "source": "party_publiclobbies",
+      "target": "party_publiclobbies_joinablepartyview",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "apps/platform/server/party/publicLobbies.ts",
+      "source_location": "L27",
+      "weight": 1.0,
+      "source": "party_publiclobbies",
+      "target": "party_publiclobbies_tojoinablepartyview",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "imports_from",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "apps/platform/server/party/publicLobbies.ts",
+      "source_location": "L3",
+      "weight": 1.0,
+      "source": "party_publiclobbies",
+      "target": "party_types",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "apps/platform/server/party/publicLobbies.ts",
+      "source_location": "L3",
+      "weight": 1.0,
+      "source": "party_publiclobbies",
+      "target": "party_types_partysession",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "imports_from",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "apps/platform/server/party/publicLobbies.ts",
+      "source_location": "L4",
+      "weight": 1.0,
+      "source": "party_publiclobbies",
+      "target": "registry_index",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "apps/platform/server/party/publicLobbies.ts",
+      "source_location": "L4",
+      "weight": 1.0,
+      "source": "party_publiclobbies",
+      "target": "registry_index_getgame",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "apps/platform/server/party/publicLobbies.ts",
+      "source_location": "L28",
+      "weight": 1.0,
+      "source": "party_publiclobbies_tojoinablepartyview",
+      "target": "registry_index_getgame",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "apps/platform/server/party/publicLobbies.ts",
+      "source_location": "L57",
+      "weight": 1.0,
+      "source": "party_publiclobbies_broadcastjoinableparties",
+      "target": "party_publiclobbies_getjoinablepublicpartiessnapshot",
+      "confidence_score": 1.0
     },
     {
       "relation": "imports_from",
@@ -18734,12 +19856,52 @@
     {
       "relation": "contains",
       "confidence": "EXTRACTED",
+      "source_file": "apps/platform/src/components/home/PublicLobbiesSection.vue",
+      "source_location": "L27",
+      "weight": 1.0,
+      "source": "home_publiclobbiessection",
+      "target": "home_publiclobbiessection_handlejoinroom",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "apps/platform/src/components/home/PublicLobbiesSection.vue",
+      "source_location": "L22",
+      "weight": 1.0,
+      "source": "home_publiclobbiessection",
+      "target": "home_publiclobbiessection_isloading",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "apps/platform/src/components/home/PublicLobbiesSection.vue",
+      "source_location": "L23",
+      "weight": 1.0,
+      "source": "home_publiclobbiessection",
+      "target": "home_publiclobbiessection_isready",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
       "source_file": "apps/platform/src/composables/usePartySocket.ts",
       "source_location": "L64",
       "weight": 1.0,
       "confidence_score": 1.0,
       "source": "composables_usepartysocket",
       "target": "composables_usepartysocket_disconnectpartysocket"
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "apps/platform/src/composables/usePartySocket.ts",
+      "source_location": "L5",
+      "weight": 1.0,
+      "source": "composables_usepartysocket",
+      "target": "composables_usepartysocket_joinablelistresponse",
+      "confidence_score": 1.0
     },
     {
       "relation": "contains",
@@ -18775,6 +19937,16 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "apps/platform/src/composables/usePartySocket.ts",
+      "source_location": "L9",
+      "weight": 1.0,
+      "source": "composables_usepartysocket",
+      "target": "composables_usepartysocket_setpartypublicresponse",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "apps/platform/src/composables/usePartySocket.ts",
       "source_location": "L54",
       "weight": 1.0,
       "confidence_score": 1.0,
@@ -18804,6 +19976,39 @@
       "target": "stores_party_partyview"
     },
     {
+      "relation": "imports_from",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "apps/platform/src/composables/usePartySocket.ts",
+      "source_location": "L3",
+      "weight": 1.0,
+      "source": "composables_usepartysocket",
+      "target": "stores_publiclobbies",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "apps/platform/src/composables/usePartySocket.ts",
+      "source_location": "L3",
+      "weight": 1.0,
+      "source": "composables_usepartysocket",
+      "target": "stores_publiclobbies_joinablepartyview",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "imports_from",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "apps/platform/src/composables/usePublicLobbies.ts",
+      "source_location": "L2",
+      "weight": 1.0,
+      "source": "composables_usepubliclobbies",
+      "target": "composables_usepartysocket",
+      "confidence_score": 1.0
+    },
+    {
       "relation": "references",
       "context": "field",
       "confidence": "EXTRACTED",
@@ -18824,6 +20029,93 @@
       "confidence_score": 1.0,
       "source": "composables_usepartysocket_partyservertoclientevents",
       "target": "stores_party_partyview"
+    },
+    {
+      "relation": "references",
+      "context": "field",
+      "confidence": "EXTRACTED",
+      "source_file": "apps/platform/src/composables/usePartySocket.ts",
+      "source_location": "L62",
+      "weight": 1.0,
+      "source": "composables_usepartysocket_partyservertoclientevents",
+      "target": "stores_publiclobbies_joinablepartyview",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "apps/platform/src/composables/usePublicLobbies.ts",
+      "source_location": "L2",
+      "weight": 1.0,
+      "source": "composables_usepubliclobbies",
+      "target": "composables_usepartysocket_usepartysocket",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "apps/platform/src/composables/usePublicLobbies.ts",
+      "source_location": "L16",
+      "weight": 1.0,
+      "source": "composables_usepubliclobbies_usepubliclobbies",
+      "target": "composables_usepartysocket_usepartysocket"
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "apps/platform/src/composables/usePublicLobbies.ts",
+      "source_location": "L15",
+      "weight": 1.0,
+      "source": "composables_usepubliclobbies",
+      "target": "composables_usepubliclobbies_usepubliclobbies",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "imports_from",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "apps/platform/src/composables/usePublicLobbies.ts",
+      "source_location": "L3",
+      "weight": 1.0,
+      "source": "composables_usepubliclobbies",
+      "target": "stores_publiclobbies",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "apps/platform/src/composables/usePublicLobbies.ts",
+      "source_location": "L3",
+      "weight": 1.0,
+      "source": "composables_usepubliclobbies",
+      "target": "stores_publiclobbies_joinablepartyview",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "apps/platform/src/composables/usePublicLobbies.ts",
+      "source_location": "L3",
+      "weight": 1.0,
+      "source": "composables_usepubliclobbies",
+      "target": "stores_publiclobbies_usepubliclobbiesstore",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "apps/platform/src/composables/usePublicLobbies.ts",
+      "source_location": "L17",
+      "weight": 1.0,
+      "source": "composables_usepubliclobbies_usepubliclobbies",
+      "target": "stores_publiclobbies_usepubliclobbiesstore"
     },
     {
       "relation": "contains",
@@ -19010,6 +20302,36 @@
       "confidence_score": 1.0,
       "source": "stores_party",
       "target": "stores_party_usepartystore"
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "apps/platform/src/stores/publicLobbies.ts",
+      "source_location": "L11",
+      "weight": 1.0,
+      "source": "stores_publiclobbies",
+      "target": "stores_publiclobbies_joinablepartyview",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "apps/platform/src/stores/publicLobbies.ts",
+      "source_location": "L22",
+      "weight": 1.0,
+      "source": "stores_publiclobbies",
+      "target": "stores_publiclobbies_publiclobbiesloadstate",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "apps/platform/src/stores/publicLobbies.ts",
+      "source_location": "L24",
+      "weight": 1.0,
+      "source": "stores_publiclobbies",
+      "target": "stores_publiclobbies_usepubliclobbiesstore",
+      "confidence_score": 1.0
     },
     {
       "relation": "contains",
@@ -39798,5 +41120,5 @@
     }
   ],
   "hyperedges": [],
-  "built_at_commit": "00afa84ed553a7f82d04d7827ff80b4b956109b9"
+  "built_at_commit": "aa7dd04625f8dda45ddb769239a55305e624ff38"
 }

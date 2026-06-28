@@ -1,10 +1,11 @@
 <script setup lang="ts">
-import { ref, onMounted, onBeforeUnmount } from 'vue';
+import { ref, onMounted, onBeforeUnmount, nextTick } from 'vue';
 import { useRouter } from 'vue-router';
 import { usePartyStore } from '../stores/party';
 import { usePartySocket } from '../composables/usePartySocket';
 import { clientGameRegistry } from '../games';
 import GameLibraryGrid from '../components/home/GameLibraryGrid.vue';
+import PublicLobbiesSection from '../components/home/PublicLobbiesSection.vue';
 
 const router = useRouter();
 const store = usePartyStore();
@@ -58,6 +59,17 @@ function handleJoin() {
     store.saveSession(res.partyView.inviteCode);
     router.push(`/party/${res.partyView.inviteCode}`);
   });
+}
+
+// A public lobby card pre-fills the existing Join form with the invite code.
+// Joining still requires the user to enter a name and submit — no silent join.
+async function handlePublicLobbyClick(payload: { inviteCode: string }) {
+  mode.value = 'join';
+  inviteCode.value = payload.inviteCode;
+  error.value = '';
+  await nextTick();
+  const selector = playerName.value.trim() ? '#code' : '#name';
+  document.querySelector<HTMLInputElement>(selector)?.focus();
 }
 
 function tryResume() {
@@ -185,6 +197,10 @@ onBeforeUnmount(() => {
       <h2 id="home-library-heading" class="ui-section-label">Game Library</h2>
       <GameLibraryGrid :games="clientGameRegistry" />
     </section>
+
+    <div class="home-public-lobbies">
+      <PublicLobbiesSection @join-room="handlePublicLobbyClick" />
+    </div>
   </div>
 </template>
 
@@ -294,6 +310,11 @@ onBeforeUnmount(() => {
 }
 
 .home-library {
+  width: 100%;
+  max-width: 960px;
+}
+
+.home-public-lobbies {
   width: 100%;
   max-width: 960px;
 }

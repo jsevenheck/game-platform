@@ -25,6 +25,8 @@ export interface PartyView {
   selectedGameId: string | null;
   activeMatch: PartyMatchView | null;
   status: PartyStatus;
+  isPublic: boolean;
+  publicListedAt: number | null;
 }
 
 const SESSION_KEY = 'platform.party.session';

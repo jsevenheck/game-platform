@@ -28,4 +28,8 @@ export interface PartySession {
   returnAcks: Set<string>;
   /** matchKey of match currently being cleaned up after replay */
   pendingCleanupMatchKey: string | null;
+  /** Host opt-in to list this lobby publicly. Defaults false. */
+  isPublic: boolean;
+  /** Epoch ms when the party most recently became public; null when not public. */
+  publicListedAt: number | null;
 }
