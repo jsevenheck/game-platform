@@ -1,187 +1,109 @@
-# Plan 3 — Split HomeView into "Host / Browse / Join" Tabbed Experience
+# Plan 03 — Split HomeView into Browse / Host / Join Tabs
 
-> Status: **Planning only — no code changes in this document.**
-> Repo: `game-platform` (pnpm workspace, Vue 3 + Pinia + Vue Router + Tailwind v4.3).
-> Working branch assumed: `pi/create-scout-game` (working tree clean at time of writing).
-> This is **Plan 3 of 3** and assumes **Plan 1** (hero/animations refactor) and **Plan 2** (public-lobbies listing) are already merged on the branch.
+**Status:** revised planning document (critical review applied)  
+**Baseline:** should be implemented after Plan 01 and Plan 02.  
+**Scope:** frontend refactor of `HomeView.vue` and home-page components. No new route and no new backend events beyond Plan 02.
 
 ---
 
-## 1. Goal
+## 1. Critical assessment / verdict
 
-Refactor `apps/platform/src/views/HomeView.vue` — currently a single 400 px card that tab-switches between "Create Party" and "Join Party" — into a 3-tab **Host a Party · Browse Games · Join with Code** experience that preserves every existing behavior (create/join flows, `tryResume` on mount, `partyUpdate` subscription, `Transition name="slide-up"` / `name="fade"`) while exposing the platform's game catalog (5 live games + coming-soon placeholders from Plan 1) and the public-lobbies section (from Plan 2) directly on the landing page.
+**Verdict: worthwhile refactor, but only after Plan 01 and Plan 02 have landed with reusable components.**
 
-The deliverable is **one HomeView with three tabs**, backed by a small `useHomeTabs` composable that owns tab persistence (URL `?tab=` ↔ `sessionStorage`) and a per-tab form-state cache. The split is **architecture option C** (Hybrid) — see §3.
+Issues found in the previous draft and fixed here:
+
+1. **Wrong prerequisite references:** it pointed to non-existing files and mismatched Plan 02 APIs. This plan now references the actual docs and revised deliverables.
+2. **Card width was too small:** a 720px card cannot comfortably host live lobbies and a game grid in a two-column Browse layout. This plan uses compact vs. wide card modes.
+3. **Existing E2E helpers would break:** after defaulting to Browse, helpers that fill `#name` immediately must first switch to Host or Join. This is now explicit.
+4. **Unclear game preselect behavior:** Browse card clicks can preselect a game using existing `selectGame` after `createParty`; this plan documents the sequence and failure behavior.
+5. **Component unit tests were unrealistic:** the current Vitest platform project runs in Node and does not include Vue Test Utils/jsdom. Component behavior is covered with Playwright; only pure tab helpers get unit tests.
+6. **Plan 02 polling language:** replaced with Socket.IO public-lobby feed terminology.
 
 ---
 
 ## 2. Prerequisites
 
-Both prerequisite plans must be merged before this plan is executed.
+| Plan    | File                                    | Required deliverables                                                                                                            |
+| ------- | --------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------- |
+| Plan 01 | `docs/plan-01-game-grid-on-homeview.md` | `GameLibraryGrid.vue`, `PlatformGameMeta.category`, home catalog styles.                                                         |
+| Plan 02 | `docs/plan-02-live-rooms-section.md`    | public lobby socket events, `usePublicLobbies`, `PublicLobbiesList.vue` / `PublicLobbiesSection.vue`, `PartyView` public toggle. |
 
-| Plan | Path | What it delivers that this plan consumes |
-| --- | --- | --- |
-| **Plan 1 — Hero & Game Grid** | `docs/plan-01-hero-and-game-grid.md` | (a) Refactored `HomeView` hero (gradient title, animated background, "Coming soon" cards with `platformMeta` from `clientGameRegistry`). (b) `<GameGrid>` SFC exporting a 5-card grid + 2-3 coming-soon cards using the existing `ui-game-card` / `ui-game-card-banner` / `ui-game-card-body` classes from `apps/platform/src/styles/main.css`. (c) Visual baseline (card width, accent line, logo block) that Plan 3 keeps. |
-| **Plan 2 — Public Lobbies** | `docs/plan-02-public-lobbies.md` | (a) New `usePublicLobbies` composable (Polling/Socket subscribe to a `publicLobbies:update` event or `/api/public-lobbies`). (b) `<PublicLobbiesList>` SFC rendering `[{ inviteCode, hostName, memberCount, maxPlayers, createdAt }]` as compact rows. (c) Server endpoint `GET /api/public-lobbies` emitting refresh on party join/leave. (d) Clear-text policy redaction in logs. |
-
-If Plan 2's composable is named differently or its event names change, **update §6.3 / §8 of this plan** to match before executing.
+Do not implement this plan against the old assumptions (`/api/public-lobbies`, polling, `PublicLobbiesList` with host names, or coming-soon cards). If Plan 01/02 names differ after implementation, update this document before coding.
 
 ---
 
-## 3. Architecture decision — A vs B vs C
+## 3. Goal
 
-### A. Keep everything in `HomeView.vue` (expand the existing tab group)
+Refactor `/` into a three-tab landing experience:
 
-- **Pros:** Smallest diff. No router or nav-guard churn. Reuses existing `mode: 'create' | 'join'` ref, renamed `mode: 'host' | 'browse' | 'join'`.
-- **Cons:** `HomeView.vue` balloons past 500 lines. Template becomes hard to scan, conditional blocks overlap (`v-if="activeTab === 'host'"`, `v-if="activeTab === 'browse'"`, `v-if="activeTab === 'join'"`). Hard to reuse a "Browse" panel elsewhere (e.g. a `/browse` route, Admin lobby browser, mobile deep-link share preview).
-- **Verdict:** ❌ — single-file ceiling is already close (286 lines today); 3 tabs × (template + script + state) breaks it.
+1. **Browse Games** — default first-visit tab; shows Live Rooms and Game Library.
+2. **Host a Party** — existing create flow, optionally with a game preselected from Browse.
+3. **Join with Code** — existing join flow, with invite code pre-fill from Live Rooms.
 
-### B. Extract a new `BrowseView.vue` at route `/browse`; HomeView keeps Host+Join
+Must preserve:
 
-- **Pros:** Cleanest separation. Browse becomes a real destination shareable via URL. Allows `HomeView` to stay a focused "create-or-join" view (great for first-time users).
-- **Cons:** **Breaks the requirement that `tryResume` runs regardless of active tab on `/`.** With `BrowseView` at `/browse`, a user refreshing that route would lose the resume flow unless we mount the resume effect in both views. Two routes also means two `<RouterView>` scroll-restore scenarios and double the route to test. Plan 1's hero lives in `HomeView` — duplicating it in `BrowseView` (or hoisting to `App.vue`) adds churn.
-- **Verdict:** ❌ — unnecessary fragmentation for a feature that conceptually lives on one page.
-
-### C. Hybrid — HomeView hosts the tabs; each tab panel is its own SFC ✅ **RECOMMENDED**
-
-- **Pros:** `HomeView` becomes a thin shell (~80 lines): hero + `<TabBar :tabs="…" v-model="activeTab" />` + `<component :is="…">` for the active panel, plus the existing resume lifecycle. Each panel (`<HostTabPanel>`, `<BrowseTabPanel>`, `<JoinTabPanel>`) is independently testable, replaceable, and under 200 lines. Reuse of `<BrowseTabPanel>` becomes trivial if a future `/browse` route is added. Pattern matches existing `clientGameRegistry` lazy-loading (Plan 1).
-- **Cons:** Three new SFCs to register; one extra shared composable (`useHomeTabs`); slightly higher cognitive load for first-time readers.
-- **Verdict:** ✅ — **smallest blast radius** (only `HomeView.vue` is touched in-place, three siblings added under `apps/platform/src/components/home/`), preserves every existing flow, and reuses Plan 1 / Plan 2 deliverables without duplication.
-
-**Recommendation: option C.** It contains the blast radius (one parent file edited, three new siblings, one composable), preserves the `tryResume` invariant at a single mount point, and unlocks future reuse without re-architecting again.
+- `tryResume()` on HomeView mount regardless of active tab;
+- existing create/join socket flows;
+- local session persistence (`usePartyStore.saveSession()`);
+- `partyUpdate` subscription behavior;
+- `/party/:code` and `/party/:code/game/:gameId` redirects;
+- no new router path.
 
 ---
 
-## 4. Tab UX design
+## 4. Architecture decision
 
-### 4.1 Tab order — **Browse → Host → Join**
+Use the hybrid approach:
 
-| Position | Tab | Rationale |
-| --- | --- | --- |
-| 1 (default) | **Browse Games** | First-time users land here — they don't yet have an invite code, so "Join with Code" is useless; "Host a Party" is a deliberate act. Surfacing the catalog first teaches what the platform *is*. Returning users still land on their saved tab (see §4.3). |
-| 2 | **Host a Party** | The previous default — preserves existing power-user path. |
-| 3 | **Join with Code** | Visually adjacent to **Host** to suggest symmetry. Placed last because typing a 6-char code is the most deliberate action. |
+- `HomeView.vue` remains the route-level shell and resume owner;
+- tabs and panels are split into focused components under `apps/platform/src/components/home/`;
+- tab state lives in `useHomeTabs()`;
+- create/join/preselect behavior lives in a small home actions composable or in the parent shell (implementation choice below).
 
-> If Plan 2's public-lobbies panel is empty on first visit, Browse still has value (game catalog + coming-soon). The tab does not become empty.
+Recommended files:
 
-### 4.2 Default tab on first visit
+| File                                                   | Responsibility                                                          |
+| ------------------------------------------------------ | ----------------------------------------------------------------------- |
+| `apps/platform/src/composables/useHomeTabs.ts`         | Active tab, URL query sync, sessionStorage persistence.                 |
+| `apps/platform/src/composables/useHomePartyActions.ts` | Existing create/join/resume actions, form refs, optional selected game. |
+| `apps/platform/src/components/home/HomeTabBar.vue`     | Accessible tab pills + mobile select.                                   |
+| `apps/platform/src/components/home/HostTabPanel.vue`   | Presentational create form.                                             |
+| `apps/platform/src/components/home/JoinTabPanel.vue`   | Presentational join form.                                               |
+| `apps/platform/src/components/home/BrowseTabPanel.vue` | Composes public lobbies + game library + Host CTA.                      |
+| `apps/platform/src/views/HomeView.vue`                 | Thin composition shell; owns mount/unmount subscriptions.               |
 
-`useHomeTabs()` resolution order (see §6.1):
-
-1. `route.query.tab` if it validates against the union `'host' | 'browse' | 'join'`.
-2. `sessionStorage.getItem('home.activeTab')` if valid.
-3. **`'browse'`** — first-visit default.
-
-> Note: this is a **deliberate change** from today's behavior (the form was always visible). See §11 Risk R3 for the new-user conversion concern and the mitigations baked into §5 (Browse tab includes prominent "Host a Party" CTA card above the grid).
-
-### 4.3 Default tab when returning
-
-`sessionStorage['home.activeTab']` (last-clicked tab). Survives refresh and tab-restoration. Does **not** survive new browser profile / incognito (which is desired — first-visit default reappears).
-
-### 4.4 Mobile behavior (< 640 px viewport)
-
-Below 640 px wide (`@media (max-width: 639.98px)`), the `.ui-tab-group` collapses into a **native `<select>`** styled with the same `ui-input` chrome:
-
-- Replaces the pill bar to free vertical space for the panel.
-- Selecting an option calls the same `setTab()` handler.
-- Above 640 px the pill bar reappears (no JS branching needed — the `<select>` is `hidden` via CSS in a desktop media query, the pill bar is `hidden` on mobile).
-- **Recommendation: stacked <select>** over a hamburger because (a) native pickers are accessible by default, (b) three options don't need progressive disclosure, (c) it avoids re-implementing a11y for a custom dropdown.
-
-```css
-/* In HomeView.vue scoped <style> */
-@media (max-width: 639.98px) {
-  .home-tab-bar-pills { display: none; }
-  .home-tab-bar-select { display: block; }
-}
-@media (min-width: 640px) {
-  .home-tab-bar-select { display: none; }
-  .home-tab-bar-pills { display: flex; }
-}
-```
-
-### 4.5 Keyboard navigation
-
-| Key | Behavior |
-| --- | --- |
-| `Tab` (into tab bar) | Focuses the active tab button (roving tabindex pattern). |
-| `ArrowLeft` / `ArrowRight` | Move focus across tab buttons. Wraps around. Selecting the next tab **does not** auto-activate it (matches WAI-ARIA tabs pattern with manual activation) — but pressing `Enter` or `Space` on the focused tab activates it. |
-| `Enter` / `Space` (on focused tab) | Activates that tab (`setTab(focused)`) and moves DOM focus into the panel's first focusable element (the `#name` input by default). |
-| `Home` / `End` | Jump to first / last tab button. |
-| `Escape` (inside a panel) | No-op (panels are non-modal; user can still hit `Tab` to leave). |
-
-Implementation: use the native `<button role="tab" aria-selected=…>` pattern with `tabindex="-1"` on non-active tabs and `tabindex="0"` on the active one; a `keydown` handler on each tab button performs arrow-key movement. This is the same pattern `ui-tab-group` was designed for (see `apps/platform/src/styles/main.css:357–392`).
+This follows Vue Composition API best practice: the route view composes features, while substantial UI and side effects are factored out.
 
 ---
 
-## 5. Layout & visual hierarchy
+## 5. Tab behavior
 
-### 5.1 Vertical stack on a single HomeView card
+### 5.1 Tab order and default
 
-```
-┌──────────────────────────── .home-card (max-width: 720px, up from 400px) ────────────────────────────┐
-│ ── home-top-line (orange gradient) ──                                                                │
-│                                                                                                      │
-│   .home-hero                                                                                         │
-│     ⚡  Game Platform                                                                                 │
-│         Pick a game, host a party, or join a friend's code.                                          │
-│                                                                                                      │
-│   .home-tab-bar-pills  (>=640px)            .home-tab-bar-select  (<640px)                          │
-│   [ Browse Games ] [ Host a Party ] [ Join with Code ]   <select>…</select>                          │
-│                                                                                                      │
-│   <Transition name="fade" mode="out-in">                                                             │
-│     <HostTabPanel v-if="activeTab === 'host'" />                                                    │
-│     <BrowseTabPanel v-else-if="activeTab === 'browse'" />                                           │
-│     <JoinTabPanel v-else />                                                                          │
-│   </Transition>                                                                                      │
-│                                                                                                      │
-└──────────────────────────────────────────────────────────────────────────────────────────────────────┘
-```
+Order: **Browse Games → Host a Party → Join with Code**.
 
-### 5.2 Card width
+First-visit default: `browse`.
 
-`max-width: 720px` (up from 400 px). Rationale: the Browse tab's 2- or 3-column game grid (Plan 1) needs horizontal room; 400 px collapses every card to one column and the page feels like a stack of full-width tiles. The Host/Join tabs still center their inner form (`max-width: 360px; margin: 0 auto`) so the visual weight matches today.
+Resolution order:
 
-### 5.3 Browse tab internal layout
+1. valid `route.query.tab` (`browse`, `host`, `join`);
+2. valid `sessionStorage['home.activeTab']`;
+3. fallback `browse`.
 
-```
-┌─ BrowseTabPanel ─────────────────────────────────────────────────────────────────────────────────────┐
-│  ┌─ browse-cta ────────────────────────────────────────────────────────────────────────────────┐   │
-│  │  "Host a Party"  big button ─→ switches to Host tab.                                        │   │
-│  │  (only shown when public-lobbies list is non-empty AND not yet 8+ entries; see §5.4)       │   │
-│  └────────────────────────────────────────────────────────────────────────────────────────────┘   │
-│                                                                                                    │
-│  <h2 class="ui-section-label">Live Lobbies</h2>                                                     │
-│  <PublicLobbiesList />            ← from Plan 2                                                    │
-│                                                                                                    │
-│  <h2 class="ui-section-label">Pick a Game</h2>                                                     │
-│  <GameGrid />                     ← from Plan 1                                                    │
-│                                                                                                    │
-└────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────┘
-```
+Use `router.replace`, not `router.push`, when tab changes so the browser Back button does not step through tab switches.
 
-**On wide screens (≥1024 px)**, the Browse tab is rendered as a 2-column CSS grid:
+### 5.2 URL sync
 
-```
-| live-lobbies (sticky, 1fr) | game-grid (1.6fr) |
-```
-
-On `<1024 px` (tablet and below) it collapses to a single column with `live-lobbies` first, then `game-grid`. Both columns scroll independently inside the card (the card itself stays `min-height: 100dvh` centered). The grid switch is driven by a `@media` query on `<BrowseTabPanel>` — no JS.
-
-### 5.4 Browse CTA card visibility rules
-
-The orange "Host a Party" CTA inside Browse appears **only when** `publicLobbies.length > 0` AND the user has not yet created a party this session. Once the user clicks "Create Party" (or any Host tab action), set `sessionStorage['home.ctaDismissed'] = '1'` and never show it again in this browser profile. This keeps first-time users aware of the catalog without nagging returning hosts.
-
----
-
-## 6. State management
-
-### 6.1 `useHomeTabs` composable (new — `apps/platform/src/composables/useHomeTabs.ts`)
+`useHomeTabs()` should expose:
 
 ```ts
-// pseudo-code — final shape to be agreed in execution PR
-export type HomeTabId = 'host' | 'browse' | 'join';
-const STORAGE_KEY = 'home.activeTab';
-const VALID_TABS: ReadonlySet<HomeTabId> = new Set(['host', 'browse', 'join']);
+export type HomeTabId = 'browse' | 'host' | 'join';
+
+export const HOME_TABS = [
+  { id: 'browse', label: 'Browse Games', icon: '🎮' },
+  { id: 'host', label: 'Host a Party', icon: '⚡' },
+  { id: 'join', label: 'Join with Code', icon: '🔗' },
+] as const;
 
 export function useHomeTabs(): {
   activeTab: Ref<HomeTabId>;
@@ -189,384 +111,480 @@ export function useHomeTabs(): {
 };
 ```
 
-**Resolution rules (called once on HomeView mount, exposed as `activeTab` ref):**
-
-1. Read `route.query.tab`. If valid → use it, write to `sessionStorage`, return.
-2. Else read `sessionStorage[STORAGE_KEY]`. If valid → return.
-3. Else default to `'browse'`, write to `sessionStorage` so subsequent refreshes stay on Browse.
-
-**`setTab(next)`:**
-
-1. Validate `next ∈ VALID_TABS`. Bail if not.
-2. `activeTab.value = next`.
-3. `sessionStorage.setItem(STORAGE_KEY, next)`.
-4. **Push to URL** without page reload: `router.replace({ query: { ...route.query, tab: next } })`. Use `replace`, not `push`, so back-button doesn't trap users inside tab switches. Never push from inside the URL → state sync watcher (avoids loops — see §6.2).
-
-### 6.2 URL ↔ sessionStorage sync (watcher in `HomeView.vue`)
-
-A single `watch(() => route.query.tab, …)`:
-
-- If query `tab` is **absent or invalid**: do nothing (don't clobber user's choice; only `setTab` writes URL).
-- If query `tab` is **valid and differs from `activeTab.value`**: update `activeTab`, write to `sessionStorage`. This handles deep-link landings (§6.4) and back/forward navigation.
-
-Do **not** `router.push` from inside this watcher — that would loop with `setTab`. Only `setTab` initiates URL writes.
-
-### 6.3 `tryResume` behavior across tabs
-
-**Invariant: `tryResume` runs on HomeView mount exactly as today, regardless of which tab is active.** It is not gated by `activeTab`.
-
-- The resume effect (`onMounted` block of `HomeView.vue`) subscribes to `partyUpdate`, `connect`, and calls `tryResume()` if connected (else triggers `socket.connect()`). This is **unchanged**.
-- If `tryResume()` succeeds and redirects to `/party/:code` or `/party/:code/game/:gameId`, the user never sees any tab — the redirect wins.
-- If `tryResume()` fails (clears session, no redirect), the user remains on `/` and sees the active tab.
-
-**The three tab panels must not subscribe to `partyUpdate` themselves.** All party state lives in the Pinia store; tabs read from it. This avoids double-subscription and double-`off` bugs during fast tab switches.
-
-### 6.4 Form state per tab
-
-Per-tab form state (name, invite code, error) is hoisted into `useHomeTabs` (or a sibling `useHomeForms`) so that **switching tabs preserves the user's input**:
-
-| State | Lifetime |
-| --- | --- |
-| `playerName` | Persists across tab switches (single ref, shared). Survives refresh via `sessionStorage['home.playerName']`. |
-| `inviteCode` | Persists across tab switches and refreshes (same `sessionStorage` key). |
-| `error` | Per-tab — clears when switching away, sets fresh on next submit. |
-| Browse tab's selected game (if any, from `<GameGrid>`) | Lives in `<BrowseTabPanel>` local state; lost on tab switch (intentional — catalog is "browse, don't bind"). |
-
-Rationale: a user filling out the Join form who clicks Browse to check the catalog should not lose what they typed. Same for typing a name on Host then peeking at Browse.
-
-### 6.5 Lifecycle invariants
-
-- `onBeforeUnmount` of `HomeView.vue`: `socket.off('partyUpdate', store.applyPartyUpdate)`; `socket.off('connect', tryResume)`; **do not** tear down `usePartySocket` itself (it's a module-level singleton — see `apps/platform/src/composables/usePartySocket.ts:51–60`). This matches today.
-- `onBeforeUnmount` of any tab panel: no `socket.off` (see §6.3).
-- `useHomeTabs` owns no socket subscriptions; it only manipulates local refs and `sessionStorage`.
-
----
-
-## 7. Step-by-step plan
-
-Numbered in execution order. Each step lists the file(s) touched and approximate line count delta.
-
-1. **Create `useHomeTabs` composable.**
-   - File: `apps/platform/src/composables/useHomeTabs.ts` (~50 lines, new).
-   - Exports: `useHomeTabs()`, `type HomeTabId`, `const HOME_TABS: readonly HomeTabId[]`.
-   - No socket, no store, no router dependency beyond `useRoute()` / `useRouter()`.
-
-2. **Create `<TabBar>` SFC** (shared between HomeView's pill bar and select).
-   - File: `apps/platform/src/components/home/HomeTabBar.vue` (~80 lines, new).
-   - Props: `modelValue: HomeTabId`, `tabs: readonly { id: HomeTabId; label: string; icon?: string }[]`.
-   - Emits: `update:modelValue`.
-   - Renders BOTH a `.ui-tab-group` (pill) and a `<select class="ui-input">`; CSS toggles which is visible (§4.4).
-   - Implements roving tabindex + arrow-key handler (§4.5).
-
-3. **Create `<HostTabPanel>` SFC.**
-   - File: `apps/platform/src/components/home/HostTabPanel.vue` (~110 lines, new).
-   - Lifts `handleCreate()` from current `HomeView.vue` lines 16–36 unchanged.
-   - Props: `playerName: string`, `error: string`, `submitting: boolean`.
-   - Emits: `submit` (with payload `{ playerName }`), `update:playerName`, `update:error` (or hoist form state into parent — TBD during execution; **lean toward hoisting** so it persists across tab switches per §6.4).
-   - Uses `ui-tab-group`/form styling from current file lines 140–179.
-
-4. **Create `<JoinTabPanel>` SFC.**
-   - File: `apps/platform/src/components/home/JoinTabPanel.vue` (~140 lines, new).
-   - Lifts `handleJoin()` from current lines 38–59 unchanged.
-   - On wide viewports (≥1024 px) **also renders `<PublicLobbiesList>`** (Plan 2) below the form as a "quick join" rail. On narrow viewports hides the list (the Browse tab is where users go to discover lobbies). Section label "Quick Join" uses `ui-section-label` (already in `main.css:347`).
-   - Same prop/emit contract as `<HostTabPanel>`.
-
-5. **Create `<BrowseTabPanel>` SFC.**
-   - File: `apps/platform/src/components/home/BrowseTabPanel.vue` (~120 lines, new).
-   - Composes `<PublicLobbiesList>` (Plan 2) + `<GameGrid>` (Plan 1) per §5.3.
-   - On `<GameGrid>` card click → emits `select-game` (parent switches to Host tab and pre-selects that game in the Host form via a new `selectedGameId: string | null` ref).
-   - On `<PublicLobbiesList>` row click → emits `join-lobby` with `{ inviteCode }` (parent switches to Join tab and pre-fills `inviteCode`).
-   - Shows the CTA card per §5.4.
-
-6. **Refactor `HomeView.vue` to the thin shell.**
-   - File: `apps/platform/src/views/HomeView.vue` (was 286 lines → target ~140 lines).
-   - Imports: `useHomeTabs`, `HomeTabBar`, `HostTabPanel`, `JoinTabPanel`, `BrowseTabPanel`, `clientGameRegistry` (for type only).
-   - Keeps `tryResume()` and the `onMounted`/`onBeforeUnmount` block verbatim (§6.3).
-   - Keeps the `home-top-line`, `home-hero`, hero text, and all `<style scoped>` blocks. Hero sub-line updates to: **"Pick a game, host a party, or join a friend's code."**
-   - Template body becomes:
-     ```vue
-     <HomeTabBar v-model="activeTab" :tabs="tabs" />
-     <Transition name="fade" mode="out-in">
-       <HostTabPanel v-if="activeTab === 'host'" ... />
-       <BrowseTabPanel v-else-if="activeTab === 'browse'" @select-game="..." @join-lobby="..." />
-       <JoinTabPanel v-else ... />
-     </Transition>
-     ```
-
-7. **Update `apps/platform/e2e/party-resume.spec.ts`.**
-   - Existing `joinParty` helper (lines 11–18) does `await page.getByRole('button', { name: 'Join Party' }).click()` — this still works because the Join tab button is labelled "Join with Code" but **the form's submit button keeps the existing label "Join Party"** (form buttons stay unchanged; only the *tab* label changes). Verify and update if Playwright's strict mode rejects — likely it will still match the submit button's accessible name.
-   - Add a new `describe('home tabs')` block (see §10.4).
-
-8. **Add `home-tabs.test.ts`** unit test.
-   - File: `apps/platform/__tests__/homeTabs.test.ts` (~80 lines, new).
-   - Covers: resolution order (URL → storage → default), invalid value fall-through, `setTab` writes both storage and URL, no `router.push` loop, `setTab('garbage')` is a no-op.
-
-9. **Run typecheck + lint + unit + e2e** (§10).
-
-10. **Manual checklist** (§10.5).
-
----
-
-## 8. Component breakdown (option C — each new component)
-
-### `apps/platform/src/composables/useHomeTabs.ts` (~50 lines)
+Also export pure helpers for Node unit tests:
 
 ```ts
-export type HomeTabId = 'host' | 'browse' | 'join';
-export const HOME_TABS = [
-  { id: 'browse', label: 'Browse Games',  icon: '🎮' },
-  { id: 'host',   label: 'Host a Party',  icon: '⚡' },
-  { id: 'join',   label: 'Join with Code', icon: '🔗' },
-] as const;
-
-export function useHomeTabs(): { activeTab: Ref<HomeTabId>; setTab: (next: HomeTabId) => void };
+export function normalizeHomeTab(value: unknown): HomeTabId | null;
+export function resolveInitialHomeTab(queryValue: unknown, storedValue: unknown): HomeTabId;
 ```
 
-No props, no emits, no slots.
+A watcher handles browser navigation:
 
-### `apps/platform/src/components/home/HomeTabBar.vue` (~80 lines)
+- if query tab becomes valid and differs from `activeTab`, update state and storage;
+- if query tab is absent/invalid, do not clobber the current tab;
+- never write to the router from inside that watcher.
 
-| Aspect | Detail |
-| --- | --- |
-| Props | `modelValue: HomeTabId` (v-model), `tabs: readonly { id: HomeTabId; label: string; icon?: string }[]` (required) |
-| Emits | `update:modelValue[HomeTabId]` |
-| Slots | none |
-| Behavior | Renders pills (`>640px`) and `<select>` (`<640px`), wired to the same `v-model`. Arrow-key handler on pill buttons. `aria-selected`, `role="tab"`, roving `tabindex`. |
-| Tests | Unit: arrow-key moves focus; Enter activates; Home/End jumps. E2E: keyboard navigation across tabs. |
+### 5.3 Mobile behavior
 
-### `apps/platform/src/components/home/HostTabPanel.vue` (~110 lines)
+Below `640px`, `HomeTabBar.vue` shows a native `<select class="ui-input">` and hides tab pills. Above `640px`, pills are shown and the select is hidden.
 
-| Aspect | Detail |
-| --- | --- |
-| Props | `playerName: string`, `error: string`, `submitting: boolean` |
-| Emits | `update:playerName[string]`, `submit[]` |
-| Slots | none |
-| Behavior | Form + submit. Calls `socket.emit('createParty', …)` and on success does `store.setSession`/`applyPartyUpdate`/`saveSession`/`router.push` (lifted from `HomeView.vue` lines 16–36). |
-| Tests | E2E: Host tab → fill name → submit → land on `/party/:code`. |
+The select is the accessible mobile control; do not test hidden tab buttons on mobile.
 
-### `apps/platform/src/components/home/JoinTabPanel.vue` (~140 lines)
+### 5.4 Keyboard behavior for desktop pills
 
-| Aspect | Detail |
-| --- | --- |
-| Props | `playerName: string`, `inviteCode: string`, `error: string`, `submitting: boolean`, `publicLobbies: PublicLobbyView[]` |
-| Emits | `update:playerName[string]`, `update:inviteCode[string]`, `submit[]` |
-| Slots | none |
-| Behavior | Form + submit. Above 1024 px also renders `<PublicLobbiesList :lobbies="publicLobbies">` (Plan 2) below the form. Clicking a lobby row emits `update:inviteCode` with that code (no auto-submit — user must still type name + press submit to avoid accidental joins). |
-| Tests | E2E: Join tab → fill code → submit → land on `/party/:code`. E2E: Public-lobbies row click fills code field. |
+Use WAI-ARIA tabs with manual activation:
 
-### `apps/platform/src/components/home/BrowseTabPanel.vue` (~120 lines)
+| Key                        | Behavior                                                                   |
+| -------------------------- | -------------------------------------------------------------------------- |
+| `Tab`                      | Focuses active tab.                                                        |
+| `ArrowLeft` / `ArrowRight` | Moves focus among tab buttons, wrapping. Does not activate.                |
+| `Home` / `End`             | Moves focus to first/last tab.                                             |
+| `Enter` / `Space`          | Activates focused tab and moves focus to the panel's first useful control. |
 
-| Aspect | Detail |
-| --- | --- |
-| Props | `publicLobbies: PublicLobbyView[]`, `publicLobbiesLoading: boolean`, `ctaDismissed: boolean` |
-| Emits | `select-game[string]`, `join-lobby[{ inviteCode: string }]`, `dismiss-cta[]` |
-| Slots | `#empty-rooms` (rendered when `publicLobbies.length === 0` and `!publicLobbiesLoading`; defaults to a muted "No public lobbies right now" message — overridable for tests). |
-| Behavior | Renders CTA (§5.4), `<PublicLobbiesList>`, `<GameGrid>`. Two-column on `≥1024px`, single-column below. |
-| Tests | E2E: Browse tab renders game grid; clicking a game card fires `select-game`; clicking a lobby row fires `join-lobby`. |
+Use `role="tablist"`, `role="tab"`, `aria-selected`, `aria-controls`, and `tabindex`.
 
 ---
 
-## 9. Router changes
+## 6. Layout
 
-**None.** This plan deliberately stays on option C, not option B. The `/` route continues to render `HomeView.vue`. No `/browse` route is added; deep-linking happens via `?tab=` query (§6.1 / §6.2).
+The current centered 400px card is too narrow for Browse. Use width modes:
 
-If a future plan promotes Browse to its own route, the work is purely additive: extract `BrowseTabPanel` into `BrowseView.vue`, add `{ path: '/browse', name: 'browse', component: BrowseView }`, and the `tryResume` effect needs to be duplicated (or hoisted into `App.vue`'s `<RouterView>` wrapper). That's out of scope here (§13).
+```vue
+<div class="home-card" :class="activeTab === 'browse' ? 'home-card-wide' : 'home-card-compact'">
+  …
+</div>
+```
 
-**Nav-guard considerations:** none. No route is added; no guards needed. `vue-router`'s default scroll behavior is fine (the card re-centers via `min-height: 100dvh; align-items: center` already in `.home-root`).
+```css
+.home-root {
+  min-height: 100dvh;
+  display: flex;
+  align-items: flex-start;
+  justify-content: center;
+  padding: clamp(1.25rem, 4vw, 3rem);
+}
+
+.home-card {
+  width: min(100%, 1040px);
+}
+
+.home-card-compact {
+  max-width: 440px;
+}
+
+.home-card-wide {
+  max-width: 1040px;
+}
+```
+
+Host and Join panels center their forms internally:
+
+```css
+.home-form-panel {
+  max-width: 400px;
+  margin: 0 auto;
+}
+```
+
+Browse layout:
+
+- single column below `1024px`;
+- two columns at `1024px+`: Live Rooms column (`minmax(280px, 0.9fr)`) + Game Library column (`1.4fr`);
+- use normal page scroll, not independently scrolling panels.
 
 ---
 
-## 10. Verification
+## 7. State management
 
-### 10.1 Static checks
+### 7.1 Persistent form refs
 
-```bash
-pnpm typecheck     # tsc across the workspace via apps/platform
-pnpm lint          # eslint across all source
-pnpm format:check  # prettier --check
+Persist in `sessionStorage`, not `localStorage`:
+
+| Key                 | Value                                            |
+| ------------------- | ------------------------------------------------ |
+| `home.activeTab`    | last active tab                                  |
+| `home.playerName`   | draft name                                       |
+| `home.inviteCode`   | draft invite code                                |
+| `home.ctaDismissed` | Browse CTA dismissed in this browser tab session |
+
+`selectedGameId` from Browse may stay in memory only. Persisting it is optional but not required.
+
+### 7.2 `useHomePartyActions`
+
+Recommended composable API:
+
+```ts
+export function useHomePartyActions(): {
+  playerName: Ref<string>;
+  inviteCode: Ref<string>;
+  selectedGameId: Ref<string | null>;
+  error: Ref<string>;
+  submitting: Ref<boolean>;
+  isResuming: Ref<boolean>;
+  handleCreate: () => void;
+  handleJoin: () => void;
+  tryResume: () => void;
+  clearError: () => void;
+};
 ```
 
-All three must pass before any commit lands. Expected: zero new warnings.
+It may use `useRouter()`, `usePartyStore()`, and `usePartySocket()` internally. It must not disconnect the shared socket.
 
-### 10.2 Unit tests
+### 7.3 Create with selected game
+
+When a user clicks a game in Browse:
+
+1. `BrowseTabPanel` emits `select-game(gameId)`;
+2. `HomeView` sets `selectedGameId.value = gameId`;
+3. `HomeView` switches to `host` tab;
+4. Host panel shows a small selected-game hint;
+5. on `handleCreate()`, after `createParty` succeeds and session is saved, emit existing `selectGame` with returned `playerId` and selected `gameId`;
+6. then route to `/party/:code`.
+
+If `selectGame` fails, do not discard the newly created party. Navigate to the party and show/keep an error message where practical; the host can still select a game manually in `PartyView`.
+
+This uses existing backend events. No server change is required.
+
+### 7.4 Public lobby click
+
+When a user clicks a public lobby:
+
+1. `PublicLobbiesList` / `PublicLobbiesSection` emits `join-room({ inviteCode })`;
+2. `BrowseTabPanel` re-emits it;
+3. `HomeView` sets `inviteCode.value`;
+4. `HomeView` switches to `join` tab;
+5. focus goes to `#name` if empty, otherwise `#code`.
+
+No silent join in Plan 03.
+
+---
+
+## 8. Component contracts
+
+### `HomeTabBar.vue`
+
+Props:
+
+```ts
+{
+  modelValue: HomeTabId;
+  tabs: readonly { id: HomeTabId; label: string; icon?: string }[];
+}
+```
+
+Emits:
+
+```ts
+{ 'update:modelValue': [HomeTabId] }
+```
+
+### `HostTabPanel.vue`
+
+Props:
+
+```ts
+{
+  playerName: string;
+  error: string;
+  submitting: boolean;
+  selectedGameName?: string | null;
+}
+```
+
+Emits:
+
+```ts
+{
+  'update:playerName': [string];
+  submit: [];
+  clearSelectedGame: [];
+}
+```
+
+### `JoinTabPanel.vue`
+
+Props:
+
+```ts
+{
+  playerName: string;
+  inviteCode: string;
+  error: string;
+  submitting: boolean;
+}
+```
+
+Emits:
+
+```ts
+{
+  'update:playerName': [string];
+  'update:inviteCode': [string];
+  submit: [];
+}
+```
+
+### `BrowseTabPanel.vue`
+
+Props:
+
+```ts
+{
+  ctaDismissed: boolean;
+}
+```
+
+Emits:
+
+```ts
+{
+  selectGame: [gameId: string];
+  joinRoom: [{ inviteCode: string }];
+  hostRequested: [];
+  dismissCta: [];
+}
+```
+
+Internally composes:
+
+- `PublicLobbiesSection.vue` from Plan 02;
+- `GameLibraryGrid.vue` from Plan 01 with `interactive` enabled.
+
+CTA rule: show a prominent **Host a Party →** CTA on Browse until `home.ctaDismissed === '1'`. Do not hide it just because there are no public lobbies; an empty Live Rooms section is exactly when hosting is useful.
+
+---
+
+## 9. HomeView shell outline
+
+```vue
+<script setup lang="ts">
+import { computed, nextTick, onBeforeUnmount, onMounted, watch } from 'vue';
+import { useHomeTabs } from '../composables/useHomeTabs';
+import { useHomePartyActions } from '../composables/useHomePartyActions';
+import { usePartySocket } from '../composables/usePartySocket';
+import { usePartyStore } from '../stores/party';
+import { getClientGame } from '../games';
+
+const socket = usePartySocket();
+const store = usePartyStore();
+const { activeTab, setTab } = useHomeTabs();
+const actions = useHomePartyActions();
+
+const selectedGameName = computed(() =>
+  actions.selectedGameId.value
+    ? (getClientGame(actions.selectedGameId.value)?.definition.name ?? null)
+    : null
+);
+
+function handleSelectGame(gameId: string) {
+  actions.selectedGameId.value = gameId;
+  setTab('host');
+}
+
+async function handleJoinRoom(payload: { inviteCode: string }) {
+  actions.inviteCode.value = payload.inviteCode;
+  actions.clearError();
+  setTab('join');
+  await nextTick();
+  document
+    .querySelector<HTMLInputElement>(actions.playerName.value.trim() ? '#code' : '#name')
+    ?.focus();
+}
+
+onMounted(() => {
+  socket.on('partyUpdate', store.applyPartyUpdate);
+  socket.on('connect', actions.tryResume);
+  if (socket.connected) actions.tryResume();
+  else socket.connect();
+});
+
+onBeforeUnmount(() => {
+  socket.off('partyUpdate', store.applyPartyUpdate);
+  socket.off('connect', actions.tryResume);
+});
+</script>
+```
+
+`tryResume()` remains active regardless of tab.
+
+---
+
+## 10. Implementation steps
+
+1. **Confirm prerequisites**
+   - Plan 01 component exists and exports/accepts the expected props.
+   - Plan 02 public lobby components and socket events exist.
+
+2. **Create `useHomeTabs.ts`**
+   - Include pure helper exports for tests.
+   - Add URL/sessionStorage sync.
+
+3. **Create `useHomePartyActions.ts`**
+   - Move existing `handleCreate`, `handleJoin`, `tryResume` logic out of `HomeView.vue`.
+   - Add `selectedGameId` support.
+   - Persist `playerName` and `inviteCode` to sessionStorage.
+
+4. **Create `HomeTabBar.vue`**
+   - Desktop ARIA tabs + mobile select.
+   - No dependency on party state.
+
+5. **Create presentational panels**
+   - `HostTabPanel.vue`.
+   - `JoinTabPanel.vue`.
+   - `BrowseTabPanel.vue`.
+
+6. **Refactor `HomeView.vue`**
+   - Keep hero/top accent.
+   - Replace old two-button mode switch with `HomeTabBar`.
+   - Render active panel in `<Transition name="fade" mode="out-in">`.
+   - Keep socket mount/unmount subscription in the view shell.
+
+7. **Update E2E helpers**
+   - Any helper that creates a party must click **Host a Party** first.
+   - Any helper that joins by code must click **Join with Code** first.
+   - Search `apps/platform/e2e` and `games/*/e2e` for `#name`, `#code`, and `Join Party` assumptions.
+
+8. **Add tests and run verification**
+
+---
+
+## 11. Testing plan
+
+### Unit tests (Node-safe only)
+
+`apps/platform/__tests__/homeTabs.test.ts`
+
+Test pure helpers and router/storage behavior via mocks:
+
+- default is `browse` when query/storage are empty;
+- valid query wins over storage;
+- invalid query falls back to valid storage;
+- invalid everything returns `browse`;
+- `setTab('host')` writes sessionStorage and calls `router.replace`;
+- invalid tab input is ignored.
+
+Do not add Vue component unit tests unless the project also adds Vue Test Utils and a DOM test environment. Current platform Vitest config is Node-only.
+
+### Playwright E2E
+
+New file: `apps/platform/e2e/home-tabs.spec.ts`.
+
+Required tests:
+
+1. first visit defaults to Browse;
+2. `/?tab=join` opens Join;
+3. invalid `?tab=garbage` falls back to Browse;
+4. active tab persists across refresh;
+5. Host form name survives switching away and back;
+6. Join form invite code survives switching away and back;
+7. Host tab can create a party;
+8. Join tab can join an existing party;
+9. clicking a public lobby pre-fills Join tab (requires Plan 02 setup);
+10. clicking a game in Browse switches to Host and shows selected-game hint;
+11. mobile viewport uses select and changes panels;
+12. keyboard Arrow/Enter behavior activates tabs;
+13. `tryResume` redirects from `/` even when stored tab is Browse.
+
+Update existing `apps/platform/e2e/party-resume.spec.ts` helpers:
+
+```ts
+async function createParty(page: Page, name: string): Promise<string> {
+  await page.goto('/');
+  await page.getByRole('tab', { name: 'Host a Party' }).click();
+  await page.fill('#name', name);
+  await page.click('button[type="submit"]');
+  await page.waitForURL(/\/party\/[A-Z0-9]+/);
+  return page.url().split('/party/')[1]?.split('/')[0] ?? '';
+}
+
+async function joinParty(page: Page, name: string, inviteCode: string): Promise<void> {
+  await page.goto('/');
+  await page.getByRole('tab', { name: 'Join with Code' }).click();
+  await page.fill('#name', name);
+  await page.fill('#code', inviteCode);
+  await page.click('button[type="submit"]');
+  await page.waitForURL(/\/party\/[A-Z0-9]+/);
+}
+```
+
+On mobile, assert select value/panel visibility instead of hidden tab button attributes.
+
+### Command gates
+
+Run from workspace root:
 
 ```bash
+pnpm typecheck
+pnpm lint
+pnpm format:check
 pnpm test
-```
-
-Expected additions:
-
-- `apps/platform/__tests__/homeTabs.test.ts` (~80 lines)
-  - `useHomeTabs()` returns `'browse'` when storage and query are empty.
-  - Returns the value of `route.query.tab` when it's valid.
-  - Falls back to storage when `route.query.tab` is invalid (`'garbage'`).
-  - `setTab('host')` updates the ref, writes to `sessionStorage`, and calls `router.replace({ query: { tab: 'host' } })`.
-  - `setTab('garbage')` is a no-op (no ref change, no storage write, no router call).
-  - Repeated `setTab` calls do not push redundant history entries (uses `replace`, not `push`).
-
-Existing `partyStore.test.ts`, `requestLogger.test.ts`, etc. must still pass (no regressions).
-
-### 10.3 Manual smoke checks (developer machine)
-
-```bash
-pnpm dev
-```
-
-| # | Action | Expected |
-| --- | --- | --- |
-| 1 | Open `http://localhost:5173/` (fresh storage) | Lands on **Browse Games** tab; `<GameGrid>` renders 5 + 2 cards; no form visible. |
-| 2 | Click **Host a Party** | Pill highlights; form fades in; previous empty state cleared. |
-| 3 | Type "Alice", switch to **Browse Games**, switch back to **Host a Party** | Input still shows "Alice". |
-| 4 | Refresh the page | Tab restored from `sessionStorage`. |
-| 5 | Visit `/?tab=join` | URL query overrides default → Join tab active. |
-| 6 | Visit `/?tab=garbage` | Falls back to Browse (invalid). |
-| 7 | Click browser **Back** after switching tabs | Skips past tab-history entries (because we `replace`, not `push`); lands on previous real page. |
-| 8 | Create a party, land on `/party/:code`, click **Leave** | Returns to `/`; Browse tab (or last-active tab) is restored from `sessionStorage`. |
-| 9 | Create a party, disconnect network mid-game, refresh `/` | `tryResume` runs regardless of tab, redirects back to game view (existing test). |
-| 10 | Resize browser below 640 px | Pill bar hides; `<select>` appears; selecting an option still switches tabs. |
-| 11 | Use only the keyboard: Tab into the bar, Arrow keys, Enter | Focus moves; selected tab activates; focus jumps into the panel's first input. |
-| 12 | Open two tabs, both Browse; observe a lobby appear in tab 1, switch to Browse in tab 2 | Lobby appears within polling interval (Plan 2's cadence). |
-| 13 | DevTools → Application → Session Storage → delete `home.activeTab` | Next reload lands on Browse (default). |
-
-### 10.4 Playwright E2E additions
-
-```bash
 pnpm test:e2e
 ```
 
-Append a `describe('home tabs', …)` block to `apps/platform/e2e/party-resume.spec.ts` (or a new sibling `apps/platform/e2e/home-tabs.spec.ts` — either is fine; prefer a sibling to keep the resume file focused):
+---
 
-```ts
-test.describe('home tabs', () => {
-  test('default tab is Browse on first visit', async ({ page }) => {
-    await page.goto('/');
-    await expect(page.getByRole('tab', { name: 'Browse Games' })).toHaveAttribute('aria-selected', 'true');
-  });
+## 12. Manual smoke checklist
 
-  test('deep-link ?tab=join activates Join', async ({ page }) => {
-    await page.goto('/?tab=join');
-    await expect(page.getByRole('tab', { name: 'Join with Code' })).toHaveAttribute('aria-selected', 'true');
-  });
-
-  test('deep-link ?tab=garbage falls back to Browse', async ({ page }) => {
-    await page.goto('/?tab=garbage');
-    await expect(page.getByRole('tab', { name: 'Browse Games' })).toHaveAttribute('aria-selected', 'true');
-  });
-
-  test('active tab persists across refresh', async ({ page }) => {
-    await page.goto('/');
-    await page.getByRole('tab', { name: 'Host a Party' }).click();
-    await page.reload();
-    await expect(page.getByRole('tab', { name: 'Host a Party' })).toHaveAttribute('aria-selected', 'true');
-  });
-
-  test('form input survives tab switch', async ({ page }) => {
-    await page.goto('/');
-    await page.getByRole('tab', { name: 'Host a Party' }).click();
-    await page.fill('#name', 'Alice');
-    await page.getByRole('tab', { name: 'Browse Games' }).click();
-    await page.getByRole('tab', { name: 'Host a Party' }).click();
-    await expect(page.locator('#name')).toHaveValue('Alice');
-  });
-
-  test('tryResume runs regardless of active tab', async ({ browser }) => {
-    // Create party in ctx1, leave party view, return to /, switch to Browse, refresh, expect redirect into game.
-    // Mirrors the existing 'home route resumes an active match' test but adds a tab switch in the middle.
-  });
-
-  test('mobile viewport renders <select> instead of pill bar', async ({ page }) => {
-    await page.setViewportSize({ width: 390, height: 844 });
-    await page.goto('/');
-    await expect(page.locator('.home-tab-bar-pills')).toBeHidden();
-    await expect(page.locator('.home-tab-bar-select')).toBeVisible();
-    await page.selectOption('.home-tab-bar-select', 'host');
-    await expect(page.getByRole('tab', { name: 'Host a Party' })).toHaveAttribute('aria-selected', 'true');
-  });
-
-  test('keyboard: ArrowRight moves focus + Enter activates', async ({ page }) => {
-    await page.goto('/');
-    await page.locator('.home-tab-bar-pills button[aria-selected="true"]').focus();
-    await page.keyboard.press('ArrowRight');
-    await page.keyboard.press('Enter');
-    // Now the next tab (Host) is active.
-  });
-});
-```
-
-The **existing** four tests in `party-resume.spec.ts` must continue to pass unchanged. They use the form submit buttons (labelled "Create Party" / "Join Party"), which are unchanged by this plan — only the *tab labels* change, not the *submit button labels*.
-
-### 10.5 Performance & a11y
-
-- DevTools → Performance: switching tabs should be < 16 ms (no layout thrash; Transition `mode="out-in"`).
-- DevTools → Lighthouse a11y score: ≥ 95 (roving tabindex + ARIA roles + native `<select>` fallback).
-- axe-core via `@axe-core/playwright` (if already in the project — if not, this is out of scope) would be a nice-to-have for a follow-up.
+1. Fresh `/` load shows Browse.
+2. Host tab shows the old create form behavior.
+3. Join tab shows the old invite-code behavior.
+4. Name and code drafts survive tab switches.
+5. Refresh restores the active tab from sessionStorage.
+6. `/?tab=host` and `/?tab=join` deep-link correctly.
+7. Browser Back does not step through every tab click.
+8. Public lobby click switches to Join and pre-fills code.
+9. Game click switches to Host and shows selected-game hint.
+10. Creating from that selected-game state lands in PartyView with the game selected when `selectGame` succeeds.
+11. Returning user with active match goes to `/party/:code/game/:gameId` regardless of stored tab.
+12. 390px viewport shows mobile select, not pill tabs.
+13. Keyboard-only user can switch tabs and submit forms.
 
 ---
 
-## 11. Risks & open questions
+## 13. Risks and mitigations
 
-### Top risks
-
-1. **R1 — `tryResume` regression on Browse default.** Today a returning user with a saved session always lands on `/` and gets redirected. With Browse as the new default, the resume happens during the brief render of `<HomeView>` before the redirect — there's a perceptible flash of the Browse tab. **Mitigation:** show a `<div aria-busy="true" class="sr-only">Resuming your party…</div>` placeholder behind the tabs during the resume attempt; the redirect still wins. Estimated extra effort: 15 min, no schema change.
-2. **R2 — Tab state drift between URL and storage.** A user bookmarks `/?tab=join`, then changes their default to Browse via the UI. Browser back may land them on `/?tab=join` again, but their storage now says `'browse'`. **Mitigation:** `watch(() => route.query.tab, …)` (see §6.2) re-syncs on every navigation; document the precedence order in a code comment so future readers don't invert it.
-3. **R3 — New-user conversion regression.** Today's first-time UX is one form, one button. After this plan, first-time users see a game grid and have to click "Host a Party" to begin. **Mitigation:** (a) Browse tab's CTA card (§5.4) is prominent and orange-accented; (b) Browse tab's `<GameGrid>` cards are clickable and explain each game with one-line descriptions; (c) ship with analytics events (`tab_changed`, `tab_first_paint`, `host_started_from_browse`) so we can measure the funnel and revert to a single-form layout if needed.
-
-### Open questions for the user
-
-1. **Q1 — Browse CTA copy:** Should the in-Browse "Host a Party" CTA read **"Host a Party →"**, **"Create Your Own Party"**, or just **"Host"** (icon-only on mobile)? Default plan: "Host a Party →" on desktop, icon-only on mobile.
-2. **Q2 — Coming-soon cards:** Plan 1 places 2–3 coming-soon cards in `<GameGrid>`. Should those cards (a) do nothing on click, (b) show a tooltip "Coming soon", or (c) switch to the Host tab and toast "Coming soon — host a party with another game for now"? Default plan: (b), no tab switch.
-
-### Other risks (not in top 3)
-
-- **R4 — i18n:** None today (all copy is inline English). If i18n is on the roadmap, extract labels (`'Browse Games'`, `'Host a Party'`, `'Join with Code'`, `'Pick a game, host a party, or join a friend's code.'`) into a constants object during this PR rather than retrofitting later. Cost: ~10 min.
-- **R5 — Analytics / share-links:** Adding `?tab=` to the URL doesn't affect analytics events (no event currently fires on `/`), but if future plans emit `page_view` events, decide whether `?tab=` should be stripped or reported. Out of scope here.
-- **R6 — Public-lobbies endpoint availability:** If Plan 2's `/api/public-lobbies` is not deployed yet, `<PublicLobbiesList>` renders an empty state. `<BrowseTabPanel>` must handle `publicLobbies === undefined` (treat as empty, don't show a spinner forever). Plan 2 should already cover this; verify during execution.
+| Risk                                     | Mitigation                                                                                                                   |
+| ---------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------- |
+| Browse default reduces create conversion | Prominent Host CTA in Browse; session remembers last tab for returning users.                                                |
+| Resume flash before redirect             | `useHomePartyActions.isResuming` can show a small `aria-busy` status or hide panels while a stored session is being checked. |
+| URL/storage drift                        | Single precedence rule and one watcher that never writes router state.                                                       |
+| Selected-game preselect race             | Create party first, then best-effort `selectGame`, then navigate. Party remains usable if preselect fails.                   |
+| E2E flakiness from changed default tab   | Update all helpers and prefer role labels over CSS selectors.                                                                |
+| Mobile hidden tabs confuse tests/a11y    | Native select is the mobile tab control; hidden pills are not tested or announced.                                           |
 
 ---
 
-## 12. Estimated effort
+## 14. Open questions
 
-| Activity | Time |
-| --- | --- |
-| §7.1 `useHomeTabs` composable + tests | 1.5 h |
-| §7.2 `<HomeTabBar>` (pills + select + a11y) + unit tests | 2.5 h |
-| §7.3 `<HostTabPanel>` lift + parent wiring | 1 h |
-| §7.4 `<JoinTabPanel>` lift + `<PublicLobbiesList>` rail | 1.5 h |
-| §7.5 `<BrowseTabPanel>` compose + 2-col layout | 2 h |
-| §7.6 `HomeView.vue` shell refactor + style tweaks (max-width 720, hero copy) | 1.5 h |
-| §7.7 E2E updates + new test cases | 2 h |
-| §7.8 `homeTabs.test.ts` | 1 h |
-| §10.3 manual smoke checklist (13 steps) | 1 h |
-| Code review cycles (assume 2 rounds) | 2 h |
-| **Total** | **~16 h (≈ 2 working days)** |
-
-Breakdown assumes one developer familiar with the codebase. No backend or design changes required.
+1. CTA copy: **Host a Party →** or **Create Your Own Party**?
+2. Should game preselection after create be blocking? Recommendation: best-effort and non-blocking.
+3. Should selected game persist across refresh? Recommendation: no for v1.
+4. Should Browse remain default if analytics later show lower create conversion? Recommendation: revisit after one release; no analytics added in this plan.
 
 ---
 
-## 13. Out of scope
+## 15. Estimated effort
 
-- **No auth changes.** No login, no signup, no user accounts.
-- **No new game types.** Browse lists the existing 5 + coming-soon from Plan 1.
-- **No `/browse` route.** That would require re-architecting the resume flow and is intentionally deferred.
-- **No Admin view changes.** `AdminView.vue` is unaffected; admins continue to use the existing entry point.
-- **No i18n infrastructure setup.** Only label extraction (§11 R4) if trivial.
-- **No analytics events** (recommend adding in a follow-up if conversion regression is observed).
-- **No deep-linking to specific games** (e.g. `/browse?game=blackout` would be nice but is not required by the task).
-- **No design tokens added.** Reuses `ui-tab-group`, `ui-tab`, `ui-tab-active`, `ui-section-label`, `ui-game-card*`, `ui-input`, `ui-btn-primary`, `--color-accent`. **No new `@layer components` classes.**
-- **No server-side changes.** No new HTTP routes, no new Socket.IO events beyond what Plan 2 introduces.
-- **No persistence of form drafts to `localStorage`.** Only `sessionStorage` (cleared on tab close), per task spec.
-- **No changes to `usePartySocket`** (module-level singleton stays exactly as it is in `apps/platform/src/composables/usePartySocket.ts`).
+| Area                           | Estimate    |
+| ------------------------------ | ----------- |
+| `useHomeTabs` + tests          | 1.5–2h      |
+| `useHomePartyActions`          | 2–3h        |
+| `HomeTabBar.vue`               | 2h          |
+| Host/Join/Browse panels        | 3–4h        |
+| HomeView refactor/layout       | 1.5–2h      |
+| E2E helper updates + new specs | 3–4h        |
+| Verification/fixes             | 1–2h        |
+| **Total**                      | **~14–19h** |
 
 ---
 
-## 14. Execution checklist (for the implementing agent)
+## 16. Out of scope
 
-- [ ] Read `docs/plan-01-hero-and-game-grid.md` and `docs/plan-02-public-lobbies.md`. Confirm Plan 1's `<GameGrid>` and Plan 2's `<PublicLobbiesList>` exist with the names and props assumed in §8. Adjust this plan if names differ.
-- [ ] Confirm Plan 1's `clientGameRegistry` exposes `platformMeta` for all 5 games (currently true per `CLAUDE.md:158–174`).
-- [ ] Implement steps 1–6 in §7 in order.
-- [ ] Run §10.1 / §10.2 / §10.4 — all green.
-- [ ] Walk §10.3 manually.
-- [ ] Bump `HomeView.vue` line count target in the commit message (286 → ~140).
-- [ ] PR description links Plans 1, 2, and 3; mentions §11 R1 mitigation (resume placeholder) is in place.
-- [ ] After merge: monitor new-user conversion (R3) for one release cycle.
+- New `/browse` route.
+- Authentication/accounts.
+- Analytics implementation.
+- Password-protected public lobbies.
+- New server events beyond Plan 02.
+- New games or coming-soon placeholders.
+- Vue component unit-test infrastructure.
+- i18n infrastructure.
