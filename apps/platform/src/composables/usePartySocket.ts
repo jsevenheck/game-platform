@@ -3,8 +3,7 @@ import type { PartyView } from '../stores/party';
 import type { JoinablePartyView } from '../stores/publicLobbies';
 
 export type JoinableListResponse =
-  | { ok: true; parties: JoinablePartyView[] }
-  | { ok: false; error: string };
+  { ok: true; parties: JoinablePartyView[] } | { ok: false; error: string };
 
 export type SetPartyPublicResponse = { ok: true; isPublic: boolean } | { ok: false; error: string };
 

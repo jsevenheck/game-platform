@@ -1834,7 +1834,7 @@
       "label": "SetPartyPublicResponse",
       "file_type": "code",
       "source_file": "apps/platform/server/party/partyHandlers.ts",
-      "source_location": "L105",
+      "source_location": "L104",
       "id": "party_partyhandlers_setpartypublicresponse",
       "community": 25,
       "norm_label": "setpartypublicresponse"
@@ -1843,7 +1843,7 @@
       "label": "PartyServerToClientEvents",
       "file_type": "code",
       "source_file": "apps/platform/server/party/partyHandlers.ts",
-      "source_location": "L107",
+      "source_location": "L106",
       "id": "party_partyhandlers_partyservertoclientevents",
       "community": 25,
       "norm_label": "partyservertoclientevents"
@@ -1852,7 +1852,7 @@
       "label": "PartySocket",
       "file_type": "code",
       "source_file": "apps/platform/server/party/partyHandlers.ts",
-      "source_location": "L112",
+      "source_location": "L111",
       "id": "party_partyhandlers_partysocket",
       "community": 25,
       "norm_label": "partysocket"
@@ -1861,7 +1861,7 @@
       "label": "broadcastParty()",
       "file_type": "code",
       "source_file": "apps/platform/server/party/partyHandlers.ts",
-      "source_location": "L114",
+      "source_location": "L113",
       "id": "party_partyhandlers_broadcastparty",
       "community": 25,
       "norm_label": "broadcastparty()"
@@ -1870,7 +1870,7 @@
       "label": "broadcastPartyAndLobbies()",
       "file_type": "code",
       "source_file": "apps/platform/server/party/partyHandlers.ts",
-      "source_location": "L119",
+      "source_location": "L118",
       "id": "party_partyhandlers_broadcastpartyandlobbies",
       "community": 25,
       "norm_label": "broadcastpartyandlobbies()"
@@ -1879,7 +1879,7 @@
       "label": "joinableListRateLimit",
       "file_type": "code",
       "source_file": "apps/platform/server/party/partyHandlers.ts",
-      "source_location": "L125",
+      "source_location": "L124",
       "id": "party_partyhandlers_joinablelistratelimit",
       "community": 25,
       "norm_label": "joinablelistratelimit"
@@ -1888,7 +1888,7 @@
       "label": "joinableListPruneInterval",
       "file_type": "code",
       "source_file": "apps/platform/server/party/partyHandlers.ts",
-      "source_location": "L128",
+      "source_location": "L127",
       "id": "party_partyhandlers_joinablelistpruneinterval",
       "community": 25,
       "norm_label": "joinablelistpruneinterval"
@@ -1897,7 +1897,7 @@
       "label": "registerPartyHandlers()",
       "file_type": "code",
       "source_file": "apps/platform/server/party/partyHandlers.ts",
-      "source_location": "L134",
+      "source_location": "L133",
       "id": "party_partyhandlers_registerpartyhandlers",
       "community": 57,
       "norm_label": "registerpartyhandlers()"
@@ -1906,7 +1906,7 @@
       "label": "scheduleReturnCleanup()",
       "file_type": "code",
       "source_file": "apps/platform/server/party/partyHandlers.ts",
-      "source_location": "L926",
+      "source_location": "L925",
       "id": "party_partyhandlers_schedulereturncleanup",
       "community": 25,
       "norm_label": "schedulereturncleanup()"
@@ -2662,7 +2662,7 @@
       "label": "SetPartyPublicResponse",
       "file_type": "code",
       "source_file": "apps/platform/src/composables/usePartySocket.ts",
-      "source_location": "L9",
+      "source_location": "L8",
       "id": "composables_usepartysocket_setpartypublicresponse",
       "community": 37,
       "norm_label": "setpartypublicresponse"
@@ -2671,7 +2671,7 @@
       "label": "PartyClientToServerEvents",
       "file_type": "code",
       "source_file": "apps/platform/src/composables/usePartySocket.ts",
-      "source_location": "L11",
+      "source_location": "L10",
       "id": "composables_usepartysocket_partyclienttoserverevents",
       "community": 37,
       "norm_label": "partyclienttoserverevents"
@@ -2680,7 +2680,7 @@
       "label": "PartyServerToClientEvents",
       "file_type": "code",
       "source_file": "apps/platform/src/composables/usePartySocket.ts",
-      "source_location": "L59",
+      "source_location": "L58",
       "id": "composables_usepartysocket_partyservertoclientevents",
       "community": 37,
       "norm_label": "partyservertoclientevents"
@@ -2689,7 +2689,7 @@
       "label": "PartySocket",
       "file_type": "code",
       "source_file": "apps/platform/src/composables/usePartySocket.ts",
-      "source_location": "L65",
+      "source_location": "L64",
       "id": "composables_usepartysocket_partysocket",
       "community": 37,
       "norm_label": "partysocket"
@@ -2698,7 +2698,7 @@
       "label": "usePartySocket()",
       "file_type": "code",
       "source_file": "apps/platform/src/composables/usePartySocket.ts",
-      "source_location": "L69",
+      "source_location": "L68",
       "id": "composables_usepartysocket_usepartysocket",
       "community": 37,
       "norm_label": "usepartysocket()"
@@ -2707,7 +2707,7 @@
       "label": "disconnectPartySocket()",
       "file_type": "code",
       "source_file": "apps/platform/src/composables/usePartySocket.ts",
-      "source_location": "L79",
+      "source_location": "L78",
       "id": "composables_usepartysocket_disconnectpartysocket",
       "community": 37,
       "norm_label": "disconnectpartysocket()"
@@ -11023,7 +11023,7 @@
       "label": "TeamConfig",
       "file_type": "code",
       "source_file": "games/secret-signals/core/src/types.ts",
-      "source_location": "L47",
+      "source_location": "L42",
       "id": "src_types_teamconfig",
       "community": 29,
       "norm_label": "teamconfig"
@@ -11032,7 +11032,7 @@
       "label": "Player",
       "file_type": "code",
       "source_file": "games/secret-signals/core/src/types.ts",
-      "source_location": "L54",
+      "source_location": "L49",
       "id": "games_secret_signals_core_src_types_ts_src_types_player",
       "community": 29,
       "norm_label": "player"
@@ -11041,7 +11041,7 @@
       "label": "PlayerView",
       "file_type": "code",
       "source_file": "games/secret-signals/core/src/types.ts",
-      "source_location": "L66",
+      "source_location": "L61",
       "id": "games_secret_signals_core_src_types_ts_src_types_playerview",
       "community": 29,
       "norm_label": "playerview"
@@ -11050,7 +11050,7 @@
       "label": "FocusMarker",
       "file_type": "code",
       "source_file": "games/secret-signals/core/src/types.ts",
-      "source_location": "L76",
+      "source_location": "L71",
       "id": "src_types_focusmarker",
       "community": 29,
       "norm_label": "focusmarker"
@@ -11059,7 +11059,7 @@
       "label": "Room",
       "file_type": "code",
       "source_file": "games/secret-signals/core/src/types.ts",
-      "source_location": "L81",
+      "source_location": "L76",
       "id": "games_secret_signals_core_src_types_ts_src_types_room",
       "community": 29,
       "norm_label": "room"
@@ -11068,7 +11068,7 @@
       "label": "RoomView",
       "file_type": "code",
       "source_file": "games/secret-signals/core/src/types.ts",
-      "source_location": "L101",
+      "source_location": "L96",
       "id": "games_secret_signals_core_src_types_ts_src_types_roomview",
       "community": 29,
       "norm_label": "roomview"
@@ -11077,7 +11077,7 @@
       "label": "StoredSession",
       "file_type": "code",
       "source_file": "games/secret-signals/core/src/types.ts",
-      "source_location": "L119",
+      "source_location": "L114",
       "id": "games_secret_signals_core_src_types_ts_src_types_storedsession",
       "community": 29,
       "norm_label": "storedsession"
@@ -41865,5 +41865,5 @@
     }
   ],
   "hyperedges": [],
-  "built_at_commit": "50811239e21b70106fddd9ea3e189f3e958d16e3"
+  "built_at_commit": "713bc066c94cb03c6b9eb0295cfb0e84fd95d777"
 }

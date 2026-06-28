@@ -36,12 +36,7 @@ export interface LogEntry {
   signal: { word: string; number: number };
   revealedCards: Array<{ word: string; type: CardType }>;
   endReason:
-    | 'correct-complete'
-    | 'wrong-team'
-    | 'neutral'
-    | 'assassin'
-    | 'voluntary'
-    | 'max-guesses';
+    'correct-complete' | 'wrong-team' | 'neutral' | 'assassin' | 'voluntary' | 'max-guesses';
 }
 
 export interface TeamConfig {

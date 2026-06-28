@@ -99,8 +99,7 @@ interface PartyClientToServerEvents {
 }
 
 type JoinableListResponse =
-  | { ok: true; parties: JoinablePartyView[] }
-  | { ok: false; error: string };
+  { ok: true; parties: JoinablePartyView[] } | { ok: false; error: string };
 
 type SetPartyPublicResponse = { ok: true; isPublic: boolean } | { ok: false; error: string };
 
