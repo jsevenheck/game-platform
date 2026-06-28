@@ -143,6 +143,7 @@ function onKeydown(event: KeyboardEvent, index: number): void {
   display: flex;
   gap: 4px;
   padding: 4px;
+  margin-bottom: 1.5rem;
   background: var(--color-elevated);
   border: 1px solid var(--color-border);
   border-radius: var(--radius-lg);
@@ -186,6 +187,7 @@ function onKeydown(event: KeyboardEvent, index: number): void {
   display: none;
   flex-direction: column;
   gap: 0.375rem;
+  margin-bottom: 1.5rem;
 }
 
 .home-label {

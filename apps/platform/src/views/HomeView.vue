@@ -92,12 +92,7 @@ onBeforeUnmount(() => {
       </div>
 
       <!-- Tab bar -->
-      <HomeTabBar
-        :model-value="activeTab"
-        :tabs="HOME_TABS"
-        class="mb-6"
-        @update:model-value="setTab"
-      />
+      <HomeTabBar :model-value="activeTab" :tabs="HOME_TABS" @update:model-value="setTab" />
 
       <!-- Panels -->
       <Transition name="fade" mode="out-in">
@@ -174,7 +169,7 @@ onBeforeUnmount(() => {
   background: var(--color-panel);
   border: 1px solid var(--color-border-strong);
   border-radius: var(--radius-xl);
-  padding: 2.5rem 2rem;
+  padding: clamp(1.25rem, 3vw, 2.25rem);
   box-shadow:
     0 24px 64px rgba(0, 0, 0, 0.65),
     0 0 0 1px rgba(255, 255, 255, 0.03) inset;
@@ -201,20 +196,20 @@ onBeforeUnmount(() => {
 
 .home-hero {
   text-align: center;
-  margin-bottom: 2rem;
+  margin-bottom: 1.25rem;
 }
 
 .home-logo-wrap {
-  width: 56px;
-  height: 56px;
-  margin: 0 auto 1.125rem;
+  width: 44px;
+  height: 44px;
+  margin: 0 auto 0.75rem;
   background: var(--color-elevated);
   border: 1px solid var(--color-border-strong);
   border-radius: var(--radius-lg);
   display: flex;
   align-items: center;
   justify-content: center;
-  font-size: 1.625rem;
+  font-size: 1.35rem;
   box-shadow: 0 0 24px rgba(249, 115, 22, 0.18);
 }
 
@@ -223,14 +218,14 @@ onBeforeUnmount(() => {
 }
 
 .home-title {
-  font-size: 1.875rem;
+  font-size: 1.625rem;
   font-weight: 800;
   letter-spacing: -0.02em;
   background: linear-gradient(135deg, #f0f0f5 0%, #7878a0 100%);
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
   background-clip: text;
-  margin-bottom: 0.375rem;
+  margin-bottom: 0.25rem;
   line-height: 1.2;
 }
 

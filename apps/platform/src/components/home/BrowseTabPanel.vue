@@ -133,4 +133,17 @@ const emit = defineEmits<{
 .browse-library {
   min-width: 0;
 }
+
+/* Mobile: stack CTA text and actions vertically so the text isn't squeezed. */
+@media (max-width: 639px) {
+  .browse-cta {
+    flex-direction: column;
+    gap: 0.75rem;
+    text-align: center;
+  }
+
+  .browse-cta-actions {
+    justify-content: center;
+  }
+}
 </style>

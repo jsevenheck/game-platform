@@ -126,20 +126,14 @@ function handleSelect(id: string) {
   margin: 0;
   padding: 0;
   display: grid;
-  grid-template-columns: 1fr;
+  /*
+   * Container-adaptive columns: the grid fills with as many 160px-min cards
+   * as fit its actual width. This works both in full-width (Plan 01 standalone)
+   * and inside the narrow Browse two-column layout (Plan 03), where viewport
+   * media queries would produce too many columns and overflow.
+   */
+  grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
   gap: 1rem;
-}
-
-@media (min-width: 700px) {
-  .game-library-grid {
-    grid-template-columns: repeat(2, 1fr);
-  }
-}
-
-@media (min-width: 1024px) {
-  .game-library-grid {
-    grid-template-columns: repeat(3, 1fr);
-  }
 }
 
 .game-library-card {
@@ -148,6 +142,7 @@ function handleSelect(id: string) {
   display: flex;
   flex-direction: column;
   cursor: default; /* Static Plan 01 cards must not look clickable. */
+  overflow: hidden; /* Safety net: clip any residual overflow at the card edge. */
   /* Staggered fade-up entrance. `--stagger` is set per-card inline. */
   animation: game-library-fade-up 600ms cubic-bezier(0.22, 1, 0.36, 1) both;
   animation-delay: var(--stagger, 0ms);
@@ -199,9 +194,9 @@ function handleSelect(id: string) {
 
 .game-library-card__head {
   display: flex;
-  align-items: baseline;
-  justify-content: space-between;
-  gap: 0.5rem;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 0.25rem;
 }
 
 .game-library-card__name {
@@ -212,7 +207,7 @@ function handleSelect(id: string) {
 }
 
 .game-library-card__chip {
-  flex: 0 0 auto;
+  align-self: flex-start;
   font-size: 0.62rem;
   font-weight: 600;
   letter-spacing: 0.04em;
