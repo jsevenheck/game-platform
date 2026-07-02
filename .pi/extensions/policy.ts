@@ -20,7 +20,7 @@ function isInsideRoot(absPath: string, rootDir: string): boolean {
 
 // Lesen grundsätzlich verboten: sensible Credentials & interne Metadaten
 const READ_DENY = [
-  /(?:^|\/)\.env(\.[^/]*)?$/,   // .env* (außer .env.example)
+  /(?:^|\/)\.env(\.[^/]*)?$/, // .env* (außer .env.example)
   /(?:^|\/)\.git\//,
   /(?:^|\/)node_modules\//,
   /\.pem$/,
@@ -30,12 +30,13 @@ const READ_DENY = [
   /\.crt$/,
   /\.cer$/,
   /\.log$/,
+  /(?:^|\/)graphify-out(?:\/|$)/,
 ];
 
 // Schreiben grundsätzlich verboten: kritische Konfigurationsdateien & Credentials
 const WRITE_DENY = [
-  /(?:^|\/)\.env(\.[^/]*)?$/,                  // .env* (außer .env.example → siehe WRITE_ALLOW_OVERRIDE)
-  /(?:^|\/)\.claude\/settings\.json$/,          // eigene Agent-Settings
+  /(?:^|\/)\.env(\.[^/]*)?$/, // .env* (außer .env.example → siehe WRITE_ALLOW_OVERRIDE)
+  /(?:^|\/)\.claude\/settings\.json$/, // eigene Agent-Settings
   /(?:^|\/)package-lock\.json$/,
   /\.pem$/,
   /\.key$/,
@@ -47,7 +48,7 @@ const WRITE_DENY = [
 
 // Explizit immer erlaubt (überschreibt ggf. WRITE_DENY-ähnliche Muster)
 const WRITE_ALLOW_OVERRIDE = [
-  /\.env\.example$/,            // .env.example ist harmlos und soll editierbar bleiben
+  /\.env\.example$/, // .env.example ist harmlos und soll editierbar bleiben
 ];
 
 // Schreiben verboten nach Dateityp: Binärdateien & kompilierte Artefakte
@@ -83,7 +84,7 @@ const WRITE_DENY_TYPES = [
   /\.jpe?g$/,
   /\.gif$/,
   /\.webp$/,
-  /\.svg$/,   // SVG ist XML — bei Bedarf diese Zeile entfernen
+  /\.svg$/, // SVG ist XML — bei Bedarf diese Zeile entfernen
   /\.ico$/,
   /\.mp3$/,
   /\.mp4$/,
@@ -107,29 +108,41 @@ const BASH_DENY = [
   /^git\s+rebase\b/,
   /^git\s+reset\b/,
   /^git\s+clean\b/,
-  /^git\s+checkout\s+--/,   // Datei-Discard
+  /^git\s+checkout\s+--/, // Datei-Discard
 
   // Destruktive Filesystem-Ops
-  /\brm\s+.*-[a-z]*r[a-z]*f\b/,  // rm -rf und Varianten
+  /\brm\s+.*-[a-z]*r[a-z]*f\b/, // rm -rf und Varianten
   /\brm\s+.*-[a-z]*f[a-z]*r\b/,
   /^sudo\b/,
   /^su\b/,
-
-  /^graphify\s+add\b/,
 
   // Netzwerk-Exfiltration / Tunneling
   /\bcurl\b.*\|\s*(ba)?sh/,
   /\bwget\b.*\|\s*(ba)?sh/,
   /\bngrok\b/,
-  /\bssh\s+-R\b/,           // Reverse-Tunnel
+  /\bssh\s+-R\b/, // Reverse-Tunnel
 
   // Deploy & Publish — explizit blockiert
   /^npm\s+publish\b/,
-  /^cf\s+(push|login)\b/,   // Cloud Foundry
-  /^cds\s+deploy\b/,        // SAP CAP Deploy (Produktiv-Deploy verhindern)
+  /^cf\s+(push|login)\b/, // Cloud Foundry
+  /^cds\s+deploy\b/, // SAP CAP Deploy (Produktiv-Deploy verhindern)
 
   // .env-Inhalt via Shell-Tools lesen blockieren
   /\b(cat|less|more|grep|awk|sed)\b[^|]*\.env\b/,
+];
+
+// Sichere Bash-Compound-Commands.
+// Wichtig: NICHT pauschal /^if\b/ erlauben, sondern nur konkrete sichere Formen.
+const BASH_ALLOW_COMPOUND = [
+  // if [ -f graphify-out/graph.json ]; then echo yes; else echo no; fi
+  /^if\s+\[\s+-f\s+graphify-out\/graph\.json\s+\]\s*;\s*then\s+echo\s+(?:"yes"|'yes'|yes)\s*;\s*else\s+echo\s+(?:"no"|'no'|no)\s*;\s*fi$/,
+
+  // if [ -f graphify-out/graph.json ]; then graphify query "..."; else echo "NO_GRAPH"; fi
+  //
+  // Erlaubt einfache/sichere Query-Strings in '...' oder "...".
+  // Blockiert bewusst Shell-Expansionen wie $, Backticks und unquoted Queries.
+  /^if\s+\[\s+-f\s+graphify-out\/graph\.json\s+\]\s*;\s*then\s+graphify\s+query\s+(?:"[^"`$\\]*(?:\\.[^"`$\\]*)*"|'[^'`$\\]*(?:\\.[^'`$\\]*)*')\s*;\s*else\s+echo\s+(?:"NO_GRAPH"|'NO_GRAPH'|NO_GRAPH)\s*;\s*fi$/,
+  /^test\s+-f\s+graphify-out\/graph\.json\s*&&\s*echo\s+exists\s*\|\|\s*echo\s+missing\s*&&\s*pwd\s*&&\s*find\s+\.\s+-maxdepth\s+3\s+-type\s+f\s*\|\s*sed\s+'s#\^\.\/##'\s*\|\s*head\s+-80$/,
 ];
 
 // Erlaubt
@@ -165,7 +178,7 @@ const BASH_ALLOW = [
   /^jar\b/,
   /^kotlin\b/,
   /^kotlinc\b/,
-  /^spring\b/,              // Spring Boot CLI
+  /^spring\b/, // Spring Boot CLI
 
   // Python / FastAPI / Uvicorn / Gunicorn
   /^python3?\b/,
@@ -178,12 +191,12 @@ const BASH_ALLOW = [
   /^uvicorn\b/,
   /^gunicorn\b/,
   /^hypercorn\b/,
-  /^fastapi\b/,             // fastapi dev / fastapi run
-  /^alembic\b/,             // DB-Migrationen
-  /^celery\b/,              // Task-Queue
+  /^fastapi\b/, // fastapi dev / fastapi run
+  /^alembic\b/, // DB-Migrationen
+  /^celery\b/, // Task-Queue
 
   // SAP CAP (CDS)
-  /^cds\b/,                 // cds build / cds deploy / cds watch / cds repl …
+  /^cds\b/, // cds build / cds deploy / cds watch / cds repl …
 
   // Playwright
   /^playwright\b/,
@@ -192,7 +205,7 @@ const BASH_ALLOW = [
   // Flutter / Dart
   /^flutter\b/,
   /^dart\b/,
-  /^pub\b/,                 // dart pub
+  /^pub\b/, // dart pub
 
   // Go
   /^go\b/,
@@ -220,7 +233,7 @@ const BASH_ALLOW = [
 
   // Shell-Werkzeuge (Suche, Inspektion, Text)
   /^grep\b/,
-  /^rg\b/,             // ripgrep
+  /^rg\b/, // ripgrep
   /^find\b/,
   /^ls\b/,
   /^ll\b/,
@@ -259,6 +272,10 @@ const BASH_ALLOW = [
   /^tsc\b/,
   /^tslint\b/,
   /^biome\b/,
+
+  /^graphify\s+query\b/,
+  /^graphify\s+path\b/,
+  /^graphify\s+explain\b/,
 ];
 
 // ─── Extension ────────────────────────────────────────────────────────────────
@@ -298,7 +315,10 @@ export default function (pi: ExtensionAPI) {
 
         // Credentials & kritische Config → hart blockieren
         if (matches(relPath, WRITE_DENY)) {
-          return { block: true, reason: `Write/Edit blocked (protected file): ${relPath}` };
+          return {
+            block: true,
+            reason: `Write/Edit blocked (protected file): ${relPath}`,
+          };
         }
 
         // Binärdateien & Medien → blockieren
@@ -323,7 +343,13 @@ export default function (pi: ExtensionAPI) {
         return { block: true, reason: `Bash blockiert (Denylist): ${command}` };
       }
 
-      // Danach Allowlist prüfen
+      // Sichere Compound-Commands wie:
+      // if [ -f graphify-out/graph.json ]; then ...; else ...; fi
+      if (matches(command, BASH_ALLOW_COMPOUND)) {
+        return; // durchlassen
+      }
+
+      // Danach normale Allowlist prüfen
       if (!matches(command, BASH_ALLOW)) {
         return {
           block: true,

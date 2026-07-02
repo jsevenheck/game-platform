@@ -196,10 +196,12 @@ See [docs/adding-a-new-game.md](docs/adding-a-new-game.md) for the full guide: f
 
 Graphify is available for codebase architecture and relationship queries.
 
-- Use `graphify .` to build the project graph for the current repository.
 - Use `graphify update .` to re-extract changed code files and update the existing graph without requiring an LLM API key.
 - Use `graphify query "..."` for architecture, file relationship, or call-graph questions before broad grep/read searches.
+- Use `graphify path "..."` to trace dependency / call paths between files or symbols.
+- Use `graphify explain "..."` to get an explanation of a specific subgraph or symbol relationships.
 - If `graphify-out/graph.json` exists, prefer a targeted Graphify query for high-level codebase context.
+- **Never read or directly access `graphify-out/`** (e.g. `graphify-out/graph.json`). Always go through the `graphify update .`, `graphify query`, `graphify path`, or `graphify explain` commands instead — the raw graph files are an internal artifact and must not be inspected directly.
 
 ## Skills
 

@@ -1,5 +1,7 @@
 #!/usr/bin/env python3
-import json, sys, os
+import json
+import os
+import sys
 
 # Read stdin so the pipe closes cleanly; the contents are not needed.
 try:
@@ -14,7 +16,7 @@ graph = os.path.join(root, "graphify-out", "graph.json")
 if os.path.exists(graph):
     hint = ("graphify-out/ is available — for questions about architecture, "
             "file relationships, or call graphs, use "
-            "`graphify query \"...\"` before broad grep/read searches.")
+            "`graphify query \"...\"` before broad grep/read searches. Do not search graphify-out/ manually")
     print(json.dumps({
         "hookSpecificOutput": {
             "hookEventName": "UserPromptSubmit",
