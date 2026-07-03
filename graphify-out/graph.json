@@ -5659,7 +5659,7 @@
       "label": "HandlerMap",
       "file_type": "code",
       "source_file": "games/flip7/__tests__/socketHandlers.test.ts",
-      "source_location": "L32",
+      "source_location": "L31",
       "id": "games_flip7_tests_sockethandlers_test_ts_tests_sockethandlers_test_handlermap",
       "community": 14,
       "norm_label": "handlermap"
@@ -5668,7 +5668,7 @@
       "label": "makeRoom()",
       "file_type": "code",
       "source_file": "games/flip7/__tests__/socketHandlers.test.ts",
-      "source_location": "L34",
+      "source_location": "L33",
       "id": "games_flip7_tests_sockethandlers_test_ts_tests_sockethandlers_test_makeroom",
       "community": 14,
       "norm_label": "makeroom()"
@@ -5677,7 +5677,7 @@
       "label": "makeNamespace()",
       "file_type": "code",
       "source_file": "games/flip7/__tests__/socketHandlers.test.ts",
-      "source_location": "L58",
+      "source_location": "L57",
       "id": "games_flip7_tests_sockethandlers_test_ts_tests_sockethandlers_test_makenamespace",
       "community": 14,
       "norm_label": "makenamespace()"
@@ -5686,7 +5686,7 @@
       "label": "makeSocket()",
       "file_type": "code",
       "source_file": "games/flip7/__tests__/socketHandlers.test.ts",
-      "source_location": "L84",
+      "source_location": "L83",
       "id": "games_flip7_tests_sockethandlers_test_ts_tests_sockethandlers_test_makesocket",
       "community": 14,
       "norm_label": "makesocket()"
@@ -5695,7 +5695,7 @@
       "label": "makeIo()",
       "file_type": "code",
       "source_file": "games/flip7/__tests__/socketHandlers.test.ts",
-      "source_location": "L102",
+      "source_location": "L101",
       "id": "games_flip7_tests_sockethandlers_test_ts_tests_sockethandlers_test_makeio",
       "community": 14,
       "norm_label": "makeio()"
@@ -5704,7 +5704,7 @@
       "label": "setupParty()",
       "file_type": "code",
       "source_file": "games/flip7/__tests__/socketHandlers.test.ts",
-      "source_location": "L107",
+      "source_location": "L106",
       "id": "games_flip7_tests_sockethandlers_test_ts_tests_sockethandlers_test_setupparty",
       "community": 14,
       "norm_label": "setupparty()"
@@ -19739,9 +19739,9 @@
       "source_file": "games/blackout/server/src/socketHandlers.ts",
       "source_location": "L17",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "games_blackout_server_src_sockethandlers_ts_src_sockethandlers",
-      "target": "party_gameauth_assignhost",
-      "confidence_score": 1.0
+      "target": "party_gameauth_assignhost"
     },
     {
       "relation": "imports",
@@ -19750,9 +19750,9 @@
       "source_file": "games/flip7/server/src/socketHandlers.ts",
       "source_location": "L17",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "games_flip7_server_src_sockethandlers_ts_src_sockethandlers",
-      "target": "party_gameauth_assignhost",
-      "confidence_score": 1.0
+      "target": "party_gameauth_assignhost"
     },
     {
       "relation": "calls",
@@ -36761,9 +36761,9 @@
       "source_file": "games/scout/server/src/models/room.ts",
       "source_location": "L76",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "games_scout_server_src_models_room_ts_models_room",
-      "target": "games_scout_server_src_models_room_ts_models_room_getroomsnapshot",
-      "confidence_score": 1.0
+      "target": "games_scout_server_src_models_room_ts_models_room_getroomsnapshot"
     },
     {
       "relation": "contains",
@@ -36791,9 +36791,9 @@
       "source_file": "games/scout/server/src/models/room.ts",
       "source_location": "L71",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "games_scout_server_src_models_room_ts_models_room",
-      "target": "games_scout_server_src_models_room_ts_models_room_roomstoresnapshot",
-      "confidence_score": 1.0
+      "target": "games_scout_server_src_models_room_ts_models_room_roomstoresnapshot"
     },
     {
       "relation": "contains",
@@ -43182,5 +43182,5 @@
     }
   ],
   "hyperedges": [],
-  "built_at_commit": "0764d60c4260694f1fbf21b97fbea680a30b06bc"
+  "built_at_commit": "8ae3c83b33542e6f432e8ac47bea6799d655b3f8"
 }

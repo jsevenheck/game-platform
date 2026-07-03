@@ -109,7 +109,10 @@ function makeSocket(id: string, auth?: Record<string, string>) {
 }
 
 describe('socketHandlers embedded autoJoinRoom', () => {
-  function setupParty(matchKey = 'session-1'): { party: PartySession; tokens: Record<string, string> } {
+  function setupParty(matchKey = 'session-1'): {
+    party: PartySession;
+    tokens: Record<string, string>;
+  } {
     const { party, hostResumeToken } = createPartySession('hub-1', 'Host', 'party-hub-socket');
     party.status = 'in-match';
     party.activeMatch = {

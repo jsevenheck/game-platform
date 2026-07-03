@@ -1,5 +1,4 @@
 import type { Mock } from 'vitest';
-import type { PartySession } from '../../../apps/platform/server/party/types';
 import {
   clearAllParties,
   createParty as createPartySession,
@@ -186,7 +185,13 @@ describe('registerFlip7 — autoJoinRoom', () => {
 
     const cb = vi.fn();
     socket.handlers['autoJoinRoom']?.(
-      { sessionId: 'session-1', name: 'Host', playerId: 'player-1', joinToken, resumeToken: 'wrong-token' },
+      {
+        sessionId: 'session-1',
+        name: 'Host',
+        playerId: 'player-1',
+        joinToken,
+        resumeToken: 'wrong-token',
+      },
       cb
     );
 

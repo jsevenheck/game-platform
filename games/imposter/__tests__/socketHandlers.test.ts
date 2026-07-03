@@ -80,7 +80,12 @@ function ensurePartyMember(sessionId, playerId, name) {
   if (!tokens) {
     const { party, hostResumeToken } = createPartySession(playerId, name, 'party-socket');
     party.status = 'in-match';
-    party.activeMatch = { gameId: 'imposter', matchKey: sessionId, namespace: '/g/imposter', startedAt: Date.now() };
+    party.activeMatch = {
+      gameId: 'imposter',
+      matchKey: sessionId,
+      namespace: '/g/imposter',
+      startedAt: Date.now(),
+    };
     tokens = { [playerId]: hostResumeToken };
     partyTokensBySession.set(sessionId, tokens);
     return hostResumeToken;
@@ -89,7 +94,13 @@ function ensurePartyMember(sessionId, playerId, name) {
   const token = 'token-' + sessionId + '-' + playerId;
   const party = getPartyByActiveMatch(sessionId, 'imposter');
   if (party && !party.members.has(playerId)) {
-    party.members.set(playerId, { playerId, name, connected: true, socketId: 'party-' + playerId, resumeToken: token });
+    party.members.set(playerId, {
+      playerId,
+      name,
+      connected: true,
+      socketId: 'party-' + playerId,
+      resumeToken: token,
+    });
   }
   tokens[playerId] = token;
   return token;
