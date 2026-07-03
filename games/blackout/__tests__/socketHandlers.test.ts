@@ -1,4 +1,9 @@
 import type { Mock } from 'vitest';
+import type { PartySession } from '../../../apps/platform/server/party/types';
+import {
+  clearAllParties,
+  createParty as createPartySession,
+} from '../../../apps/platform/server/party/partyStore';
 
 vi.mock('../server/src/models/room', () => ({
   createRoom: vi.fn(),
@@ -104,15 +109,29 @@ function makeSocket(id: string, auth?: Record<string, string>) {
 }
 
 describe('socketHandlers embedded autoJoinRoom', () => {
+  function setupParty(matchKey = 'session-1'): { party: PartySession; tokens: Record<string, string> } {
+    const { party, hostResumeToken } = createPartySession('hub-1', 'Host', 'party-hub-socket');
+    party.status = 'in-match';
+    party.activeMatch = {
+      gameId: 'blackout',
+      matchKey,
+      namespace: '/g/blackout',
+      startedAt: Date.now(),
+    };
+    return { party, tokens: { host: hostResumeToken } };
+  }
+
   afterEach(() => {
     vi.clearAllMocks();
     deleteSocketIndex('socket-old');
     deleteSocketIndex('socket-new');
     deleteSocketIndex('socket-host');
+    clearAllParties();
   });
 
   test('first autoJoinRoom creates a room using the hub player id as host id', () => {
     const room = makeRoom('ABCD', 'hub-1', 'socket-host');
+    setupParty('session-1');
     vi.mocked(getSessionRoom).mockReturnValue(undefined);
     vi.mocked(createRoom).mockImplementation(
       (_name: string, _socketId: string, hostPlayerId?: string) => ({
@@ -130,7 +149,10 @@ describe('socketHandlers embedded autoJoinRoom', () => {
     namespace.connect(socket);
 
     const cb = vi.fn();
-    socket.handlers.autoJoinRoom({ sessionId: 'session-1', playerId: 'hub-1', name: 'Host' }, cb);
+    socket.handlers.autoJoinRoom(
+      { sessionId: 'session-1', playerId: 'hub-1', name: 'Host', joinToken: 'mock-id' },
+      cb
+    );
 
     expect(createRoom).toHaveBeenCalledWith('Host', 'socket-host', 'hub-1');
     expect(setSessionToRoom).toHaveBeenCalledWith('session-1', 'ABCD');
@@ -144,6 +166,7 @@ describe('socketHandlers embedded autoJoinRoom', () => {
   });
 
   test('second autoJoinRoom with same session and hub player reconnects to the same slot', () => {
+    setupParty('session-1');
     const room = makeRoom('ABCD', 'hub-1', 'socket-old', 'Embedded Tester');
     vi.mocked(getSessionRoom).mockReturnValue('ABCD');
     vi.mocked(getRoom).mockReturnValue(room);
@@ -167,6 +190,7 @@ describe('socketHandlers embedded autoJoinRoom', () => {
         sessionId: 'session-1',
         playerId: 'hub-1',
         name: 'Embedded Tester',
+        joinToken: 'mock-id',
         resumeToken: room.players['hub-1'].resumeToken,
       },
       cb

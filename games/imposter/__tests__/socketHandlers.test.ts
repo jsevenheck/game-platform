@@ -1,4 +1,9 @@
 import type { Server } from 'socket.io';
+import {
+  clearAllParties,
+  createParty as createPartySession,
+  getPartyByActiveMatch,
+} from '../../../apps/platform/server/party/partyStore';
 import { registerGame } from '../server/src/handlers/socketHandlers';
 import { deleteRoom, getRoom } from '../server/src/models/room';
 import { deleteSocketIndex } from '../server/src/models/player';
@@ -60,9 +65,34 @@ function autoJoin(
     isHost?: boolean;
   }
 ) {
+  if (!payload.joinToken) {
+    payload.joinToken = ensurePartyMember(payload.sessionId, payload.playerId, payload.name);
+  }
   const cb = vi.fn();
   socket.handlers.autoJoinRoom(payload, cb);
   return cb;
+}
+
+const partyTokensBySession = new Map();
+
+function ensurePartyMember(sessionId, playerId, name) {
+  let tokens = partyTokensBySession.get(sessionId);
+  if (!tokens) {
+    const { party, hostResumeToken } = createPartySession(playerId, name, 'party-socket');
+    party.status = 'in-match';
+    party.activeMatch = { gameId: 'imposter', matchKey: sessionId, namespace: '/g/imposter', startedAt: Date.now() };
+    tokens = { [playerId]: hostResumeToken };
+    partyTokensBySession.set(sessionId, tokens);
+    return hostResumeToken;
+  }
+  if (tokens[playerId]) return tokens[playerId];
+  const token = 'token-' + sessionId + '-' + playerId;
+  const party = getPartyByActiveMatch(sessionId, 'imposter');
+  if (party && !party.members.has(playerId)) {
+    party.members.set(playerId, { playerId, name, connected: true, socketId: 'party-' + playerId, resumeToken: token });
+  }
+  tokens[playerId] = token;
+  return token;
 }
 
 describe('socketHandlers autoJoinRoom', () => {
@@ -71,6 +101,8 @@ describe('socketHandlers autoJoinRoom', () => {
     deleteSocketIndex('socket-2');
     deleteSocketIndex('socket-3');
     deleteSocketIndex('socket-4');
+    clearAllParties();
+    partyTokensBySession.clear();
   });
 
   it('creates a room keyed by session and preserves the hub player id', () => {
@@ -88,11 +120,11 @@ describe('socketHandlers autoJoinRoom', () => {
     namespace.sockets.set(socket.id, socket);
     connectionHandler!(socket);
 
-    const cb = vi.fn();
-    socket.handlers.autoJoinRoom(
-      { sessionId: 'session-1', playerId: 'hub-player-1', name: 'Host' },
-      cb
-    );
+    const cb = autoJoin(socket, {
+      sessionId: 'session-1',
+      playerId: 'hub-player-1',
+      name: 'Host',
+    });
 
     expect(cb).toHaveBeenCalledWith(
       expect.objectContaining({
@@ -124,11 +156,11 @@ describe('socketHandlers autoJoinRoom', () => {
     namespace.sockets.set(firstSocket.id, firstSocket);
     connectionHandler!(firstSocket);
 
-    const firstCb = vi.fn();
-    firstSocket.handlers.autoJoinRoom(
-      { sessionId: 'session-2', playerId: 'hub-player-2', name: 'Host' },
-      firstCb
-    );
+    const firstCb = autoJoin(firstSocket, {
+      sessionId: 'session-2',
+      playerId: 'hub-player-2',
+      name: 'Host',
+    });
 
     const roomCode = firstCb.mock.calls[0]?.[0]?.roomCode as string;
     const resumeToken = firstCb.mock.calls[0]?.[0]?.resumeToken as string;
@@ -137,11 +169,12 @@ describe('socketHandlers autoJoinRoom', () => {
     namespace.sockets.set(secondSocket.id, secondSocket);
     connectionHandler!(secondSocket);
 
-    const reconnectCb = vi.fn();
-    secondSocket.handlers.autoJoinRoom(
-      { sessionId: 'session-2', playerId: 'hub-player-2', name: 'Host', resumeToken },
-      reconnectCb
-    );
+    const reconnectCb = autoJoin(secondSocket, {
+      sessionId: 'session-2',
+      playerId: 'hub-player-2',
+      name: 'Host',
+      resumeToken,
+    });
 
     expect(reconnectCb).toHaveBeenCalledWith({
       ok: true,

@@ -97,7 +97,7 @@ const singleWinner = computed(() =>
 
     <button
       v-if="isHost"
-      class="ui-btn-primary bg-imposter! hover:bg-imposter-hover! py-4! px-10! text-lg!"
+      class="ui-btn-primary btn-imposter btn-imposter-hover py-4 px-10 text-lg"
       @click="$emit('restart')"
     >
       Play Again
@@ -105,3 +105,12 @@ const singleWinner = computed(() =>
     <p v-else class="text-muted-foreground italic">Waiting for host to restart...</p>
   </div>
 </template>
+
+<style scoped>
+.btn-imposter {
+  background: var(--color-imposter);
+}
+.btn-imposter-hover:hover:not(:disabled) {
+  background: var(--color-imposter-hover);
+}
+</style>

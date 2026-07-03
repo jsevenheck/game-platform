@@ -29,6 +29,7 @@ function onPhaseChange(phase: string) {
       :session-id="matchKey"
       :player-name="playerName"
       :player-id="playerId"
+      :join-token="joinToken"
       :is-host="isHost"
       @phase-change="onPhaseChange"
     />

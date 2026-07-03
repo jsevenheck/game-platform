@@ -5,6 +5,7 @@ export interface AutoJoinRoomData {
   name: string;
   playerId?: string;
   isHost?: boolean;
+  joinToken?: string;
   resumeToken?: string;
 }
 

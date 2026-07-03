@@ -15,6 +15,13 @@ import {
   recordNamespaceDisconnect,
 } from '../../../../apps/platform/server/observability/socketNamespaceMetrics';
 import {
+  assignHost,
+  authorizePartyJoin,
+  normalizeJoinToken,
+  normalizeStablePlayerId,
+  syncRoomHostAfterJoin,
+} from '../../../../apps/platform/server/party/gameAuth';
+import {
   MIN_PLAYERS,
   MIN_ROUNDS,
   MAX_ROUNDS,
@@ -68,30 +75,9 @@ function normalizeExcludedLetters(letters: string[]): string[] {
   return result.length > 0 ? result : [...DEFAULT_EXCLUDED_LETTERS];
 }
 
-function assignHost(room: Room, newHostId: string): void {
-  const nextHost = room.players[newHostId];
-  if (!nextHost) return;
-
-  if (room.hostId) {
-    const currentHost = room.players[room.hostId];
-    if (currentHost) {
-      currentHost.isHost = false;
-    }
-  }
-
-  room.hostId = newHostId;
-  nextHost.isHost = true;
-}
-
 function verifyPlayer(socket: BlackoutSocket, roomCode: string, playerId: string): boolean {
   const index = getSocketIndex(socket.id);
   return index !== undefined && index.roomCode === roomCode && index.playerId === playerId;
-}
-
-function normalizeStablePlayerId(value: unknown): string | null {
-  if (typeof value !== 'string') return null;
-  const trimmed = value.trim();
-  return trimmed.length > 0 ? trimmed : null;
 }
 
 function detachIndexedSocket(nsp: Namespace, socketId: string): void {
@@ -194,36 +180,48 @@ export function registerBlackout(io: Server, namespace = '/g/blackout'): void {
       const respond = instrumentation.wrapCallback(cb);
       try {
         const sessionId = data.sessionId?.trim();
-        const name = data.name?.trim();
-        const wantsHost = data.isHost === true;
-        const stablePlayerId =
-          normalizeStablePlayerId(data.playerId) ?? normalizeStablePlayerId(socket.data.playerId);
-
-        if (!sessionId || !name) {
+        if (!sessionId) {
           return respond({ ok: false, error: 'Missing session info' });
         }
+
+        const stablePlayerId =
+          normalizeStablePlayerId(data.playerId) ?? normalizeStablePlayerId(socket.data.playerId);
+        const joinToken = normalizeJoinToken(data.joinToken, socket.data.joinToken);
+
+        // Validate the platform joinToken against the active party match and
+        // derive the authoritative player identity + host from party state.
+        // Never trust client-supplied `isHost` or `name` for authorization.
+        const authorization = authorizePartyJoin(gameId, sessionId, stablePlayerId, joinToken);
+        if (!authorization.ok) {
+          socketLogger.warn(
+            { sessionId, playerId: stablePlayerId, reason: authorization.reason },
+            'autoJoinRoom rejected: unauthorized blackout party member'
+          );
+          return respond({ ok: false, error: authorization.error });
+        }
+
+        const authorizedPlayerId = authorization.member.playerId;
+        const name = authorization.member.name;
+        const providedResumeToken =
+          typeof data.resumeToken === 'string' ? data.resumeToken : undefined;
 
         // Check if session already mapped to a room
         const roomCode = getSessionRoom(sessionId);
         const existingRoom = roomCode ? getRoom(roomCode) : undefined;
         if (existingRoom) {
-          const indexedPlayerId =
-            getSocketIndex(socket.id)?.roomCode === existingRoom.code
-              ? getSocketIndex(socket.id)?.playerId
-              : undefined;
-          const reconnectPlayerId = stablePlayerId ?? indexedPlayerId;
+          const reconnectPlayerId = authorizedPlayerId;
 
-          if (reconnectPlayerId && existingRoom.players[reconnectPlayerId]) {
+          if (existingRoom.players[reconnectPlayerId]) {
             const player = existingRoom.players[reconnectPlayerId];
             // Require the server-issued resumeToken to prevent slot hijacking via public playerId.
-            if (data.resumeToken && player.resumeToken !== data.resumeToken) {
+            if (providedResumeToken && player.resumeToken !== providedResumeToken) {
               socketLogger.warn(
                 { roomCode: existingRoom.code, playerId: player.id, sessionId },
                 'autoJoinRoom rejected: invalid blackout resume token'
               );
               return respond({ ok: false, error: 'Invalid resume token' });
             }
-            if (!data.resumeToken && player.resumeToken) {
+            if (!providedResumeToken && player.resumeToken) {
               socketLogger.warn(
                 { roomCode: existingRoom.code, playerId: player.id, sessionId },
                 'autoJoinRoom rejected: blackout resume token required'
@@ -231,12 +229,11 @@ export function registerBlackout(io: Server, namespace = '/g/blackout'): void {
               return respond({ ok: false, error: 'Resume token required' });
             }
             bindPlayerToSocket(nsp, socket, existingRoom, reconnectPlayerId);
-            if (wantsHost && existingRoom.hostId !== reconnectPlayerId) {
-              assignHost(existingRoom, reconnectPlayerId);
-            }
-            if (wantsHost) {
-              existingRoom.ownerId = reconnectPlayerId;
-            }
+            syncRoomHostAfterJoin(
+              existingRoom,
+              authorization.hostPlayerId,
+              !authorization.hostConnected
+            );
             broadcastRoom(nsp, existingRoom);
             socketLogger.info(
               {
@@ -256,8 +253,7 @@ export function registerBlackout(io: Server, namespace = '/g/blackout'): void {
           }
 
           const nameExists = Object.values(existingRoom.players).some(
-            (player) =>
-              player.id !== stablePlayerId && player.name.toLowerCase() === name.toLowerCase()
+            (player) => player.name.toLowerCase() === name.toLowerCase()
           );
           if (nameExists) {
             return respond({ ok: false, error: 'Name already taken' });
@@ -267,14 +263,15 @@ export function registerBlackout(io: Server, namespace = '/g/blackout'): void {
             return respond({ ok: false, error: 'Game already started' });
           }
 
-          const player = createPlayer(name, false, stablePlayerId ?? undefined);
+          const player = createPlayer(name, false, authorizedPlayerId);
           player.socketId = socket.id;
           existingRoom.players[player.id] = player;
           bindPlayerToSocket(nsp, socket, existingRoom, player.id);
-          if (wantsHost) {
-            assignHost(existingRoom, player.id);
-            existingRoom.ownerId = player.id;
-          }
+          syncRoomHostAfterJoin(
+            existingRoom,
+            authorization.hostPlayerId,
+            !authorization.hostConnected
+          );
           broadcastRoom(nsp, existingRoom);
 
           socketLogger.info(
@@ -296,14 +293,11 @@ export function registerBlackout(io: Server, namespace = '/g/blackout'): void {
         }
 
         // Create a new room for this session
-        const { room, hostId, resumeToken } = createRoom(
-          name,
-          socket.id,
-          stablePlayerId ?? undefined
-        );
+        const { room, hostId, resumeToken } = createRoom(name, socket.id, authorizedPlayerId);
         setSessionToRoom(sessionId, room.code);
         clearRoomCleanup(room.code);
         socket.join(room.code);
+        syncRoomHostAfterJoin(room, authorization.hostPlayerId, !authorization.hostConnected);
         broadcastRoom(nsp, room);
 
         socketLogger.info(
@@ -424,26 +418,34 @@ export function registerBlackout(io: Server, namespace = '/g/blackout'): void {
     });
 
     socket.on('updateMaxRounds', (data) => {
-      const room = getRoom(data.roomCode);
-      if (!room) return;
-      if (!verifyPlayer(socket, data.roomCode, room.hostId ?? '')) return;
-      if (room.phase !== 'lobby') return;
+      try {
+        const room = getRoom(data.roomCode);
+        if (!room) return;
+        if (!verifyPlayer(socket, data.roomCode, room.hostId ?? '')) return;
+        if (room.phase !== 'lobby') return;
 
-      const rounds = Math.min(MAX_ROUNDS, Math.max(MIN_ROUNDS, data.maxRounds));
-      room.maxRounds = rounds;
-      broadcastRoom(nsp, room);
+        const rounds = Math.min(MAX_ROUNDS, Math.max(MIN_ROUNDS, data.maxRounds));
+        room.maxRounds = rounds;
+        broadcastRoom(nsp, room);
+      } catch (err) {
+        gameLogger.error({ err, event: 'updateMaxRounds' }, 'blackout handler error');
+      }
     });
 
     socket.on('updateRoomSettings', (data) => {
-      const room = getRoom(data.roomCode);
-      if (!room) return;
-      if (!verifyPlayer(socket, data.roomCode, room.hostId ?? '')) return;
-      if (room.phase !== 'lobby') return;
-      if (!isLanguage(data.language)) return;
+      try {
+        const room = getRoom(data.roomCode);
+        if (!room) return;
+        if (!verifyPlayer(socket, data.roomCode, room.hostId ?? '')) return;
+        if (room.phase !== 'lobby') return;
+        if (!isLanguage(data.language)) return;
 
-      room.language = data.language;
-      room.excludedLetters = normalizeExcludedLetters(data.excludedLetters);
-      broadcastRoom(nsp, room);
+        room.language = data.language;
+        room.excludedLetters = normalizeExcludedLetters(data.excludedLetters);
+        broadcastRoom(nsp, room);
+      } catch (err) {
+        gameLogger.error({ err, event: 'updateRoomSettings' }, 'blackout handler error');
+      }
     });
 
     socket.on('startGame', (data, cb) => {
@@ -488,46 +490,62 @@ export function registerBlackout(io: Server, namespace = '/g/blackout'): void {
     });
 
     socket.on('revealCategory', (data) => {
-      const room = getRoom(data.roomCode);
-      if (!room || !room.currentRound) return;
-      if (!verifyPlayer(socket, data.roomCode, room.hostId ?? '')) return;
-      if (room.currentRound.revealed) return;
+      try {
+        const room = getRoom(data.roomCode);
+        if (!room || !room.currentRound) return;
+        if (!verifyPlayer(socket, data.roomCode, room.hostId ?? '')) return;
+        if (room.currentRound.revealed) return;
 
-      revealCategory(room);
-      broadcastRoom(nsp, room);
+        revealCategory(room);
+        broadcastRoom(nsp, room);
+      } catch (err) {
+        gameLogger.error({ err, event: 'revealCategory' }, 'blackout handler error');
+      }
     });
 
     socket.on('rerollPrompt', (data) => {
-      const room = getRoom(data.roomCode);
-      if (!room || !room.currentRound) return;
-      if (!verifyPlayer(socket, data.roomCode, room.hostId ?? '')) return;
+      try {
+        const room = getRoom(data.roomCode);
+        if (!room || !room.currentRound) return;
+        if (!verifyPlayer(socket, data.roomCode, room.hostId ?? '')) return;
 
-      rerollCurrentPrompt(room);
-      broadcastRoom(nsp, room);
+        rerollCurrentPrompt(room);
+        broadcastRoom(nsp, room);
+      } catch (err) {
+        gameLogger.error({ err, event: 'rerollPrompt' }, 'blackout handler error');
+      }
     });
 
     socket.on('selectWinner', (data) => {
-      const room = getRoom(data.roomCode);
-      if (!room || !room.currentRound) return;
-      if (!verifyPlayer(socket, data.roomCode, room.hostId ?? '')) return;
-      if (!room.currentRound.revealed) return;
-      if (!room.players[data.winnerId]?.connected) return;
-      if (data.winnerId === room.currentRound.readerId) return;
+      try {
+        const room = getRoom(data.roomCode);
+        if (!room || !room.currentRound) return;
+        if (!verifyPlayer(socket, data.roomCode, room.hostId ?? '')) return;
+        if (!room.currentRound.revealed) return;
+        if (!room.players[data.winnerId]?.connected) return;
+        if (data.winnerId === room.currentRound.readerId) return;
 
-      selectRoundWinner(room, data.winnerId);
-      addPoint(room, data.winnerId);
-      assignHost(room, data.winnerId);
-      advanceRound(data.roomCode);
+        selectRoundWinner(room, data.winnerId);
+        addPoint(room, data.winnerId);
+        assignHost(room, data.winnerId);
+        advanceRound(data.roomCode);
+      } catch (err) {
+        gameLogger.error({ err, event: 'selectWinner' }, 'blackout handler error');
+      }
     });
 
     socket.on('skipRound', (data) => {
-      const room = getRoom(data.roomCode);
-      if (!room || !room.currentRound) return;
-      const socketIdx = getSocketIndex(socket.id);
-      if (!socketIdx || socketIdx.roomCode !== data.roomCode) return;
-      const canSkip = socketIdx.playerId === room.hostId || socketIdx.playerId === room.ownerId;
-      if (!canSkip) return;
-      advanceRound(data.roomCode);
+      try {
+        const room = getRoom(data.roomCode);
+        if (!room || !room.currentRound) return;
+        const socketIdx = getSocketIndex(socket.id);
+        if (!socketIdx || socketIdx.roomCode !== data.roomCode) return;
+        const canSkip = socketIdx.playerId === room.hostId || socketIdx.playerId === room.ownerId;
+        if (!canSkip) return;
+        advanceRound(data.roomCode);
+      } catch (err) {
+        gameLogger.error({ err, event: 'skipRound' }, 'blackout handler error');
+      }
     });
 
     socket.on('restartGame', (data) => {

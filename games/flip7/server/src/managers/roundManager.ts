@@ -15,12 +15,24 @@ type ResolvedActionRecord = {
   targetId: string;
 };
 
-const _resolvedActions = new Map<string, ResolvedActionRecord>();
+const _resolvedActions = new Map<string, ResolvedActionRecord[]>();
 
-/** Consume and return the last action resolved for a room (if any). */
+/** Enqueue a resolved action for a room (called from resolveAction). */
+function enqueueResolvedAction(roomCode: string, record: ResolvedActionRecord): void {
+  const queue = _resolvedActions.get(roomCode);
+  if (queue) {
+    queue.push(record);
+  } else {
+    _resolvedActions.set(roomCode, [record]);
+  }
+}
+
+/** Consume and return the next resolved action for a room (if any). */
 export function popResolvedAction(roomCode: string): ResolvedActionRecord | undefined {
-  const record = _resolvedActions.get(roomCode);
-  _resolvedActions.delete(roomCode);
+  const queue = _resolvedActions.get(roomCode);
+  if (!queue || queue.length === 0) return undefined;
+  const record = queue.shift()!;
+  if (queue.length === 0) _resolvedActions.delete(roomCode);
   return record;
 }
 
@@ -374,7 +386,7 @@ function resolveAction(
   round.pendingAction = null;
 
   // Record so the socket handler can broadcast the outcome.
-  _resolvedActions.set(room.code, { drawerId, action, targetId });
+  enqueueResolvedAction(room.code, { drawerId, action, targetId });
 
   const rp = round.players[targetId];
   if (!rp) return;

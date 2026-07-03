@@ -74,7 +74,7 @@ apps/platform/
     index.ts          <- Express + Socket.IO entry
     httpRoutes.ts     <- health check + static file serving + SPA fallback
     logging/          <- shared Pino helpers (reuse these, never add your own logger stack)
-    party/            <- party domain (types, store, handlers)
+    party/            <- party domain (types, store, handlers, gameAuth shared helper)
     registry/         <- game server module registry
     metrics/          <- Prometheus metrics
     observability/      <- namespace/socket observability helpers
@@ -121,6 +121,10 @@ Every game server module exposes:
 - `register(io, namespacePath)` — registers Socket.IO handlers
 - `cleanupMatch(matchKey)` — tears down a room by matchKey
 - `autoJoinRoom` socket event — creates or rejoins a room for a given sessionId/matchKey, validates the platform `joinToken`, and syncs host identity from party state
+
+### Shared game-auth helper
+
+`apps/platform/server/party/gameAuth.ts` exports `authorizePartyJoin`, `syncRoomHostAfterJoin`, and supporting helpers (`assignHost`, `clearHost`, `isConnectedPlayer`, `restoreHostToFirstConnectedPlayer`, `normalizeJoinToken`, `normalizeStablePlayerId`). Every game's `autoJoinRoom` handler MUST call `authorizePartyJoin(gameId, sessionId, playerId, joinToken)` at the top and use the returned `member.playerId` / `member.name` as the authoritative identity — never trust client-supplied `playerId` / `name` / `isHost`.
 
 ### Props passed to PlatformAdapter.vue
 
@@ -187,6 +191,15 @@ Each entry maps a game ID to its `PlatformAdapter.vue` via lazy `import('@{game}
 - `/metrics` is enabled by default outside production; in production requires `METRICS_ENABLED=true`.
 - Protect production scrapes with `METRICS_AUTH_TOKEN` or internal-only network policy.
 - **Keep metric labels low-cardinality** — never use `inviteCode`, `partyId`, `matchKey`, `playerId`, `playerName`, socket IDs, or raw payload fields as labels.
+
+## Security Rules
+
+- **Party action rate limiting**: `createParty` and `joinParty` are rate-limited per socket id (5 actions / 10 s). Uses `checkFixedWindowRateLimit` from `apps/platform/server/observability/rateLimit.ts`. Reset in tests via `resetPartyActionRateLimit()`.
+- **Connection rate limiting**: the Socket.IO engine limits new connections per IP (20 / 10 s), respecting `X-Forwarded-For` for reverse-proxy deployments. Exceeding sockets are destroyed.
+- **Security headers**: `X-Content-Type-Options: nosniff`, `X-Frame-Options: DENY`, `Referrer-Policy: strict-origin-when-cross-origin`, `X-XSS-Protection: 0` are set on all HTTP responses via middleware in `index.ts`.
+- **Admin CSRF**: double-submit cookie pattern (`admin_csrf` cookie + `X-CSRF-Token` header).
+- **Game join authorization**: every game validates the platform `joinToken` against the party member's `resumeToken` via `authorizePartyJoin`. Host identity is derived from `party.hostPlayerId`, never from client-supplied `isHost`.
+- **Word persistence** (Imposter): `IMPOSTER_PERSIST_WORDS` env flag (default `true`) controls whether submitted words are written to `words.txt`. Set to `false` in multi-instance deployments to avoid file divergence.
 
 ## Adding a New Game
 

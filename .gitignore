@@ -21,4 +21,6 @@ graphify-out/GRAPH_TREE.html
 graphify-out/[0-9][0-9][0-9][0-9]-[0-9][0-9]-[0-9][0-9]/
 # Machine-specific: absolute interpreter path + local cost tracker
 graphify-out/.graphify_python
-graphify-out/cost.json
+graphify-out/cost.jsongames/blackout/server/src/db/*.sqlite
+games/blackout/server/src/db/*.sqlite-shm
+games/blackout/server/src/db/*.sqlite-wal

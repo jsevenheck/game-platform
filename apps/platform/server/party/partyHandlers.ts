@@ -130,6 +130,22 @@ const joinableListPruneInterval = setInterval(
 );
 joinableListPruneInterval.unref?.();
 
+// Rate limiter for party creation and joining (per socket id).
+// Prevents party-spam and invite-code brute-force attacks.
+const partyActionRateLimit = new Map<string, RateLimitRecord>();
+const PARTY_ACTION_RATE_LIMIT_WINDOW_MS = 10_000;
+const PARTY_ACTION_RATE_LIMIT_MAX = 5;
+const partyActionPruneInterval = setInterval(
+  () => pruneExpiredRateLimitEntries(partyActionRateLimit),
+  60_000
+);
+partyActionPruneInterval.unref?.();
+
+/** Reset the party-action rate limiter. Intended for test cleanup only. */
+export function resetPartyActionRateLimit(): void {
+  partyActionRateLimit.clear();
+}
+
 export function registerPartyHandlers(io: Server): void {
   const nsp = io.of('/party');
   const partyLogger = createComponentLogger('party', { namespace: '/party' });
@@ -169,6 +185,20 @@ export function registerPartyHandlers(io: Server): void {
       const instrumentation = startSocketHandlerInstrumentation('/party', 'createParty');
       const respond = instrumentation.wrapCallback(cb);
       try {
+        if (
+          !checkFixedWindowRateLimit(partyActionRateLimit, socket.id, {
+            windowMs: PARTY_ACTION_RATE_LIMIT_WINDOW_MS,
+            max: PARTY_ACTION_RATE_LIMIT_MAX,
+          })
+        ) {
+          incrementPartyLifecycle({
+            event: 'createParty',
+            result: 'rejected',
+            reason: 'rate_limited',
+          });
+          return respond({ ok: false, error: 'Too many requests' });
+        }
+
         const name = data.playerName?.trim();
         if (!name || name.length > 20) {
           incrementPartyLifecycle({
@@ -210,6 +240,20 @@ export function registerPartyHandlers(io: Server): void {
       const instrumentation = startSocketHandlerInstrumentation('/party', 'joinParty');
       const respond = instrumentation.wrapCallback(cb);
       try {
+        if (
+          !checkFixedWindowRateLimit(partyActionRateLimit, socket.id, {
+            windowMs: PARTY_ACTION_RATE_LIMIT_WINDOW_MS,
+            max: PARTY_ACTION_RATE_LIMIT_MAX,
+          })
+        ) {
+          incrementPartyLifecycle({
+            event: 'joinParty',
+            result: 'rejected',
+            reason: 'rate_limited',
+          });
+          return respond({ ok: false, error: 'Too many requests' });
+        }
+
         const name = data.playerName?.trim();
         const inviteCode = data.inviteCode?.trim().toUpperCase();
         if (!name || name.length > 20) {

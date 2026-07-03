@@ -72,7 +72,7 @@ const winningLabel = computed(() => {
 
     <button
       v-if="isHost"
-      class="ui-btn-primary bg-signals! hover:bg-signals-hover!"
+      class="ui-btn-primary btn-signals btn-signals-hover"
       @click="$emit('restart')"
     >
       Play Again
@@ -80,3 +80,12 @@ const winningLabel = computed(() => {
     <p v-else class="text-muted-foreground">Waiting for host to restart...</p>
   </div>
 </template>
+
+<style scoped>
+.btn-signals {
+  background: var(--color-signals);
+}
+.btn-signals-hover:hover:not(:disabled) {
+  background: var(--color-signals-hover);
+}
+</style>

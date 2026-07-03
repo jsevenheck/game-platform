@@ -18,7 +18,11 @@ function toRoundView(room: Room, playerId: string): RoundView | null {
   const round = room.currentRound;
   if (!round) return null;
 
-  const isReader = room.hostId === playerId;
+  // The reader is the player whose turn it is to reveal the prompt.
+  // In Blackout the winner becomes the next host/reader, so hostId === readerId,
+  // but we check readerId directly so the hidden-info gate tracks the actual
+  // reader, not the host, if a non-host reader is ever introduced.
+  const isReader = round.readerId === playerId;
   const showCategory = isReader || round.revealed;
 
   return {

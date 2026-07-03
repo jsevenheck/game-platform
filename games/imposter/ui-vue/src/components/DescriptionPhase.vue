@@ -114,7 +114,7 @@ function handleSubmit() {
       </p>
       <button
         v-if="store.isHost && store.room?.currentDescriberId"
-        class="ui-btn-secondary mt-3 hover:border-imposter! hover:text-imposter!"
+        class="ui-btn-secondary mt-3 hover-border-imposter hover-text-imposter"
         @click="$emit('skipDescriptionTurn')"
       >
         Skip Turn
@@ -132,12 +132,12 @@ function handleSubmit() {
           type="text"
           :placeholder="store.myWord ? 'Your clue...' : 'Blend in...'"
           maxlength="30"
-          class="ui-input bg-white/5! border-white/10! focus:border-imposter! flex-1"
+          class="ui-input bg-white-5 border-white-10 focus-border-imposter flex-1"
           @keyup.enter="handleSubmit"
         />
         <button
           id="btn-submit-description"
-          class="ui-btn-primary bg-imposter! hover:bg-imposter-hover!"
+          class="ui-btn-primary btn-imposter btn-imposter-hover"
           @click="handleSubmit"
         >
           Submit
@@ -195,7 +195,7 @@ function handleSubmit() {
       <h3 class="text-foreground text-base mb-3">Clue Progress</h3>
       <div class="ui-progress-track">
         <div
-          class="ui-progress-fill bg-imposter!"
+          class="ui-progress-fill btn-imposter"
           :style="{
             width: `${((store.room?.submittedDescriptionIds.length ?? 0) / (store.connectedPlayers.length || 1)) * 100}%`,
           }"
@@ -208,3 +208,31 @@ function handleSubmit() {
     </div>
   </div>
 </template>
+
+<style scoped>
+.btn-imposter {
+  background: var(--color-imposter);
+}
+.btn-imposter-hover:hover:not(:disabled) {
+  background: var(--color-imposter-hover);
+}
+.hover-border-imposter:hover {
+  border-color: var(--color-imposter);
+}
+.hover-text-imposter:hover {
+  color: var(--color-imposter);
+}
+.focus-border-imposter:focus {
+  border-color: var(--color-imposter);
+}
+.bg-white-5 {
+  background: rgba(255, 255, 255, 0.05);
+}
+.border-white-10 {
+  border-color: rgba(255, 255, 255, 0.1);
+}
+.signals-active {
+  border-color: var(--color-imposter);
+  background: rgba(239, 68, 68, 0.1);
+}
+</style>

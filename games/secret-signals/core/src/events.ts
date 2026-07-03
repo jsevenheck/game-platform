@@ -91,6 +91,7 @@ export interface ClientToServerEvents {
       playerId: string;
       name: string;
       isHost?: boolean;
+      joinToken?: string;
       resumeToken?: string;
     },
     cb: (

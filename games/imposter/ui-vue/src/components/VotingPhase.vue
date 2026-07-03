@@ -151,7 +151,7 @@ function getDescriptionText(playerId: string): string {
           v-for="player in otherPlayers"
           :key="player.id"
           class="vote-btn flex items-center justify-between px-4 py-3.5 bg-white/4 border-2 border-white/10 rounded-[--radius-lg] cursor-pointer text-foreground text-base transition-all hover:border-imposter/40 hover:bg-imposter/5"
-          :class="{ 'border-imposter! bg-imposter/10!': selectedTarget === player.id }"
+          :class="{ 'signals-active': selectedTarget === player.id }"
           @click="selectedTarget = player.id"
         >
           <span class="font-medium">{{ player.name }}</span>
@@ -161,7 +161,7 @@ function getDescriptionText(playerId: string): string {
         </button>
         <button
           id="btn-confirm-vote"
-          class="ui-btn-primary bg-imposter! hover:bg-imposter-hover! w-full py-4! mt-3"
+          class="ui-btn-primary btn-imposter btn-imposter-hover w-full py-4 mt-3"
           :disabled="!selectedTarget"
           @click="handleVote"
         >
@@ -182,7 +182,7 @@ function getDescriptionText(playerId: string): string {
         </p>
         <div class="ui-progress-track">
           <div
-            class="ui-progress-fill bg-imposter!"
+            class="ui-progress-fill btn-imposter"
             :style="{
               width: `${((store.room?.submittedVoteIds.length ?? 0) / (store.connectedPlayers.length || 1)) * 100}%`,
             }"
@@ -192,3 +192,31 @@ function getDescriptionText(playerId: string): string {
     </div>
   </div>
 </template>
+
+<style scoped>
+.btn-imposter {
+  background: var(--color-imposter);
+}
+.btn-imposter-hover:hover:not(:disabled) {
+  background: var(--color-imposter-hover);
+}
+.hover-border-imposter:hover {
+  border-color: var(--color-imposter);
+}
+.hover-text-imposter:hover {
+  color: var(--color-imposter);
+}
+.focus-border-imposter:focus {
+  border-color: var(--color-imposter);
+}
+.bg-white-5 {
+  background: rgba(255, 255, 255, 0.05);
+}
+.border-white-10 {
+  border-color: rgba(255, 255, 255, 0.1);
+}
+.signals-active {
+  border-color: var(--color-imposter);
+  background: rgba(239, 68, 68, 0.1);
+}
+</style>

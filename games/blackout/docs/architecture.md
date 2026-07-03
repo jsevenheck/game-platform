@@ -106,7 +106,7 @@ on unmount.
 ```mermaid
 flowchart TD
   A[Platform launches match] --> B[Client connects to /g/blackout]
-  B --> C[autoJoinRoom with sessionId, playerId, name, isHost]
+  B --> C[autoJoinRoom with sessionId, playerId, name, joinToken, isHost]
   C --> D{Session mapping exists?}
   D -->|no| E[Create room and map sessionId -> roomCode]
   D -->|yes and player exists| F[Validate resumeToken and reconnect player]

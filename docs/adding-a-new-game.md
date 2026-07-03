@@ -193,12 +193,14 @@ export function cleanupMatch(matchKey: string): void {
 
 This is the critical integration point. The handler must:
 
-1. **Create a room** if none exists for the given `sessionId` (matchKey).
-2. **Rejoin** if the player's `playerId` already exists in the room (reconnection) — **validate the `resumeToken`**: if the slot has a server-issued token, require the client to supply it; reject with `{ ok: false, error: 'Resume token required' }` if absent or `'Invalid resume token'` if wrong.
-3. **Authorize with `joinToken`** — validate the platform-provided token against the active party member for this match before allowing the socket into the room.
-4. **Sync host from party state** — treat `data.isHost` only as an optional client/UI hint. Re-sync the game room host from the active party on join/reconnect/disconnect and before host-only actions.
+1. **Authorize with `joinToken`** — call `authorizePartyJoin(gameId, sessionId, stablePlayerId, joinToken)` from `apps/platform/server/party/gameAuth.ts` at the top of the handler. Use the returned `member.playerId` and `member.name` as the authoritative identity — never trust client-supplied `playerId` / `name` / `isHost`.
+2. **Create a room** if none exists for the given `sessionId` (matchKey).
+3. **Rejoin** if the player's `playerId` already exists in the room (reconnection) — **validate the `resumeToken`**: if the slot has a server-issued token, require the client to supply it; reject with `{ ok: false, error: 'Resume token required' }` if absent or `'Invalid resume token'` if wrong.
+4. **Sync host from party state** — call `syncRoomHostAfterJoin(room, authorization.hostPlayerId, !authorization.hostConnected)` after binding the player. Treat `data.isHost` only as an optional client/UI hint.
 5. **Call back** with `{ ok: true, roomCode, playerId, resumeToken }` on success or `{ ok: false, error }` on failure.
 6. The server-issued `resumeToken` must never be included in any broadcast room view sent to clients.
+
+> **Use the shared helpers** — `authorizePartyJoin`, `syncRoomHostAfterJoin`, `assignHost`, `restoreHostToFirstConnectedPlayer`, `normalizeJoinToken`, and `normalizeStablePlayerId` are all exported from `apps/platform/server/party/gameAuth.ts`. Do not re-implement them per game.
 
 ### Socket Handler Validation and Authorization
 
@@ -351,6 +353,8 @@ onBeforeUnmount(() => {
 > **Key:** Emit `phase-change` with the value `'ended'` when the game is over. The `PlatformAdapter` watches for this to show the replay/return overlay.
 >
 > If you extract socket creation into a `useSocket()` composable, keep ownership explicit: return the socket (and/or a cleanup function) and disconnect in the owning `App.vue` `onBeforeUnmount()`. Do not hide parent-owned socket teardown inside a composable lifecycle hook.
+>
+> **Required:** The `useSocket` composable must accept and forward `joinToken` in the socket `auth` object. Without it, `authorizePartyJoin` will reject the join. Every game's `useSocket` must also call `socket.disconnect()` in `onUnmounted()` to prevent socket leaks.
 
 ### `ui-vue/src/PlatformAdapter.vue`
 

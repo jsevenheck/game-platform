@@ -10,6 +10,7 @@ export function useSocket(opts?: {
   apiBaseUrl?: string;
   sessionId?: string;
   playerId?: string;
+  joinToken?: string;
   wsNamespace?: string;
 }): {
   socket: GameSocket;
@@ -23,6 +24,7 @@ export function useSocket(opts?: {
   const socket: GameSocket = io(`${url}${namespace}`, {
     auth: {
       sessionId: opts?.sessionId,
+      joinToken: opts?.joinToken,
       playerId: opts?.playerId,
     },
     autoConnect: false,

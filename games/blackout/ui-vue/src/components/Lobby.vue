@@ -75,25 +75,29 @@ function saveExcludedLetters() {
     <div v-if="store.isHost" class="flex flex-col items-center gap-4">
       <div class="rounds-config flex items-center gap-3 text-foreground">
         <span>Rounds:</span>
-        <button class="ui-stepper-btn hover:border-blackout!" @click="adjustRounds(-1)">-</button>
+        <button class="ui-stepper-btn hover:border-blackout-active" @click="adjustRounds(-1)">
+          -
+        </button>
         <span class="rounds-value min-w-8 text-center text-2xl font-bold">{{
           store.room?.maxRounds
         }}</span>
-        <button class="ui-stepper-btn hover:border-blackout!" @click="adjustRounds(1)">+</button>
+        <button class="ui-stepper-btn hover:border-blackout-active" @click="adjustRounds(1)">
+          +
+        </button>
       </div>
 
       <div class="flex items-center gap-2 text-foreground">
         <span>Language:</span>
         <button
-          class="ui-stepper-btn text-sm hover:border-blackout!"
-          :class="store.room?.language === 'de' && 'border-blackout! text-foreground'"
+          class="ui-stepper-btn text-sm hover:border-blackout-active"
+          :class="store.room?.language === 'de' && 'border-blackout-active text-foreground'"
           @click="updateLanguage('de')"
         >
           DE
         </button>
         <button
-          class="ui-stepper-btn text-sm hover:border-blackout!"
-          :class="store.room?.language === 'en' && 'border-blackout! text-foreground'"
+          class="ui-stepper-btn text-sm hover:border-blackout-active"
+          :class="store.room?.language === 'en' && 'border-blackout-active text-foreground'"
           @click="updateLanguage('en')"
         >
           EN
@@ -106,14 +110,14 @@ function saveExcludedLetters() {
           <input
             id="excluded-letters"
             v-model="excludedLettersInput"
-            class="ui-input flex-1 focus:border-blackout!"
+            class="ui-input flex-1 focus:border-blackout-active"
             type="text"
             placeholder="Q, X, Y"
             @keydown.enter.prevent="saveExcludedLetters"
             @blur="saveExcludedLetters"
           />
           <button
-            class="ui-stepper-btn w-auto min-w-14 px-3 text-sm hover:border-blackout!"
+            class="ui-stepper-btn w-auto min-w-14 px-3 text-sm hover:border-blackout-active"
             @click="saveExcludedLetters"
           >
             Save
@@ -122,7 +126,7 @@ function saveExcludedLetters() {
       </div>
 
       <button
-        class="ui-btn-primary bg-blackout! px-12 py-4 text-xl hover:bg-blackout-hover!"
+        class="ui-btn-primary btn-blackout px-12 py-4 text-xl btn-blackout-hover"
         :disabled="connectedCount() < MIN_PLAYERS"
         @click="$emit('startGame')"
       >
@@ -138,3 +142,18 @@ function saveExcludedLetters() {
     </div>
   </div>
 </template>
+
+<style scoped>
+.btn-blackout {
+  background: var(--color-blackout);
+}
+.btn-blackout-hover:hover:not(:disabled) {
+  background: var(--color-blackout-hover);
+}
+.border-blackout-active {
+  border-color: var(--color-blackout);
+}
+.focus-border-blackout-active:focus {
+  border-color: var(--color-blackout);
+}
+</style>

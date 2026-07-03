@@ -15,6 +15,13 @@ import {
   recordNamespaceDisconnect,
 } from '../../../../apps/platform/server/observability/socketNamespaceMetrics';
 import {
+  assignHost,
+  authorizePartyJoin,
+  normalizeJoinToken,
+  normalizeStablePlayerId,
+  syncRoomHostAfterJoin,
+} from '../../../../apps/platform/server/party/gameAuth';
+import {
   MIN_PLAYERS,
   ROUND_END_DISPLAY_MS,
   ROOM_IDLE_TIMEOUT_MS,
@@ -50,23 +57,6 @@ import {
 } from './managers/phaseManager';
 
 type Flip7Socket = Socket<ClientToServerEvents, ServerToClientEvents>;
-
-function normalizeStablePlayerId(value: unknown): string | null {
-  if (typeof value !== 'string') return null;
-  const trimmed = value.trim();
-  return trimmed.length > 0 ? trimmed : null;
-}
-
-function assignHost(room: Room, newHostId: string): void {
-  const nextHost = room.players[newHostId];
-  if (!nextHost) return;
-  if (room.hostId) {
-    const currentHost = room.players[room.hostId];
-    if (currentHost) currentHost.isHost = false;
-  }
-  room.hostId = newHostId;
-  nextHost.isHost = true;
-}
 
 function verifyIsHost(socket: Flip7Socket, room: Room): boolean {
   const index = getSocketIndex(socket.id);
@@ -131,6 +121,7 @@ export function registerFlip7(io: Server, namespace = '/g/flip7'): void {
     const auth = socket.handshake.auth || {};
     socket.data.sessionId = auth.sessionId;
     socket.data.playerId = auth.playerId;
+    socket.data.joinToken = auth.joinToken || auth.token;
     next();
   });
 
@@ -177,35 +168,46 @@ export function registerFlip7(io: Server, namespace = '/g/flip7'): void {
       const respond = instrumentation.wrapCallback(cb);
       try {
         const sessionId = data.sessionId?.trim();
-        const name = data.name?.trim();
-        const wantsHost = data.isHost === true;
-        const stablePlayerId =
-          normalizeStablePlayerId(data.playerId) ?? normalizeStablePlayerId(socket.data.playerId);
-
-        if (!sessionId || !name) {
+        if (!sessionId) {
           return respond({ ok: false, error: 'Missing session info' });
         }
+
+        const stablePlayerId =
+          normalizeStablePlayerId(data.playerId) ?? normalizeStablePlayerId(socket.data.playerId);
+        const joinToken = normalizeJoinToken(data.joinToken, socket.data.joinToken);
+
+        // Validate the platform joinToken against the active party match and
+        // derive authoritative player identity + host from party state.
+        const authorization = authorizePartyJoin(gameId, sessionId, stablePlayerId, joinToken);
+        if (!authorization.ok) {
+          socketLogger.warn(
+            { sessionId, playerId: stablePlayerId, reason: authorization.reason },
+            'autoJoinRoom rejected: unauthorized flip7 party member'
+          );
+          return respond({ ok: false, error: authorization.error });
+        }
+
+        const authorizedPlayerId = authorization.member.playerId;
+        const name = authorization.member.name;
+        const providedResumeToken =
+          typeof data.resumeToken === 'string' ? data.resumeToken : undefined;
 
         const roomCode = getSessionRoom(sessionId);
         const existingRoom = roomCode ? getRoom(roomCode) : undefined;
 
         if (existingRoom) {
-          const indexedPlayerId =
-            getSocketIndex(socket.id)?.roomCode === existingRoom.code
-              ? getSocketIndex(socket.id)?.playerId
-              : undefined;
-          const reconnectPlayerId = stablePlayerId ?? indexedPlayerId;
+          const reconnectPlayerId = authorizedPlayerId;
 
-          if (reconnectPlayerId && existingRoom.players[reconnectPlayerId]) {
+          if (existingRoom.players[reconnectPlayerId]) {
             const player = existingRoom.players[reconnectPlayerId];
-            if (data.resumeToken && player.resumeToken !== data.resumeToken) {
+            if (providedResumeToken && player.resumeToken !== providedResumeToken) {
               socketLogger.warn(
                 { roomCode: existingRoom.code, playerId: player.id, sessionId },
                 'autoJoinRoom rejected: invalid flip7 resume token'
               );
               return respond({ ok: false, error: 'Invalid resume token' });
             }
-            if (!data.resumeToken && player.resumeToken) {
+            if (!providedResumeToken && player.resumeToken) {
               socketLogger.warn(
                 { roomCode: existingRoom.code, playerId: player.id, sessionId },
                 'autoJoinRoom rejected: flip7 resume token required'
@@ -213,10 +215,11 @@ export function registerFlip7(io: Server, namespace = '/g/flip7'): void {
               return respond({ ok: false, error: 'Resume token required' });
             }
             bindPlayerToSocket(nsp, socket, existingRoom, reconnectPlayerId);
-            if (wantsHost && existingRoom.hostId !== reconnectPlayerId) {
-              assignHost(existingRoom, reconnectPlayerId);
-            }
-            if (wantsHost) existingRoom.ownerId = reconnectPlayerId;
+            syncRoomHostAfterJoin(
+              existingRoom,
+              authorization.hostPlayerId,
+              !authorization.hostConnected
+            );
             broadcastRoom(nsp, existingRoom);
             socketLogger.info(
               { roomCode: existingRoom.code, playerId: player.id, sessionId, resumed: true },
@@ -231,21 +234,22 @@ export function registerFlip7(io: Server, namespace = '/g/flip7'): void {
           }
 
           const nameExists = Object.values(existingRoom.players).some(
-            (p) => p.id !== stablePlayerId && p.name.toLowerCase() === name.toLowerCase()
+            (p) => p.name.toLowerCase() === name.toLowerCase()
           );
           if (nameExists) return respond({ ok: false, error: 'Name already taken' });
           if (existingRoom.phase !== 'lobby') {
             return respond({ ok: false, error: 'Game already started' });
           }
 
-          const player = createPlayer(name, false, stablePlayerId ?? undefined);
+          const player = createPlayer(name, false, authorizedPlayerId);
           player.socketId = socket.id;
           existingRoom.players[player.id] = player;
           bindPlayerToSocket(nsp, socket, existingRoom, player.id);
-          if (wantsHost) {
-            assignHost(existingRoom, player.id);
-            existingRoom.ownerId = player.id;
-          }
+          syncRoomHostAfterJoin(
+            existingRoom,
+            authorization.hostPlayerId,
+            !authorization.hostConnected
+          );
           broadcastRoom(nsp, existingRoom);
           socketLogger.info(
             { roomCode: existingRoom.code, playerId: player.id, sessionId, resumed: false },
@@ -260,17 +264,11 @@ export function registerFlip7(io: Server, namespace = '/g/flip7'): void {
         }
 
         // Create a new room
-        const { room, hostId, resumeToken } = createRoom(
-          name,
-          socket.id,
-          stablePlayerId ?? undefined
-        );
+        const { room, hostId, resumeToken } = createRoom(name, socket.id, authorizedPlayerId);
         setSessionToRoom(sessionId, room.code);
         clearRoomCleanup(room.code);
         socket.join(room.code);
-        if (wantsHost && room.hostId !== hostId) {
-          assignHost(room, hostId);
-        }
+        syncRoomHostAfterJoin(room, authorization.hostPlayerId, !authorization.hostConnected);
         broadcastRoom(nsp, room);
         socketLogger.info(
           { roomCode: room.code, playerId: hostId, sessionId },
@@ -331,11 +329,23 @@ export function registerFlip7(io: Server, namespace = '/g/flip7'): void {
       const playerId = verifyPlayerInRoom(socket, data.roomCode);
       if (!playerId) return;
 
-      playerHit(room, playerId);
+      try {
+        playerHit(room, playerId);
+      } catch (err) {
+        socketLogger.error(
+          { err, roomCode: data.roomCode, playerId, event: 'hit' },
+          'flip7 hit threw — broadcasting current room state'
+        );
+        broadcastRoom(nsp, room);
+        return;
+      }
 
-      // Broadcast action announcement before room state (auto-resolve only).
-      const resolved = popResolvedAction(data.roomCode);
-      if (resolved) broadcastActionResolved(nsp, room, resolved);
+      // Broadcast all queued action announcements before room state.
+      let resolved = popResolvedAction(data.roomCode);
+      while (resolved) {
+        broadcastActionResolved(nsp, room, resolved);
+        resolved = popResolvedAction(data.roomCode);
+      }
 
       // roundManager already calls finalizeRound internally when round ends.
       // We only need to trigger the phase transition from here.
@@ -354,7 +364,16 @@ export function registerFlip7(io: Server, namespace = '/g/flip7'): void {
       const playerId = verifyPlayerInRoom(socket, data.roomCode);
       if (!playerId) return;
 
-      playerStay(room, playerId);
+      try {
+        playerStay(room, playerId);
+      } catch (err) {
+        socketLogger.error(
+          { err, roomCode: data.roomCode, playerId, event: 'stay' },
+          'flip7 stay threw — broadcasting current room state'
+        );
+        broadcastRoom(nsp, room);
+        return;
+      }
 
       if (room.currentRound?.roundEndReason) {
         broadcastRoom(nsp, room);
@@ -371,11 +390,23 @@ export function registerFlip7(io: Server, namespace = '/g/flip7'): void {
       const playerId = verifyPlayerInRoom(socket, data.roomCode);
       if (!playerId) return;
 
-      chooseActionTarget(room, playerId, data.targetPlayerId);
+      try {
+        chooseActionTarget(room, playerId, data.targetPlayerId);
+      } catch (err) {
+        socketLogger.error(
+          { err, roomCode: data.roomCode, playerId, event: 'chooseActionTarget' },
+          'flip7 chooseActionTarget threw — broadcasting current room state'
+        );
+        broadcastRoom(nsp, room);
+        return;
+      }
 
-      // Broadcast action announcement before room state.
-      const resolved = popResolvedAction(data.roomCode);
-      if (resolved) broadcastActionResolved(nsp, room, resolved);
+      // Broadcast all queued action announcements before room state.
+      let resolved = popResolvedAction(data.roomCode);
+      while (resolved) {
+        broadcastActionResolved(nsp, room, resolved);
+        resolved = popResolvedAction(data.roomCode);
+      }
 
       if (room.currentRound?.roundEndReason) {
         broadcastRoom(nsp, room);

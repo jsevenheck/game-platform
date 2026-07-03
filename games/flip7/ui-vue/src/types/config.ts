@@ -4,5 +4,6 @@ export interface HubIntegrationProps {
   playerName?: string;
   wsNamespace?: string;
   isHost?: boolean;
+  joinToken?: string;
   apiBaseUrl?: string;
 }

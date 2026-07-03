@@ -8,6 +8,8 @@ Namespace: `/g/flip7`
 
 Creates or rejoins a Flip 7 room for the given session.
 
+> **Authorization:** The server validates `joinToken` against the active platform party member via `authorizePartyJoin` from `apps/platform/server/party/gameAuth.ts`. Host identity is derived from `party.hostPlayerId`, not from the client-supplied `isHost` flag.
+
 **Request:**
 
 ```ts
@@ -15,7 +17,8 @@ Creates or rejoins a Flip 7 room for the given session.
   sessionId: string;       // Platform matchKey — unique per match
   name: string;            // Player display name
   playerId?: string;       // Stable platform player ID (omit on first join)
-  isHost?: boolean;        // True if this player should be host
+  isHost?: boolean;        // UI hint only; server derives host from party state
+  joinToken?: string;      // Platform resume token — validated against the active party member
   resumeToken?: string;    // Required when rejoining an existing player slot
 }
 ```

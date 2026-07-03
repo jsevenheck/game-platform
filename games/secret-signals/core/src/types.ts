@@ -75,6 +75,7 @@ export interface FocusMarker {
 
 export interface Room {
   code: string;
+  ownerId: string | null;
   hostId: string | null;
   phase: Phase;
   players: Record<string, Player>;

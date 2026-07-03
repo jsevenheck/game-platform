@@ -47,7 +47,7 @@ function toRoomView(room: Room, playerId?: string): RoomView {
 
 export function broadcastRoom(nsp: GameNamespace, room: Room): void {
   for (const player of Object.values(room.players)) {
-    if (!player.socketId) continue;
+    if (!player.socketId || !player.connected) continue;
     nsp.to(player.socketId).emit('roomState', toRoomView(room, player.id));
   }
 }

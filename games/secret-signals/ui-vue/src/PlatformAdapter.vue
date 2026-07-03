@@ -47,9 +47,7 @@ function onPhaseChange(phase: string) {
           <template v-if="isHost">
             <p class="mb-6 text-sm text-muted-foreground">What would you like to do?</p>
             <div class="flex flex-col gap-3">
-              <button class="btn-replay ui-btn-primary bg-signals!" @click="onReplayGame?.()">
-                Play Again
-              </button>
+              <button class="btn-replay" @click="onReplayGame?.()">Play Again</button>
               <button class="btn-lobby ui-btn-secondary" @click="onReturnToLobby?.()">
                 Back to Party
               </button>
@@ -62,3 +60,13 @@ function onPhaseChange(phase: string) {
     </Transition>
   </div>
 </template>
+
+<style scoped>
+.btn-replay {
+  background: var(--color-signals);
+  color: white;
+}
+.btn-replay:hover:not(:disabled) {
+  background: var(--color-signals-hover);
+}
+</style>

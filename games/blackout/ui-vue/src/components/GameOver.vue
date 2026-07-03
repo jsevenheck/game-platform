@@ -54,7 +54,7 @@ const winners = computed(() => {
 
     <button
       v-if="store.isHost"
-      class="ui-btn-primary bg-blackout! hover:bg-blackout-hover!"
+      class="ui-btn-primary btn-blackout btn-blackout-hover"
       @click="$emit('restart')"
     >
       Play Again
@@ -62,3 +62,18 @@ const winners = computed(() => {
     <p v-else class="text-muted-foreground">Waiting for host to restart...</p>
   </div>
 </template>
+
+<style scoped>
+.btn-blackout {
+  background: var(--color-blackout);
+}
+.btn-blackout-hover:hover:not(:disabled) {
+  background: var(--color-blackout-hover);
+}
+.border-blackout-active {
+  border-color: var(--color-blackout);
+}
+.focus-border-blackout-active:focus {
+  border-color: var(--color-blackout);
+}
+</style>

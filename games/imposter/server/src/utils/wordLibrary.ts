@@ -1,8 +1,18 @@
 import * as fs from 'fs';
 import * as path from 'path';
 import { DEFAULT_WORD_LIBRARY, WORD_MAX_LENGTH } from '../../../core/src/constants';
+import { createComponentLogger } from '../../../../../apps/platform/server/logging/logger';
 
+const wordLogger = createComponentLogger('imposter-word-library');
 const WORDS_FILE = path.resolve(process.cwd(), 'server', 'data', 'words.txt');
+
+/** When false, submitted words are kept in-memory only (for multi-instance deployments
+ * where a local file would diverge across processes). Defaults to true. */
+const PERSIST_ENABLED = (() => {
+  const raw = process.env.IMPOSTER_PERSIST_WORDS;
+  if (raw === undefined) return true;
+  return ['1', 'true', 'yes', 'on'].includes(raw.trim().toLowerCase());
+})();
 
 let cache: string[] | null = null;
 
@@ -34,10 +44,13 @@ export function persistWord(word: string): void {
   const lower = word.toLowerCase();
   if (cache.some((w) => w.toLowerCase() === lower)) return;
   cache.push(word);
+  if (!PERSIST_ENABLED) return;
   try {
     fs.appendFileSync(WORDS_FILE, '\n' + word, 'utf8');
-  } catch {
-    // File not writable (e.g. read-only Docker image without a mounted volume) — words
-    // still work in-memory for the current server process, just won't persist across restarts.
+  } catch (err) {
+    wordLogger.warn(
+      { err },
+      'failed to persist submitted word to disk — word is in-memory only for this process'
+    );
   }
 }

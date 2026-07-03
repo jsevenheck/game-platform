@@ -25,6 +25,7 @@ const { socket } = useSocket({
   apiBaseUrl: props.apiBaseUrl,
   sessionId: props.sessionId,
   playerId: props.playerId,
+  joinToken: props.joinToken,
   wsNamespace: props.wsNamespace,
 });
 

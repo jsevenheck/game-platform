@@ -15,6 +15,12 @@ import {
   recordNamespaceDisconnect,
 } from '../../../../../apps/platform/server/observability/socketNamespaceMetrics';
 import {
+  authorizePartyJoin,
+  normalizeJoinToken,
+  normalizeStablePlayerId,
+  syncRoomHostAfterJoin,
+} from '../../../../../apps/platform/server/party/gameAuth';
+import {
   ASSASSIN_PENALTY_MODES,
   BOARD_SIZE,
   DEFAULT_ASSASSIN_PENALTY_MODE,
@@ -50,7 +56,6 @@ import {
 } from '../models/room';
 
 const GAME_ID = 'secret-signals';
-const MAX_PLAYER_NAME_LENGTH = 20;
 
 type GameSocket = Socket<ClientToServerEvents, ServerToClientEvents>;
 
@@ -68,6 +73,7 @@ export function registerGame(io: Server, namespace = `/g/${GAME_ID}`): void {
     const auth = socket.handshake.auth || {};
     socket.data.sessionId = auth.sessionId;
     socket.data.playerId = auth.playerId;
+    socket.data.joinToken = auth.joinToken || auth.token;
     next();
   });
 
@@ -83,32 +89,38 @@ export function registerGame(io: Server, namespace = `/g/${GAME_ID}`): void {
       const respond = instrumentation.wrapCallback(cb);
       try {
         const sessionId = data.sessionId?.trim();
-        const normalizedName = (data.name ?? '').trim();
-        const name = normalizedName.slice(0, MAX_PLAYER_NAME_LENGTH);
-        const hubPlayerId = data.playerId?.trim();
-
-        if (!sessionId || !normalizedName) {
+        if (!sessionId) {
           return respond({ ok: false, error: 'Missing session info' });
         }
 
-        if (normalizedName.length > MAX_PLAYER_NAME_LENGTH) {
-          return respond({
-            ok: false,
-            error: `Name must be ${MAX_PLAYER_NAME_LENGTH} characters or fewer`,
-          });
+        const stablePlayerId =
+          normalizeStablePlayerId(data.playerId) ?? normalizeStablePlayerId(socket.data.playerId);
+        const joinToken = normalizeJoinToken(data.joinToken, socket.data.joinToken);
+
+        // Validate the platform joinToken against the active party match and
+        // derive authoritative player identity + host from party state.
+        const authorization = authorizePartyJoin(GAME_ID, sessionId, stablePlayerId, joinToken);
+        if (!authorization.ok) {
+          socketLogger.warn(
+            { sessionId, playerId: stablePlayerId, reason: authorization.reason },
+            'autoJoinRoom rejected: unauthorized secret-signals party member'
+          );
+          return respond({ ok: false, error: authorization.error });
         }
+
+        const authorizedPlayerId = authorization.member.playerId;
+        const name = authorization.member.name;
+        const providedResumeToken =
+          typeof data.resumeToken === 'string' ? data.resumeToken : undefined;
 
         const mappedRoomCode = getSessionRoom(sessionId);
         const mappedRoom = mappedRoomCode ? getRoom(mappedRoomCode) : undefined;
 
         if (!mappedRoom) {
-          const { room, hostId, resumeToken } = createRoom(
-            name,
-            socket.id,
-            hubPlayerId || undefined
-          );
+          const { room, hostId, resumeToken } = createRoom(name, socket.id, authorizedPlayerId);
           setSessionToRoom(sessionId, room.code);
           socket.join(room.code);
+          syncRoomHostAfterJoin(room, authorization.hostPlayerId, !authorization.hostConnected);
           broadcastRoom(nsp, room);
           socketLogger.info(
             {
@@ -121,57 +133,53 @@ export function registerGame(io: Server, namespace = `/g/${GAME_ID}`): void {
           return respond({ ok: true, roomCode: room.code, playerId: hostId, resumeToken });
         }
 
-        if (hubPlayerId) {
-          const existingPlayer = mappedRoom.players[hubPlayerId];
-          if (existingPlayer) {
-            // Require the server-issued resumeToken to prevent slot hijacking via public playerId.
-            if (data.resumeToken && existingPlayer.resumeToken !== data.resumeToken) {
-              socketLogger.warn(
-                { roomCode: mappedRoom.code, playerId: existingPlayer.id, sessionId },
-                'autoJoinRoom rejected: invalid secret-signals resume token'
-              );
-              return respond({ ok: false, error: 'Invalid resume token' });
-            }
-            if (!data.resumeToken && existingPlayer.resumeToken) {
-              socketLogger.warn(
-                { roomCode: mappedRoom.code, playerId: existingPlayer.id, sessionId },
-                'autoJoinRoom rejected: secret-signals resume token required'
-              );
-              return respond({ ok: false, error: 'Resume token required' });
-            }
-
-            if (existingPlayer.socketId && existingPlayer.socketId !== socket.id) {
-              deleteSocketIndex(existingPlayer.socketId);
-            }
-            existingPlayer.socketId = socket.id;
-            existingPlayer.connected = true;
-            if (existingPlayer.isHost || data.isHost) {
-              for (const p of Object.values(mappedRoom.players)) {
-                p.isHost = false;
-              }
-              existingPlayer.isHost = true;
-              mappedRoom.hostId = existingPlayer.id;
-            }
-            setSocketIndex(socket.id, mappedRoom.code, existingPlayer.id);
-            clearRoomCleanup(mappedRoom.code);
-            socket.join(mappedRoom.code);
-            broadcastRoom(nsp, mappedRoom);
-            socketLogger.info(
-              {
-                roomCode: mappedRoom.code,
-                playerId: existingPlayer.id,
-                sessionId,
-                resumed: true,
-              },
-              'player rejoined secret-signals room'
+        if (mappedRoom.players[authorizedPlayerId]) {
+          const existingPlayer = mappedRoom.players[authorizedPlayerId];
+          // Require the server-issued resumeToken to prevent slot hijacking via public playerId.
+          if (providedResumeToken && existingPlayer.resumeToken !== providedResumeToken) {
+            socketLogger.warn(
+              { roomCode: mappedRoom.code, playerId: existingPlayer.id, sessionId },
+              'autoJoinRoom rejected: invalid secret-signals resume token'
             );
-            return respond({
-              ok: true,
+            return respond({ ok: false, error: 'Invalid resume token' });
+          }
+          if (!providedResumeToken && existingPlayer.resumeToken) {
+            socketLogger.warn(
+              { roomCode: mappedRoom.code, playerId: existingPlayer.id, sessionId },
+              'autoJoinRoom rejected: secret-signals resume token required'
+            );
+            return respond({ ok: false, error: 'Resume token required' });
+          }
+
+          if (existingPlayer.socketId && existingPlayer.socketId !== socket.id) {
+            deleteSocketIndex(existingPlayer.socketId);
+          }
+          existingPlayer.socketId = socket.id;
+          existingPlayer.connected = true;
+          setSocketIndex(socket.id, mappedRoom.code, existingPlayer.id);
+          clearRoomCleanup(mappedRoom.code);
+          syncRoomHostAfterJoin(
+            mappedRoom,
+            authorization.hostPlayerId,
+            !authorization.hostConnected
+          );
+          socket.join(mappedRoom.code);
+          broadcastRoom(nsp, mappedRoom);
+          socketLogger.info(
+            {
               roomCode: mappedRoom.code,
               playerId: existingPlayer.id,
-              resumeToken: existingPlayer.resumeToken,
-            });
-          }
+              sessionId,
+              resumed: true,
+            },
+            'player rejoined secret-signals room'
+          );
+          return respond({
+            ok: true,
+            roomCode: mappedRoom.code,
+            playerId: existingPlayer.id,
+            resumeToken: existingPlayer.resumeToken,
+          });
         }
 
         if (mappedRoom.phase !== 'lobby') {
@@ -185,18 +193,12 @@ export function registerGame(io: Server, namespace = `/g/${GAME_ID}`): void {
           return respond({ ok: false, error: 'Name already taken' });
         }
 
-        const player = createPlayer(name, false, hubPlayerId || undefined);
+        const player = createPlayer(name, false, authorizedPlayerId);
         player.socketId = socket.id;
         mappedRoom.players[player.id] = player;
-        if (data.isHost) {
-          for (const p of Object.values(mappedRoom.players)) {
-            p.isHost = false;
-          }
-          player.isHost = true;
-          mappedRoom.hostId = player.id;
-        }
         setSocketIndex(socket.id, mappedRoom.code, player.id);
         clearRoomCleanup(mappedRoom.code);
+        syncRoomHostAfterJoin(mappedRoom, authorization.hostPlayerId, !authorization.hostConnected);
         socket.join(mappedRoom.code);
         broadcastRoom(nsp, mappedRoom);
         socketLogger.info(

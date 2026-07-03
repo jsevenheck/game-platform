@@ -1,4 +1,9 @@
 import type { Mock } from 'vitest';
+import type { PartySession } from '../../../apps/platform/server/party/types';
+import {
+  clearAllParties,
+  createParty as createPartySession,
+} from '../../../apps/platform/server/party/partyStore';
 
 vi.mock('../server/src/models/room', () => ({
   createRoom: vi.fn(),
@@ -99,11 +104,20 @@ function makeIo(nsp: ReturnType<typeof makeNamespace>['nsp']) {
 }
 
 describe('registerFlip7 — autoJoinRoom', () => {
+  function setupParty(playerId, name, matchKey = 'session-1') {
+    const { party, hostResumeToken } = createPartySession(playerId, name, 'party-socket');
+    party.status = 'in-match';
+    party.activeMatch = { gameId: 'flip7', matchKey, namespace: '/g/flip7', startedAt: Date.now() };
+    return hostResumeToken;
+  }
+
   beforeEach(() => {
     vi.clearAllMocks();
+    clearAllParties();
   });
 
   it('creates a new room when session is unknown', () => {
+    const joinToken = setupParty('player-1', 'Host');
     const ns = makeNamespace();
     const io = makeIo(ns.nsp);
     registerFlip7(io as never, '/g/flip7');
@@ -121,7 +135,7 @@ describe('registerFlip7 — autoJoinRoom', () => {
 
     const cb = vi.fn();
     socket.handlers['autoJoinRoom']?.(
-      { sessionId: 'session-1', name: 'Host', playerId: 'player-1', isHost: true },
+      { sessionId: 'session-1', name: 'Host', playerId: 'player-1', isHost: true, joinToken },
       cb
     );
 
@@ -136,6 +150,7 @@ describe('registerFlip7 — autoJoinRoom', () => {
   });
 
   it('rejects with "Resume token required" when player exists but no token provided', () => {
+    const joinToken = setupParty('player-1', 'Host');
     const ns = makeNamespace();
     const io = makeIo(ns.nsp);
     registerFlip7(io as never, '/g/flip7');
@@ -149,7 +164,7 @@ describe('registerFlip7 — autoJoinRoom', () => {
 
     const cb = vi.fn();
     socket.handlers['autoJoinRoom']?.(
-      { sessionId: 'session-1', name: 'Host', playerId: 'player-1' },
+      { sessionId: 'session-1', name: 'Host', playerId: 'player-1', joinToken },
       cb
     );
 
@@ -157,6 +172,7 @@ describe('registerFlip7 — autoJoinRoom', () => {
   });
 
   it('rejects with "Invalid resume token" when wrong token is given', () => {
+    const joinToken = setupParty('player-1', 'Host');
     const ns = makeNamespace();
     const io = makeIo(ns.nsp);
     registerFlip7(io as never, '/g/flip7');
@@ -170,7 +186,7 @@ describe('registerFlip7 — autoJoinRoom', () => {
 
     const cb = vi.fn();
     socket.handlers['autoJoinRoom']?.(
-      { sessionId: 'session-1', name: 'Host', playerId: 'player-1', resumeToken: 'wrong-token' },
+      { sessionId: 'session-1', name: 'Host', playerId: 'player-1', joinToken, resumeToken: 'wrong-token' },
       cb
     );
 
@@ -178,6 +194,7 @@ describe('registerFlip7 — autoJoinRoom', () => {
   });
 
   it('rejoins with correct resume token', () => {
+    const joinToken = setupParty('player-1', 'Host');
     const ns = makeNamespace();
     const io = makeIo(ns.nsp);
     registerFlip7(io as never, '/g/flip7');
@@ -197,6 +214,7 @@ describe('registerFlip7 — autoJoinRoom', () => {
         sessionId: 'session-1',
         name: 'Host',
         playerId: 'player-1',
+        joinToken,
         resumeToken: 'resume-player-1',
       },
       cb
@@ -209,6 +227,7 @@ describe('registerFlip7 — autoJoinRoom', () => {
   });
 
   it('rejects when name already taken in lobby', () => {
+    const joinToken = setupParty('player-2', 'Alice');
     const ns = makeNamespace();
     const io = makeIo(ns.nsp);
     registerFlip7(io as never, '/g/flip7');
@@ -222,7 +241,7 @@ describe('registerFlip7 — autoJoinRoom', () => {
 
     const cb = vi.fn();
     socket.handlers['autoJoinRoom']?.(
-      { sessionId: 'session-1', name: 'Alice', playerId: 'player-2' },
+      { sessionId: 'session-1', name: 'Alice', playerId: 'player-2', joinToken },
       cb
     );
 

@@ -6,6 +6,7 @@ import { getRoomSnapshot as getBlackoutRoomSnapshot } from '../../../../games/bl
 import { getRoomSnapshot as getImposterRoomSnapshot } from '../../../../games/imposter/server/src/models/room';
 import { getRoomSnapshot as getSecretSignalsRoomSnapshot } from '../../../../games/secret-signals/server/src/models/room';
 import { getRoomSnapshot as getFlip7RoomSnapshot } from '../../../../games/flip7/server/src/models/room';
+import { getRoomSnapshot as getScoutRoomSnapshot } from '../../../../games/scout/server/src/models/room';
 
 /**
  * Metrics in this file are process-local in-memory gauges.
@@ -41,6 +42,7 @@ const roomsActiveGauge = new Gauge({
     this.labels('imposter').set(getImposterRoomSnapshot().roomCount);
     this.labels('secret-signals').set(getSecretSignalsRoomSnapshot().roomCount);
     this.labels('flip7').set(getFlip7RoomSnapshot().roomCount);
+    this.labels('scout').set(getScoutRoomSnapshot().roomCount);
   },
 });
 
@@ -54,6 +56,7 @@ const roomPlayersConnectedGauge = new Gauge({
     this.labels('imposter').set(getImposterRoomSnapshot().connectedPlayers);
     this.labels('secret-signals').set(getSecretSignalsRoomSnapshot().connectedPlayers);
     this.labels('flip7').set(getFlip7RoomSnapshot().connectedPlayers);
+    this.labels('scout').set(getScoutRoomSnapshot().connectedPlayers);
   },
 });
 

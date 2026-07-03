@@ -24,6 +24,7 @@ export function useSocket(opts?: {
   apiBaseUrl?: string;
   sessionId?: string;
   playerId?: string;
+  joinToken?: string;
   wsNamespace?: string;
 }): { socket: Flip7Socket; connected: ReturnType<typeof ref<boolean>> } {
   const connected = ref(false);
@@ -33,6 +34,7 @@ export function useSocket(opts?: {
   const socket: Flip7Socket = io(url, {
     auth: {
       sessionId: opts?.sessionId,
+      joinToken: opts?.joinToken,
       playerId: opts?.playerId,
     },
     autoConnect: false,

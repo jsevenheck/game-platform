@@ -11,6 +11,11 @@ import { registerHttpRoutes } from './httpRoutes';
 import { registerAdminRoutes } from './admin';
 import { initializeMetrics, setActiveConnections } from './metrics/collectors';
 import { registerMetricsRoutes } from './metrics/httpMetrics';
+import {
+  checkFixedWindowRateLimit,
+  pruneExpiredRateLimitEntries,
+  type RateLimitRecord,
+} from './observability/rateLimit';
 
 const app = express();
 const httpServer = createServer(app);
@@ -20,6 +25,13 @@ registerProcessLogging(serverLogger);
 app.use(express.json());
 app.use(cookieParser());
 app.use(requestLogger);
+app.use((_req, res, next) => {
+  res.setHeader('X-Content-Type-Options', 'nosniff');
+  res.setHeader('X-Frame-Options', 'DENY');
+  res.setHeader('Referrer-Policy', 'strict-origin-when-cross-origin');
+  res.setHeader('X-XSS-Protection', '0');
+  next();
+});
 registerMetricsRoutes(app, serverLogger);
 
 const io = new Server(httpServer, {
@@ -44,7 +56,31 @@ for (const [gameId, game] of gameRegistry) {
   );
 }
 
+const connRateLimit = new Map<string, RateLimitRecord>();
+const CONN_RATE_LIMIT_WINDOW_MS = 10_000;
+const CONN_RATE_LIMIT_MAX = 20; // max 20 new connections per IP per 10s
+const CONN_RATE_LIMIT_ENABLED = process.env.E2E_TESTS !== '1';
+const connPruneInterval = setInterval(() => pruneExpiredRateLimitEntries(connRateLimit), 60_000);
+connPruneInterval.unref?.();
+
 io.engine.on('connection', (engineSocket) => {
+  if (CONN_RATE_LIMIT_ENABLED) {
+    const forwarded = engineSocket.request?.headers?.['x-forwarded-for'];
+    const ip =
+      (typeof forwarded === 'string' ? forwarded.split(',')[0]?.trim() : undefined) ||
+      engineSocket.remoteAddress ||
+      'unknown';
+    if (
+      !checkFixedWindowRateLimit(connRateLimit, ip, {
+        windowMs: CONN_RATE_LIMIT_WINDOW_MS,
+        max: CONN_RATE_LIMIT_MAX,
+      })
+    ) {
+      serverLogger.warn({ ip }, 'connection rate limit exceeded — dropping socket');
+      engineSocket.destroy();
+      return;
+    }
+  }
   setActiveConnections(io.engine.clientsCount);
 
   engineSocket.on('close', () => {

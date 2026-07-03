@@ -491,7 +491,21 @@ export function passAndScout(
 
   if (thenPlay) {
     player.scoutAndShowTokens -= 1;
-    commitPlay(room, playerId, thenPlay.startIndex, thenPlay.count);
+    // Defensive: all commitPlay throw paths are pre-validated above, but if
+    // commitPlay throws for an unexpected reason, roll back the scout mutation
+    // so the prior set and player row are not left in an inconsistent state.
+    try {
+      commitPlay(room, playerId, thenPlay.startIndex, thenPlay.count);
+    } catch (err) {
+      // Roll back: remove the scouted card from the row and re-insert into current play
+      player.row.splice(insertIndex, 1);
+      trick.currentPlay = summarizePlay(ownerId, [
+        ...(trick.currentPlay?.cards ?? []),
+        scoutedOriginal,
+      ]);
+      trick.plays = [trick.currentPlay];
+      throw err;
+    }
     return;
   }
 

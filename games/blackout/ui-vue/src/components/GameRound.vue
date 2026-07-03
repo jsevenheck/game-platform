@@ -54,7 +54,7 @@ const selectablePlayers = computed(() => {
           <p v-if="round?.letter" class="text-6xl font-black text-blackout">{{ round?.letter }}</p>
         </div>
         <button
-          class="ui-btn-primary bg-blackout! px-12 py-4 text-2xl hover:bg-blackout-hover!"
+          class="ui-btn-primary btn-blackout px-12 py-4 text-2xl btn-blackout-hover"
           @click="$emit('reveal')"
         >
           Reveal!
@@ -131,3 +131,18 @@ const selectablePlayers = computed(() => {
     </template>
   </div>
 </template>
+
+<style scoped>
+.btn-blackout {
+  background: var(--color-blackout);
+}
+.btn-blackout-hover:hover:not(:disabled) {
+  background: var(--color-blackout-hover);
+}
+.border-blackout-active {
+  border-color: var(--color-blackout);
+}
+.focus-border-blackout-active:focus {
+  border-color: var(--color-blackout);
+}
+</style>

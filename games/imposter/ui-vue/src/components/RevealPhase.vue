@@ -159,12 +159,12 @@ const voteTally = computed(() => {
           type="text"
           placeholder="Your guess..."
           maxlength="40"
-          class="ui-input bg-white/5! border-white/10! focus:border-danger! flex-1 min-w-0"
+          class="ui-input bg-white-5 border-white-10 focus:border-danger! flex-1 min-w-0"
           @keyup.enter="handleGuess"
         />
         <button
           id="btn-guess-word"
-          class="ui-btn-primary bg-imposter! hover:bg-imposter-hover!"
+          class="ui-btn-primary btn-imposter btn-imposter-hover"
           @click="handleGuess"
         >
           Guess!
@@ -181,7 +181,7 @@ const voteTally = computed(() => {
       <button
         v-if="isHost"
         id="btn-skip-guess"
-        class="ui-btn-secondary text-sm! px-5! py-2! hover:border-imposter! hover:text-imposter!"
+        class="ui-btn-secondary text-sm px-5 py-2 hover-border-imposter hover-text-imposter"
         @click="$emit('skipGuess')"
       >
         Skip Guess
@@ -228,20 +228,20 @@ const voteTally = computed(() => {
     <div v-if="isHost && result" class="flex gap-3 w-full max-w-100">
       <button
         id="btn-next-round"
-        class="ui-btn-primary bg-imposter! hover:bg-imposter-hover! flex-1"
+        class="ui-btn-primary btn-imposter btn-imposter-hover flex-1"
         @click="$emit('nextRound')"
       >
         Next Round
       </button>
       <button
         id="btn-end-game"
-        class="ui-btn-secondary hover:border-imposter! hover:text-imposter! flex-1"
+        class="ui-btn-secondary hover-border-imposter hover-text-imposter flex-1"
         @click="$emit('endGame')"
       >
         End Game
       </button>
       <button
-        class="ui-btn-secondary hover:border-imposter! hover:text-imposter! flex-1"
+        class="ui-btn-secondary hover-border-imposter hover-text-imposter flex-1"
         @click="$emit('restartGame')"
       >
         Back to Lobby
@@ -279,5 +279,30 @@ const voteTally = computed(() => {
   50% {
     box-shadow: 0 0 25px rgba(239, 68, 68, 0.2);
   }
+}
+.btn-imposter {
+  background: var(--color-imposter);
+}
+.btn-imposter-hover:hover:not(:disabled) {
+  background: var(--color-imposter-hover);
+}
+.hover-border-imposter:hover {
+  border-color: var(--color-imposter);
+}
+.hover-text-imposter:hover {
+  color: var(--color-imposter);
+}
+.focus-border-imposter:focus {
+  border-color: var(--color-imposter);
+}
+.bg-white-5 {
+  background: rgba(255, 255, 255, 0.05);
+}
+.border-white-10 {
+  border-color: rgba(255, 255, 255, 0.1);
+}
+.signals-active {
+  border-color: var(--color-imposter);
+  background: rgba(239, 68, 68, 0.1);
 }
 </style>

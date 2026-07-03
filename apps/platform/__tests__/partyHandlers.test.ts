@@ -1,5 +1,5 @@
 import type { Server } from 'socket.io';
-import { registerPartyHandlers } from '../server/party/partyHandlers';
+import { registerPartyHandlers, resetPartyActionRateLimit } from '../server/party/partyHandlers';
 import {
   getParty,
   getPartyByInviteCode,
@@ -87,6 +87,7 @@ describe('partyHandlers', () => {
 
   afterEach(() => {
     vi.useRealTimers();
+    resetPartyActionRateLimit();
     for (const id of partyIds) {
       clearPartyCleanup(id);
       deleteParty(id);
