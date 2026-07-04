@@ -84,9 +84,6 @@ onBeforeUnmount(() => {
 
       <!-- Hero -->
       <div class="home-hero">
-        <div class="home-logo-wrap">
-          <span class="home-logo-icon">⚡</span>
-        </div>
         <h1 class="home-title">Game Platform</h1>
         <p class="home-sub">Browse games, host a party, or join your friends</p>
       </div>
@@ -197,24 +194,6 @@ onBeforeUnmount(() => {
 .home-hero {
   text-align: center;
   margin-bottom: 1.25rem;
-}
-
-.home-logo-wrap {
-  width: 44px;
-  height: 44px;
-  margin: 0 auto 0.75rem;
-  background: var(--color-elevated);
-  border: 1px solid var(--color-border-strong);
-  border-radius: var(--radius-lg);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-size: 1.35rem;
-  box-shadow: 0 0 24px rgba(249, 115, 22, 0.18);
-}
-
-.home-logo-icon {
-  line-height: 1;
 }
 
 .home-title {
