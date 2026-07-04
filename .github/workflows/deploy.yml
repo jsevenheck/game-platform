@@ -33,3 +33,4 @@ jobs:
             ADMIN_USERNAME=${{ secrets.ADMIN_USERNAME }}
             ADMIN_PASSWORD_HASH=${{ secrets.ADMIN_PASSWORD_HASH }}
             ADMIN_JWT_SECRET=${{ secrets.ADMIN_JWT_SECRET }}
+            TRAEFIK_HOST=${{ secrets.TRAEFIK_HOST }}

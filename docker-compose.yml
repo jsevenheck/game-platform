@@ -6,8 +6,8 @@ services:
     # to :latest if IMAGE_TAG is unset (e.g. a manual `docker compose pull`).
     image: ghcr.io/jsevenheck/game-platform:${IMAGE_TAG:-latest}
     restart: unless-stopped
-    ports:
-      - '3002:3002'
+    expose:
+      - '3002'
     env_file:
       - path: ./.env
         required: false
@@ -15,3 +15,11 @@ services:
     environment:
       - NODE_ENV=production
       - PORT=3002
+    labels:
+      - traefik.enable=true
+
+      - traefik.http.routers.${COMPOSE_PROJECT_NAME}.rule=Host(`${COMPOSE_PROJECT_NAME}.${TRAEFIK_HOST}`)
+      - traefik.http.routers.${COMPOSE_PROJECT_NAME}.entrypoints=websecure
+      - traefik.http.routers.${COMPOSE_PROJECT_NAME}.tls.certresolver=letsencrypt
+
+      - traefik.http.services.${COMPOSE_PROJECT_NAME}.loadbalancer.server.port=3002
