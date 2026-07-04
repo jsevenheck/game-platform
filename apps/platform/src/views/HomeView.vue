@@ -82,6 +82,22 @@ onBeforeUnmount(() => {
       <!-- Top accent line -->
       <div class="home-top-line" />
 
+      <!-- Card suit corner marks -->
+      <span class="home-corner-suit home-corner-suit-left" aria-hidden="true">
+        <svg viewBox="0 0 16 16" fill="currentColor">
+          <path
+            d="M7.184 11.246A3.5 3.5 0 0 1 1 9c0-1.602 1.14-2.633 2.66-4.008C4.986 3.792 6.602 2.33 8 0c1.398 2.33 3.014 3.792 4.34 4.992C13.86 6.367 15 7.398 15 9a3.5 3.5 0 0 1-6.184 2.246a20 20 0 0 0 1.582 2.907c.231.35-.02.847-.438.847H6.04c-.419 0-.67-.497-.438-.847a20 20 0 0 0 1.582-2.907"
+          />
+        </svg>
+      </span>
+      <span class="home-corner-suit home-corner-suit-right" aria-hidden="true">
+        <svg viewBox="0 0 16 16" fill="currentColor">
+          <path
+            d="M11.5 12.5a3.5 3.5 0 0 1-2.684-1.254 20 20 0 0 0 1.582 2.907c.231.35-.02.847-.438.847H6.04c-.419 0-.67-.497-.438-.847a20 20 0 0 0 1.582-2.907 3.5 3.5 0 1 1-2.538-5.743 3.5 3.5 0 1 1 6.708 0A3.5 3.5 0 1 1 11.5 12.5"
+          />
+        </svg>
+      </span>
+
       <!-- Hero -->
       <div class="home-hero">
         <h1 class="home-title">Game Platform</h1>
@@ -189,6 +205,30 @@ onBeforeUnmount(() => {
   right: 0;
   height: 1px;
   background: linear-gradient(90deg, transparent, rgba(249, 115, 22, 0.4), transparent);
+}
+
+.home-corner-suit {
+  position: absolute;
+  top: 1.1rem;
+  width: 22px;
+  height: 22px;
+  color: var(--color-muted-foreground);
+  opacity: 0.4;
+  pointer-events: none;
+}
+
+.home-corner-suit svg {
+  width: 100%;
+  height: 100%;
+  display: block;
+}
+
+.home-corner-suit-left {
+  left: 1.1rem;
+}
+
+.home-corner-suit-right {
+  right: 1.1rem;
 }
 
 .home-hero {
