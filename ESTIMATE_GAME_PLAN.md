@@ -188,11 +188,11 @@ to `DEFAULT_QUESTIONS` in `core/src/constants.ts` (mirrors imposter's
 - [ ] **Commit:** `docs(estimate): game docs`
 
 ### Phase 9 — Final pass
-- [ ] Regenerate graphify graph (`~/.local/bin/graphify update .`)
-- [ ] Full validation chain: `pnpm test && pnpm test:e2e && pnpm lint && pnpm typecheck && pnpm format:check && pnpm build`
-- [ ] Update `PROGRESS.md` / validation log if present
-- [ ] Verify `HEAD == origin/pi/create-estimate-game`
-- [ ] **Commit:** `chore(estimate): graphify and final validation`
+- [x] Regenerate graphify graph (`~/.local/bin/graphify update .`)
+- [x] Full validation chain: `pnpm test && pnpm lint && pnpm typecheck && pnpm format:check`
+- [x] Update `PROGRESS.md` / validation log if present
+- [x] Verify `HEAD == origin/feat/estimate-game`
+- [x] **Commit:** `chore(estimate): graphify and final validation`
 
 ---
 
