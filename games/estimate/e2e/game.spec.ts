@@ -1,0 +1,165 @@
+import {
+  expect,
+  test,
+  type Browser,
+  type BrowserContext,
+  type Page,
+} from '@playwright/test';
+
+interface EstimateSession {
+  contexts: BrowserContext[];
+  hostPage: Page;
+  guestPage: Page;
+  inviteCode: string;
+}
+
+async function createParty(page: Page, name: string): Promise<string> {
+  await page.goto('/');
+  await page.getByRole('tab', { name: 'Host a Party' }).click();
+  const form = page.locator('form');
+  await form.getByLabel('Your Name').fill(name);
+  await form.getByRole('button', { name: 'Create Party', exact: true }).click();
+  await page.waitForURL(/\/party\/[A-Z0-9]+/);
+  return page.url().split('/party/')[1]?.split('/')[0] ?? '';
+}
+
+async function joinParty(page: Page, name: string, inviteCode: string): Promise<void> {
+  await page.goto('/');
+  await page.getByRole('tab', { name: 'Join with Code' }).click();
+  const form = page.locator('form');
+  await form.getByLabel('Your Name').fill(name);
+  await form.getByLabel('Invite Code').fill(inviteCode);
+  await form.getByRole('button', { name: 'Join Party', exact: true }).click();
+  await page.waitForURL(/\/party\/[A-Z0-9]+/);
+}
+
+async function createTwoPlayerEstimateSession(
+  browser: Browser,
+  hostName: string,
+  guestName: string
+): Promise<EstimateSession> {
+  const hostContext = await browser.newContext();
+  const guestContext = await browser.newContext();
+  const hostPage = await hostContext.newPage();
+  const guestPage = await guestContext.newPage();
+
+  const inviteCode = await createParty(hostPage, hostName);
+  await joinParty(guestPage, guestName, inviteCode);
+  await expect(hostPage.getByRole('heading', { name: 'Players (2)' })).toBeVisible();
+
+  return {
+    contexts: [hostContext, guestContext],
+    hostPage,
+    guestPage,
+    inviteCode,
+  };
+}
+
+async function closeSession(session: EstimateSession): Promise<void> {
+  await Promise.all(session.contexts.map((context) => context.close()));
+}
+
+async function launchEstimateGame(hostPage: Page, guestPage: Page): Promise<void> {
+  await hostPage.getByRole('button', { name: /Estimate/ }).click();
+  await Promise.all([
+    hostPage.waitForURL(/\/game\/estimate/, { timeout: 15_000 }),
+    guestPage.waitForURL(/\/game\/estimate/, { timeout: 15_000 }),
+  ]);
+}
+
+async function hostStartsGame(hostPage: Page): Promise<void> {
+  await expect(hostPage.getByTestId('estimate-lobby')).toBeVisible({ timeout: 15_000 });
+  const startButton = hostPage.getByTestId('estimate-start');
+  await expect(startButton).toBeEnabled({ timeout: 10_000 });
+  await startButton.click();
+}
+
+async function bothSubmitGuesses(
+  hostPage: Page,
+  guestPage: Page,
+  hostGuess: string,
+  guestGuess: string
+): Promise<void> {
+  await expect(hostPage.getByTestId('estimate-question')).toBeVisible({ timeout: 15_000 });
+  await expect(guestPage.getByTestId('estimate-question')).toBeVisible({ timeout: 15_000 });
+
+  // Host submits.
+  await hostPage.getByTestId('estimate-guess-input').fill(hostGuess);
+  await hostPage.getByTestId('estimate-guess-submit').click();
+
+  // Guest submits.
+  await guestPage.getByTestId('estimate-guess-input').fill(guestGuess);
+  await guestPage.getByTestId('estimate-guess-submit').click();
+
+  // Both should transition to the waiting/reveal state.
+  await expect(hostPage.getByTestId('estimate-waiting')).toBeVisible({ timeout: 5_000 });
+  await expect(guestPage.getByTestId('estimate-waiting')).toBeVisible({ timeout: 5_000 });
+}
+
+async function hostReveals(hostPage: Page): Promise<void> {
+  await expect(hostPage.getByTestId('estimate-reveal')).toBeVisible({ timeout: 15_000 });
+  // The "Auflösen" button is only visible before reveal. After all players
+  // submit, the room transitions to 'allSubmitted' which still shows the
+  // reveal button (solution not yet visible).
+  await hostPage.getByTestId('estimate-reveal-button').click();
+  await expect(hostPage.getByTestId('estimate-revealed-banner')).toBeVisible({ timeout: 5_000 });
+}
+
+async function hostAdvances(hostPage: Page): Promise<void> {
+  await hostPage.getByTestId('estimate-next-button').click();
+  await expect(hostPage.getByTestId('estimate-question')).toBeVisible({ timeout: 10_000 });
+}
+
+test.describe('Estimate game', () => {
+  test('happy path: 2 players play 1 round end-to-end', async ({ browser }) => {
+    const session = await createTwoPlayerEstimateSession(browser, 'Alice', 'Bob');
+    try {
+      await launchEstimateGame(session.hostPage, session.guestPage);
+      await hostStartsGame(session.hostPage);
+      await bothSubmitGuesses(session.hostPage, session.guestPage, '1989', '1990');
+      await hostReveals(session.hostPage);
+      // The number line is rendered for both players.
+      await expect(session.hostPage.getByTestId('estimate-number-line')).toBeVisible();
+      await expect(session.guestPage.getByTestId('estimate-number-line')).toBeVisible();
+    } finally {
+      await closeSession(session);
+    }
+  });
+
+  test('host-only action: guest cannot reveal', async ({ browser }) => {
+    const session = await createTwoPlayerEstimateSession(browser, 'Carol', 'Dave');
+    try {
+      await launchEstimateGame(session.hostPage, session.guestPage);
+      await hostStartsGame(session.hostPage);
+      await bothSubmitGuesses(session.hostPage, session.guestPage, '100', '100');
+
+      // The reveal button is not visible to the guest.
+      await expect(session.guestPage.getByTestId('estimate-reveal-button')).toHaveCount(0);
+      // Host can reveal.
+      await hostReveals(session.hostPage);
+    } finally {
+      await closeSession(session);
+    }
+  });
+
+  test('multiple rounds: advancing progresses to a new question', async ({ browser }) => {
+    const session = await createTwoPlayerEstimateSession(browser, 'Eve', 'Frank');
+    try {
+      await launchEstimateGame(session.hostPage, session.guestPage);
+      await hostStartsGame(session.hostPage);
+
+      // Round 1
+      await bothSubmitGuesses(session.hostPage, session.guestPage, '5', '5');
+      await hostReveals(session.hostPage);
+      await hostAdvances(session.hostPage);
+
+      // Round 2 — both players should see a fresh QuestionView.
+      await expect(session.hostPage.getByTestId('estimate-question')).toBeVisible();
+      await expect(session.guestPage.getByTestId('estimate-question')).toBeVisible();
+      // The input should be empty (fresh state).
+      await expect(session.hostPage.getByTestId('estimate-guess-input')).toHaveValue('');
+    } finally {
+      await closeSession(session);
+    }
+  });
+});
