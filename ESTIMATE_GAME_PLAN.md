@@ -177,10 +177,12 @@ to `DEFAULT_QUESTIONS` in `core/src/constants.ts` (mirrors imposter's
 - [ ] **Commit:** `test(estimate): e2e happy path and tie`
 
 ### Phase 8 — Docs
-- [ ] `games/estimate/README.md`
-- [ ] `games/estimate/docs/api.md` (Socket.IO event reference)
-- [ ] `games/estimate/docs/architecture.md` (state machine, design decisions)
-- [ ] `docs/games.md` (user-facing game overview; one paragraph per game)
+- [x] `games/estimate/README.md` (user guide + dev commands + adding questions)
+- [x] `games/estimate/docs/architecture.md` (phase machine, modules, host-gating, first-join fix)
+- [x] `games/estimate/docs/api.md` (Socket.IO events with payloads + error catalog)
+- [x] `docs/games.md` (catalogue updated with Estimate row)
+- [x] `docs/README.md` (repo overview with Estimate in the game table)
+- [x] `docs/observability-metrics.md` (game_id + namespace list updated)
 - [ ] `docs/README.md` (index for `docs/`)
 - [ ] **Validation:** `pnpm format:check` + `pnpm lint`
 - [ ] **Commit:** `docs(estimate): game docs`

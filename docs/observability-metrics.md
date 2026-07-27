@@ -66,8 +66,8 @@ Use these rules to avoid high-cardinality metrics that degrade Prometheus and Gr
 
 ### Allowed labels (low cardinality)
 
-- `game_id`: one of `blackout`, `imposter`, `secret-signals`, `flip7`, `scout`
-- `namespace`: `/party`, `/g/blackout`, `/g/imposter`, `/g/secret-signals`, `/g/flip7`, `/g/scout`
+- `game_id`: one of `blackout`, `imposter`, `secret-signals`, `flip7`, `scout`, `estimate`
+- `namespace`: `/party`, `/g/blackout`, `/g/imposter`, `/g/secret-signals`, `/g/flip7`, `/g/scout`, `/g/estimate`
 - `result`: bounded enums such as `ok`, `rejected`, `failed`, `unauthorized`
 - `reason` / `end_reason`: bounded enums controlled by server code
 - `status_class`: `2xx`, `3xx`, `4xx`, `5xx`
