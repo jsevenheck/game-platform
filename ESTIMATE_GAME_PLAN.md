@@ -136,10 +136,24 @@ to `DEFAULT_QUESTIONS` in `core/src/constants.ts` (mirrors imposter's
 > into the existing-player rejoin branch.
 
 ### Phase 4 — UI shell
-- [ ] `games/estimate/ui-vue/src/composables/useSocket.ts`
-- [ ] `games/estimate/ui-vue/src/stores/game.ts` (Pinia: `roomView`, `phase`, `myGuess`, `error`)
-- [ ] `games/estimate/ui-vue/src/App.vue` (real root, phase routing, `phase-change` emit)
-- [ ] `games/estimate/ui-vue/src/PlatformAdapter.vue` (real wrapper, replay overlay)
+- [x] `games/estimate/ui-vue/src/stores/game.ts` (Pinia store: room, players, phase, error)
+- [x] `games/estimate/ui-vue/src/composables/useSocket.ts` (typed socket.io client, normalized namespace)
+- [x] `games/estimate/ui-vue/src/App.vue` (root: socket, phase routing, emits `phase-change`)
+- [x] `games/estimate/ui-vue/src/PlatformAdapter.vue` (game-end overlay for the host / guests)
+
+> Phases 5 and 6 were rolled into Phase 4 because each Vue component is
+> small and self-contained. The components implemented in this commit:
+>
+> - `Lobby.vue` — host-gated start button, player list, ready hint
+> - `QuestionView.vue` — numeric input with decimal-comma normalization and
+>   GUESS_VALUE_LIMIT guard mirroring the server-side validator
+> - `WaitingView.vue` — counter for "X / Y submitted" before host reveals
+> - `RevealView.vue` — NumberLine + solution banner + host-only reveal/next
+>   buttons. Emits the same `reveal` and `next` events the parent forwards.
+> - `GameOver.vue` — final scoreboard sorted by points
+> - `NumberLine.vue` — SVG-less CSS-line with stacked player markers
+>   (collision-avoidance), gold solution marker (only post-reveal), auto-
+>   scaled range from the RoomView's `displayRange`
 - [ ] **Validation:** `pnpm dev` (manual: connect/disconnect smoke)
 - [ ] **Commit:** `feat(estimate): ui shell and socket`
 
