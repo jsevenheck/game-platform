@@ -14,7 +14,7 @@ lobby ──► guessing ──► allSubmitted ──► reveal ──► guess
 - **`guessing`** — the question is visible to every connected player. Players submit one
   number each (last write wins). The server does not auto-submit on a timer — the UI shows a
   hint, the player submits when ready.
-- **`allSubmitted`** — server-driven transition once every *connected* player has submitted.
+- **`allSubmitted`** — server-driven transition once every _connected_ player has submitted.
   The room view shows every guess on the number line. The solution stays hidden until the
   host presses the explicit `revealSolution` event.
 - **`reveal`** — host pressed "Auflösen". The solution marker appears on the number line,
@@ -28,15 +28,15 @@ and we should show the winner banner".
 
 ## Server modules
 
-| Module | Responsibility |
-| --- | --- |
-| `models/room.ts` | in-memory room store keyed by `roomCode` and `matchKey` |
-| `models/player.ts` | `createPlayer`, socket-id index, resume-token generation |
-| `managers/scoreManager.ts` | `computeRoundWinners` (pure helper, easy to test) |
+| Module                         | Responsibility                                                    |
+| ------------------------------ | ----------------------------------------------------------------- |
+| `models/room.ts`               | in-memory room store keyed by `roomCode` and `matchKey`           |
+| `models/player.ts`             | `createPlayer`, socket-id index, resume-token generation          |
+| `managers/scoreManager.ts`     | `computeRoundWinners` (pure helper, easy to test)                 |
 | `managers/broadcastManager.ts` | `buildRoomView` — the single source of truth for what clients see |
-| `managers/roundManager.ts` | state transitions, guess validation, scoring, advance / restart |
-| `utils/questionLibrary.ts` | CSV parser, cache, fallback to `DEFAULT_QUESTIONS` |
-| `socketHandlers.ts` | Socket.IO event handlers, host-gating, instrumentation |
+| `managers/roundManager.ts`     | state transitions, guess validation, scoring, advance / restart   |
+| `utils/questionLibrary.ts`     | CSV parser, cache, fallback to `DEFAULT_QUESTIONS`                |
+| `socketHandlers.ts`            | Socket.IO event handlers, host-gating, instrumentation            |
 
 `broadcastManager` is the single place where game state becomes client-visible state.
 Both `solution` (only after `reveal`) and `displayRange` (always present once any guess
@@ -47,7 +47,7 @@ exists) are derived here, so the UI does not have to re-implement the rules.
 `core/src/range.ts` exposes `computeDisplayRange(guesses, solution?)` which:
 
 1. collects the min and max of the submitted guesses,
-2. adds `RANGE_PADDING_RATIO * span` (10% by default) on each side,
+2. adds 10% of the guess span on each side,
 3. clamps the span to at least `MIN_DISPLAY_SPAN` (so close-together guesses still have
    a visible band),
 4. widens the range to include the solution if the solution is outside the guess span.
@@ -77,7 +77,7 @@ instead of attempting to add a new one (which would fail with `'Name already tak
   `ScoreEntry`, `WinnerEntry`, `StoredSession`, `Question`
 - `games/estimate/core/src/range.ts` — `computeDisplayRange`
 - `games/estimate/core/src/constants.ts` — `MIN_PLAYERS`, `MAX_PLAYERS`, `DEFAULT_TOTAL_ROUNDS`,
-  `RANGE_PADDING_RATIO`, `MIN_DISPLAY_SPAN`, `GUESS_VALUE_LIMIT`, `DEFAULT_QUESTIONS`
+  `MIN_DISPLAY_SPAN`, `GUESS_VALUE_LIMIT`, `DEFAULT_QUESTIONS`
 - `games/estimate/server/src/socketHandlers.ts` — entry point + all Socket.IO handlers
 - `games/estimate/ui-vue/src/App.vue` — root component, phase routing, socket lifecycle
 - `games/estimate/ui-vue/src/components/NumberLine.vue` — auto-scaled CSS-line with

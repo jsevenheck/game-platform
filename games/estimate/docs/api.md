@@ -93,7 +93,8 @@ Response: `{ ok: true } | { ok: false, error: string }`. Errors:
 ### `revealSolution`
 
 Host-only. Reveals the solution for the current round. The room must be in
-`allSubmitted` or `reveal`. Re-revealing is a no-op.
+`allSubmitted`; a second reveal is rejected because the room is already in
+`reveal`.
 
 Payload:
 
@@ -144,21 +145,6 @@ Response: `{ ok: true } | { ok: false, error: string }`. Errors:
 - `'Only host can restart'`
 - `'Cannot restart in phase …'`
 
-### `requestState`
-
-Requests a fresh personalized `roomUpdate` (e.g. after a reconnect blip). Acknowledgement
-callback is optional.
-
-Payload:
-
-```ts
-{
-  roomCode: string;
-}
-```
-
-Response: `{ ok: true } | { ok: false, error: string }`.
-
 ## Server → client events
 
 ### `roomUpdate`
@@ -173,8 +159,7 @@ interface Range {
 }
 
 interface Question {
-  text: string;
-  answer: number; // visible only after reveal
+  text: string; // answer is never included in RoomView
 }
 
 interface GuessEntry {
@@ -199,12 +184,10 @@ interface ScoreEntry {
 interface WinnerEntry {
   playerId: string;
   name: string;
-  distance: number;
 }
 
 interface RoomView {
   roomCode: string;
-  matchKey: string;
   phase: 'lobby' | 'guessing' | 'allSubmitted' | 'reveal' | 'gameEnd';
   currentRound: number;
   totalRounds: number;
@@ -226,7 +209,6 @@ and shows its replay overlay once `phase === 'gameEnd'`.
 ```ts
 {
   phase: 'lobby' | 'guessing' | 'allSubmitted' | 'reveal' | 'gameEnd';
-  roomCode: string;
 }
 ```
 
@@ -246,6 +228,8 @@ via the ack callback).
 - Lifecycle logs cover room creation, join/resume, start, submit, reveal, next, restart,
   and cleanup. Logs must never include resume tokens, `joinToken` values, or names paired
   with playerIds beyond the platform-party identification.
+- The server emits `phaseChange` alongside every `roomUpdate`; the platform adapter uses
+  the `gameEnd` phase to show its replay / return-to-party overlay.
 - The CSV question library is loaded once at server start (cached). Restart the server to
   pick up changes to `games/estimate/server/data/questions.csv`.
 - E2E timer constants are halved (`GUESS_TIMER_MS = 2_000`) when `E2E_TESTS=1` is set in

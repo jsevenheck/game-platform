@@ -35,6 +35,7 @@ import {
   revealSolution,
   startGame as startRound,
   submitGuess,
+  allConnectedPlayersSubmitted,
   isFiniteGuess,
   EstimateError,
 } from './managers/roundManager';
@@ -87,6 +88,7 @@ function createInstrumentedResponder<T extends { ok?: boolean }>(
 function broadcastRoom(nsp: EstimateNamespace, room: ServerRoom): void {
   const view = buildRoomView(room);
   nsp.to(room.roomCode).emit('roomUpdate', view);
+  nsp.to(room.roomCode).emit('phaseChange', { phase: view.phase });
 }
 
 function findPlayerBySocket(socket: EstimateSocket, room: ServerRoom): string | null {
@@ -460,6 +462,9 @@ function registerGameHandlers(
           player.connected = false;
           player.socketId = '';
           clearSocketIndex(socket.id);
+          if (room.phase === 'guessing' && allConnectedPlayersSubmitted(room)) {
+            room.phase = 'allSubmitted';
+          }
           broadcastRoom(nsp, room);
         }
       }

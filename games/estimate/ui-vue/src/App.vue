@@ -184,7 +184,7 @@ onBeforeUnmount(() => {
     />
 
     <GameOver
-      v-else-if="view === 'gameEnd' && store.room"
+      v-else-if="view === 'gameOver' && store.room"
       :scores="store.room.scores"
       :winners="store.room.winners"
       :is-host="props.isHost"

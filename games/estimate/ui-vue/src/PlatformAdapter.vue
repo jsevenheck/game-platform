@@ -47,10 +47,20 @@ function onPhaseChange(phase: string) {
     />
 
     <div v-if="gameEnded && isHost" class="platform-overlay">
-      <button class="ui-btn-primary" type="button" @click="onReplayGame?.()">
+      <button
+        class="ui-btn-primary"
+        type="button"
+        data-testid="platform-replay"
+        @click="onReplayGame?.()"
+      >
         Nochmal spielen
       </button>
-      <button class="ui-btn-secondary mt-2" type="button" @click="onReturnToLobby?.()">
+      <button
+        class="ui-btn-secondary mt-2"
+        type="button"
+        data-testid="platform-return"
+        @click="onReturnToLobby?.()"
+      >
         Zurück zur Party
       </button>
       <p v-if="actionError" class="mt-3 text-center text-sm text-danger">{{ actionError }}</p>

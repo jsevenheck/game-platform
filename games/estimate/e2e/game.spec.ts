@@ -139,8 +139,39 @@ test.describe('Estimate game', () => {
 
       // The reveal button is not visible to the guest.
       await expect(session.guestPage.getByTestId('estimate-reveal-button')).toHaveCount(0);
-      // Host can reveal.
+      // Host can reveal, and equal guesses share the round win.
       await hostReveals(session.hostPage);
+      const winners = session.hostPage.getByText(/Gewinner:/);
+      await expect(winners).toContainText('Carol');
+      await expect(winners).toContainText('Dave');
+    } finally {
+      await closeSession(session);
+    }
+  });
+
+  test('final round shows the game-over scoreboard and platform replay overlay', async ({
+    browser,
+  }) => {
+    const session = await createTwoPlayerEstimateSession(browser, 'Grace', 'Heidi');
+    try {
+      await launchEstimateGame(session.hostPage, session.guestPage);
+      await hostStartsGame(session.hostPage);
+
+      for (let round = 1; round <= 5; round += 1) {
+        await bothSubmitGuesses(session.hostPage, session.guestPage, '5', '5');
+        await hostReveals(session.hostPage);
+        await session.hostPage.getByTestId('estimate-next-button').click();
+        if (round < 5) {
+          await expect(session.hostPage.getByTestId('estimate-question')).toBeVisible();
+          await expect(session.guestPage.getByTestId('estimate-question')).toBeVisible();
+        }
+      }
+
+      await expect(session.hostPage.getByTestId('estimate-gameover')).toBeVisible();
+      await expect(session.hostPage.getByTestId('estimate-restart')).toBeVisible();
+      await expect(session.hostPage.getByTestId('platform-replay')).toBeVisible();
+      await expect(session.hostPage.getByTestId('platform-return')).toBeVisible();
+      await expect(session.guestPage.getByText('Warte auf den Host…')).toBeVisible();
     } finally {
       await closeSession(session);
     }

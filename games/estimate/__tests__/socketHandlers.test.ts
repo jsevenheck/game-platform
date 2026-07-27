@@ -497,6 +497,29 @@ describe('registerEstimate', () => {
     });
   });
 
+  describe('connection lifecycle', () => {
+    it('transitions to allSubmitted when an unsubmitted player disconnects', () => {
+      const ns = setupServer();
+      const { tokens } = setupParty();
+
+      const hostSocket = makeSocket('game-host-socket');
+      ns.connect(hostSocket);
+      autoJoin(hostSocket, 'host', tokens.host);
+      const guestSocket = makeSocket('game-guest-socket');
+      ns.connect(guestSocket);
+      autoJoin(guestSocket, 'guest', tokens.guest);
+
+      const room = firstRoom()!;
+      hostSocket.handlers.startGame({ roomCode: room.roomCode }, vi.fn());
+      hostSocket.handlers.submitGuess({ roomCode: room.roomCode, guess: 42 }, vi.fn());
+      expect(room.phase).toBe('guessing');
+
+      guestSocket.handlers.disconnect();
+
+      expect(room.phase).toBe('allSubmitted');
+    });
+  });
+
   describe('input validation', () => {
     it('rejects non-object payloads on autoJoinRoom', () => {
       const ns = setupServer();

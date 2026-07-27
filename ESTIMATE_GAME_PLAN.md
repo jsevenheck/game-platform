@@ -1,7 +1,7 @@
 # Estimate Game — Implementation Plan
 
-> **Status:** Plan, awaiting Jona's OK
-> **Branch:** `pi/create-estimate-game` (from `main` @ `43af1a8`)
+> **Status:** Implementation complete; runtime, E2E and documentation follow-up fixes validated locally
+> **Branch:** `feat/estimate-game` (from `main` @ `43af1a8`)
 > **Author:** Hermes Agent
 > **Date:** 2026-07-27
 > **Game-ID:** `estimate`
@@ -16,7 +16,7 @@ A new game in the **game-platform** repo. The host is just another player
 **Per round:**
 
 1. Server broadcasts the current question (text only — e.g.
-   *„In welchem Jahr fiel die Berliner Mauer?"*).
+   _„In welchem Jahr fiel die Berliner Mauer?"_).
 2. Each player types **one numeric guess** (integer or decimal) and submits.
 3. Once **all** players have submitted, the UI shows a **horizontal number
    line** with one marker per player. The solution is **NOT** revealed yet.
@@ -66,6 +66,7 @@ to `DEFAULT_QUESTIONS` in `core/src/constants.ts` (mirrors imposter's
 > Each box is one commit. Mark `[x]` when the commit is pushed.
 
 ### Phase 0 — Scaffold
+
 - [x] `games/estimate/package.json` (workspace pkg, `type: commonjs`)
 - [x] `games/estimate/core/src/types.ts`
 - [x] `games/estimate/core/src/constants.ts` (`MIN_PLAYERS=2`, `MAX_PLAYERS=12`, `DEFAULT_QUESTIONS`, `DEFAULT_TOTAL_ROUNDS=5`)
@@ -89,6 +90,7 @@ to `DEFAULT_QUESTIONS` in `core/src/constants.ts` (mirrors imposter's
 - [x] **Commit:** `chore(estimate): scaffold new game`
 
 ### Phase 1 — CSV loader
+
 - [x] `games/estimate/server/src/utils/questionLibrary.ts` (load CSV, fallback, validation, cache)
 - [x] `games/estimate/server/data/questions.csv` (≥10 seed questions, DE/EN mix)
 - [x] `games/estimate/__tests__/questionLibrary.test.ts`
@@ -97,6 +99,7 @@ to `DEFAULT_QUESTIONS` in `core/src/constants.ts` (mirrors imposter's
 - [x] **Commit:** `feat(estimate): csv question loader`
 
 ### Phase 2 — Server core (room, player, round, score)
+
 - [x] `games/estimate/server/src/models/player.ts` (createPlayer, socket index)
 - [x] `games/estimate/server/src/models/room.ts` (room store, attach/detach, RoomFullError)
 - [x] `games/estimate/server/src/managers/scoreManager.ts` (`computeRoundWinners`, pure)
@@ -117,7 +120,7 @@ to `DEFAULT_QUESTIONS` in `core/src/constants.ts` (mirrors imposter's
 > switches from `null` to the actual number.
 
 ### Phase 3 — Socket handlers
-### Phase 3 — Socket handlers
+
 - [x] `games/estimate/server/src/socketHandlers.ts` (`registerEstimate`, `autoJoinRoom`, `startGame`, `submitGuess`, `revealSolution`, `nextRound`, `restartGame`)
 - [x] `games/estimate/__tests__/socketHandlers.test.ts` (19 tests covering auth, host-gating, validation)
 - [x] `games/estimate/core/src/events.ts` (added `startGame` event)
@@ -136,69 +139,57 @@ to `DEFAULT_QUESTIONS` in `core/src/constants.ts` (mirrors imposter's
 > into the existing-player rejoin branch.
 
 ### Phase 4 — UI shell
+
 - [x] `games/estimate/ui-vue/src/stores/game.ts` (Pinia store: room, players, phase, error)
 - [x] `games/estimate/ui-vue/src/composables/useSocket.ts` (typed socket.io client, normalized namespace)
 - [x] `games/estimate/ui-vue/src/App.vue` (root: socket, phase routing, emits `phase-change`)
 - [x] `games/estimate/ui-vue/src/PlatformAdapter.vue` (game-end overlay for the host / guests)
 
-> Phases 5 and 6 were rolled into Phase 4 because each Vue component is
-> small and self-contained. The components implemented in this commit:
->
-> - `Lobby.vue` — host-gated start button, player list, ready hint
-> - `QuestionView.vue` — numeric input with decimal-comma normalization and
->   GUESS_VALUE_LIMIT guard mirroring the server-side validator
-> - `WaitingView.vue` — counter for "X / Y submitted" before host reveals
-> - `RevealView.vue` — NumberLine + solution banner + host-only reveal/next
->   buttons. Emits the same `reveal` and `next` events the parent forwards.
-> - `GameOver.vue` — final scoreboard sorted by points
-> - `NumberLine.vue` — SVG-less CSS-line with stacked player markers
->   (collision-avoidance), gold solution marker (only post-reveal), auto-
->   scaled range from the RoomView's `displayRange`
-- [ ] **Validation:** `pnpm dev` (manual: connect/disconnect smoke)
-- [ ] **Commit:** `feat(estimate): ui shell and socket`
+### Phases 4–6 — UI shell and game views
 
-### Phase 5 — Lobby + guessing UI
-- [ ] `games/estimate/ui-vue/src/components/Lobby.vue`
-- [ ] `games/estimate/ui-vue/src/components/QuestionView.vue`
-- [ ] `games/estimate/ui-vue/src/components/WaitingView.vue`
-- [ ] **Validation:** manual smoke + screenshot review
-- [ ] **Commit:** `feat(estimate): lobby and guessing ui`
-
-### Phase 6 — Reveal + game-over UI
-- [ ] `games/estimate/ui-vue/src/components/NumberLine.vue` (SVG, player markers + solution marker)
-- [ ] `games/estimate/ui-vue/src/components/RevealView.vue`
-- [ ] `games/estimate/ui-vue/src/components/GameOver.vue`
-- [ ] **Validation:** manual smoke (host reveals, all see markers) + mobile viewport
-- [ ] **Commit:** `feat(estimate): reveal and gameover ui`
+- [x] `games/estimate/ui-vue/src/stores/game.ts` and `composables/useSocket.ts`
+- [x] `games/estimate/ui-vue/src/App.vue` and `PlatformAdapter.vue`
+- [x] `Lobby.vue`, `QuestionView.vue`, `WaitingView.vue`
+- [x] `RevealView.vue`, `NumberLine.vue`, `GameOver.vue`
+- [x] Numeric input normalization for browser `type="number"` values
+- [x] Host-gated controls and standard platform game-end overlay
+- [x] **Validation:** typecheck, lint, unit tests and live E2E coverage
+- [x] **Commit:** `feat(estimate): ui shell and game views` (`77c2936`)
 
 ### Phase 7 — E2E
-- [ ] `games/estimate/e2e/game.spec.ts` (happy path, host-is-player, tie)
-- [ ] **Validation:** `pnpm test:e2e` (full)
-- [ ] **Commit:** `test(estimate): e2e happy path and tie`
+
+- [x] Happy path and host-is-player flow
+- [x] Host-only reveal enforcement
+- [x] Tie resolution
+- [x] Multiple rounds and final game-over / replay overlay
+- [x] **Validation:** Estimate Playwright suite (4 scenarios)
+- [x] **Commits:** `test(estimate): add playwright e2e` (`f6d3a56`) plus follow-up E2E/runtime fixes
 
 ### Phase 8 — Docs
+
 - [x] `games/estimate/README.md` (user guide + dev commands + adding questions)
 - [x] `games/estimate/docs/architecture.md` (phase machine, modules, host-gating, first-join fix)
 - [x] `games/estimate/docs/api.md` (Socket.IO events with payloads + error catalog)
 - [x] `docs/games.md` (catalogue updated with Estimate row)
 - [x] `docs/README.md` (repo overview with Estimate in the game table)
 - [x] `docs/observability-metrics.md` (game_id + namespace list updated)
-- [ ] `docs/README.md` (index for `docs/`)
-- [ ] **Validation:** `pnpm format:check` + `pnpm lint`
-- [ ] **Commit:** `docs(estimate): game docs`
+- [x] **Validation:** documentation synchronized with the implemented event/types contract
+- [x] **Commit:** `docs(estimate): add game docs and platform catalogue updates` (`8139f4b`)
 
-### Phase 9 — Final pass
-- [x] Regenerate graphify graph (`~/.local/bin/graphify update .`)
-- [x] Full validation chain: `pnpm test && pnpm lint && pnpm typecheck && pnpm format:check`
-- [x] Update `PROGRESS.md` / validation log if present
-- [x] Verify `HEAD == origin/feat/estimate-game`
-- [x] **Commit:** `chore(estimate): graphify and final validation`
+### Phase 9 — Final pass and follow-up fixes
+
+- [x] Host identity synchronization uses one mutated `GameRoomLike` adapter
+- [x] `phaseChange` is emitted alongside `roomUpdate`
+- [x] Disconnects re-evaluate the all-connected-players condition
+- [x] Final `gameEnd` view renders the scoreboard and platform overlay
+- [x] Full validation chain and remote SHA verification
 
 ---
 
 ## 4. File Manifest (reference)
 
 ### 4.1 New files
+
 ```
 games/estimate/package.json
 games/estimate/core/src/types.ts
@@ -238,6 +229,7 @@ games/estimate/README.md
 ```
 
 ### 4.2 Modified files (registry / wiring / docs)
+
 ```
 apps/platform/server/registry/index.ts
 apps/platform/src/games/index.ts
@@ -256,33 +248,36 @@ docs/README.md                 (new)
 **Namespace:** `/g/estimate`
 
 ### 5.1 Client → Server
-| Event             | Payload                                                  | Auth                              | Notes |
-| ----------------- | -------------------------------------------------------- | --------------------------------- | ----- |
-| `autoJoinRoom`    | `{ sessionId, name, playerId?, isHost?, joinToken? }`    | `authorizePartyJoin`              | Mirrors scout. `isHost` is UI hint only. |
-| `submitGuess`     | `{ roomCode, playerId, guess: number }`                  | socket-bound + room check         | `guess` must be a finite number; clamp to ±1e9. |
-| `revealSolution`  | `{ roomCode, playerId }`                                 | host-only (re-sync from party)    | Server re-syncs host via `syncRoomHostAfterJoin`. |
-| `nextRound`       | `{ roomCode, playerId }`                                 | host-only                         | Advances to next question or ends the game. |
-| `restartGame`     | `{ roomCode, playerId }`                                 | host-only                         | Resets scores, re-uses the same room. |
+
+| Event            | Payload                                               | Auth                           | Notes                                             |
+| ---------------- | ----------------------------------------------------- | ------------------------------ | ------------------------------------------------- |
+| `autoJoinRoom`   | `{ sessionId, name, playerId?, isHost?, joinToken? }` | `authorizePartyJoin`           | Mirrors scout. `isHost` is UI hint only.          |
+| `submitGuess`    | `{ roomCode, playerId, guess: number }`               | socket-bound + room check      | `guess` must be a finite number; clamp to ±1e9.   |
+| `revealSolution` | `{ roomCode, playerId }`                              | host-only (re-sync from party) | Server re-syncs host via `syncRoomHostAfterJoin`. |
+| `nextRound`      | `{ roomCode, playerId }`                              | host-only                      | Advances to next question or ends the game.       |
+| `restartGame`    | `{ roomCode, playerId }`                              | host-only                      | Resets scores, re-uses the same room.             |
 
 ### 5.2 Server → Client
-| Event         | Payload                          | Notes |
-| ------------- | -------------------------------- | ----- |
-| `roomUpdate`  | `RoomView`                       | Single source of truth. Never includes `resumeToken`. |
-| `phaseChange` | `{ phase: Phase }`               | `'lobby' \| 'guessing' \| 'reveal' \| 'roundEnd' \| 'gameEnd'` |
-| `error`       | `{ message: string }`            | Client-displayed errors. |
+
+| Event         | Payload               | Notes                                                          |
+| ------------- | --------------------- | -------------------------------------------------------------- |
+| `roomUpdate`  | `RoomView`            | Single source of truth. Never includes `resumeToken`.          |
+| `phaseChange` | `{ phase: Phase }`    | `'lobby' \| 'guessing' \| 'reveal' \| 'roundEnd' \| 'gameEnd'` |
+| `error`       | `{ message: string }` | Client-displayed errors.                                       |
 
 ### 5.3 `RoomView` shape
+
 ```ts
 interface RoomView {
   roomCode: string;
   phase: 'lobby' | 'guessing' | 'reveal' | 'roundEnd' | 'gameEnd';
-  currentRound: number;          // 1-indexed; 0 in lobby
+  currentRound: number; // 1-indexed; 0 in lobby
   totalRounds: number;
   question: { id: string; text: string } | null; // answer hidden until reveal
-  players: PlayerView[];          // hide disconnected except for self
+  players: PlayerView[]; // hide disconnected except for self
   guesses: { playerId: string; guess: number }[]; // empty before submit
-  solution: number | null;        // null until host reveals
-  winners: { playerId: string; name: string }[];   // empty until reveal; ties allowed
+  solution: number | null; // null until host reveals
+  winners: { playerId: string; name: string }[]; // empty until reveal; ties allowed
   scores: { playerId: string; name: string; points: number }[];
   displayRange: { lo: number; hi: number } | null; // null in lobby
 }
@@ -296,9 +291,10 @@ the answer before reveal.
 
 ```
 [lobby]  --host: startGame-->  [guessing]
-[guessing]  --all submitted-->  [reveal]    (auto-transition, server-driven)
-[reveal]  --host: nextRound-->  [guessing] | [gameEnd]   (if last round)
-[reveal]  --host: restartGame--> [lobby]    (optional, only after gameEnd)
+[guessing]  --all connected players submitted-->  [allSubmitted]
+[allSubmitted]  --host: revealSolution-->  [reveal]
+[reveal]  --host: nextRound-->  [guessing] | [gameEnd]
+[gameEnd]  --host: restartGame--> [lobby]
 ```
 
 - Server is authoritative for phase transitions.
@@ -307,22 +303,24 @@ the answer before reveal.
 - A disconnecting player keeps their last guess; on reconnect they
   re-enter `guessing` and may resubmit.
 - When all **connected** players have `hasSubmitted: true`, server
-  auto-transitions to `reveal` and freezes `guesses`.
+  auto-transitions to `allSubmitted` and emits `phaseChange` alongside the
+  `roomUpdate`. A disconnect re-evaluates this condition.
 - A 60-second soft timer (`GUESS_TIMER_MS = IS_E2E ? 2_000 : 60_000`)
   prompts un-submitted players via a UI badge. **The server never
   auto-submits** on a player's behalf — the timer is UI-only.
 
 ## 7. UI / UX
 
-| Phase        | Component            | Action affordances                                  |
-| ------------ | -------------------- | --------------------------------------------------- |
-| `lobby`      | `Lobby.vue`          | Host: "Spiel starten" (disabled until ≥ MIN_PLAYERS)|
-| `guessing`   | `QuestionView.vue`   | Player: numeric input + "Schätzung abgeben"         |
-| `guessing`   | `WaitingView.vue`    | Player: "Warte auf N Spieler…"                      |
-| `reveal`     | `RevealView.vue`     | `NumberLine.vue` with markers; Host: "Auflösen" / "Nächste Frage" |
-| `gameEnd`    | `GameOver.vue`       | Platform overlay: Play Again / Back to Party        |
+| Phase                     | Component          | Action affordances                                   |
+| ------------------------- | ------------------ | ---------------------------------------------------- |
+| `lobby`                   | `Lobby.vue`        | Host: "Spiel starten" (disabled until ≥ MIN_PLAYERS) |
+| `guessing`                | `QuestionView.vue` | Player: numeric input + "Schätzung abgeben"          |
+| `guessing`                | `WaitingView.vue`  | Player: "Warte auf N Spieler…"                       |
+| `allSubmitted` / `reveal` | `RevealView.vue`   | NumberLine; Host: "Auflösen" / "Nächste Frage"       |
+| `gameEnd`                 | `GameOver.vue`     | Platform overlay: Play Again / Back to Party         |
 
 ### Number line (`NumberLine.vue`)
+
 - Horizontal SVG, `viewBox` derived from `lo`/`hi` in `RoomView.displayRange`.
 - One labelled marker per player, stacked above the line at their guess
   position. Player name + exact value on hover/tap.
@@ -334,6 +332,7 @@ the answer before reveal.
   pre-computation and client re-render never drift.
 
 ### Input handling
+
 - `<input type="number" inputmode="decimal" />` for sane mobile keyboards.
 - Client-side `parseFiniteNumber` helper (mirrors server's parser).
 - Submit button disabled while input is empty or invalid; server
@@ -357,6 +356,7 @@ the answer before reveal.
 ## 9. Tests
 
 ### 9.1 Unit (Vitest)
+
 - `questionLibrary.test.ts` — bundled CSV loads; blank/`#`/header skipped;
   fallback to `DEFAULT_QUESTIONS`; rejects NaN/Infinity/empty rows.
 - `roundManager.test.ts` — start round → `guessing`; all-submitted →
@@ -369,14 +369,17 @@ the answer before reveal.
   guess validation: NaN/Infinity/>1e9 → `{ ok: false, error: 'Invalid guess' }`.
 
 ### 9.2 E2E (Playwright)
-Mirrors `games/scout/e2e/game.spec.ts`. Required scenarios:
-1. **Happy path:** 4 players → all submit → host reveals → next round →
-   all submit → host reveals → final scoreboard.
-2. **Host is also a player:** host submits a guess like everyone else,
-   appears as a marker on the number line, can reveal for the whole room.
-3. **Tie resolution:** two players at equal distance → both +1 in scoreboard.
+
+The suite covers:
+
+1. **Happy path:** two players submit, host reveals, and the number line is shown.
+2. **Host is also a player:** host submits a guess like everyone else and can reveal.
+3. **Tie resolution:** equal-distance guesses both appear as winners.
+4. **Final game:** five rounds reach `gameEnd`, showing the scoreboard and the
+   platform replay / return-to-party overlay.
 
 ### 9.3 Validation gates
+
 ```bash
 pnpm install
 pnpm typecheck
@@ -411,14 +414,14 @@ pnpm test:e2e
 
 ## 12. Risks & Edge Cases
 
-| Risk                                                                                              | Mitigation                                                                                          |
-| ------------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------- |
-| "Auto-Scaling" interpreted as "auto-submit on timer"                                               | Server never auto-submits. Timer is UI-only. Documented in §1, §6.                                  |
-| Decimal commas (DE locale) break CSV parse                                                        | CSV uses dot decimal; server normalises. UI input restricts to `.` and digits.                      |
-| All players guess the same exact value                                                            | Display range falls back to `answer ± 1` so the bar stays readable. Covered in unit tests.          |
-| Solution outside min/max of guesses                                                               | Server extends the range so the solution marker is always visible. §1, §7.                          |
-| Game ends with all players tied                                                                   | All tied players are winners; scoreboard shows all names. Test covers it.                           |
-| Lockfile drift (new workspace package)                                                            | `pnpm install` after Phase 0; commit updated `pnpm-lock.yaml` if it changes.                        |
+| Risk                                                 | Mitigation                                                                                 |
+| ---------------------------------------------------- | ------------------------------------------------------------------------------------------ |
+| "Auto-Scaling" interpreted as "auto-submit on timer" | Server never auto-submits. Timer is UI-only. Documented in §1, §6.                         |
+| Decimal commas (DE locale) break CSV parse           | CSV uses dot decimal; server normalises. UI input restricts to `.` and digits.             |
+| All players guess the same exact value               | Display range falls back to `answer ± 1` so the bar stays readable. Covered in unit tests. |
+| Solution outside min/max of guesses                  | Server extends the range so the solution marker is always visible. §1, §7.                 |
+| Game ends with all players tied                      | All tied players are winners; scoreboard shows all names. Test covers it.                  |
+| Lockfile drift (new workspace package)               | `pnpm install` after Phase 0; commit updated `pnpm-lock.yaml` if it changes.               |
 
 ## 13. Out of Scope (Phase 2 candidates)
 

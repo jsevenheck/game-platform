@@ -21,19 +21,19 @@ export interface ClientToServerEvents {
     ) => void
   ) => void;
   submitGuess: (
-    data: { roomCode: string; playerId: string; guess: number },
+    data: { roomCode: string; playerId?: string; guess: number },
     cb: (res: { ok: true } | { ok: false; error: string }) => void
   ) => void;
   revealSolution: (
-    data: { roomCode: string; playerId: string },
+    data: { roomCode: string; playerId?: string },
     cb: (res: { ok: true } | { ok: false; error: string }) => void
   ) => void;
   nextRound: (
-    data: { roomCode: string; playerId: string },
+    data: { roomCode: string; playerId?: string },
     cb: (res: { ok: true } | { ok: false; error: string }) => void
   ) => void;
   restartGame: (
-    data: { roomCode: string; playerId: string },
+    data: { roomCode: string; playerId?: string },
     cb: (res: { ok: true } | { ok: false; error: string }) => void
   ) => void;
 }
