@@ -101,6 +101,22 @@ export const clientGameRegistry: PlatformGameModule[] = [
     },
     loadClient: () => import('@scout-ui/PlatformAdapter.vue'),
   },
+  {
+    definition: {
+      id: 'estimate',
+      name: 'Estimate',
+      minPlayers: 2,
+      maxPlayers: 12,
+    },
+    platformMeta: {
+      icon: '📏',
+      gradFrom: '#0c4a6e',
+      gradTo: '#082f49',
+      description: 'Guess a number for each question — closest to the truth wins the round',
+      category: 'Trivia · Numbers',
+    },
+    loadClient: () => import('@estimate-ui/PlatformAdapter.vue'),
+  },
 ];
 
 export function getClientGame(gameId: string): PlatformGameModule | undefined {

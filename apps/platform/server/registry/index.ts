@@ -93,6 +93,22 @@ const scoutModule: GameServerModule = {
   cleanupMatch: scoutCleanup,
 };
 
+// ─── Estimate ─────────────────────────────────────────────────────────────────
+
+import {
+  definition as estimateDef,
+  register as estimateRegister,
+  cleanupMatch as estimateCleanup,
+} from '../../../../games/estimate/server/src/index';
+
+const estimateModule: GameServerModule = {
+  definition: estimateDef,
+  registerServer(io: Server, namespacePath: string) {
+    estimateRegister(io, namespacePath);
+  },
+  cleanupMatch: estimateCleanup,
+};
+
 // ─── Registry ─────────────────────────────────────────────────────────────────
 
 export const gameRegistry = new Map<string, GameServerModule>([
@@ -101,6 +117,7 @@ export const gameRegistry = new Map<string, GameServerModule>([
   ['secret-signals', secretSignalsModule],
   ['flip7', flip7Module],
   ['scout', scoutModule],
+  ['estimate', estimateModule],
 ]);
 
 export function getGame(gameId: string): GameServerModule | undefined {

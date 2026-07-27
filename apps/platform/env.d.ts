@@ -29,3 +29,9 @@ declare module '@scout-ui/PlatformAdapter.vue' {
   const component: DefineComponent;
   export default component;
 }
+
+declare module '@estimate-ui/PlatformAdapter.vue' {
+  import type { DefineComponent } from 'vue';
+  const component: DefineComponent;
+  export default component;
+}

@@ -77,6 +77,19 @@ export const scoutProject = {
   },
 };
 
+export const estimateProject = {
+  resolve: {
+    alias: [{ find: '@shared', replacement: resolve(GAMES_ROOT, 'estimate/core/src') }],
+  },
+  test: {
+    name: 'estimate',
+    include: ['games/estimate/__tests__/**/*.test.ts'],
+    environment: 'node',
+    globals: true,
+    clearMocks: true,
+  },
+};
+
 export const allProjects = [
   platformProject,
   blackoutProject,
@@ -84,4 +97,5 @@ export const allProjects = [
   secretSignalsProject,
   flip7Project,
   scoutProject,
+  estimateProject,
 ];

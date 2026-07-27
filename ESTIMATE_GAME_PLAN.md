@@ -66,26 +66,27 @@ to `DEFAULT_QUESTIONS` in `core/src/constants.ts` (mirrors imposter's
 > Each box is one commit. Mark `[x]` when the commit is pushed.
 
 ### Phase 0 — Scaffold
-- [ ] `games/estimate/package.json` (workspace pkg, `type: commonjs`)
-- [ ] `games/estimate/core/src/types.ts`
-- [ ] `games/estimate/core/src/constants.ts` (`MIN_PLAYERS=2`, `MAX_PLAYERS=12`, `DEFAULT_QUESTIONS`, `DEFAULT_TOTAL_ROUNDS=5`)
-- [ ] `games/estimate/core/src/events.ts` (C2S / S2C maps)
-- [ ] `games/estimate/core/src/range.ts` (shared display-range helper used by server + client)
-- [ ] `games/estimate/server/src/config/constants.ts` (`IS_E2E`, `GUESS_TIMER_MS`)
-- [ ] `games/estimate/server/src/index.ts` (stub: `definition`, `register`, `cleanupMatch`)
-- [ ] `games/estimate/ui-vue/tsconfig.json` + `ui-vue/env.d.ts`
-- [ ] `games/estimate/ui-vue/src/App.vue` (placeholder)
-- [ ] `games/estimate/ui-vue/src/PlatformAdapter.vue` (placeholder)
-- [ ] **Wiring:** `apps/platform/server/registry/index.ts` (import + add to `gameRegistry`)
-- [ ] **Wiring:** `apps/platform/src/games/index.ts` (append to `clientGameRegistry`)
-- [ ] **Wiring:** `apps/platform/vite.config.ts` (`@estimate-ui` alias + `else if` in `sharedAliasPlugin`)
-- [ ] **Wiring:** `apps/platform/env.d.ts` (declare `@estimate-ui/PlatformAdapter.vue`)
-- [ ] **Wiring:** `apps/platform/src/styles/main.css` (--color-estimate tokens)
-- [ ] **Wiring:** `vitest.projects.ts` (add `estimateProject`)
-- [ ] **Wiring:** `package.json` (`"test:estimate": "vitest run --project estimate"`)
-- [ ] **Wiring:** `Dockerfile` (COPY `games/estimate/package.json`)
-- [ ] **Validation:** `pnpm install` + `pnpm typecheck` clean
-- [ ] **Commit:** `chore(estimate): scaffold new game`
+- [x] `games/estimate/package.json` (workspace pkg, `type: commonjs`)
+- [x] `games/estimate/core/src/types.ts`
+- [x] `games/estimate/core/src/constants.ts` (`MIN_PLAYERS=2`, `MAX_PLAYERS=12`, `DEFAULT_QUESTIONS`, `DEFAULT_TOTAL_ROUNDS=5`)
+- [x] `games/estimate/core/src/events.ts` (C2S / S2C maps)
+- [x] `games/estimate/core/src/range.ts` (shared display-range helper used by server + client)
+- [x] `games/estimate/server/src/config/constants.ts` (`IS_E2E`, `GUESS_TIMER_MS`)
+- [x] `games/estimate/server/src/index.ts` (stub: `definition`, `register`, `cleanupMatch`)
+- [x] `games/estimate/ui-vue/tsconfig.json` + `ui-vue/env.d.ts`
+- [x] `games/estimate/ui-vue/src/App.vue` (placeholder)
+- [x] `games/estimate/ui-vue/src/PlatformAdapter.vue` (placeholder)
+- [x] **Wiring:** `apps/platform/server/registry/index.ts` (import + add to `gameRegistry`)
+- [x] **Wiring:** `apps/platform/src/games/index.ts` (append to `clientGameRegistry`)
+- [x] **Wiring:** `apps/platform/vite.config.ts` (`@estimate-ui` alias + `else if` in `sharedAliasPlugin`)
+- [x] **Wiring:** `apps/platform/env.d.ts` (declare `@estimate-ui/PlatformAdapter.vue`)
+- [x] **Wiring:** `apps/platform/src/styles/main.css` (--color-estimate tokens)
+- [x] **Wiring:** `vitest.projects.ts` (add `estimateProject`)
+- [x] **Wiring:** `package.json` (`"test:estimate": "vitest run --project estimate"`)
+- [x] **Wiring:** `Dockerfile` (COPY `games/estimate/package.json` in both stages)
+- [x] **Validation:** `pnpm install` + `pnpm typecheck` clean
+- [x] **Validation:** `pnpm lint` clean
+- [x] **Commit:** `chore(estimate): scaffold new game`
 
 ### Phase 1 — CSV loader
 - [ ] `games/estimate/server/src/utils/questionLibrary.ts` (load CSV, fallback, validation, cache)

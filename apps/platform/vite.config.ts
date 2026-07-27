@@ -28,6 +28,8 @@ function sharedAliasPlugin(): Plugin {
         baseDir = resolve(GAMES_ROOT, 'flip7/core/src');
       } else if (normalized.includes('/games/scout/')) {
         baseDir = resolve(GAMES_ROOT, 'scout/core/src');
+      } else if (normalized.includes('/games/estimate/')) {
+        baseDir = resolve(GAMES_ROOT, 'estimate/core/src');
       }
       if (!baseDir) return null;
       // Delegate to Vite's resolver so .ts / index.ts extensions are handled
@@ -51,6 +53,7 @@ export default defineConfig({
       { find: '@secret-signals-ui', replacement: resolve(GAMES_ROOT, 'secret-signals/ui-vue/src') },
       { find: '@flip7-ui', replacement: resolve(GAMES_ROOT, 'flip7/ui-vue/src') },
       { find: '@scout-ui', replacement: resolve(GAMES_ROOT, 'scout/ui-vue/src') },
+      { find: '@estimate-ui', replacement: resolve(GAMES_ROOT, 'estimate/ui-vue/src') },
     ],
     // Force a single copy of shared framework deps across platform + game code
     dedupe: ['vue', 'pinia', 'vue-router'],
