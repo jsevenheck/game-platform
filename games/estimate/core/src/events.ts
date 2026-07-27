@@ -1,6 +1,10 @@
 import type { RoomView } from './types';
 
 export interface ClientToServerEvents {
+  startGame: (
+    data: { roomCode: string },
+    cb: (res: { ok: true } | { ok: false; error: string }) => void
+  ) => void;
   autoJoinRoom: (
     data: {
       sessionId: string;

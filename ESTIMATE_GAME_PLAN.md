@@ -117,11 +117,23 @@ to `DEFAULT_QUESTIONS` in `core/src/constants.ts` (mirrors imposter's
 > switches from `null` to the actual number.
 
 ### Phase 3 — Socket handlers
-- [ ] `games/estimate/server/src/socketHandlers.ts` (`registerEstimate`, `autoJoinRoom`, `submitGuess`, `revealSolution`, `nextRound`, `restartGame`)
-- [ ] `games/estimate/server/src/index.ts` (wire up `registerEstimate`)
-- [ ] `games/estimate/__tests__/socketHandlers.test.ts`
-- [ ] **Validation:** `pnpm test:estimate` + `pnpm lint`
-- [ ] **Commit:** `feat(estimate): socket handlers`
+### Phase 3 — Socket handlers
+- [x] `games/estimate/server/src/socketHandlers.ts` (`registerEstimate`, `autoJoinRoom`, `startGame`, `submitGuess`, `revealSolution`, `nextRound`, `restartGame`)
+- [x] `games/estimate/__tests__/socketHandlers.test.ts` (19 tests covering auth, host-gating, validation)
+- [x] `games/estimate/core/src/events.ts` (added `startGame` event)
+- [x] `games/estimate/server/src/models/room.ts` (added `hostPlayerId` option to `createRoom` for first-join binding)
+- [x] **Validation:** `pnpm test:estimate` (68/68 passed)
+- [x] **Validation:** `pnpm test` (340/340 passed — no regressions)
+- [x] **Validation:** `pnpm typecheck` clean
+- [x] **Validation:** `pnpm lint` clean
+- [x] **Commit:** `feat(estimate): socket handlers`
+
+> Phase 3 introduced an important fix: the first room-creation now binds the
+> room's host to the platform-authoritative `authorizedPlayerId` via the new
+> `hostPlayerId` option on `createRoom`. Without it, the host reconnects would
+> fail with 'Name already taken' because the room's first player was a fresh
+> nanoid rather than the platform's player id. The same fix flows naturally
+> into the existing-player rejoin branch.
 
 ### Phase 4 — UI shell
 - [ ] `games/estimate/ui-vue/src/composables/useSocket.ts`

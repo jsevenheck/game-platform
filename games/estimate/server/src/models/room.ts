@@ -29,6 +29,13 @@ function generateRoomCode(): string {
 export interface CreateRoomOptions {
   matchKey: string;
   totalRounds?: number;
+  /**
+   * Optional explicit host player id. When provided, the auto-generated host
+   * player is created with this id instead of a fresh nanoid. This lets the
+   * socket handler bind the room to the platform's authoritative playerId so
+   * reconnects and host-sync work without an extra rename.
+   */
+  hostPlayerId?: string;
 }
 
 export function createRoom(hostName: string, opts: CreateRoomOptions): ServerRoom {
@@ -36,7 +43,7 @@ export function createRoom(hostName: string, opts: CreateRoomOptions): ServerRoo
     throw new Error(`Session ${opts.matchKey} already has a room`);
   }
   const code = generateRoomCode();
-  const host = createPlayer(hostName, true);
+  const host = createPlayer(hostName, true, opts.hostPlayerId);
   const room: ServerRoom = {
     roomCode: code,
     matchKey: opts.matchKey,
@@ -127,4 +134,9 @@ export function __resetRoomStoreForTests(): void {
   roomsByCode.clear();
   codeBySession.clear();
   codeByPlayer.clear();
+}
+
+/** Test-only: list all rooms (for socket disconnect lookups). */
+export function __listRoomsForTests(): ServerRoom[] {
+  return Array.from(roomsByCode.values());
 }
