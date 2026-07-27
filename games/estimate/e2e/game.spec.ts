@@ -55,10 +55,16 @@ async function closeSession(session: EstimateSession): Promise<void> {
 
 async function launchEstimateGame(hostPage: Page, guestPage: Page): Promise<void> {
   await hostPage.getByRole('button', { name: /Estimate/ }).click();
+  // The host now clicks "Launch Game" which emits the launchGame socket event.
+  // The server then broadcasts an updated party view (status: in-match),
+  // which PartyView consumes to navigate to /party/<code>/game/<gameId>.
+  await hostPage.getByRole('button', { name: 'Launch Game' }).click();
   await Promise.all([
-    hostPage.waitForURL(/\/game\/estimate/, { timeout: 15_000 }),
-    guestPage.waitForURL(/\/game\/estimate/, { timeout: 15_000 }),
+    hostPage.waitForURL(/\/game\/estimate/, { timeout: 20_000 }),
+    guestPage.waitForURL(/\/game\/estimate/, { timeout: 20_000 }),
   ]);
+  // Give GameView a beat to loadClient() and mount PlatformAdapter + App.
+  await hostPage.waitForLoadState('networkidle');
 }
 
 async function hostStartsGame(hostPage: Page): Promise<void> {
@@ -66,6 +72,8 @@ async function hostStartsGame(hostPage: Page): Promise<void> {
   const startButton = hostPage.getByTestId('estimate-start');
   await expect(startButton).toBeEnabled({ timeout: 10_000 });
   await startButton.click();
+  // Wait for the room update to land and QuestionView to render.
+  await expect(hostPage.getByTestId('estimate-question')).toBeVisible({ timeout: 10_000 });
 }
 
 async function bothSubmitGuesses(
@@ -85,9 +93,11 @@ async function bothSubmitGuesses(
   await guestPage.getByTestId('estimate-guess-input').fill(guestGuess);
   await guestPage.getByTestId('estimate-guess-submit').click();
 
-  // Both should transition to the waiting/reveal state.
-  await expect(hostPage.getByTestId('estimate-waiting')).toBeVisible({ timeout: 5_000 });
-  await expect(guestPage.getByTestId('estimate-waiting')).toBeVisible({ timeout: 5_000 });
+  // After both submissions the room transitions to 'allSubmitted' and the
+  // host sees the RevealView (with the solution still hidden). The guest
+  // also lands on RevealView once the room phase changes.
+  await expect(hostPage.getByTestId('estimate-reveal')).toBeVisible({ timeout: 10_000 });
+  await expect(guestPage.getByTestId('estimate-reveal')).toBeVisible({ timeout: 10_000 });
 }
 
 async function hostReveals(hostPage: Page): Promise<void> {

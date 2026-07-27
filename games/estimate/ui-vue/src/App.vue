@@ -104,13 +104,22 @@ function restartGame() {
 }
 
 const view = computed(() => {
+  if (!store.room) return 'lobby';
   switch (store.phase) {
     case 'lobby':
       return 'lobby';
     case 'guessing':
-      return store.self?.hasSubmitted ? 'waiting' : 'guessing';
-    case 'allSubmitted':
-      return 'reveal';
+    case 'allSubmitted': {
+      // If we know the local playerId, use store.self.hasSubmitted; otherwise
+      // assume the local player has submitted once any guess exists in the
+      // room (we are always one of the guessers when the socket is connected
+      // and we haven't yet received our authoritative playerId).
+      const hasSubmitted =
+        store.self?.hasSubmitted ??
+        (store.playerId === '' && (store.room.guesses?.length ?? 0) > 0);
+      if (store.phase === 'allSubmitted') return 'reveal';
+      return hasSubmitted ? 'waiting' : 'guessing';
+    }
     case 'reveal':
       return 'reveal';
     case 'gameEnd':
@@ -154,7 +163,7 @@ onBeforeUnmount(() => {
     <Lobby
       v-else-if="view === 'lobby'"
       :players="store.room?.players ?? []"
-      :is-host="store.isHost"
+      :is-host="props.isHost"
       :can-start="store.canStart"
       :total-rounds="store.room?.totalRounds ?? 5"
       @start="startGame"
@@ -177,7 +186,7 @@ onBeforeUnmount(() => {
     <RevealView
       v-else-if="view === 'reveal' && store.room"
       :room="store.room"
-      :is-host="store.isHost"
+      :is-host="props.isHost"
       :my-id="store.playerId"
       @reveal="revealSolution"
       @next="nextRound"
@@ -187,7 +196,7 @@ onBeforeUnmount(() => {
       v-else-if="view === 'gameEnd' && store.room"
       :scores="store.room.scores"
       :winners="store.room.winners"
-      :is-host="store.isHost"
+      :is-host="props.isHost"
       :my-score="store.myScore"
       @restart="restartGame"
     />

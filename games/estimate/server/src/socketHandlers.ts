@@ -200,14 +200,18 @@ function registerGameHandlers(
             return respond({ ok: false, error: callbackErrorMessage(err) });
           }
           bindPlayerToSocket(nsp, socket, room, authorizedPlayerId);
-          syncRoomHostAfterJoin(
-            asGameRoomLike(room),
-            authorization.hostPlayerId,
-            !authorization.hostConnected
-          );
-          // Re-sync: the host sync helper mutated the GameRoomLike view but not
-          // our original array. Re-apply the isHost flag back to the array.
+          // Build a single GameRoomLike view that syncRoomHostAfterJoin mutates
+          // in-place, then re-apply the resulting isHost flags back to the
+          // room's player array. Building a fresh view for the re-sync would
+          // discard the helper's mutations.
           const gl = asGameRoomLike(room);
+          syncRoomHostAfterJoin(
+            gl,
+            authorization.hostPlayerId,
+            // Platform hostPlayerId is authoritative; never fall back to a
+            // first-connected player when the platform host is missing.
+            false
+          );
           for (const p of room.players) p.isHost = gl.players[p.id]?.isHost ?? false;
           if (gl.hostId) room.hostPlayerId = gl.hostId;
 
@@ -239,12 +243,14 @@ function registerGameHandlers(
             return respond({ ok: false, error: 'Resume token required' });
           }
           bindPlayerToSocket(nsp, socket, room, existing.id);
-          syncRoomHostAfterJoin(
-            asGameRoomLike(room),
-            authorization.hostPlayerId,
-            !authorization.hostConnected
-          );
           const gl = asGameRoomLike(room);
+          syncRoomHostAfterJoin(
+            gl,
+            authorization.hostPlayerId,
+            // Platform hostPlayerId is authoritative; never fall back to a
+            // first-connected player when the platform host is missing.
+            false
+          );
           for (const p of room.players) p.isHost = gl.players[p.id]?.isHost ?? false;
           if (gl.hostId) room.hostPlayerId = gl.hostId;
           broadcastRoom(nsp, room);
@@ -277,12 +283,14 @@ function registerGameHandlers(
         try {
           const { playerId, resumeToken } = attachPlayerToRoom(room, name, authorizedPlayerId);
           bindPlayerToSocket(nsp, socket, room, playerId);
-          syncRoomHostAfterJoin(
-            asGameRoomLike(room),
-            authorization.hostPlayerId,
-            !authorization.hostConnected
-          );
           const gl = asGameRoomLike(room);
+          syncRoomHostAfterJoin(
+            gl,
+            authorization.hostPlayerId,
+            // Platform hostPlayerId is authoritative; never fall back to a
+            // first-connected player when the platform host is missing.
+            false
+          );
           for (const p of room.players) p.isHost = gl.players[p.id]?.isHost ?? false;
           if (gl.hostId) room.hostPlayerId = gl.hostId;
           broadcastRoom(nsp, room);
