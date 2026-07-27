@@ -89,11 +89,12 @@ to `DEFAULT_QUESTIONS` in `core/src/constants.ts` (mirrors imposter's
 - [x] **Commit:** `chore(estimate): scaffold new game`
 
 ### Phase 1 — CSV loader
-- [ ] `games/estimate/server/src/utils/questionLibrary.ts` (load CSV, fallback, validation, cache)
-- [ ] `games/estimate/server/data/questions.csv` (≥10 seed questions, DE/EN mix)
-- [ ] `games/estimate/__tests__/questionLibrary.test.ts`
-- [ ] **Validation:** `pnpm test:estimate`
-- [ ] **Commit:** `feat(estimate): csv question loader`
+- [x] `games/estimate/server/src/utils/questionLibrary.ts` (load CSV, fallback, validation, cache)
+- [x] `games/estimate/server/data/questions.csv` (≥10 seed questions, DE/EN mix)
+- [x] `games/estimate/__tests__/questionLibrary.test.ts`
+- [x] **Validation:** `pnpm test:estimate` (17/17 passed)
+- [x] **Validation:** `pnpm test` (full suite, 289/289 passed — no regressions)
+- [x] **Commit:** `feat(estimate): csv question loader`
 
 ### Phase 2 — Server core (room, player, round, score)
 - [ ] `games/estimate/server/src/models/player.ts`
