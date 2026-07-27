@@ -1,10 +1,4 @@
-import {
-  expect,
-  test,
-  type Browser,
-  type BrowserContext,
-  type Page,
-} from '@playwright/test';
+import { expect, test, type Browser, type BrowserContext, type Page } from '@playwright/test';
 
 interface EstimateSession {
   contexts: BrowserContext[];
