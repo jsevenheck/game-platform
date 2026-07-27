@@ -97,15 +97,24 @@ to `DEFAULT_QUESTIONS` in `core/src/constants.ts` (mirrors imposter's
 - [x] **Commit:** `feat(estimate): csv question loader`
 
 ### Phase 2 — Server core (room, player, round, score)
-- [ ] `games/estimate/server/src/models/player.ts`
-- [ ] `games/estimate/server/src/models/room.ts` (room store, `getSessionRoom`, `deleteRoom`, `setRoom`)
-- [ ] `games/estimate/server/src/managers/scoreManager.ts` (`computeRoundWinners`, `applyPoint`)
-- [ ] `games/estimate/server/src/managers/roundManager.ts` (`startGame`, `submitGuess`, `revealSolution`, `nextRound`, `restartGame`, `computeDisplayRange`)
-- [ ] `games/estimate/server/src/managers/broadcastManager.ts` (`broadcastRoomView`)
-- [ ] `games/estimate/__tests__/scoreManager.test.ts`
-- [ ] `games/estimate/__tests__/roundManager.test.ts`
-- [ ] **Validation:** `pnpm test:estimate`
-- [ ] **Commit:** `feat(estimate): round lifecycle and scoring`
+- [x] `games/estimate/server/src/models/player.ts` (createPlayer, socket index)
+- [x] `games/estimate/server/src/models/room.ts` (room store, attach/detach, RoomFullError)
+- [x] `games/estimate/server/src/managers/scoreManager.ts` (`computeRoundWinners`, pure)
+- [x] `games/estimate/server/src/managers/roundManager.ts` (`startGame`, `submitGuess`, `revealSolution`, `nextRound`, `restartGame`, EstimateError)
+- [x] `games/estimate/server/src/managers/broadcastManager.ts` (`buildRoomView`)
+- [x] `games/estimate/__tests__/scoreManager.test.ts` (7 tests)
+- [x] `games/estimate/__tests__/roundManager.test.ts` (25 tests, covers broadcast + room)
+- [x] **Validation:** `pnpm test:estimate` (49/49 passed)
+- [x] **Validation:** `pnpm test` (321/321 passed — no regressions)
+- [x] **Validation:** `pnpm typecheck` clean
+- [x] **Validation:** `pnpm lint` clean
+- [x] **Commit:** `feat(estimate): round lifecycle and scoring`
+
+> Phase 2 introduced a new game phase: `allSubmitted` (all players have guessed
+> but the host has not yet pressed Auflösen). This keeps the "show all markers
+> on the number line, solution still hidden" semantics clean and makes the
+> broadcast view stable: it exposes the same shape, only the `solution` field
+> switches from `null` to the actual number.
 
 ### Phase 3 — Socket handlers
 - [ ] `games/estimate/server/src/socketHandlers.ts` (`registerEstimate`, `autoJoinRoom`, `submitGuess`, `revealSolution`, `nextRound`, `restartGame`)

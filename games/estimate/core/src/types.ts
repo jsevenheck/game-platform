@@ -1,4 +1,4 @@
-export type Phase = 'lobby' | 'guessing' | 'reveal' | 'roundEnd' | 'gameEnd';
+export type Phase = 'lobby' | 'guessing' | 'allSubmitted' | 'reveal' | 'gameEnd';
 
 export interface Question {
   id: string;
