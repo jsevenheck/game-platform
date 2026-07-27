@@ -104,22 +104,13 @@ function restartGame() {
 }
 
 const view = computed(() => {
-  if (!store.room) return 'lobby';
   switch (store.phase) {
     case 'lobby':
       return 'lobby';
     case 'guessing':
-    case 'allSubmitted': {
-      // If we know the local playerId, use store.self.hasSubmitted; otherwise
-      // assume the local player has submitted once any guess exists in the
-      // room (we are always one of the guessers when the socket is connected
-      // and we haven't yet received our authoritative playerId).
-      const hasSubmitted =
-        store.self?.hasSubmitted ??
-        (store.playerId === '' && (store.room.guesses?.length ?? 0) > 0);
-      if (store.phase === 'allSubmitted') return 'reveal';
-      return hasSubmitted ? 'waiting' : 'guessing';
-    }
+      return store.self?.hasSubmitted ? 'waiting' : 'guessing';
+    case 'allSubmitted':
+      return 'reveal';
     case 'reveal':
       return 'reveal';
     case 'gameEnd':

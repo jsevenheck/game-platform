@@ -14,7 +14,7 @@ const validationError = ref('');
 
 function parseAndSubmit() {
   validationError.value = '';
-  const trimmed = input.value.trim().replace(',', '.');
+  const trimmed = String(input.value).trim().replace(',', '.');
   if (trimmed === '') {
     validationError.value = 'Bitte eine Zahl eingeben.';
     return;
