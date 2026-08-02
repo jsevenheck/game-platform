@@ -45,6 +45,7 @@ const { socket, connected } = useSocket({
 const initError = ref('');
 
 function joinRoom() {
+  const saved = store.loadSession();
   socket.emit(
     'autoJoinRoom',
     {
@@ -52,6 +53,10 @@ function joinRoom() {
       name: props.playerName,
       playerId: props.playerId,
       joinToken: props.joinToken,
+      resumeToken:
+        saved?.sessionId === undefined || saved.sessionId === props.sessionId
+          ? store.resumeToken || saved?.resumeToken
+          : undefined,
       isHost: props.isHost,
     },
     (res) => {
@@ -63,6 +68,7 @@ function joinRoom() {
       store.roomCode = res.roomCode;
       store.playerId = res.playerId;
       store.playerName = props.playerName;
+      store.sessionId = props.sessionId;
       store.resumeToken = res.resumeToken;
       store.saveSession();
     }
@@ -121,6 +127,19 @@ const view = computed(() => {
 });
 
 onMounted(() => {
+  const saved = store.loadSession();
+  store.sessionId = props.sessionId;
+  if (
+    saved &&
+    saved.playerId === props.playerId &&
+    (!saved.sessionId || saved.sessionId === props.sessionId)
+  ) {
+    store.playerId = saved.playerId;
+    store.playerName = saved.name;
+    store.roomCode = saved.roomCode;
+    store.resumeToken = saved.resumeToken;
+  }
+
   socket.on('roomUpdate', (room) => {
     store.setRoom(room);
   });

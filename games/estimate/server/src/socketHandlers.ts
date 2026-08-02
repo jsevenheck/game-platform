@@ -1,9 +1,12 @@
 import type { Namespace, Server, Socket } from 'socket.io';
 import type { Logger } from 'pino';
+import { getPartyByActiveMatch } from '../../../../apps/platform/server/party/partyStore';
 import {
   authorizePartyJoin,
   normalizeJoinToken,
   normalizeStablePlayerId,
+  restoreHostToFirstConnectedPlayer,
+  syncRoomHostFromParty,
   syncRoomHostAfterJoin,
   type GameRoomLike,
 } from '../../../../apps/platform/server/party/gameAuth';
@@ -77,6 +80,43 @@ function asGameRoomLike(room: ServerRoom): GameRoomLike {
   };
 }
 
+function applyHostSync(room: ServerRoom, gameRoom: GameRoomLike): void {
+  for (const player of room.players) {
+    player.isHost = gameRoom.players[player.id]?.isHost ?? false;
+  }
+  if (gameRoom.hostId) room.hostPlayerId = gameRoom.hostId;
+}
+
+function syncHostAfterJoin(
+  room: ServerRoom,
+  hostPlayerId: string,
+  allowFallbackHost: boolean
+): void {
+  const gameRoom = asGameRoomLike(room);
+  syncRoomHostAfterJoin(gameRoom, hostPlayerId, allowFallbackHost);
+  applyHostSync(room, gameRoom);
+}
+
+function syncHostFromActiveParty(room: ServerRoom): boolean {
+  const party = getPartyByActiveMatch(room.matchKey, GAME_ID);
+  if (!party) return false;
+
+  const gameRoom = asGameRoomLike(room);
+  syncRoomHostFromParty(gameRoom, party.hostPlayerId);
+  applyHostSync(room, gameRoom);
+  return true;
+}
+
+function restoreFallbackHost(room: ServerRoom): void {
+  const gameRoom = asGameRoomLike(room);
+  restoreHostToFirstConnectedPlayer(gameRoom);
+  applyHostSync(room, gameRoom);
+}
+
+function hasConnectedGameHost(room: ServerRoom): boolean {
+  return room.players.some((player) => player.id === room.hostPlayerId && player.connected);
+}
+
 function createInstrumentedResponder<T extends { ok?: boolean }>(
   instrumentation: ReturnType<typeof startSocketHandlerInstrumentation>,
   cb: unknown
@@ -128,6 +168,7 @@ function listAllRooms(): ServerRoom[] {
 }
 
 function isHost(socket: EstimateSocket, room: ServerRoom): boolean {
+  syncHostFromActiveParty(room);
   const playerId = findPlayerBySocket(socket, room);
   if (!playerId) return false;
   const player = findPlayer(room, playerId);
@@ -206,16 +247,7 @@ function registerGameHandlers(
           // in-place, then re-apply the resulting isHost flags back to the
           // room's player array. Building a fresh view for the re-sync would
           // discard the helper's mutations.
-          const gl = asGameRoomLike(room);
-          syncRoomHostAfterJoin(
-            gl,
-            authorization.hostPlayerId,
-            // Platform hostPlayerId is authoritative; never fall back to a
-            // first-connected player when the platform host is missing.
-            false
-          );
-          for (const p of room.players) p.isHost = gl.players[p.id]?.isHost ?? false;
-          if (gl.hostId) room.hostPlayerId = gl.hostId;
+          syncHostAfterJoin(room, authorization.hostPlayerId, !authorization.hostConnected);
 
           broadcastRoom(nsp, room);
           socketLogger.info(
@@ -245,16 +277,10 @@ function registerGameHandlers(
             return respond({ ok: false, error: 'Resume token required' });
           }
           bindPlayerToSocket(nsp, socket, room, existing.id);
-          const gl = asGameRoomLike(room);
-          syncRoomHostAfterJoin(
-            gl,
-            authorization.hostPlayerId,
-            // Platform hostPlayerId is authoritative; never fall back to a
-            // first-connected player when the platform host is missing.
-            false
-          );
-          for (const p of room.players) p.isHost = gl.players[p.id]?.isHost ?? false;
-          if (gl.hostId) room.hostPlayerId = gl.hostId;
+          syncHostAfterJoin(room, authorization.hostPlayerId, !authorization.hostConnected);
+          if (room.phase === 'allSubmitted' && !room.guesses.has(existing.id)) {
+            room.phase = 'guessing';
+          }
           broadcastRoom(nsp, room);
           socketLogger.info(
             {
@@ -285,16 +311,7 @@ function registerGameHandlers(
         try {
           const { playerId, resumeToken } = attachPlayerToRoom(room, name, authorizedPlayerId);
           bindPlayerToSocket(nsp, socket, room, playerId);
-          const gl = asGameRoomLike(room);
-          syncRoomHostAfterJoin(
-            gl,
-            authorization.hostPlayerId,
-            // Platform hostPlayerId is authoritative; never fall back to a
-            // first-connected player when the platform host is missing.
-            false
-          );
-          for (const p of room.players) p.isHost = gl.players[p.id]?.isHost ?? false;
-          if (gl.hostId) room.hostPlayerId = gl.hostId;
+          syncHostAfterJoin(room, authorization.hostPlayerId, !authorization.hostConnected);
           broadcastRoom(nsp, room);
           socketLogger.info(
             { roomCode: room.roomCode, playerId, sessionId, resumed: false },
@@ -464,6 +481,9 @@ function registerGameHandlers(
           clearSocketIndex(socket.id);
           if (room.phase === 'guessing' && allConnectedPlayersSubmitted(room)) {
             room.phase = 'allSubmitted';
+          }
+          if (player.isHost || !hasConnectedGameHost(room)) {
+            if (!syncHostFromActiveParty(room)) restoreFallbackHost(room);
           }
           broadcastRoom(nsp, room);
         }

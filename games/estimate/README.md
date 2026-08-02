@@ -20,7 +20,7 @@ game uses `autoJoinRoom` plus resume tokens for join and reconnect behaviour.
 - **Default rounds:** 5
 - **Guess timer hint:** 60 s (UI-only; the server never auto-submits)
 - **Scoring:** +1 per round for the closest guesser; ties share the +1
-- **Question source:** `games/estimate/server/data/questions.csv`
+- **Question source:** `games/estimate/server/data/questions.csv` (copied into the production server build)
 - **Socket namespace:** `/g/estimate`
 
 ## Development

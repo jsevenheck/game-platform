@@ -197,4 +197,23 @@ test.describe('Estimate game', () => {
       await closeSession(session);
     }
   });
+
+  test('rejoins the active game after a browser reload', async ({ browser }) => {
+    const session = await createTwoPlayerEstimateSession(browser, 'Iris', 'Jules');
+    try {
+      await launchEstimateGame(session.hostPage, session.guestPage);
+      await hostStartsGame(session.hostPage);
+
+      await session.guestPage.reload();
+      await expect(session.guestPage.getByTestId('estimate-question')).toBeVisible({
+        timeout: 15_000,
+      });
+
+      await bothSubmitGuesses(session.hostPage, session.guestPage, '1989', '1990');
+      await hostReveals(session.hostPage);
+      await expect(session.guestPage.getByTestId('estimate-revealed-banner')).toBeVisible();
+    } finally {
+      await closeSession(session);
+    }
+  });
 });

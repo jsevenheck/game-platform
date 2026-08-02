@@ -77,4 +77,6 @@ export interface StoredSession {
   roomCode: string;
   name: string;
   resumeToken: string;
+  /** Match key this game resume token belongs to. Older sessions may omit it. */
+  sessionId?: string;
 }

@@ -252,6 +252,76 @@ describe('registerEstimate', () => {
       expect(cb).toHaveBeenCalledWith({ ok: false, error: 'Invalid resume token' });
     });
 
+    it('synchronizes the platform host before a host-only action', () => {
+      const ns = setupServer();
+      const { party, tokens } = setupParty();
+
+      const hostSocket = makeSocket('game-host-socket');
+      ns.connect(hostSocket);
+      autoJoin(hostSocket, 'host', tokens.host);
+
+      const guestSocket = makeSocket('game-guest-socket');
+      ns.connect(guestSocket);
+      autoJoin(guestSocket, 'guest', tokens.guest);
+
+      party.members.get('host')!.connected = false;
+      party.hostPlayerId = 'guest';
+
+      const cb = vi.fn();
+      guestSocket.handlers.startGame({ roomCode: firstRoom()!.roomCode }, cb);
+
+      expect(cb).toHaveBeenCalledWith({ ok: true });
+      expect(firstRoom()!.hostPlayerId).toBe('guest');
+      expect(firstRoom()!.players.find((p) => p.id === 'guest')?.isHost).toBe(true);
+      expect(firstRoom()!.players.find((p) => p.id === 'host')?.isHost).toBe(false);
+    });
+
+    it('assigns a fallback host when the game host socket disconnects', () => {
+      const ns = setupServer();
+      const { party, tokens } = setupParty();
+
+      const hostSocket = makeSocket('game-host-socket');
+      ns.connect(hostSocket);
+      autoJoin(hostSocket, 'host', tokens.host);
+
+      const guestSocket = makeSocket('game-guest-socket');
+      ns.connect(guestSocket);
+      autoJoin(guestSocket, 'guest', tokens.guest);
+
+      party.members.get('host')!.connected = false;
+      hostSocket.handlers.disconnect('transport close');
+
+      expect(firstRoom()!.players.find((p) => p.id === 'host')?.connected).toBe(false);
+      expect(firstRoom()!.hostPlayerId).toBe('guest');
+      expect(firstRoom()!.players.find((p) => p.id === 'guest')?.isHost).toBe(true);
+    });
+
+    it('returns to guessing when an unsubmitted player reconnects', () => {
+      const ns = setupServer();
+      const { tokens } = setupParty();
+
+      const hostSocket = makeSocket('game-host-socket');
+      ns.connect(hostSocket);
+      autoJoin(hostSocket, 'host', tokens.host);
+
+      const guestSocket = makeSocket('game-guest-socket');
+      ns.connect(guestSocket);
+      const guestJoin = autoJoin(guestSocket, 'guest', tokens.guest);
+      const roomCode = firstRoom()!.roomCode;
+
+      hostSocket.handlers.startGame({ roomCode }, vi.fn());
+      guestSocket.handlers.disconnect('transport close');
+      hostSocket.handlers.submitGuess({ roomCode, guess: 42 }, vi.fn());
+      expect(firstRoom()!.phase).toBe('allSubmitted');
+
+      const reconnect = makeSocket('game-guest-reconnect-socket');
+      ns.connect(reconnect);
+      autoJoin(reconnect, 'guest', tokens.guest, 'match-estimate', guestJoin.resumeToken as string);
+
+      expect(firstRoom()!.phase).toBe('guessing');
+      expect(firstRoom()!.players.find((p) => p.id === 'guest')?.connected).toBe(true);
+    });
+
     it('lets a new player join an existing lobby', () => {
       const ns = setupServer();
       const { tokens } = setupParty();

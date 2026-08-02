@@ -6,6 +6,7 @@ const SESSION_KEY = 'estimate.session';
 export const useGameStore = defineStore('estimate-game', {
   state: () => ({
     room: null as RoomView | null,
+    sessionId: '',
     roomCode: '',
     playerId: '',
     playerName: '',
@@ -54,6 +55,7 @@ export const useGameStore = defineStore('estimate-game', {
         roomCode: this.roomCode,
         name: this.playerName,
         resumeToken: this.resumeToken,
+        sessionId: this.sessionId,
       };
       localStorage.setItem(SESSION_KEY, JSON.stringify(session));
     },

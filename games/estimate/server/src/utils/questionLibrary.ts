@@ -6,9 +6,8 @@ import type { Question } from '../../../core/src/types';
 
 const questionLogger = createComponentLogger('estimate-question-library');
 
-/** Path is resolved relative to the workspace root that the platform server runs from,
- *  matching the imposter wordLibrary convention. */
-const QUESTIONS_FILE = path.resolve(process.cwd(), 'games/estimate/server/data/questions.csv');
+/** Resolve beside the source/compiled game module so dev, dist and Docker use the same asset. */
+const QUESTIONS_FILE = path.resolve(__dirname, '../../data/questions.csv');
 
 /** File reader function — overridable in tests via __setQuestionFileReaderForTests. */
 let fileReader: (filePath: string, encoding: 'utf8') => string = (p, enc) =>
