@@ -1,7 +1,6 @@
 import { expect, test } from '@playwright/test';
-import { clientGameRegistry } from '../src/games';
 
-const gameNames = clientGameRegistry.map((game) => game.definition.name);
+const expectedGames = ['Blackout', 'Imposter', 'Secret Signals', 'Flip 7', 'Scout', 'Estimate'];
 
 test.describe('home library', () => {
   test.beforeEach(async ({ page }) => {
@@ -11,9 +10,9 @@ test.describe('home library', () => {
 
   test('renders every registered game', async ({ page }) => {
     await page.goto('/');
-    await expect(page.getByTestId('game-library-card')).toHaveCount(gameNames.length);
+    await expect(page.getByTestId('game-library-card')).toHaveCount(expectedGames.length);
 
-    for (const name of gameNames) {
+    for (const name of expectedGames) {
       await expect(page.getByTestId('game-library-card').filter({ hasText: name })).toBeVisible();
     }
   });

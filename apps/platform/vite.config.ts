@@ -75,15 +75,10 @@ export default defineConfig({
   build: {
     outDir: 'dist/client',
     emptyOutDir: true,
-    rolldownOptions: {
+    rollupOptions: {
       output: {
-        codeSplitting: {
-          groups: [
-            {
-              test: /node_modules[\\/]pinia/,
-              name: 'pinia',
-            },
-          ],
+        manualChunks: {
+          pinia: ['pinia'],
         },
       },
     },

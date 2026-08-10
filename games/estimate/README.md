@@ -18,7 +18,6 @@ game uses `autoJoinRoom` plus resume tokens for join and reconnect behaviour.
 
 - **Min / max players:** 2 – 12
 - **Default rounds:** 5
-- **Guess timer hint:** 60 s (UI-only; the server never auto-submits)
 - **Scoring:** +1 per round for the closest guesser; ties share the +1
 - **Question source:** `games/estimate/server/data/questions.csv` (copied into the production server build)
 - **Socket namespace:** `/g/estimate`
@@ -51,6 +50,9 @@ Empty lines are skipped. The answer can be any finite number within
 `GUESS_VALUE_LIMIT` (1e9 by default).
 
 The CSV is loaded once at server start (cached). Restart the server to pick up changes.
+
+During `guessing`, clients receive only per-player `hasSubmitted` flags. Guess values and the
+derived number-line range remain server-private until every connected player has submitted.
 
 ## Project Docs
 

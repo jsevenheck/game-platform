@@ -14,15 +14,15 @@ include `ok: true`; rejected actions return `{ ok: false, error: string }`.
 > identity is derived from `party.hostPlayerId`, not from the client-supplied `isHost` flag.
 
 Creates, joins, or resumes the room associated with the platform `sessionId`.
+`playerId` and `joinToken` may be supplied in the event payload or the Socket.IO handshake;
+the server always validates them against the active party.
 
 Payload:
 
 ```ts
 {
   sessionId: string;
-  name: string;
   playerId?: string;
-  isHost?: boolean;
   joinToken?: string;
   resumeToken?: string;
 }
@@ -67,7 +67,7 @@ Response: `{ ok: true } | { ok: false, error: string }`. Errors:
 
 - `'Only host can start'`
 - `'Game already started'` (room is not in lobby)
-- `'Not enough players'`
+- `'Need at least 2 connected players to start, have …'`
 
 ### `submitGuess`
 
@@ -111,7 +111,7 @@ Response: `{ ok: true } | { ok: false, error: string }`. Errors:
 
 ### `nextRound`
 
-Host-only. Advances to the next round. Finishes the game (`gameEnd`) once
+Host-only. Advances to the next round. Finishes the game (`ended`) once
 `currentRound >= totalRounds`. The room must be in `reveal`.
 
 Payload:
@@ -130,7 +130,7 @@ Response: `{ ok: true } | { ok: false, error: string }`. Errors:
 ### `restartGame`
 
 Host-only. Resets the room back to lobby (scores cleared, new questions drawn). Allowed in
-`reveal` (early restart) or `gameEnd`.
+`reveal` (early restart) or `ended`.
 
 Payload:
 
@@ -149,8 +149,10 @@ Response: `{ ok: true } | { ok: false, error: string }`. Errors:
 
 ### `roomUpdate`
 
-Sent after every state transition. The payload is **public** — there are no hidden values
-in estimate (every player's guess is meant to be seen by everyone once revealed).
+Sent after every state transition. The payload is a sanitized public view. During `guessing`,
+`guesses` is empty and `displayRange` is `null`; only `PlayerView.hasSubmitted` is public.
+All guesses and their derived range become public in `allSubmitted`. The solution remains
+`null` until `reveal`.
 
 ```ts
 interface Range {
@@ -188,7 +190,7 @@ interface WinnerEntry {
 
 interface RoomView {
   roomCode: string;
-  phase: 'lobby' | 'guessing' | 'allSubmitted' | 'reveal' | 'gameEnd';
+  phase: 'lobby' | 'guessing' | 'allSubmitted' | 'reveal' | 'ended';
   currentRound: number;
   totalRounds: number;
   players: PlayerView[];
@@ -204,11 +206,11 @@ interface RoomView {
 ### `phaseChange`
 
 Sent alongside `roomUpdate` on every transition. The platform adapter subscribes to this
-and shows its replay overlay once `phase === 'gameEnd'`.
+and shows its replay overlay once `phase === 'ended'`.
 
 ```ts
 {
-  phase: 'lobby' | 'guessing' | 'allSubmitted' | 'reveal' | 'gameEnd';
+  phase: 'lobby' | 'guessing' | 'allSubmitted' | 'reveal' | 'ended';
 }
 ```
 
@@ -229,8 +231,8 @@ via the ack callback).
   and cleanup. Logs must never include resume tokens, `joinToken` values, or names paired
   with playerIds beyond the platform-party identification.
 - The server emits `phaseChange` alongside every `roomUpdate`; the platform adapter uses
-  the `gameEnd` phase to show its replay / return-to-party overlay.
+  the `ended` phase to show its replay / return-to-party overlay.
 - The CSV question library is loaded once at server start (cached). Restart the server to
   pick up changes to `games/estimate/server/data/questions.csv`.
-- E2E timer constants are halved (`GUESS_TIMER_MS = 2_000`) when `E2E_TESTS=1` is set in
-  the environment, but the server never auto-submits — the timer is UI-only.
+- If every game socket disconnects, the room remains resumable for 30 minutes and is then
+  removed automatically unless a player reconnects first.

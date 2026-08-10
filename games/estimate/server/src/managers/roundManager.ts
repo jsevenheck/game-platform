@@ -1,5 +1,5 @@
 import { MAX_PLAYERS, MIN_PLAYERS, GUESS_VALUE_LIMIT } from '../../../core/src/constants';
-import type { Phase, Question, ServerRoom } from '../../../core/src/types';
+import type { Phase, ServerRoom } from '../../../core/src/types';
 import { findPlayer } from '../models/room';
 import { pickRandomQuestions } from '../utils/questionLibrary';
 import { computeRoundWinners } from './scoreManager';
@@ -21,12 +21,14 @@ export function allConnectedPlayersSubmitted(room: ServerRoom): boolean {
   return room.players.filter((p) => p.connected).every((p) => room.guesses.has(p.id));
 }
 
-function pickNextQuestion(): Question {
-  const lib = pickRandomQuestions(1);
-  if (lib.length === 0) {
-    throw new EstimateError('Question library is empty');
+function prepareQuestionDeck(room: ServerRoom): void {
+  const deck = pickRandomQuestions(room.totalRounds);
+  if (deck.length < room.totalRounds) {
+    throw new EstimateError(
+      `Need ${room.totalRounds} unique questions, library has ${deck.length}`
+    );
   }
-  return lib[0]!;
+  room.questionDeck = deck;
 }
 
 /** Start the first round. The host triggers this. */
@@ -34,9 +36,10 @@ export function startGame(room: ServerRoom): void {
   if (room.phase !== 'lobby') {
     throw new EstimateError(`Cannot start game in phase ${room.phase}`);
   }
-  if (room.players.length < MIN_PLAYERS) {
+  const connectedPlayers = room.players.filter((player) => player.connected);
+  if (connectedPlayers.length < MIN_PLAYERS) {
     throw new EstimateError(
-      `Need at least ${MIN_PLAYERS} players to start, have ${room.players.length}`
+      `Need at least ${MIN_PLAYERS} connected players to start, have ${connectedPlayers.length}`
     );
   }
   if (room.players.length > MAX_PLAYERS) {
@@ -47,12 +50,16 @@ export function startGame(room: ServerRoom): void {
   for (const p of room.players) room.scores.set(p.id, 0);
 
   room.currentRound = 0;
+  prepareQuestionDeck(room);
   advanceRound(room);
 }
 
 function advanceRound(room: ServerRoom): void {
   room.currentRound += 1;
-  room.question = pickNextQuestion();
+  room.question = room.questionDeck[room.currentRound - 1] ?? null;
+  if (!room.question) {
+    throw new EstimateError(`Question deck exhausted at round ${room.currentRound}`);
+  }
   room.guesses.clear();
   room.phase = 'guessing';
 }
@@ -122,18 +129,19 @@ export function nextRound(room: ServerRoom): void {
 /** Host restarts the game in the same room (scores reset, new questions). */
 export function restartGame(room: ServerRoom): void {
   const currentPhase = room.phase;
-  if (currentPhase !== 'gameEnd' && currentPhase !== 'reveal') {
+  if (currentPhase !== 'ended' && currentPhase !== 'reveal') {
     throw new EstimateError(`Cannot restart in phase ${currentPhase}`);
   }
   for (const p of room.players) room.scores.set(p.id, 0);
   room.currentRound = 0;
   room.question = null;
+  room.questionDeck = [];
   room.guesses.clear();
   room.phase = 'lobby' as Phase;
 }
 
 function finishGame(room: ServerRoom): void {
-  room.phase = 'gameEnd';
+  room.phase = 'ended';
   // Keep the last question + guesses so the final view can show who
   // won the deciding round.
 }

@@ -21,16 +21,17 @@ import {
   recordNamespaceDisconnect,
 } from '../../../../apps/platform/server/observability/socketNamespaceMetrics';
 import {
-  __listRoomsForTests,
   __resetRoomStoreForTests,
   attachPlayerToRoom,
+  clearRoomCleanup,
   createRoom,
   findPlayer,
   getRoomByCode,
   getRoomBySession,
+  scheduleRoomCleanup,
   RoomFullError,
 } from './models/room';
-import { clearSocketIndex, setSocketIndex } from './models/player';
+import { clearSocketIndex, getSocketIndex, setSocketIndex } from './models/player';
 import { buildRoomView } from './managers/broadcastManager';
 import {
   nextRound,
@@ -42,6 +43,7 @@ import {
   isFiniteGuess,
   EstimateError,
 } from './managers/roundManager';
+import { ROOM_IDLE_TIMEOUT_MS } from '../../core/src/constants';
 import type { ServerRoom } from '../../core/src/types';
 import type { ClientToServerEvents, ServerToClientEvents } from '../../core/src/events';
 
@@ -59,10 +61,6 @@ function normalizeRequiredString(value: unknown): string | null {
   if (typeof value !== 'string') return null;
   const trimmed = value.trim();
   return trimmed.length > 0 ? trimmed : null;
-}
-
-function callbackErrorMessage(err: unknown): string {
-  return err instanceof Error ? err.message : 'Invalid action';
 }
 
 /** Adapter that exposes a ServerRoom (array-based) as a GameRoomLike (record-based)
@@ -136,6 +134,33 @@ function findPlayerBySocket(socket: EstimateSocket, room: ServerRoom): string | 
   return player?.id ?? null;
 }
 
+function applyDisconnectLifecycle(
+  nsp: EstimateNamespace,
+  socket: EstimateSocket,
+  room: ServerRoom,
+  playerId: string
+): void {
+  const player = findPlayer(room, playerId);
+  if (!player || player.socketId !== socket.id) return;
+
+  player.connected = false;
+  player.socketId = '';
+  clearSocketIndex(socket.id);
+  socket.leave(room.roomCode);
+
+  if (room.phase === 'guessing' && allConnectedPlayersSubmitted(room)) {
+    room.phase = 'allSubmitted';
+  }
+  if (player.isHost || !hasConnectedGameHost(room)) {
+    if (!syncHostFromActiveParty(room)) restoreFallbackHost(room);
+  }
+
+  broadcastRoom(nsp, room);
+  if (!room.players.some((candidate) => candidate.connected)) {
+    scheduleRoomCleanup(room.roomCode, ROOM_IDLE_TIMEOUT_MS);
+  }
+}
+
 function bindPlayerToSocket(
   nsp: EstimateNamespace,
   socket: EstimateSocket,
@@ -145,38 +170,77 @@ function bindPlayerToSocket(
   const player = findPlayer(room, playerId);
   if (!player) return;
 
-  // Disconnect any prior socket claiming the same player.
-  for (const other of room.players) {
-    if (other.id !== playerId && other.socketId === socket.id) {
-      other.socketId = '';
-      other.connected = false;
+  if (player.socketId && player.socketId !== socket.id) {
+    const previousSocketId = player.socketId;
+    clearSocketIndex(previousSocketId);
+    nsp.sockets.get(previousSocketId)?.disconnect(true);
+  }
+
+  const currentIndex = getSocketIndex(socket.id);
+  if (
+    currentIndex &&
+    (currentIndex.roomCode !== room.roomCode || currentIndex.playerId !== playerId)
+  ) {
+    const previousRoom = getRoomByCode(currentIndex.roomCode);
+    if (previousRoom) {
+      applyDisconnectLifecycle(nsp, socket, previousRoom, currentIndex.playerId);
+    } else {
+      clearSocketIndex(socket.id);
     }
   }
 
   player.socketId = socket.id;
   player.connected = true;
   setSocketIndex(socket.id, room.roomCode, player.id);
+  clearRoomCleanup(room.roomCode);
   socket.join(room.roomCode);
 }
 
-function findRoomBySocketId(socketId: string): ServerRoom | undefined {
-  return listAllRooms().find((r) => r.players.some((p) => p.socketId === socketId));
+interface AuthorizedPlayer {
+  ok: true;
+  playerId: string;
 }
 
-function listAllRooms(): ServerRoom[] {
-  return __listRoomsForTests();
+interface UnauthorizedPlayer {
+  ok: false;
+  error: string;
 }
 
-function isHost(socket: EstimateSocket, room: ServerRoom): boolean {
-  syncHostFromActiveParty(room);
+function authorizeBoundPlayer(
+  nsp: EstimateNamespace,
+  socket: EstimateSocket,
+  room: ServerRoom
+): AuthorizedPlayer | UnauthorizedPlayer {
   const playerId = findPlayerBySocket(socket, room);
-  if (!playerId) return false;
-  const player = findPlayer(room, playerId);
-  return player?.isHost === true && player.connected === true;
+  if (!playerId) return { ok: false, error: 'Not in room' };
+
+  const joinToken = normalizeJoinToken(undefined, socket.data.joinToken);
+  const authorization = authorizePartyJoin(GAME_ID, room.matchKey, playerId, joinToken);
+  if (!authorization.ok) {
+    applyDisconnectLifecycle(nsp, socket, room, playerId);
+    return { ok: false, error: 'Not authorized for this match' };
+  }
+
+  const previousHostPlayerId = room.hostPlayerId;
+  syncHostFromActiveParty(room);
+  if (previousHostPlayerId !== room.hostPlayerId) {
+    broadcastRoom(nsp, room);
+  }
+  return { ok: true, playerId };
 }
 
-function verifyPlayerInRoom(socket: EstimateSocket, room: ServerRoom): string | null {
-  return findPlayerBySocket(socket, room);
+function authorizeHost(
+  nsp: EstimateNamespace,
+  socket: EstimateSocket,
+  room: ServerRoom
+): { ok: true } | UnauthorizedPlayer {
+  const authorization = authorizeBoundPlayer(nsp, socket, room);
+  if (!authorization.ok) return authorization;
+  const player = findPlayer(room, authorization.playerId);
+  if (player?.isHost !== true || player.connected !== true) {
+    return { ok: false, error: 'Only host' };
+  }
+  return { ok: true };
 }
 
 function registerGameHandlers(
@@ -185,6 +249,14 @@ function registerGameHandlers(
   namespace: string,
   gameLogger: Logger
 ): void {
+  nsp.use((socket, next) => {
+    const auth = socket.handshake.auth ?? {};
+    socket.data.sessionId = auth.sessionId;
+    socket.data.playerId = auth.playerId;
+    socket.data.joinToken = auth.joinToken ?? auth.token;
+    next();
+  });
+
   nsp.on('connection', (socket: EstimateSocket) => {
     const socketLogger = createSocketLogger(gameLogger, socket);
     attachSocketEventDebugLogging(socket, socketLogger, readLoggingConfig().socketEvents);
@@ -227,6 +299,9 @@ function registerGameHandlers(
 
         const authorizedPlayerId = authorization.member.playerId;
         const name = authorization.member.name;
+        socket.data.sessionId = sessionId;
+        socket.data.playerId = authorizedPlayerId;
+        socket.data.joinToken = joinToken;
 
         let room = getRoomBySession(sessionId);
 
@@ -240,7 +315,9 @@ function registerGameHandlers(
               hostPlayerId: authorizedPlayerId,
             });
           } catch (err) {
-            return respond({ ok: false, error: callbackErrorMessage(err) });
+            instrumentation.finishError();
+            socketLogger.error({ err, sessionId }, 'failed to create estimate room');
+            return respond({ ok: false, error: 'Action failed' });
           }
           bindPlayerToSocket(nsp, socket, room, authorizedPlayerId);
           // Build a single GameRoomLike view that syncRoomHostAfterJoin mutates
@@ -322,11 +399,37 @@ function registerGameHandlers(
           if (err instanceof RoomFullError) {
             return respond({ ok: false, error: 'Room is full' });
           }
-          return respond({ ok: false, error: callbackErrorMessage(err) });
+          instrumentation.finishError();
+          socketLogger.error({ err, sessionId }, 'failed to join estimate room');
+          return respond({ ok: false, error: 'Action failed' });
         }
       } catch (err) {
         instrumentation.finishError();
-        return respond({ ok: false, error: callbackErrorMessage(err) });
+        socketLogger.error({ err }, 'unexpected autoJoinRoom failure');
+        return respond({ ok: false, error: 'Action failed' });
+      }
+    });
+
+    socket.on('syncAuthority', (data: unknown, cb: unknown) => {
+      const instrumentation = startSocketHandlerInstrumentation(namespace, 'syncAuthority', gameId);
+      const respond = createInstrumentedResponder<{ ok: true } | { ok: false; error: string }>(
+        instrumentation,
+        cb
+      );
+      try {
+        if (!isObjectPayload(data)) return respond({ ok: false, error: INVALID_REQUEST_ERROR });
+        const roomCode = normalizeRequiredString(data.roomCode);
+        if (!roomCode) return respond({ ok: false, error: INVALID_REQUEST_ERROR });
+        const room = getRoomByCode(roomCode);
+        if (!room) return respond({ ok: false, error: 'Room not found' });
+        const authorization = authorizeBoundPlayer(nsp, socket, room);
+        if (!authorization.ok) return respond(authorization);
+        broadcastRoom(nsp, room);
+        return respond({ ok: true });
+      } catch (err) {
+        instrumentation.finishError();
+        socketLogger.error({ err }, 'unexpected estimate authority sync failure');
+        return respond({ ok: false, error: 'Action failed' });
       }
     });
 
@@ -342,7 +445,14 @@ function registerGameHandlers(
         if (!roomCode) return respond({ ok: false, error: INVALID_REQUEST_ERROR });
         const room = getRoomByCode(roomCode);
         if (!room) return respond({ ok: false, error: 'Room not found' });
-        if (!isHost(socket, room)) return respond({ ok: false, error: 'Only host can start' });
+        const authorization = authorizeHost(nsp, socket, room);
+        if (!authorization.ok) {
+          return respond({
+            ok: false,
+            error:
+              authorization.error === 'Only host' ? 'Only host can start' : authorization.error,
+          });
+        }
         if (room.phase !== 'lobby') return respond({ ok: false, error: 'Game already started' });
 
         startRound(room);
@@ -353,9 +463,10 @@ function registerGameHandlers(
         );
         return respond({ ok: true });
       } catch (err) {
-        instrumentation.finishError();
         if (err instanceof EstimateError) return respond({ ok: false, error: err.message });
-        return respond({ ok: false, error: callbackErrorMessage(err) });
+        instrumentation.finishError();
+        socketLogger.error({ err }, 'unexpected estimate action failure');
+        return respond({ ok: false, error: 'Action failed' });
       }
     });
 
@@ -371,21 +482,22 @@ function registerGameHandlers(
         if (!roomCode) return respond({ ok: false, error: INVALID_REQUEST_ERROR });
         const room = getRoomByCode(roomCode);
         if (!room) return respond({ ok: false, error: 'Room not found' });
-        const playerId = verifyPlayerInRoom(socket, room);
-        if (!playerId) return respond({ ok: false, error: 'Not in room' });
+        const authorization = authorizeBoundPlayer(nsp, socket, room);
+        if (!authorization.ok) return respond(authorization);
         if (!isFiniteGuess(data.guess)) return respond({ ok: false, error: 'Invalid guess' });
 
-        submitGuess(room, playerId, data.guess);
+        submitGuess(room, authorization.playerId, data.guess);
         broadcastRoom(nsp, room);
         socketLogger.info(
-          { roomCode: room.roomCode, playerId, phase: room.phase },
+          { roomCode: room.roomCode, playerId: authorization.playerId, phase: room.phase },
           'estimate guess submitted'
         );
         return respond({ ok: true });
       } catch (err) {
-        instrumentation.finishError();
         if (err instanceof EstimateError) return respond({ ok: false, error: err.message });
-        return respond({ ok: false, error: callbackErrorMessage(err) });
+        instrumentation.finishError();
+        socketLogger.error({ err }, 'unexpected estimate action failure');
+        return respond({ ok: false, error: 'Action failed' });
       }
     });
 
@@ -405,15 +517,23 @@ function registerGameHandlers(
         if (!roomCode) return respond({ ok: false, error: INVALID_REQUEST_ERROR });
         const room = getRoomByCode(roomCode);
         if (!room) return respond({ ok: false, error: 'Room not found' });
-        if (!isHost(socket, room)) return respond({ ok: false, error: 'Only host can reveal' });
+        const authorization = authorizeHost(nsp, socket, room);
+        if (!authorization.ok) {
+          return respond({
+            ok: false,
+            error:
+              authorization.error === 'Only host' ? 'Only host can reveal' : authorization.error,
+          });
+        }
         revealSolution(room);
         broadcastRoom(nsp, room);
         socketLogger.info({ roomCode: room.roomCode }, 'estimate solution revealed');
         return respond({ ok: true });
       } catch (err) {
-        instrumentation.finishError();
         if (err instanceof EstimateError) return respond({ ok: false, error: err.message });
-        return respond({ ok: false, error: callbackErrorMessage(err) });
+        instrumentation.finishError();
+        socketLogger.error({ err }, 'unexpected estimate action failure');
+        return respond({ ok: false, error: 'Action failed' });
       }
     });
 
@@ -429,7 +549,14 @@ function registerGameHandlers(
         if (!roomCode) return respond({ ok: false, error: INVALID_REQUEST_ERROR });
         const room = getRoomByCode(roomCode);
         if (!room) return respond({ ok: false, error: 'Room not found' });
-        if (!isHost(socket, room)) return respond({ ok: false, error: 'Only host can advance' });
+        const authorization = authorizeHost(nsp, socket, room);
+        if (!authorization.ok) {
+          return respond({
+            ok: false,
+            error:
+              authorization.error === 'Only host' ? 'Only host can advance' : authorization.error,
+          });
+        }
         nextRound(room);
         broadcastRoom(nsp, room);
         socketLogger.info(
@@ -438,9 +565,10 @@ function registerGameHandlers(
         );
         return respond({ ok: true });
       } catch (err) {
-        instrumentation.finishError();
         if (err instanceof EstimateError) return respond({ ok: false, error: err.message });
-        return respond({ ok: false, error: callbackErrorMessage(err) });
+        instrumentation.finishError();
+        socketLogger.error({ err }, 'unexpected estimate action failure');
+        return respond({ ok: false, error: 'Action failed' });
       }
     });
 
@@ -456,15 +584,23 @@ function registerGameHandlers(
         if (!roomCode) return respond({ ok: false, error: INVALID_REQUEST_ERROR });
         const room = getRoomByCode(roomCode);
         if (!room) return respond({ ok: false, error: 'Room not found' });
-        if (!isHost(socket, room)) return respond({ ok: false, error: 'Only host can restart' });
+        const authorization = authorizeHost(nsp, socket, room);
+        if (!authorization.ok) {
+          return respond({
+            ok: false,
+            error:
+              authorization.error === 'Only host' ? 'Only host can restart' : authorization.error,
+          });
+        }
         restartGame(room);
         broadcastRoom(nsp, room);
         socketLogger.info({ roomCode: room.roomCode }, 'estimate game restarted');
         return respond({ ok: true });
       } catch (err) {
-        instrumentation.finishError();
         if (err instanceof EstimateError) return respond({ ok: false, error: err.message });
-        return respond({ ok: false, error: callbackErrorMessage(err) });
+        instrumentation.finishError();
+        socketLogger.error({ err }, 'unexpected estimate action failure');
+        return respond({ ok: false, error: 'Action failed' });
       }
     });
 
@@ -472,22 +608,18 @@ function registerGameHandlers(
       recordNamespaceDisconnect({ namespace, gameId }, nsp);
       // Mark the player as disconnected; the room view will reflect this on
       // the next broadcast. We do not delete the player — they may rejoin.
-      const room = findRoomBySocketId(socket.id);
-      if (room) {
-        const player = room.players.find((p) => p.socketId === socket.id);
-        if (player) {
-          player.connected = false;
-          player.socketId = '';
-          clearSocketIndex(socket.id);
-          if (room.phase === 'guessing' && allConnectedPlayersSubmitted(room)) {
-            room.phase = 'allSubmitted';
-          }
-          if (player.isHost || !hasConnectedGameHost(room)) {
-            if (!syncHostFromActiveParty(room)) restoreFallbackHost(room);
-          }
-          broadcastRoom(nsp, room);
+      const index = getSocketIndex(socket.id);
+      const room = index ? getRoomByCode(index.roomCode) : undefined;
+      if (room && index) {
+        applyDisconnectLifecycle(nsp, socket, room, index.playerId);
+        if (!room.players.some((candidate) => candidate.connected)) {
+          socketLogger.info(
+            { roomCode: room.roomCode, delayMs: ROOM_IDLE_TIMEOUT_MS },
+            'scheduled abandoned estimate room cleanup'
+          );
         }
       }
+      clearSocketIndex(socket.id);
       socketLogger.debug('estimate client disconnected');
     });
   });

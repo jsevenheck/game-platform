@@ -7,20 +7,19 @@ Socket.IO server handlers, and a Vue platform adapter.
 
 ```
 lobby ──► guessing ──► allSubmitted ──► reveal ──► guessing (next round)
-                                                └─► gameEnd ──► lobby (via restart)
+                                                └─► ended ──► lobby (via restart)
 ```
 
-- **`lobby`** — players are joined. Host can start once `players.length >= MIN_PLAYERS`.
+- **`lobby`** — players are joined. Host can start once at least `MIN_PLAYERS` players are connected.
 - **`guessing`** — the question is visible to every connected player. Players submit one
-  number each (last write wins). The server does not auto-submit on a timer — the UI shows a
-  hint, the player submits when ready.
+  number each (last write wins). Partial guesses and their derived range remain server-private.
 - **`allSubmitted`** — server-driven transition once every _connected_ player has submitted.
   The room view shows every guess on the number line. The solution stays hidden until the
   host presses the explicit `revealSolution` event.
 - **`reveal`** — host pressed "Auflösen". The solution marker appears on the number line,
   winner(s) are highlighted, and the host sees the "Nächste Frage" button.
-- **`gameEnd`** — last round completed. The platform adapter overlays replay / return-to-party
-  buttons on top of the final scoreboard.
+- **`ended`** — last round completed. The readable scoreboard remains visible and the platform
+  adapter presents replay / return-to-party actions below it.
 
 The `'allSubmitted'` ↔ `'reveal'` split is important: without it, the UI cannot distinguish
 "everyone has spoken, time to show the guesses" from "the host actually revealed the answer
@@ -39,8 +38,9 @@ and we should show the winner banner".
 | `socketHandlers.ts`            | Socket.IO event handlers, host-gating, instrumentation            |
 
 `broadcastManager` is the single place where game state becomes client-visible state.
-Both `solution` (only after `reveal`) and `displayRange` (always present once any guess
-exists) are derived here, so the UI does not have to re-implement the rules.
+Both `solution` (only after `reveal`) and public guesses / `displayRange` (from
+`allSubmitted` onward) are derived here, so the UI does not have to re-implement the rules
+and cannot inspect another player's partial guess.
 
 ## Display range computation
 
@@ -48,12 +48,20 @@ exists) are derived here, so the UI does not have to re-implement the rules.
 
 1. collects the min and max of the submitted guesses,
 2. adds 10% of the guess span on each side,
-3. clamps the span to at least `MIN_DISPLAY_SPAN` (so close-together guesses still have
-   a visible band),
+3. uses `guess ± 1` when all guesses are equal,
 4. widens the range to include the solution if the solution is outside the guess span.
 
-The UI then linearly maps each guess onto the band; markers stack vertically when two
-guesses land within 4% of each other so nothing overlaps.
+The UI then linearly maps each guess onto the band. A `ResizeObserver` assigns markers to
+responsive lanes based on the available pixel width, and an equivalent screen-reader table
+exposes every guess and the solution without relying on the visual chart.
+
+## Questions and reconnect lifecycle
+
+At game start the server draws a shuffled deck containing exactly `totalRounds` unique
+questions. A round consumes the next deck entry, so a match cannot repeat a question.
+Socket ownership is indexed by socket id. Rebinding disconnects and unindexes the superseded
+socket; disconnect lookup remains O(1). Empty rooms receive a 30-minute cleanup timer that is
+cancelled by a successful resume.
 
 ## Host gating
 

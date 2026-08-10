@@ -1,4 +1,4 @@
-import { afterEach, beforeEach, describe, expect, it } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { MAX_PLAYERS, GUESS_VALUE_LIMIT } from '@shared/constants';
 import {
   __resetQuestionFileReaderForTests,
@@ -23,6 +23,7 @@ import {
   submitGuess,
 } from '../server/src/managers/roundManager';
 import { buildRoomView } from '../server/src/managers/broadcastManager';
+import { computeDisplayRange } from '../core/src/range';
 import type { ServerRoom } from '../core/src/types';
 
 // Always reset between tests so the in-memory room/question state doesn't leak.
@@ -35,6 +36,7 @@ beforeEach(() => {
 });
 
 afterEach(() => {
+  vi.restoreAllMocks();
   __resetQuestionLibraryCacheForTests();
   __resetQuestionFileReaderForTests();
 });
@@ -92,6 +94,14 @@ describe('startGame', () => {
   it('throws if there are too few players', () => {
     const room = createRoom('Host', { matchKey: 'm1' });
     expect(() => startGame(room)).toThrow(EstimateError);
+  });
+
+  it('rejects a start when a lobby slot is disconnected', () => {
+    const { room, players } = setupRoomWithPlayers(2);
+    findPlayer(room, players[0]!.id)!.connected = false;
+
+    expect(() => startGame(room)).toThrow('Need at least 2 connected players');
+    expect(room.phase).toBe('lobby');
   });
 
   it('throws if the game is not in lobby', () => {
@@ -212,7 +222,25 @@ describe('nextRound / restartGame', () => {
     }
     // After 3 rounds, the final nextRound from 'reveal' ends the game.
     nextRound(room);
-    expect(room.phase).toBe('gameEnd');
+    expect(room.phase).toBe('ended');
+  });
+
+  it('does not repeat a question within one game', () => {
+    vi.spyOn(Math, 'random').mockReturnValue(0);
+    const { room, players } = setupRoomWithPlayers(2, 'm-unique-questions');
+    startGame(room);
+    const questionIds = new Set([room.question!.id]);
+
+    for (let round = 1; round < room.totalRounds; round += 1) {
+      submitGuess(room, room.hostPlayerId, 1);
+      submitGuess(room, players[0]!.id, 2);
+      revealSolution(room);
+      nextRound(room);
+      expect(questionIds.has(room.question!.id)).toBe(false);
+      questionIds.add(room.question!.id);
+    }
+
+    expect(questionIds.size).toBe(room.totalRounds);
   });
 
   it('throws when called outside the reveal phase', () => {
@@ -236,7 +264,7 @@ describe('nextRound / restartGame', () => {
     submitGuess(room, players[0]!.id, 1);
     revealSolution(room);
     nextRound(room); // game ends
-    expect(room.phase).toBe('gameEnd');
+    expect(room.phase).toBe('ended');
     restartGame(room);
     expect(room.phase).toBe('lobby');
     expect(room.currentRound).toBe(0);
@@ -249,6 +277,18 @@ describe('nextRound / restartGame', () => {
 });
 
 describe('buildRoomView', () => {
+  it('keeps partial guesses and their derived range private during guessing', () => {
+    const { room } = setupRoomWithPlayers(2);
+    startGame(room);
+    submitGuess(room, room.hostPlayerId, 123);
+
+    const view = buildRoomView(room);
+    expect(view.phase).toBe('guessing');
+    expect(view.guesses).toEqual([]);
+    expect(view.displayRange).toBeNull();
+    expect(view.players.find((p) => p.id === room.hostPlayerId)?.hasSubmitted).toBe(true);
+  });
+
   it('hides the solution before reveal and shows it after', () => {
     const { room, players } = setupRoomWithPlayers(3);
     const view = buildRoomView(room);
@@ -271,14 +311,14 @@ describe('buildRoomView', () => {
     expect(afterReveal.winners.length).toBeGreaterThan(0);
   });
 
-  it('exposes a non-null displayRange once guesses exist', () => {
+  it('exposes the exact padded display range once all guesses are public', () => {
     const { room, players } = setupRoomWithPlayers(2);
     startGame(room);
     submitGuess(room, room.hostPlayerId, 1);
     submitGuess(room, players[0]!.id, 10);
     const view = buildRoomView(room);
-    expect(view.displayRange).not.toBeNull();
-    expect(view.displayRange!.hi).toBeGreaterThan(view.displayRange!.lo);
+    expect(view.displayRange?.lo).toBeCloseTo(0.1);
+    expect(view.displayRange?.hi).toBeCloseTo(10.9);
   });
 
   it('marks players who have not yet submitted as hasSubmitted: false', () => {
@@ -288,6 +328,24 @@ describe('buildRoomView', () => {
     const view = buildRoomView(room);
     expect(view.players.find((p) => p.id === room.hostPlayerId)?.hasSubmitted).toBe(true);
     expect(view.players.find((p) => p.id === players[0]!.id)?.hasSubmitted).toBe(false);
+  });
+});
+
+describe('computeDisplayRange', () => {
+  it('pads the guess span before extending to a distant solution', () => {
+    expect(computeDisplayRange([0, 10], 1000)).toEqual({ lo: -1, hi: 1000 });
+  });
+
+  it('uses a stable two-unit range for equal guesses', () => {
+    expect(computeDisplayRange([10, 10])).toEqual({ lo: 9, hi: 11 });
+  });
+
+  it('supports negative and decimal guesses', () => {
+    expect(computeDisplayRange([-2.5, 2.5])).toEqual({ lo: -3, hi: 3 });
+  });
+
+  it('returns the default minimum span for no values', () => {
+    expect(computeDisplayRange([])).toEqual({ lo: 0, hi: 2 });
   });
 });
 

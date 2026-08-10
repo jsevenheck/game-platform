@@ -1,10 +1,11 @@
 import { DEFAULT_TOTAL_ROUNDS, MAX_PLAYERS, MIN_PLAYERS } from '../../../core/src/constants';
 import type { Phase, ServerRoom } from '../../../core/src/types';
-import { createPlayer, clearSocketIndexesForRoom } from './player';
+import { __resetSocketIndexForTests, clearSocketIndexesForRoom, createPlayer } from './player';
 
 const roomsByCode = new Map<string, ServerRoom>();
 const codeBySession = new Map<string, string>();
 const codeByPlayer = new Map<string, string>();
+const roomCleanupTimers = new Map<string, ReturnType<typeof setTimeout>>();
 
 /** Thrown by room mutations when capacity is exceeded. Public for tests. */
 export class RoomFullError extends Error {
@@ -52,6 +53,7 @@ export function createRoom(hostName: string, opts: CreateRoomOptions): ServerRoo
     currentRound: 0,
     totalRounds: opts.totalRounds ?? DEFAULT_TOTAL_ROUNDS,
     question: null,
+    questionDeck: [],
     players: [host],
     guesses: new Map(),
     scores: new Map(),
@@ -117,8 +119,26 @@ export function deleteRoomByCode(roomCode: string): void {
     codeByPlayer.delete(player.id);
   }
   codeBySession.delete(room.matchKey);
+  clearRoomCleanup(roomCode);
   clearSocketIndexesForRoom(roomCode);
   roomsByCode.delete(roomCode);
+}
+
+export function clearRoomCleanup(roomCode: string): void {
+  const timer = roomCleanupTimers.get(roomCode);
+  if (!timer) return;
+  clearTimeout(timer);
+  roomCleanupTimers.delete(roomCode);
+}
+
+export function scheduleRoomCleanup(roomCode: string, delayMs: number): void {
+  clearRoomCleanup(roomCode);
+  const timer = setTimeout(() => {
+    roomCleanupTimers.delete(roomCode);
+    deleteRoomByCode(roomCode);
+  }, delayMs);
+  timer.unref?.();
+  roomCleanupTimers.set(roomCode, timer);
 }
 
 export function getMinPlayers(): number {
@@ -131,9 +151,12 @@ export function getMaxPlayers(): number {
 
 /** Test-only: reset all in-memory state. */
 export function __resetRoomStoreForTests(): void {
+  for (const timer of roomCleanupTimers.values()) clearTimeout(timer);
+  roomCleanupTimers.clear();
   roomsByCode.clear();
   codeBySession.clear();
   codeByPlayer.clear();
+  __resetSocketIndexForTests();
 }
 
 /** Test-only: list all rooms (for socket disconnect lookups). */

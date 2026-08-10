@@ -35,3 +35,8 @@ export function clearSocketIndexesForRoom(roomCode: string): void {
     }
   }
 }
+
+/** Test-only: reset the process-global socket binding index. */
+export function __resetSocketIndexForTests(): void {
+  socketIndex.clear();
+}

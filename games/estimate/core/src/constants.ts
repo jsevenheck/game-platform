@@ -3,6 +3,8 @@ import type { Question } from './types';
 export const MIN_PLAYERS = 2;
 export const MAX_PLAYERS = 12;
 export const DEFAULT_TOTAL_ROUNDS = 5;
+/** Keep an empty room briefly so transient disconnects can resume safely. */
+export const ROOM_IDLE_TIMEOUT_MS = 30 * 60 * 1000;
 
 export const DEFAULT_QUESTIONS: Question[] = [
   { id: 'q-001', text: 'In welchem Jahr fiel die Berliner Mauer?', answer: 1989 },
@@ -28,5 +30,5 @@ export const DEFAULT_QUESTIONS: Question[] = [
 /** Safety clamp for a single guess to prevent absurd values from breaking math. */
 export const GUESS_VALUE_LIMIT = 1e9;
 
-/** Minimum visible span when all guesses are equal. */
-export const MIN_DISPLAY_SPAN = 1;
+/** Minimum visible span when all guesses are equal (guess ± 1). */
+export const MIN_DISPLAY_SPAN = 2;

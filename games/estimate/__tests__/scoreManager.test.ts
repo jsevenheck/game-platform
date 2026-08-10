@@ -27,6 +27,15 @@ describe('computeRoundWinners', () => {
     expect(new Set(computeRoundWinners(guesses, 1989))).toEqual(new Set(['p1', 'p2']));
   });
 
+  it('treats mathematically symmetric decimal guesses as a tie', () => {
+    const guesses = [
+      { playerId: 'low', guess: 0.9 },
+      { playerId: 'high', guess: 1.1 },
+    ];
+
+    expect(new Set(computeRoundWinners(guesses, 1))).toEqual(new Set(['low', 'high']));
+  });
+
   it('handles negative and decimal answers', () => {
     const guesses = [
       { playerId: 'p1', guess: -77 }, // distance 1

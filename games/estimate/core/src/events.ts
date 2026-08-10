@@ -8,9 +8,7 @@ export interface ClientToServerEvents {
   autoJoinRoom: (
     data: {
       sessionId: string;
-      name: string;
       playerId?: string;
-      isHost?: boolean;
       joinToken?: string;
       resumeToken?: string;
     },
@@ -19,6 +17,10 @@ export interface ClientToServerEvents {
         | { ok: true; roomCode: string; playerId: string; resumeToken: string }
         | { ok: false; error: string }
     ) => void
+  ) => void;
+  syncAuthority: (
+    data: { roomCode: string },
+    cb: (res: { ok: true } | { ok: false; error: string }) => void
   ) => void;
   submitGuess: (
     data: { roomCode: string; playerId?: string; guess: number },

@@ -18,13 +18,14 @@ export function buildRoomView(room: ServerRoom): RoomView {
     hasSubmitted: room.guesses.has(p.id),
   }));
 
-  const guesses: GuessEntry[] = Array.from(room.guesses.entries()).map(([playerId, guess]) => ({
-    playerId,
-    guess,
-  }));
+  const guessesArePublic =
+    room.phase === 'allSubmitted' || room.phase === 'reveal' || room.phase === 'ended';
+  const guesses: GuessEntry[] = guessesArePublic
+    ? Array.from(room.guesses.entries()).map(([playerId, guess]) => ({ playerId, guess }))
+    : [];
 
   const solution =
-    room.phase === 'reveal' || room.phase === 'gameEnd' ? (room.question?.answer ?? null) : null;
+    room.phase === 'reveal' || room.phase === 'ended' ? (room.question?.answer ?? null) : null;
 
   const winners: WinnerEntry[] =
     solution !== null

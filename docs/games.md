@@ -4,14 +4,14 @@ The platform currently ships six drop-in party games. Every game follows the sam
 architecture: shared `core/` types, Socket.IO server module, Vue `ui-vue/` client, and a
 `PlatformAdapter.vue` that wraps the game for the platform party flow.
 
-| Game         | Players | Round count | Core mechanic |
-| ------------ | ------- | ----------- | ------------- |
-| Blackout     | 4–10    | 1 (one big round) | Cooperative dice-grid memory reveal |
-| Imposter     | 3–10    | until reveal | Social deduction: secret word + clues + vote |
-| Secret Signals | 4–8  | 3–6         | Cooperative code-breaking with asymmetric roles |
-| Flip 7       | 2–8     | until first bust | Press-your-luck card-collection with busts |
-| Scout        | 2–5     | = player count | Trick-taking with scout / flip actions |
-| Estimate     | 2–12    | 5 (default)  | Number-estimation party game; closest guess wins |
+| Game           | Players | Round count       | Core mechanic                                    |
+| -------------- | ------- | ----------------- | ------------------------------------------------ |
+| Blackout       | 4–10    | 1 (one big round) | Cooperative dice-grid memory reveal              |
+| Imposter       | 3–10    | until reveal      | Social deduction: secret word + clues + vote     |
+| Secret Signals | 4–8     | 3–6               | Cooperative code-breaking with asymmetric roles  |
+| Flip 7         | 2–8     | until first bust  | Press-your-luck card-collection with busts       |
+| Scout          | 2–5     | = player count    | Trick-taking with scout / flip actions           |
+| Estimate       | 2–12    | 5 (default)       | Number-estimation party game; closest guess wins |
 
 ## Per-game documentation
 

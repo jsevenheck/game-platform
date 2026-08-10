@@ -11,6 +11,7 @@ A real-time multiplayer party game platform built as a single **pnpm workspace m
 | **Secret Signals** | Team-based word association where directors give clues and agents guess cards     | 4-24    |
 | **Flip 7**         | Push-your-luck card game where players race toward a total of exactly 7           | 3-18    |
 | **Scout**          | Ladder-climbing card game about timing, scouting, and hand management             | 2-5     |
+| **Estimate**       | Numeric trivia where the closest estimate wins each round                         | 2-12    |
 
 ## Tech Stack
 
@@ -111,12 +112,13 @@ pnpm dev                  # start dev server (Express + Vite HMR)
 pnpm build                # build client + server for production
 pnpm start                # run production build
 
-pnpm test                 # run all unit tests (Vitest, all 5 game projects)
+pnpm test                 # run all unit tests (Vitest, all 6 game projects)
 pnpm test:blackout        # run Blackout tests only
 pnpm test:imposter        # run Imposter tests only
 pnpm test:secret-signals  # run Secret Signals tests only
 pnpm test:flip7           # run Flip 7 tests only
 pnpm test:scout           # run Scout tests only
+pnpm test:estimate        # run Estimate tests only
 pnpm test:e2e             # run Playwright E2E tests (starts server automatically)
 
 pnpm lint                 # ESLint across all source (zero warnings)
@@ -161,3 +163,4 @@ See [docs/adding-a-new-game.md](docs/adding-a-new-game.md) for the full integrat
 - [games/secret-signals/docs/](games/secret-signals/docs/) - Secret Signals API and architecture
 - [games/flip7/docs/](games/flip7/docs/) - Flip 7 API and architecture
 - [games/scout/docs/](games/scout/docs/) - Scout API and architecture
+- [games/estimate/docs/](games/estimate/docs/) - Estimate API and architecture

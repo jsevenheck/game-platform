@@ -1,6 +1,6 @@
 # CLAUDE.md
 
-Single pnpm workspace monorepo: one platform app + five integrated games.
+Single pnpm workspace monorepo: one platform app + six integrated games.
 
 ```text
 apps/platform/       <- Express + Socket.IO server, Vue 3 client (the only production app)
@@ -9,6 +9,7 @@ games/imposter/      <- internal platform module
 games/secret-signals/ <- internal platform module
 games/flip7/         <- internal platform module
 games/scout/         <- internal platform module
+games/estimate/      <- internal platform module
 ```
 
 Games are **internal modules** and run only through the platform party flow. They have no own standalone runtime or toolchain. The platform owns the full lifecycle: create → join → launch game → replay / return to lobby.
@@ -20,12 +21,13 @@ pnpm install        # install all dependencies
 pnpm dev            # start platform (server + client)
 pnpm build          # build client + server for production
 pnpm start          # run production server from dist/
-pnpm test           # run all unit tests (vitest, all 5 games)
+pnpm test           # run all unit tests (vitest, all 6 games)
 pnpm test:blackout  # run Blackout unit tests
 pnpm test:imposter  # run Imposter unit tests
 pnpm test:secret-signals  # run Secret Signals unit tests
 pnpm test:flip7     # run Flip 7 unit tests
 pnpm test:scout     # run Scout unit tests
+pnpm test:estimate  # run Estimate unit tests
 pnpm lint           # eslint across all source
 pnpm lint:fix       # eslint with auto-fix
 pnpm format         # prettier --write across all source
@@ -51,14 +53,14 @@ Game UI source is scanned via `@source` directives so Tailwind generates classes
 
 ### Design tokens (`@theme`)
 
-| Category        | Tokens                                                                                       |
-| --------------- | -------------------------------------------------------------------------------------------- |
-| Surfaces        | `canvas` (#050509), `shell`, `panel` (#111118), `card` (#15151f), `elevated`                 |
-| Text            | `foreground`, `muted`, `muted-foreground`                                                    |
-| Borders         | `border`, `border-strong`, `ring`                                                            |
-| Platform accent | `accent` (orange #f97316)                                                                    |
-| Game accents    | `blackout` (violet), `imposter` (crimson), `signals` (cyan), `flip7` (amber), `scout` (teal) |
-| Semantic        | `danger`, `success`, `warning` plus `-muted` variants                                        |
+| Category        | Tokens                                                                                                         |
+| --------------- | -------------------------------------------------------------------------------------------------------------- |
+| Surfaces        | `canvas` (#050509), `shell`, `panel` (#111118), `card` (#15151f), `elevated`                                   |
+| Text            | `foreground`, `muted`, `muted-foreground`                                                                      |
+| Borders         | `border`, `border-strong`, `ring`                                                                              |
+| Platform accent | `accent` (orange #f97316)                                                                                      |
+| Game accents    | `blackout` (violet), `imposter` (crimson), `signals` (cyan), `flip7` (amber), `scout` (teal), `estimate` (sky) |
+| Semantic        | `danger`, `success`, `warning` plus `-muted` variants                                                          |
 
 ### Shared component classes (`@layer components`)
 
@@ -106,6 +108,7 @@ games/{game}/
 | `@secret-signals-ui` | `games/secret-signals/ui-vue/src/`                    |
 | `@flip7-ui`          | `games/flip7/ui-vue/src/`                             |
 | `@scout-ui`          | `games/scout/ui-vue/src/`                             |
+| `@estimate-ui`       | `games/estimate/ui-vue/src/`                          |
 
 `vue`, `pinia`, and `vue-router` are force-deduplicated so game UIs share a single framework instance with the platform.
 
@@ -175,7 +178,7 @@ export interface PlatformGameModule {
 }
 ```
 
-Each entry maps a game ID to its `PlatformAdapter.vue` via lazy `import('@{game}-ui/PlatformAdapter.vue')`. Current IDs: `blackout`, `imposter`, `secret-signals`, `flip7`, and `scout`. When adding a new game, register it here with both `definition` and `platformMeta`.
+Each entry maps a game ID to its `PlatformAdapter.vue` via lazy `import('@{game}-ui/PlatformAdapter.vue')`. Current IDs: `blackout`, `imposter`, `secret-signals`, `flip7`, `scout`, and `estimate`. When adding a new game, register it here with both `definition` and `platformMeta`.
 
 ## Logging Rules
 

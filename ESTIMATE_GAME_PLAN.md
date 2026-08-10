@@ -72,7 +72,7 @@ to `DEFAULT_QUESTIONS` in `core/src/constants.ts` (mirrors imposter's
 - [x] `games/estimate/core/src/constants.ts` (`MIN_PLAYERS=2`, `MAX_PLAYERS=12`, `DEFAULT_QUESTIONS`, `DEFAULT_TOTAL_ROUNDS=5`)
 - [x] `games/estimate/core/src/events.ts` (C2S / S2C maps)
 - [x] `games/estimate/core/src/range.ts` (shared display-range helper used by server + client)
-- [x] `games/estimate/server/src/config/constants.ts` (`IS_E2E`, `GUESS_TIMER_MS`)
+- [x] No timer config: Estimate intentionally has no automatic or cosmetic guess countdown.
 - [x] `games/estimate/server/src/index.ts` (stub: `definition`, `register`, `cleanupMatch`)
 - [x] `games/estimate/ui-vue/tsconfig.json` + `ui-vue/env.d.ts`
 - [x] `games/estimate/ui-vue/src/App.vue` (placeholder)
@@ -181,8 +181,81 @@ to `DEFAULT_QUESTIONS` in `core/src/constants.ts` (mirrors imposter's
 - [x] Host identity synchronization uses one mutated `GameRoomLike` adapter
 - [x] `phaseChange` is emitted alongside `roomUpdate`
 - [x] Disconnects re-evaluate the all-connected-players condition
-- [x] Final `gameEnd` view renders the scoreboard and platform overlay
+- [x] Final `ended` view renders the scoreboard and platform overlay
 - [x] Full validation chain and remote SHA verification
+
+### Phase 10 — Review-driven hardening (audit 2026-08-10)
+
+Goal: close every confirmed backend, wire-contract, UI/UX, accessibility,
+test, CI, dependency, documentation and generated-artifact finding from the
+full branch review before merge.
+
+#### 10.1 Domain integrity and deterministic rounds
+
+- [x] Keep partial guesses and their derived display range private until
+      `allSubmitted`; add wire-level regressions.
+- [x] Score mathematically symmetric decimal guesses as ties using a documented
+      floating-point tolerance.
+- [x] Require `MIN_PLAYERS` connected players in both server and UI.
+- [x] Draw a no-repeat question deck per match and reset it on restart.
+- [x] Match the documented range algorithm exactly and pin exact range fixtures.
+
+#### 10.2 Socket authority, lifecycle and observability
+
+- [x] Enforce one socket ↔ one player slot in both rebinding directions and use
+      the socket index for O(1) disconnect lookup.
+- [x] Support real handshake-auth fallback for optional join payload fields.
+- [x] Add bounded all-disconnected room cleanup independent of party cleanup.
+- [x] Classify expected rejections separately from unexpected failures, expose
+      only sanitized unexpected errors and emit structured lifecycle logs.
+- [x] Add focused socket regressions for rebind, auth-only join, fallback host,
+      cleanup, metrics outcome and connected-player start rejection.
+
+#### 10.3 Resilient and accessible game UI
+
+- [x] Model transport, join-pending, room-ready and recoverable-error states with
+      timeout/retry and visible action errors/pending states.
+- [x] Drive host controls from the authoritative `RoomView`, not the platform hint.
+- [x] Remove the unimplemented timer contract and show disconnected-player lobby
+      status without auto-submission.
+- [x] Add semantic landmarks/headings, live announcements, focus management and
+      programmatic form-error associations.
+- [x] Make NumberLine responsive at 12 players, localized and accessible with a
+      textual equivalent; remove fixed-height/hover-only assumptions.
+- [x] Align layout, Estimate accent usage, contrast and mobile spacing with the
+      shared design system.
+
+#### 10.4 Platform lifecycle and regression coverage
+
+- [x] Emit the canonical terminal phase `ended` and use the accessible shared
+      platform overlay without hiding the readable final scoreboard.
+- [x] Cover complete replay and return-to-party callbacks, unique next question,
+      game-namespace host transfer and mobile UI in tests.
+- [x] Replace the self-referential home-library expectation with an independent
+      six-game contract.
+
+#### 10.5 Production, dependencies, docs and generated artifacts
+
+- [x] Run the production build in PR CI and assert the copied Estimate CSV path.
+- [x] Remove branch-external major upgrades, reconcile workspace versions and
+      make the high-severity dependency audit green without changing deferred majors.
+- [x] Reconcile `CLAUDE.md`, platform/game docs, API/state contracts, player
+      limits, load timing, observability names and this plan.
+- [x] Bring all changed files through Prettier and refresh Graphify after the
+      final code change.
+
+#### 10.6 Final checkpoint
+
+- [x] `pnpm install --frozen-lockfile`
+- [x] `pnpm typecheck`
+- [x] `pnpm lint`
+- [x] `pnpm format:check`
+- [x] `pnpm test` and `pnpm test:estimate`
+- [x] `pnpm build` plus production `/health` smoke
+- [x] `pnpm test:e2e`
+- [x] `pnpm audit --audit-level=high`
+- [x] Clean worktree after commit; local HEAD equals
+      `origin/feat/estimate-game`
 
 ---
 
@@ -197,7 +270,6 @@ games/estimate/core/src/constants.ts
 games/estimate/core/src/events.ts
 games/estimate/core/src/range.ts
 games/estimate/server/src/index.ts
-games/estimate/server/src/config/constants.ts
 games/estimate/server/src/socketHandlers.ts
 games/estimate/server/src/models/room.ts
 games/estimate/server/src/models/player.ts
@@ -259,18 +331,18 @@ docs/README.md                 (new)
 
 ### 5.2 Server → Client
 
-| Event         | Payload               | Notes                                                          |
-| ------------- | --------------------- | -------------------------------------------------------------- |
-| `roomUpdate`  | `RoomView`            | Single source of truth. Never includes `resumeToken`.          |
-| `phaseChange` | `{ phase: Phase }`    | `'lobby' \| 'guessing' \| 'reveal' \| 'roundEnd' \| 'gameEnd'` |
-| `error`       | `{ message: string }` | Client-displayed errors.                                       |
+| Event         | Payload               | Notes                                                            |
+| ------------- | --------------------- | ---------------------------------------------------------------- |
+| `roomUpdate`  | `RoomView`            | Single source of truth. Never includes `resumeToken`.            |
+| `phaseChange` | `{ phase: Phase }`    | `'lobby' \| 'guessing' \| 'allSubmitted' \| 'reveal' \| 'ended'` |
+| `error`       | `{ message: string }` | Client-displayed errors.                                         |
 
 ### 5.3 `RoomView` shape
 
 ```ts
 interface RoomView {
   roomCode: string;
-  phase: 'lobby' | 'guessing' | 'reveal' | 'roundEnd' | 'gameEnd';
+  phase: 'lobby' | 'guessing' | 'allSubmitted' | 'reveal' | 'ended';
   currentRound: number; // 1-indexed; 0 in lobby
   totalRounds: number;
   question: { id: string; text: string } | null; // answer hidden until reveal
@@ -293,8 +365,8 @@ the answer before reveal.
 [lobby]  --host: startGame-->  [guessing]
 [guessing]  --all connected players submitted-->  [allSubmitted]
 [allSubmitted]  --host: revealSolution-->  [reveal]
-[reveal]  --host: nextRound-->  [guessing] | [gameEnd]
-[gameEnd]  --host: restartGame--> [lobby]
+[reveal]  --host: nextRound-->  [guessing] | [ended]
+[ended]  --host: restartGame--> [lobby]
 ```
 
 - Server is authoritative for phase transitions.
@@ -305,9 +377,8 @@ the answer before reveal.
 - When all **connected** players have `hasSubmitted: true`, server
   auto-transitions to `allSubmitted` and emits `phaseChange` alongside the
   `roomUpdate`. A disconnect re-evaluates this condition.
-- A 60-second soft timer (`GUESS_TIMER_MS = IS_E2E ? 2_000 : 60_000`)
-  prompts un-submitted players via a UI badge. **The server never
-  auto-submits** on a player's behalf — the timer is UI-only.
+- Estimate has no countdown or automatic submission. The waiting state remains until every
+  connected player submits or disconnects.
 
 ## 7. UI / UX
 
@@ -317,13 +388,13 @@ the answer before reveal.
 | `guessing`                | `QuestionView.vue` | Player: numeric input + "Schätzung abgeben"          |
 | `guessing`                | `WaitingView.vue`  | Player: "Warte auf N Spieler…"                       |
 | `allSubmitted` / `reveal` | `RevealView.vue`   | NumberLine; Host: "Auflösen" / "Nächste Frage"       |
-| `gameEnd`                 | `GameOver.vue`     | Platform overlay: Play Again / Back to Party         |
+| `ended`                   | `GameOver.vue`     | Platform overlay: Play Again / Back to Party         |
 
 ### Number line (`NumberLine.vue`)
 
-- Horizontal SVG, `viewBox` derived from `lo`/`hi` in `RoomView.displayRange`.
-- One labelled marker per player, stacked above the line at their guess
-  position. Player name + exact value on hover/tap.
+- Responsive CSS line derived from `lo`/`hi` in `RoomView.displayRange`.
+- One always-labelled marker per player. A `ResizeObserver` assigns collision-free lanes from
+  the available pixel width; a visually-hidden table provides the same data to screen readers.
 - Distinct styling: player markers = round, game-accent colour; solution
   marker = square, gold/white outline. Solution marker renders only in
   `reveal` and later phases.
@@ -375,7 +446,7 @@ The suite covers:
 1. **Happy path:** two players submit, host reveals, and the number line is shown.
 2. **Host is also a player:** host submits a guess like everyone else and can reveal.
 3. **Tie resolution:** equal-distance guesses both appear as winners.
-4. **Final game:** five rounds reach `gameEnd`, showing the scoreboard and the
+4. **Final game:** five rounds reach `ended`, showing the scoreboard and the
    platform replay / return-to-party overlay.
 
 ### 9.3 Validation gates
@@ -416,7 +487,7 @@ pnpm test:e2e
 
 | Risk                                                 | Mitigation                                                                                 |
 | ---------------------------------------------------- | ------------------------------------------------------------------------------------------ |
-| "Auto-Scaling" interpreted as "auto-submit on timer" | Server never auto-submits. Timer is UI-only. Documented in §1, §6.                         |
+| "Auto-Scaling" interpreted as "auto-submit on timer" | Server never auto-submits and Estimate has no countdown. Documented in §1, §6.             |
 | Decimal commas (DE locale) break CSV parse           | CSV uses dot decimal; server normalises. UI input restricts to `.` and digits.             |
 | All players guess the same exact value               | Display range falls back to `answer ± 1` so the bar stays readable. Covered in unit tests. |
 | Solution outside min/max of guesses                  | Server extends the range so the solution marker is always visible. §1, §7.                 |
@@ -441,6 +512,6 @@ pnpm test:e2e
   like imposter's word library. No DB, no admin UI, no migrations.
 - Host plays normally — no special "configure question" screen (per
   Jona 2026-07-27: UI auto-scales from players' guesses).
-- No new platform infrastructure — pure leaf node, like the existing five.
+- No new platform infrastructure — pure leaf node, like the existing six.
 - Phased commits with mid-slice push keep the branch reviewable at every
   step; nothing ships without a green `pnpm test:estimate`.

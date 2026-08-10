@@ -22,7 +22,10 @@ export const useGameStore = defineStore('estimate-game', {
     phase: (state) => state.room?.phase ?? 'lobby',
     canStart(): boolean {
       // Mirror server MIN_PLAYERS (2). The server enforces the truth.
-      return (this.room?.players.length ?? 0) >= 2 && this.phase === 'lobby';
+      return (
+        (this.room?.players.filter((player) => player.connected).length ?? 0) >= 2 &&
+        this.phase === 'lobby'
+      );
     },
     myScore(): number {
       const id = this.playerId;
@@ -32,11 +35,14 @@ export const useGameStore = defineStore('estimate-game', {
       return this.room?.players.filter((p) => p.hasSubmitted).length ?? 0;
     },
     totalPlayers(): number {
-      return this.room?.players.length ?? 0;
+      return this.room?.players.filter((player) => player.connected).length ?? 0;
     },
   },
   actions: {
     setRoom(room: RoomView) {
+      if (this.room?.currentRound !== room.currentRound || room.phase === 'lobby') {
+        this.myGuess = null;
+      }
       this.room = room;
       this.roomCode = room.roomCode;
     },

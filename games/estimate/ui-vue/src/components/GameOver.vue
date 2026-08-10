@@ -1,40 +1,44 @@
 <script setup lang="ts">
-import type { ScoreEntry, WinnerEntry } from '@shared/types';
+import { computed } from 'vue';
+import type { ScoreEntry } from '@shared/types';
 
-defineProps<{
+const props = defineProps<{
   scores: ScoreEntry[];
-  winners: WinnerEntry[];
-  isHost: boolean;
   myScore: number;
 }>();
 
-const emit = defineEmits<{ restart: [] }>();
+const sortedScores = computed(() => [...props.scores].sort((a, b) => b.points - a.points));
 </script>
 
 <template>
-  <div class="ui-panel" data-testid="estimate-gameover">
-    <h2 class="ui-section-label">Spielende</h2>
-    <p class="mt-2 text-xl font-semibold">Deine Punkte: {{ myScore }}</p>
-    <ul class="mt-4 ui-player-list">
-      <li
-        v-for="s in [...scores].sort((a, b) => b.points - a.points)"
-        :key="s.playerId"
-        class="ui-player-item"
-      >
-        <span class="ui-avatar">{{ s.name.charAt(0).toUpperCase() }}</span>
-        <span>{{ s.name }}</span>
-        <span class="ml-auto font-semibold">{{ s.points }}</span>
+  <section
+    class="ui-panel"
+    data-testid="estimate-gameover"
+    aria-labelledby="estimate-gameover-title"
+  >
+    <h2 id="estimate-gameover-title" class="text-xl font-semibold" data-phase-focus tabindex="-1">
+      Endergebnis
+    </h2>
+    <p class="mt-2 text-lg">
+      Deine Punkte: <strong>{{ myScore }}</strong>
+    </p>
+    <ol class="mt-4 ui-player-list" aria-label="Rangliste">
+      <li v-for="(score, index) in sortedScores" :key="score.playerId" class="ui-player-item">
+        <span class="rank" aria-hidden="true">{{ index + 1 }}.</span>
+        <span class="ui-avatar" aria-hidden="true">{{ score.name.charAt(0).toUpperCase() }}</span>
+        <span>{{ score.name }}</span>
+        <span class="ml-auto font-semibold">
+          {{ score.points }} {{ score.points === 1 ? 'Punkt' : 'Punkte' }}
+        </span>
       </li>
-    </ul>
-    <div v-if="isHost" class="mt-4">
-      <button
-        class="ui-btn-primary"
-        type="button"
-        data-testid="estimate-restart"
-        @click="emit('restart')"
-      >
-        Nochmal spielen
-      </button>
-    </div>
-  </div>
+    </ol>
+  </section>
 </template>
+
+<style scoped>
+.rank {
+  min-width: 1.5rem;
+  color: var(--color-muted-foreground);
+  font-variant-numeric: tabular-nums;
+}
+</style>

@@ -24,5 +24,12 @@ export function computeRoundWinners(guesses: GuessEntry[], answer: number): stri
 
   if (!Number.isFinite(bestDistance)) return [];
 
-  return distances.filter((d) => d.distance === bestDistance).map((d) => d.playerId);
+  const tolerance =
+    Number.EPSILON *
+    Math.max(1, Math.abs(answer), ...distances.map(({ distance }) => Math.abs(distance))) *
+    8;
+
+  return distances
+    .filter((d) => Math.abs(d.distance - bestDistance) <= tolerance)
+    .map((d) => d.playerId);
 }

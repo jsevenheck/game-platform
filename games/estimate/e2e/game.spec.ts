@@ -88,6 +88,7 @@ async function bothSubmitGuesses(
   // Host submits.
   await hostPage.getByTestId('estimate-guess-input').fill(hostGuess);
   await hostPage.getByTestId('estimate-guess-submit').click();
+  await expect(hostPage.locator('#estimate-waiting-title')).toBeFocused();
 
   // Guest submits.
   await guestPage.getByTestId('estimate-guess-input').fill(guestGuess);
@@ -98,6 +99,8 @@ async function bothSubmitGuesses(
   // also lands on RevealView once the room phase changes.
   await expect(hostPage.getByTestId('estimate-reveal')).toBeVisible({ timeout: 10_000 });
   await expect(guestPage.getByTestId('estimate-reveal')).toBeVisible({ timeout: 10_000 });
+  await expect(hostPage.locator('#estimate-reveal-title')).toBeFocused();
+  await expect(guestPage.locator('#estimate-reveal-title')).toBeFocused();
 }
 
 async function hostReveals(hostPage: Page): Promise<void> {
@@ -118,13 +121,39 @@ test.describe('Estimate game', () => {
   test('happy path: 2 players play 1 round end-to-end', async ({ browser }) => {
     const session = await createTwoPlayerEstimateSession(browser, 'Alice', 'Bob');
     try {
+      await session.hostPage.setViewportSize({ width: 320, height: 812 });
       await launchEstimateGame(session.hostPage, session.guestPage);
+      await expect(session.hostPage.locator('#estimate-lobby-title')).toBeFocused();
       await hostStartsGame(session.hostPage);
+      await expect(session.hostPage.locator('#estimate-question-title')).toBeFocused();
       await bothSubmitGuesses(session.hostPage, session.guestPage, '1989', '1990');
       await hostReveals(session.hostPage);
       // The number line is rendered for both players.
       await expect(session.hostPage.getByTestId('estimate-number-line')).toBeVisible();
       await expect(session.guestPage.getByTestId('estimate-number-line')).toBeVisible();
+      await session.hostPage.evaluate(() => {
+        document.documentElement.style.fontSize = '200%';
+      });
+      await expect
+        .poll(async () => {
+          return session.hostPage.evaluate(() => {
+            const chart = document.querySelector('[data-testid="estimate-number-line"]');
+            if (!chart) return false;
+            const chartBounds = chart.getBoundingClientRect();
+            return Array.from(chart.querySelectorAll<HTMLElement>('.marker')).every((marker) => {
+              const markerBounds = marker.getBoundingClientRect();
+              return (
+                markerBounds.left >= chartBounds.left - 1 &&
+                markerBounds.right <= chartBounds.right + 1
+              );
+            });
+          });
+        })
+        .toBe(true);
+      const hasHorizontalOverflow = await session.hostPage.evaluate(
+        () => document.documentElement.scrollWidth > document.documentElement.clientWidth
+      );
+      expect(hasHorizontalOverflow).toBe(false);
     } finally {
       await closeSession(session);
     }
@@ -157,7 +186,11 @@ test.describe('Estimate game', () => {
       await launchEstimateGame(session.hostPage, session.guestPage);
       await hostStartsGame(session.hostPage);
 
+      const questionTexts = new Set<string>();
       for (let round = 1; round <= 5; round += 1) {
+        questionTexts.add(
+          (await session.hostPage.locator('#estimate-question-title').textContent())?.trim() ?? ''
+        );
         await bothSubmitGuesses(session.hostPage, session.guestPage, '5', '5');
         await hostReveals(session.hostPage);
         await session.hostPage.getByTestId('estimate-next-button').click();
@@ -167,11 +200,37 @@ test.describe('Estimate game', () => {
         }
       }
 
+      expect(questionTexts.size).toBe(5);
       await expect(session.hostPage.getByTestId('estimate-gameover')).toBeVisible();
-      await expect(session.hostPage.getByTestId('estimate-restart')).toBeVisible();
-      await expect(session.hostPage.getByTestId('platform-replay')).toBeVisible();
+      await expect(session.hostPage.getByRole('dialog', { name: 'Spiel beendet' })).toBeVisible();
+      await expect(session.hostPage.getByTestId('platform-replay')).toBeFocused();
+      await session.hostPage.keyboard.press('Shift+Tab');
+      await expect(session.hostPage.getByTestId('platform-return')).toBeFocused();
+      await session.hostPage.keyboard.press('Tab');
+      await expect(session.hostPage.getByTestId('platform-replay')).toBeFocused();
       await expect(session.hostPage.getByTestId('platform-return')).toBeVisible();
-      await expect(session.guestPage.getByText('Warte auf den Host…')).toBeVisible();
+      await expect(
+        session.guestPage.getByText('Warte auf die Entscheidung des Hosts…')
+      ).toBeVisible();
+
+      await session.hostPage.getByTestId('platform-replay').click();
+      await expect(session.hostPage.getByTestId('estimate-lobby')).toBeVisible({ timeout: 15_000 });
+      await expect(session.guestPage.getByTestId('estimate-lobby')).toBeVisible({
+        timeout: 15_000,
+      });
+
+      await hostStartsGame(session.hostPage);
+      for (let round = 1; round <= 5; round += 1) {
+        await bothSubmitGuesses(session.hostPage, session.guestPage, '7', '8');
+        await hostReveals(session.hostPage);
+        await session.hostPage.getByTestId('estimate-next-button').click();
+        if (round < 5) {
+          await expect(session.hostPage.getByTestId('estimate-question')).toBeVisible();
+        }
+      }
+      await session.hostPage.getByTestId('platform-return').click();
+      await expect(session.hostPage).toHaveURL(/\/party\/[A-Z0-9]+$/);
+      await expect(session.guestPage).toHaveURL(/\/party\/[A-Z0-9]+$/);
     } finally {
       await closeSession(session);
     }
@@ -212,6 +271,34 @@ test.describe('Estimate game', () => {
       await bothSubmitGuesses(session.hostPage, session.guestPage, '1989', '1990');
       await hostReveals(session.hostPage);
       await expect(session.guestPage.getByTestId('estimate-revealed-banner')).toBeVisible();
+    } finally {
+      await closeSession(session);
+    }
+  });
+
+  test('promotes the connected guest when the original host disconnects', async ({ browser }) => {
+    const session = await createTwoPlayerEstimateSession(browser, 'Kira', 'Lena');
+    try {
+      const thirdContext = await browser.newContext();
+      session.contexts.push(thirdContext);
+      const thirdPage = await thirdContext.newPage();
+      await joinParty(thirdPage, 'Mara', session.inviteCode);
+
+      await launchEstimateGame(session.hostPage, session.guestPage);
+      await expect(thirdPage.getByTestId('estimate-lobby')).toBeVisible({ timeout: 15_000 });
+
+      await session.contexts[0]!.close();
+      await expect(session.guestPage.getByTestId('estimate-start')).toBeEnabled({
+        timeout: 15_000,
+      });
+      await session.guestPage.getByTestId('estimate-start').click();
+      await expect(session.guestPage.getByTestId('estimate-question')).toBeVisible();
+      await expect(thirdPage.getByTestId('estimate-question')).toBeVisible();
+      await session.guestPage.getByTestId('estimate-guess-input').fill('42');
+      await session.guestPage.getByTestId('estimate-guess-submit').click();
+      await thirdPage.getByTestId('estimate-guess-input').fill('43');
+      await thirdPage.getByTestId('estimate-guess-submit').click();
+      await expect(session.guestPage.getByTestId('estimate-reveal-button')).toBeVisible();
     } finally {
       await closeSession(session);
     }

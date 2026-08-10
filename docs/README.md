@@ -27,14 +27,14 @@ Then open <http://localhost:5173>.
 
 ## Available games
 
-| Game           | Players | Round count | Description |
-| -------------- | ------- | ----------- | ----------- |
-| Blackout       | 4–10    | 1           | Cooperative dice-grid memory reveal |
-| Imposter       | 3–10    | until reveal | Social deduction: secret word + clues + vote |
-| Secret Signals | 4–8     | 3–6         | Cooperative code-breaking with asymmetric roles |
-| Flip 7         | 2–8     | until bust  | Press-your-luck card-collection |
-| Scout          | 2–5     | = players   | Trick-taking with scout / flip actions |
-| Estimate       | 2–12    | 5 (default) | Number-estimation; closest guess wins |
+| Game           | Players | Round count  | Description                                     |
+| -------------- | ------- | ------------ | ----------------------------------------------- |
+| Blackout       | 4–10    | 1            | Cooperative dice-grid memory reveal             |
+| Imposter       | 3–10    | until reveal | Social deduction: secret word + clues + vote    |
+| Secret Signals | 4–8     | 3–6          | Cooperative code-breaking with asymmetric roles |
+| Flip 7         | 2–8     | until bust   | Press-your-luck card-collection                 |
+| Scout          | 2–5     | = players    | Trick-taking with scout / flip actions          |
+| Estimate       | 2–12    | 5 (default)  | Number-estimation; closest guess wins           |
 
 See `docs/games.md` for the full per-game reference.
 

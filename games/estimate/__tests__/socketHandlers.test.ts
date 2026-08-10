@@ -3,7 +3,10 @@ import type { Mock } from 'vitest';
 import type { PartySession } from '../../../apps/platform/server/party/types';
 import { clearAllParties, createParty } from '../../../apps/platform/server/party/partyStore';
 import { registerEstimate, __resetEstimateForTests } from '../server/src/socketHandlers';
-import { __listRoomsForTests } from '../server/src/models/room';
+import { __listRoomsForTests, getRoomBySession } from '../server/src/models/room';
+import { getSocketIndex } from '../server/src/models/player';
+import { ROOM_IDLE_TIMEOUT_MS } from '../core/src/constants';
+import { metricsRegistry } from '../../../apps/platform/server/metrics/registry';
 
 interface TestSocket {
   id: string;
@@ -21,6 +24,7 @@ interface TestSocket {
 function makeNamespace() {
   const middleware: Array<(socket: TestSocket, next: (err?: Error) => void) => void> = [];
   let connectionHandler: ((socket: TestSocket) => void) | undefined;
+  const roomEmitter = { emit: vi.fn() };
 
   const nsp = {
     use(fn: (socket: TestSocket, next: (err?: Error) => void) => void) {
@@ -31,12 +35,13 @@ function makeNamespace() {
       if (event === 'connection') connectionHandler = handler;
       return nsp;
     },
-    to: vi.fn(() => ({ emit: vi.fn() })),
+    to: vi.fn(() => roomEmitter),
     sockets: new Map<string, TestSocket>(),
   };
 
   return {
     nsp,
+    roomEmitter,
     connect(socket: TestSocket) {
       nsp.sockets.set(socket.id, socket);
       for (const fn of middleware) fn(socket, () => {});
@@ -126,6 +131,33 @@ function firstRoom() {
   return rooms[0];
 }
 
+async function socketHandlerMetricValue(event: string, result: string): Promise<number> {
+  const metrics = await metricsRegistry.metrics();
+  const line = metrics
+    .split('\n')
+    .find(
+      (candidate) =>
+        candidate.startsWith('platform_socket_handler_total{') &&
+        candidate.includes(`event="${event}"`) &&
+        candidate.includes(`result="${result}"`) &&
+        candidate.includes('namespace="/g/estimate"')
+    );
+  return line ? Number(line.split(' ').at(-1)) : 0;
+}
+
+async function namespaceConnectionMetricValue(): Promise<number> {
+  const metrics = await metricsRegistry.metrics();
+  const line = metrics
+    .split('\n')
+    .find(
+      (candidate) =>
+        candidate.startsWith('platform_socket_connections_open{') &&
+        candidate.includes('namespace="/g/estimate"') &&
+        candidate.includes('game_id="estimate"')
+    );
+  return line ? Number(line.split(' ').at(-1)) : 0;
+}
+
 describe('registerEstimate', () => {
   beforeEach(() => {
     __resetEstimateForTests();
@@ -134,11 +166,27 @@ describe('registerEstimate', () => {
   });
 
   afterEach(() => {
+    vi.useRealTimers();
     __resetEstimateForTests();
     clearAllParties();
   });
 
   describe('autoJoinRoom', () => {
+    it('accepts platform credentials from the Socket.IO handshake', () => {
+      const ns = setupServer();
+      const { tokens } = setupParty();
+      const socket = makeSocket('game-host-socket', {
+        playerId: 'host',
+        joinToken: tokens.host,
+      });
+      ns.connect(socket);
+      const cb = vi.fn();
+
+      socket.handlers.autoJoinRoom({ sessionId: 'match-estimate' }, cb);
+
+      expect(cb.mock.calls[0]![0]).toMatchObject({ ok: true, playerId: 'host' });
+    });
+
     it('rejects when joinToken is missing', () => {
       const ns = setupServer();
       setupParty();
@@ -227,6 +275,94 @@ describe('registerEstimate', () => {
       );
       const res = cb2.mock.calls[0]![0] as Record<string, unknown>;
       expect(res.ok).toBe(true);
+    });
+
+    it('disconnects and unindexes a superseded socket when a player reconnects', () => {
+      const ns = setupServer();
+      const { tokens } = setupParty();
+      const original = makeSocket('game-host-socket');
+      ns.connect(original);
+      const first = autoJoin(original, 'host', tokens.host);
+
+      const reconnect = makeSocket('game-host-reconnect-socket');
+      ns.connect(reconnect);
+      autoJoin(reconnect, 'host', tokens.host, 'match-estimate', first.resumeToken as string);
+
+      expect(original.disconnect).toHaveBeenCalledWith(true);
+      expect(getSocketIndex(original.id)).toBeUndefined();
+      expect(getSocketIndex(reconnect.id)).toEqual({
+        roomCode: firstRoom()!.roomCode,
+        playerId: 'host',
+      });
+      expect(firstRoom()!.players.find((player) => player.id === 'host')).toMatchObject({
+        socketId: reconnect.id,
+        connected: true,
+      });
+    });
+
+    it('runs the old room disconnect lifecycle before reusing a socket for another match', () => {
+      vi.useFakeTimers();
+      const ns = setupServer();
+      const { tokens } = setupParty('match-estimate');
+      const socket = makeSocket('shared-game-socket');
+      ns.connect(socket);
+      autoJoin(socket, 'host', tokens.host, 'match-estimate');
+      const previousRoom = getRoomBySession('match-estimate')!;
+
+      const { party: otherParty, hostResumeToken } = createParty(
+        'other-host',
+        'Other Host',
+        'other-party-socket'
+      );
+      otherParty.status = 'in-match';
+      otherParty.activeMatch = {
+        gameId: 'estimate',
+        matchKey: 'other-match',
+        namespace: '/g/estimate',
+        startedAt: Date.now(),
+      };
+
+      autoJoin(socket, 'other-host', hostResumeToken, 'other-match');
+
+      expect(previousRoom.players[0]).toMatchObject({ connected: false, socketId: '' });
+      expect(socket.leave).toHaveBeenCalledWith(previousRoom.roomCode);
+      expect(ns.nsp.to).toHaveBeenCalledWith(previousRoom.roomCode);
+      expect(getSocketIndex(socket.id)).toEqual({
+        roomCode: getRoomBySession('other-match')!.roomCode,
+        playerId: 'other-host',
+      });
+
+      vi.advanceTimersByTime(ROOM_IDLE_TIMEOUT_MS);
+      expect(getRoomBySession('match-estimate')).toBeUndefined();
+      expect(getRoomBySession('other-match')).toBeDefined();
+    });
+
+    it('broadcasts a party-only host transfer after authority synchronization', () => {
+      const ns = setupServer();
+      const { party, tokens } = setupParty();
+      const hostSocket = makeSocket('game-host-socket');
+      const guestSocket = makeSocket('game-guest-socket');
+      ns.connect(hostSocket);
+      ns.connect(guestSocket);
+      autoJoin(hostSocket, 'host', tokens.host);
+      autoJoin(guestSocket, 'guest', tokens.guest);
+
+      party.members.get('host')!.connected = false;
+      party.hostPlayerId = 'guest';
+      ns.roomEmitter.emit.mockClear();
+      const cb = vi.fn();
+
+      guestSocket.handlers.syncAuthority({ roomCode: firstRoom()!.roomCode }, cb);
+
+      expect(cb).toHaveBeenCalledWith({ ok: true });
+      expect(firstRoom()!.hostPlayerId).toBe('guest');
+      expect(firstRoom()!.players.find((player) => player.id === 'guest')?.isHost).toBe(true);
+      expect(ns.roomEmitter.emit).toHaveBeenCalledWith(
+        'roomUpdate',
+        expect.objectContaining({
+          players: expect.arrayContaining([expect.objectContaining({ id: 'guest', isHost: true })]),
+        })
+      );
     });
 
     it('rejects rejoin with a wrong resumeToken', () => {
@@ -423,6 +559,70 @@ describe('registerEstimate', () => {
   });
 
   describe('submitGuess', () => {
+    it('revokes a bound socket after its party membership is removed', () => {
+      const ns = setupServer();
+      const { party, tokens } = setupParty();
+      const hostSocket = makeSocket('game-host-socket');
+      const guestSocket = makeSocket('game-guest-socket');
+      ns.connect(hostSocket);
+      ns.connect(guestSocket);
+      autoJoin(hostSocket, 'host', tokens.host);
+      autoJoin(guestSocket, 'guest', tokens.guest);
+      hostSocket.handlers.startGame({ roomCode: firstRoom()!.roomCode }, vi.fn());
+      party.members.delete('guest');
+      const cb = vi.fn();
+
+      guestSocket.handlers.submitGuess({ roomCode: firstRoom()!.roomCode, guess: 42 }, cb);
+
+      expect(cb).toHaveBeenCalledWith({ ok: false, error: 'Not authorized for this match' });
+      expect(firstRoom()!.players.find((player) => player.id === 'guest')).toMatchObject({
+        connected: false,
+        socketId: '',
+      });
+      expect(getSocketIndex(guestSocket.id)).toBeUndefined();
+      expect(guestSocket.leave).toHaveBeenCalledWith(firstRoom()!.roomCode);
+    });
+
+    it('revokes stale host actions immediately after the party leaves the match', () => {
+      const ns = setupServer();
+      const { party, tokens } = setupParty();
+      const hostSocket = makeSocket('game-host-socket');
+      ns.connect(hostSocket);
+      autoJoin(hostSocket, 'host', tokens.host);
+      party.activeMatch = null;
+      party.status = 'returning';
+      const cb = vi.fn();
+
+      hostSocket.handlers.startGame({ roomCode: firstRoom()!.roomCode }, cb);
+
+      expect(cb).toHaveBeenCalledWith({ ok: false, error: 'Not authorized for this match' });
+      expect(getSocketIndex(hostSocket.id)).toBeUndefined();
+    });
+
+    it('does not broadcast a partial guess or derived range to the other client', () => {
+      const ns = setupServer();
+      const { tokens } = setupParty();
+      const hostSocket = makeSocket('game-host-socket');
+      const guestSocket = makeSocket('game-guest-socket');
+      ns.connect(hostSocket);
+      ns.connect(guestSocket);
+      autoJoin(hostSocket, 'host', tokens.host);
+      autoJoin(guestSocket, 'guest', tokens.guest);
+      hostSocket.handlers.startGame({ roomCode: firstRoom()!.roomCode }, vi.fn());
+      ns.roomEmitter.emit.mockClear();
+
+      hostSocket.handlers.submitGuess({ roomCode: firstRoom()!.roomCode, guess: 123 }, vi.fn());
+
+      const roomUpdate = ns.roomEmitter.emit.mock.calls.findLast(
+        ([event]) => event === 'roomUpdate'
+      )?.[1] as { phase: string; guesses: unknown[]; displayRange: unknown };
+      expect(roomUpdate).toMatchObject({
+        phase: 'guessing',
+        guesses: [],
+        displayRange: null,
+      });
+    });
+
     it('rejects NaN, Infinity, and out-of-range guesses', () => {
       const ns = setupServer();
       const { tokens } = setupParty();
@@ -543,7 +743,7 @@ describe('registerEstimate', () => {
       hostSocket.handlers.startGame({ roomCode: firstRoom()!.roomCode }, vi.fn());
 
       // DEFAULT_TOTAL_ROUNDS is 5, so play 4 rounds then the 5th transitions
-      // to 'gameEnd' on nextRound.
+      // to 'ended' on nextRound.
       for (let i = 0; i < 4; i += 1) {
         hostSocket.handlers.submitGuess({ roomCode: firstRoom()!.roomCode, guess: 1 }, vi.fn());
         guestSocket.handlers.submitGuess({ roomCode: firstRoom()!.roomCode, guess: 1 }, vi.fn());
@@ -555,7 +755,7 @@ describe('registerEstimate', () => {
       guestSocket.handlers.submitGuess({ roomCode: firstRoom()!.roomCode, guess: 1 }, vi.fn());
       hostSocket.handlers.revealSolution({ roomCode: firstRoom()!.roomCode }, vi.fn());
       hostSocket.handlers.nextRound({ roomCode: firstRoom()!.roomCode }, vi.fn());
-      expect(firstRoom()!.phase).toBe('gameEnd');
+      expect(firstRoom()!.phase).toBe('ended');
 
       const cb = vi.fn();
       guestSocket.handlers.restartGame({ roomCode: firstRoom()!.roomCode }, cb);
@@ -568,6 +768,31 @@ describe('registerEstimate', () => {
   });
 
   describe('connection lifecycle', () => {
+    it('updates the Estimate namespace connection gauge on connect and disconnect', async () => {
+      const ns = setupServer();
+      const socket = makeSocket('metrics-socket');
+      ns.connect(socket);
+      expect(await namespaceConnectionMetricValue()).toBe(1);
+
+      ns.nsp.sockets.delete(socket.id);
+      socket.handlers.disconnect('transport close');
+
+      expect(await namespaceConnectionMetricValue()).toBe(0);
+    });
+
+    it('clears the global socket index during test reset', () => {
+      const ns = setupServer();
+      const { tokens } = setupParty();
+      const socket = makeSocket('reused-test-socket');
+      ns.connect(socket);
+      autoJoin(socket, 'host', tokens.host);
+      expect(getSocketIndex(socket.id)).toBeDefined();
+
+      __resetEstimateForTests();
+
+      expect(getSocketIndex(socket.id)).toBeUndefined();
+    });
+
     it('transitions to allSubmitted when an unsubmitted player disconnects', () => {
       const ns = setupServer();
       const { tokens } = setupParty();
@@ -588,9 +813,58 @@ describe('registerEstimate', () => {
 
       expect(room.phase).toBe('allSubmitted');
     });
+
+    it('deletes an abandoned room after the reconnect grace period', () => {
+      vi.useFakeTimers();
+      const ns = setupServer();
+      const { tokens } = setupParty();
+      const hostSocket = makeSocket('game-host-socket');
+      const guestSocket = makeSocket('game-guest-socket');
+      ns.connect(hostSocket);
+      ns.connect(guestSocket);
+      autoJoin(hostSocket, 'host', tokens.host);
+      autoJoin(guestSocket, 'guest', tokens.guest);
+
+      hostSocket.handlers.disconnect('transport close');
+      guestSocket.handlers.disconnect('transport close');
+      expect(getRoomBySession('match-estimate')).toBeDefined();
+
+      vi.advanceTimersByTime(ROOM_IDLE_TIMEOUT_MS);
+
+      expect(getRoomBySession('match-estimate')).toBeUndefined();
+    });
   });
 
   describe('input validation', () => {
+    it('records expected rejections separately from unexpected sanitized failures', async () => {
+      const ns = setupServer();
+      const { tokens } = setupParty();
+      const hostSocket = makeSocket('game-host-socket');
+      const guestSocket = makeSocket('game-guest-socket');
+      ns.connect(hostSocket);
+      ns.connect(guestSocket);
+      autoJoin(hostSocket, 'host', tokens.host);
+      autoJoin(guestSocket, 'guest', tokens.guest);
+      hostSocket.handlers.startGame({ roomCode: firstRoom()!.roomCode }, vi.fn());
+
+      const rejectedBefore = await socketHandlerMetricValue('submitGuess', 'rejected');
+      hostSocket.handlers.submitGuess(
+        { roomCode: firstRoom()!.roomCode, guess: Number.NaN },
+        vi.fn()
+      );
+      expect(await socketHandlerMetricValue('submitGuess', 'rejected')).toBe(rejectedBefore + 1);
+
+      const failedBefore = await socketHandlerMetricValue('submitGuess', 'failed');
+      ns.nsp.to.mockImplementationOnce(() => {
+        throw new Error('private internal detail');
+      });
+      const cb = vi.fn();
+      hostSocket.handlers.submitGuess({ roomCode: firstRoom()!.roomCode, guess: 42 }, cb);
+
+      expect(cb).toHaveBeenCalledWith({ ok: false, error: 'Action failed' });
+      expect(await socketHandlerMetricValue('submitGuess', 'failed')).toBe(failedBefore + 1);
+    });
+
     it('rejects non-object payloads on autoJoinRoom', () => {
       const ns = setupServer();
       const socket = makeSocket('s1');

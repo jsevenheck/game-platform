@@ -1,4 +1,4 @@
-export type Phase = 'lobby' | 'guessing' | 'allSubmitted' | 'reveal' | 'gameEnd';
+export type Phase = 'lobby' | 'guessing' | 'allSubmitted' | 'reveal' | 'ended';
 
 export interface Question {
   id: string;
@@ -66,6 +66,7 @@ export interface ServerRoom {
   currentRound: number;
   totalRounds: number;
   question: Question | null;
+  questionDeck: Question[];
   players: ServerPlayer[];
   guesses: Map<string, number>;
   scores: Map<string, number>;

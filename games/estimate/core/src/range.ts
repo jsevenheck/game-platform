@@ -21,22 +21,24 @@ export function computeDisplayRange(
     return { lo: 0, hi: MIN_DISPLAY_SPAN };
   }
 
-  const values: number[] = [...guesses];
-  if (solution !== null) values.push(solution);
+  if (guesses.length === 0 && solution !== null) {
+    return {
+      lo: solution - MIN_DISPLAY_SPAN / 2,
+      hi: solution + MIN_DISPLAY_SPAN / 2,
+    };
+  }
 
-  const minV = Math.min(...values);
-  const maxV = Math.max(...values);
-  const span = Math.max(maxV - minV, MIN_DISPLAY_SPAN);
-  const padding = span * 0.1;
+  const minGuess = Math.min(...guesses);
+  const maxGuess = Math.max(...guesses);
+  const guessSpan = maxGuess - minGuess;
+  const padding = guessSpan > 0 ? guessSpan * 0.1 : MIN_DISPLAY_SPAN / 2;
 
-  let lo = minV - padding;
-  let hi = maxV + padding;
+  let lo = minGuess - padding;
+  let hi = maxGuess + padding;
 
-  // Always keep a minimum visible span and never invert lo/hi.
-  if (hi - lo < MIN_DISPLAY_SPAN) {
-    const mid = (lo + hi) / 2;
-    lo = mid - MIN_DISPLAY_SPAN / 2;
-    hi = mid + MIN_DISPLAY_SPAN / 2;
+  if (solution !== null) {
+    lo = Math.min(lo, solution);
+    hi = Math.max(hi, solution);
   }
 
   return { lo, hi };

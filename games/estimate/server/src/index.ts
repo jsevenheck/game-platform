@@ -3,6 +3,7 @@ import { createComponentLogger } from '../../../../apps/platform/server/logging/
 import { MAX_PLAYERS, MIN_PLAYERS } from '../../core/src/constants';
 import { deleteRoomByCode, getRoomBySession } from './models/room';
 import { registerEstimate } from './socketHandlers';
+import { getQuestionLibrary } from './utils/questionLibrary';
 
 interface GameDefinition {
   id: string;
@@ -21,6 +22,8 @@ export const definition: GameDefinition = {
 const gameLogger = createComponentLogger('game-server', { gameId: definition.id });
 
 export function register(io: Server, namespace = `/g/${definition.id}`): void {
+  // Eagerly validate and cache the production question asset during server startup.
+  getQuestionLibrary();
   return registerEstimate(io, namespace, gameLogger);
 }
 
