@@ -352,7 +352,7 @@ onBeforeUnmount(() => {
 
 > **Key:** Emit `phase-change` with the value `'ended'` when the game is over. The `PlatformAdapter` watches for this to show the replay/return overlay.
 >
-> If you extract socket creation into a `useSocket()` composable, keep ownership explicit: return the socket (and/or a cleanup function) and disconnect in the owning `App.vue` `onBeforeUnmount()`. Do not hide parent-owned socket teardown inside a composable lifecycle hook.
+> If you extract socket creation into a `useSocket()` composable, keep ownership explicit: the composable owns the socket and disconnects it in `onUnmounted()`. The owning `App.vue` remains responsible for unregistering its event listeners; do not duplicate socket ownership across both layers.
 >
 > **Required:** The `useSocket` composable must accept and forward `joinToken` in the socket `auth` object. Without it, `authorizePartyJoin` will reject the join. Every game's `useSocket` must also call `socket.disconnect()` in `onUnmounted()` to prevent socket leaks.
 

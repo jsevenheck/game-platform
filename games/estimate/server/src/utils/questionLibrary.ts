@@ -26,12 +26,14 @@ function parseCsvLine(line: string): { text: string; answer: number } | null {
   const trimmed = line.replace(/^\uFEFF/, '').trim();
   if (trimmed === '' || trimmed.startsWith('#')) return null;
 
-  // Match: "quoted text?",1234   OR   plain text,1234
-  const match = trimmed.match(/^"((?:[^"]|"")*)",\s*(-?\d+(?:\.\d+)?)\s*$/);
+  // Match a quoted or plain question field followed by a numeric literal.
+  // Number() handles decimal, exponent and signed forms; validation below
+  // remains the single source of truth for finiteness and the safety limit.
+  const match = trimmed.match(/^"((?:[^"]|"")*)",\s*(\S+)\s*$/);
   if (match) {
     return { text: match[1]!.replace(/""/g, '"'), answer: Number(match[2]) };
   }
-  const plain = trimmed.match(/^([^,]*),\s*(-?\d+(?:\.\d+)?)\s*$/);
+  const plain = trimmed.match(/^([^,]*),\s*(\S+)\s*$/);
   if (plain) {
     return { text: plain[1]!.trim(), answer: Number(plain[2]) };
   }

@@ -69,6 +69,22 @@ Response: `{ ok: true } | { ok: false, error: string }`. Errors:
 - `'Game already started'` (room is not in lobby)
 - `'Need at least 2 connected players to start, have …'`
 
+### `syncAuthority`
+
+Refreshes the game-room host state from the active platform party. The client
+uses this after a platform host transfer; the server re-authorizes the bound
+player and broadcasts the resulting authoritative `RoomView`.
+
+Payload:
+
+```ts
+{
+  roomCode: string;
+}
+```
+
+Response: `{ ok: true } | { ok: false, error: string }`.
+
 ### `submitGuess`
 
 Records or replaces the player's guess for the current round.

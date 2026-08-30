@@ -295,7 +295,6 @@ onBeforeUnmount(() => {
   socket.off('roomUpdate');
   socket.off('phaseChange');
   socket.off('error');
-  socket.disconnect();
 });
 </script>
 

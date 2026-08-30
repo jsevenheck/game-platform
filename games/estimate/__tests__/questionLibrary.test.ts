@@ -123,10 +123,18 @@ describe('questionLibrary', () => {
     });
 
     it('rejects answers beyond the safety limit', () => {
-      const tooBig = `1e${GUESS_VALUE_LIMIT + 1}`;
+      const tooBig = String(GUESS_VALUE_LIMIT + 1);
       mockCsv(['question,answer', `"Too big",${tooBig}`, validLine].join('\n'));
       const lib = getQuestionLibrary();
       expect(lib.length).toBe(1);
+    });
+
+    it('accepts finite signed and exponent numeric literals', () => {
+      mockCsv(
+        ['question,answer', '"Exponent",1e6', '"Signed",+7', '"Leading decimal",.5'].join('\n')
+      );
+      const lib = getQuestionLibrary();
+      expect(lib.map((question) => question.answer)).toEqual([1_000_000, 7, 0.5]);
     });
 
     it('handles a UTF-8 BOM at the start of the file', () => {

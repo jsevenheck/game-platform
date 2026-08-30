@@ -1,4 +1,4 @@
-import { ref, type Ref } from 'vue';
+import { onUnmounted, ref, type Ref } from 'vue';
 import { io, type Socket } from 'socket.io-client';
 import type { ClientToServerEvents, ServerToClientEvents } from '@shared/events';
 
@@ -46,6 +46,10 @@ export function useSocket(opts?: {
   });
   socket.on('disconnect', () => {
     connected.value = false;
+  });
+
+  onUnmounted(() => {
+    socket.disconnect();
   });
 
   return { socket, connected };
