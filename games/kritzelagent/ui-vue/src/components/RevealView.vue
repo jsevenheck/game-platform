@@ -6,10 +6,14 @@ defineEmits<{ next: [] }>();
 const agentName = () =>
   props.room.players.find((player) => player.id === props.room.roundResult?.agentId)?.name ??
   'Unbekannt';
+
+function scoreDelta(playerId: string): number {
+  return props.room.roundResult?.scoreDeltas[playerId] ?? 0;
+}
 </script>
 
 <template>
-  <section class="ui-panel" aria-labelledby="reveal-title">
+  <section class="ui-panel" data-testid="kritzelagent-reveal" aria-labelledby="reveal-title">
     <p class="text-sm text-muted-foreground">Runde {{ room.currentRound }} aufgelöst</p>
     <h2 id="reveal-title" data-phase-focus tabindex="-1">Die Auflösung</h2>
     <div v-if="room.roundResult" class="kritzelagent-result" aria-live="polite">
@@ -38,10 +42,7 @@ const agentName = () =>
     <ul v-if="room.roundResult" class="kritzelagent-vote-results">
       <li v-for="player in room.players" :key="player.id">
         <span>{{ player.name }}</span
-        ><strong
-          >{{ (room.roundResult.scoreDeltas[player.id] ?? 0 > 0) ? '+' : ''
-          }}{{ room.roundResult.scoreDeltas[player.id] ?? 0 }}</strong
-        >
+        ><strong>{{ scoreDelta(player.id) > 0 ? '+' : '' }}{{ scoreDelta(player.id) }}</strong>
       </li>
     </ul>
     <button

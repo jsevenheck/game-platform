@@ -4,14 +4,15 @@ A real-time multiplayer party game platform built as a single **pnpm workspace m
 
 ## Games
 
-| Game               | Description                                                                       | Players |
-| ------------------ | --------------------------------------------------------------------------------- | ------- |
-| **Blackout**       | Category-based trivia with a rotating host who reveals prompts and picks winners  | 3-20    |
-| **Imposter**       | Social deduction where one player is the infiltrator; describe, discuss, and vote | 3-16    |
-| **Secret Signals** | Team-based word association where directors give clues and agents guess cards     | 4-24    |
-| **Flip 7**         | Push-your-luck card game where players race toward a total of exactly 7           | 3-18    |
-| **Scout**          | Ladder-climbing card game about timing, scouting, and hand management             | 2-5     |
-| **Estimate**       | Numeric trivia where the closest estimate wins each round                         | 2-12    |
+| Game               | Description                                                                           | Players |
+| ------------------ | ------------------------------------------------------------------------------------- | ------- |
+| **Blackout**       | Category-based trivia with a rotating host who reveals prompts and picks winners      | 3-20    |
+| **Imposter**       | Social deduction where one player is the infiltrator; describe, discuss, and vote     | 3-16    |
+| **Secret Signals** | Team-based word association where directors give clues and agents guess cards         | 4-24    |
+| **Flip 7**         | Push-your-luck card game where players race toward a total of exactly 7               | 3-18    |
+| **Scout**          | Ladder-climbing card game about timing, scouting, and hand management                 | 2-5     |
+| **Estimate**       | Numeric trivia where the closest estimate wins each round                             | 2-12    |
+| **Kritzelagent**   | Shared drawing and hidden-role deduction: find the player who knows only the category | 5-12    |
 
 ## Tech Stack
 

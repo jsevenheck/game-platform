@@ -5,7 +5,7 @@ defineProps<{ scores: ScoreEntry[] }>();
 </script>
 
 <template>
-  <section class="ui-panel" aria-labelledby="game-over-title">
+  <section class="ui-panel" data-testid="kritzelagent-game-over" aria-labelledby="game-over-title">
     <p class="text-sm text-muted-foreground">Alle Runden gespielt</p>
     <h2 id="game-over-title" data-phase-focus tabindex="-1">Kritzelagent beendet</h2>
     <ol class="kritzelagent-leaderboard" aria-label="Endstand">

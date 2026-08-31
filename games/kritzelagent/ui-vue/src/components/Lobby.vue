@@ -15,7 +15,11 @@ defineEmits<{ start: [] }>();
 </script>
 
 <template>
-  <section class="ui-panel kritzelagent-lobby" aria-labelledby="lobby-title">
+  <section
+    class="ui-panel kritzelagent-lobby"
+    data-testid="kritzelagent-lobby"
+    aria-labelledby="lobby-title"
+  >
     <p class="text-sm text-muted-foreground">5–12 Spieler · Zeichnen und Deduktion</p>
     <h2 id="lobby-title" data-phase-focus tabindex="-1">Bereit für die nächste Skizze?</h2>
     <p class="mt-2">Alle zeichnen gemeinsam. Eine Person kennt nur die Kategorie.</p>

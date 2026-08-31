@@ -17,7 +17,11 @@ function submitStroke(points: { x: number; y: number }[]) {
 </script>
 
 <template>
-  <section class="ui-panel kritzelagent-round" aria-labelledby="drawing-title">
+  <section
+    class="ui-panel kritzelagent-round"
+    data-testid="kritzelagent-drawing"
+    aria-labelledby="drawing-title"
+  >
     <div class="kritzelagent-round__header">
       <div>
         <p class="text-sm text-muted-foreground">

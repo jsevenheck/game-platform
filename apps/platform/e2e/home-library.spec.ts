@@ -1,6 +1,14 @@
 import { expect, test } from '@playwright/test';
 
-const expectedGames = ['Blackout', 'Imposter', 'Secret Signals', 'Flip 7', 'Scout', 'Estimate'];
+const expectedGames = [
+  'Blackout',
+  'Imposter',
+  'Secret Signals',
+  'Flip 7',
+  'Scout',
+  'Estimate',
+  'Kritzelagent',
+];
 
 test.describe('home library', () => {
   test.beforeEach(async ({ page }) => {

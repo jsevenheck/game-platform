@@ -13,7 +13,7 @@ function submit() {
 </script>
 
 <template>
-  <section class="ui-panel" aria-labelledby="voting-title">
+  <section class="ui-panel" data-testid="kritzelagent-voting" aria-labelledby="voting-title">
     <p class="text-sm text-muted-foreground">Die Skizze ist fertig.</p>
     <h2 id="voting-title" data-phase-focus tabindex="-1">Wer ist der Kritzelagent?</h2>
     <p class="mt-2 text-sm text-muted-foreground">

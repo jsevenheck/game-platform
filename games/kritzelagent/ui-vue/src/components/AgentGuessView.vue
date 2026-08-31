@@ -19,7 +19,11 @@ function submit() {
 </script>
 
 <template>
-  <section class="ui-panel" aria-labelledby="agent-guess-title">
+  <section
+    class="ui-panel"
+    data-testid="kritzelagent-agent-guess"
+    aria-labelledby="agent-guess-title"
+  >
     <p class="text-sm text-muted-foreground">Die Abstimmung ist entschieden.</p>
     <h2 id="agent-guess-title" data-phase-focus tabindex="-1">
       Letzte Chance für den Kritzelagenten
