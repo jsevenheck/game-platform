@@ -109,6 +109,22 @@ const estimateModule: GameServerModule = {
   cleanupMatch: estimateCleanup,
 };
 
+// ─── Kritzelagent ──────────────────────────────────────────────────────────────
+
+import {
+  definition as kritzelagentDef,
+  register as kritzelagentRegister,
+  cleanupMatch as kritzelagentCleanup,
+} from '../../../../games/kritzelagent/server/src/index';
+
+const kritzelagentModule: GameServerModule = {
+  definition: kritzelagentDef,
+  registerServer(io: Server, namespacePath: string) {
+    kritzelagentRegister(io, namespacePath);
+  },
+  cleanupMatch: kritzelagentCleanup,
+};
+
 // ─── Registry ─────────────────────────────────────────────────────────────────
 
 export const gameRegistry = new Map<string, GameServerModule>([
@@ -118,6 +134,7 @@ export const gameRegistry = new Map<string, GameServerModule>([
   ['flip7', flip7Module],
   ['scout', scoutModule],
   ['estimate', estimateModule],
+  ['kritzelagent', kritzelagentModule],
 ]);
 
 export function getGame(gameId: string): GameServerModule | undefined {

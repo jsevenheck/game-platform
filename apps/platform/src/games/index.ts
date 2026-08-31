@@ -117,6 +117,22 @@ export const clientGameRegistry: PlatformGameModule[] = [
     },
     loadClient: () => import('@estimate-ui/PlatformAdapter.vue'),
   },
+  {
+    definition: {
+      id: 'kritzelagent',
+      name: 'Kritzelagent',
+      minPlayers: 5,
+      maxPlayers: 12,
+    },
+    platformMeta: {
+      icon: '✏️',
+      gradFrom: '#7c2d12',
+      gradTo: '#2a120b',
+      description: 'Zeichnet gemeinsam — findet den Agenten ohne Motivkenntnis',
+      category: 'Zeichnen · Deduktion',
+    },
+    loadClient: () => import('@kritzelagent-ui/PlatformAdapter.vue'),
+  },
 ];
 
 export function getClientGame(gameId: string): PlatformGameModule | undefined {

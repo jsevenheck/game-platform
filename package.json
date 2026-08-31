@@ -20,6 +20,7 @@
     "test:flip7": "vitest run --project flip7",
     "test:scout": "vitest run --project scout",
     "test:estimate": "vitest run --project estimate",
+    "test:kritzelagent": "vitest run --project kritzelagent",
     "test:e2e": "playwright test",
     "lint": "eslint . --cache --max-warnings 0",
     "lint:fix": "eslint . --cache --fix",

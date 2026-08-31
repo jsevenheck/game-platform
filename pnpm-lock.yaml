@@ -175,6 +175,8 @@ importers:
 
   games/imposter: {}
 
+  games/kritzelagent: {}
+
   games/scout: {}
 
   games/secret-signals: {}

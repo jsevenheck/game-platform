@@ -90,6 +90,19 @@ export const estimateProject = {
   },
 };
 
+export const kritzelagentProject = {
+  resolve: {
+    alias: [{ find: '@shared', replacement: resolve(GAMES_ROOT, 'kritzelagent/core/src') }],
+  },
+  test: {
+    name: 'kritzelagent',
+    include: ['games/kritzelagent/__tests__/**/*.test.ts'],
+    environment: 'node',
+    globals: true,
+    clearMocks: true,
+  },
+};
+
 export const allProjects = [
   platformProject,
   blackoutProject,
@@ -98,4 +111,5 @@ export const allProjects = [
   flip7Project,
   scoutProject,
   estimateProject,
+  kritzelagentProject,
 ];

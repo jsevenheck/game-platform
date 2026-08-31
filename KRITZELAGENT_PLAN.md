@@ -1,6 +1,6 @@
 # Kritzelagent — Implementation Plan
 
-> **Status:** Phase 0 in Vorbereitung
+> **Status:** Phase 0 complete; Phase 1 next
 > **Branch:** `feat/kritzelagent` (from `feat/estimate-game` @ `ff4333f`)
 > **Author:** Hermes Agent
 > **Game-ID:** `kritzelagent`
@@ -150,21 +150,22 @@ resets the deck on restart. Tests inject a file reader rather than mocking
 
 ### Phase 0 — Scaffold and all platform wiring
 
-- [ ] `games/kritzelagent/package.json`
-- [ ] `games/kritzelagent/core/src/{types,constants,events}.ts`
-- [ ] `games/kritzelagent/server/src/index.ts`
-- [ ] `games/kritzelagent/ui-vue/{tsconfig.json,env.d.ts}`
-- [ ] `games/kritzelagent/ui-vue/src/{App.vue,PlatformAdapter.vue}`
-- [ ] `apps/platform/server/registry/index.ts`
-- [ ] `apps/platform/src/games/index.ts`
-- [ ] `apps/platform/vite.config.ts` (`@kritzelagent-ui` alias)
-- [ ] `apps/platform/env.d.ts`
-- [ ] `apps/platform/src/styles/main.css` (Kritzelagent tokens)
-- [ ] `vitest.projects.ts`
-- [ ] root `package.json` (`test:kritzelagent`)
-- [ ] `Dockerfile` package manifest copies
-- [ ] `pnpm install --lockfile-only` if required by workspace wiring
-- [ ] `pnpm typecheck`, focused lint and `git diff --check`
+- [x] `games/kritzelagent/package.json`
+- [x] `games/kritzelagent/core/src/{types,constants,events}.ts`
+- [x] `games/kritzelagent/server/src/index.ts`
+- [x] `games/kritzelagent/ui-vue/{tsconfig.json,env.d.ts}`
+- [x] `games/kritzelagent/ui-vue/src/{App.vue,PlatformAdapter.vue}`
+- [x] `apps/platform/server/registry/index.ts`
+- [x] `apps/platform/src/games/index.ts`
+- [x] `apps/platform/vite.config.ts` (`@kritzelagent-ui` alias)
+- [x] `apps/platform/env.d.ts`
+- [x] `apps/platform/src/styles/main.css` (Kritzelagent tokens)
+- [x] `vitest.projects.ts`
+- [x] root `package.json` (`test:kritzelagent`)
+- [x] `Dockerfile` package manifest copies
+- [x] `pnpm install --lockfile-only`
+- [x] `pnpm typecheck`, `pnpm lint` and `git diff --check`
+- [ ] **Commit:** `chore(kritzelagent): scaffold new game`
 
 ### Phase 1 — Topic library and pure drawing/vote rules
 
