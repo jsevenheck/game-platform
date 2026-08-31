@@ -1,4 +1,3 @@
-import type { Logger } from 'pino';
 import type { Namespace, Server, Socket } from 'socket.io';
 import { getPartyByActiveMatch } from '../../../../apps/platform/server/party/partyStore';
 import {
@@ -14,7 +13,10 @@ import {
   attachSocketEventDebugLogging,
   createSocketLogger,
 } from '../../../../apps/platform/server/logging/socketLogger';
-import { readLoggingConfig } from '../../../../apps/platform/server/logging/logger';
+import {
+  readLoggingConfig,
+  createComponentLogger,
+} from '../../../../apps/platform/server/logging/logger';
 import { startSocketHandlerInstrumentation } from '../../../../apps/platform/server/observability/socketHandlerMetrics';
 import {
   recordNamespaceConnection,
@@ -215,7 +217,7 @@ function authorizeHost(
 export function registerKritzelagent(
   io: Server,
   namespace = `/g/${GAME_ID}`,
-  gameLogger: Logger
+  gameLogger = createComponentLogger('game-server', { gameId: GAME_ID })
 ): void {
   const nsp = io.of(namespace) as KritzelagentNamespace;
   nsp.use((socket, next) => {

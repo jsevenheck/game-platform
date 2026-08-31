@@ -13,8 +13,8 @@
 existing `game-platform`. Everyone contributes to one shared picture, but one
 player receives only the category and does not know the secret topic.
 
-The game is inspired by the broad hidden-information/drawing pattern of *A Fake
-Artist Goes to New York*, but uses original naming, prompts, UI, scoring, and
+The game is inspired by the broad hidden-information/drawing pattern of _A Fake
+Artist Goes to New York_, but uses original naming, prompts, UI, scoring, and
 implementation. The platform host remains only the party/lifecycle host; no
 separate game-master setup is required.
 
@@ -99,7 +99,11 @@ lobby → drawing → voting → agentGuess → reveal → drawing (next round)
 `privateAssignment` event is sent only to the authorized socket/player:
 
 ```ts
-{ category: string; topic: string | null; isAgent: boolean }
+{
+  category: string;
+  topic: string | null;
+  isAgent: boolean;
+}
 ```
 
 ### Socket events
