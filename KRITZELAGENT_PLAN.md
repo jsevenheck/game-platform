@@ -254,7 +254,7 @@ resets the deck on restart. Tests inject a file reader rather than mocking
 - [x] `pnpm build` plus production health/asset smoke (`/health`, `/metrics`, CSV asset)
 - [x] `pnpm test:e2e` — 61/61 passed
 - [x] `pnpm audit --audit-level=high` — no known vulnerabilities
-- [ ] clean tree and exact local/remote SHA verification after push
+- [x] clean tree and exact local/remote SHA verification after push
 
 ## 6. Best-practice guardrails
 
