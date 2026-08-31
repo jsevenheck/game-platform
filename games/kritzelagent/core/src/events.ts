@@ -22,7 +22,7 @@ export interface ClientToServerEvents {
     cb: (res: ActionResponse) => void
   ) => void;
   submitVote: (
-    data: { roomCode: string; playerId: string },
+    data: { roomCode: string; targetPlayerId: string },
     cb: (res: ActionResponse) => void
   ) => void;
   submitAgentGuess: (
