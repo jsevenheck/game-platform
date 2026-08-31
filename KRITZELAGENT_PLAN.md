@@ -1,0 +1,272 @@
+# Kritzelagent — Implementation Plan
+
+> **Status:** Phase 0 in Vorbereitung
+> **Branch:** `feat/kritzelagent` (from `feat/estimate-game` @ `ff4333f`)
+> **Author:** Hermes Agent
+> **Game-ID:** `kritzelagent`
+
+---
+
+## 1. Concept
+
+**Kritzelagent** is a browser-first drawing and deduction party game for the
+existing `game-platform`. Everyone contributes to one shared picture, but one
+player receives only the category and does not know the secret topic.
+
+The game is inspired by the broad hidden-information/drawing pattern of *A Fake
+Artist Goes to New York*, but uses original naming, prompts, UI, scoring, and
+implementation. The platform host remains only the party/lifecycle host; no
+separate game-master setup is required.
+
+### Per round
+
+1. The server selects a category and secret topic from the bundled library.
+2. One player is secretly assigned the **Kritzelagent** role and sees only the
+   category. All other players see category + topic.
+3. Players draw one short stroke each in a deterministic player order. The
+   server broadcasts accepted strokes to every connected client.
+4. After two drawing turns per player, everyone votes for one suspect. Players
+   cannot vote for themselves.
+5. If the Kritzelagent receives the most votes, they get one private topic guess.
+6. The Kritzelagent earns 2 points when they avoid the vote or guess the topic
+   after being caught. If they are caught and miss the topic, every artist earns
+   1 point.
+7. The next round rotates the drawing order and selects a new agent. After the
+   configured rounds, the platform's standard replay/return overlay is shown.
+
+### Scope decisions for the first implementation
+
+- **Players:** 5–12. The source game is documented for 5–10 players; the
+  platform implementation supports two additional players with a responsive
+  canvas and compact roster.
+- **Rounds:** 5 by default.
+- **Drawing:** pointer/touch strokes are represented as normalized point arrays;
+  no image uploads, filesystem writes, or free-form HTML/SVG are accepted.
+- **Stroke limit:** one contiguous stroke per turn, maximum 80 points after
+  client-side simplification and server-side validation.
+- **Private state:** the agent's identity and the topic are never included in a
+  public room view. The server sends each player a recipient-specific private
+  assignment event.
+- **Voting:** one vote per player, submitted through a typed Socket.IO event;
+  vote totals remain hidden until all eligible connected players have voted.
+- **Disconnects:** a disconnected player is excluded from the current round's
+  completion quorum, but their already accepted strokes remain visible. A
+  reconnecting player resumes the same authorized slot and private assignment.
+- **Round completion:** when all connected/eligible players have submitted both
+  strokes and voted, the server resolves automatically; no special game host is
+  required.
+
+## 2. Phase machine
+
+```text
+lobby → drawing → voting → agentGuess → reveal → drawing (next round)
+                                      └──────→ ended
+```
+
+- `lobby`: party members are joined; platform-authoritative host starts.
+- `drawing`: category is public; topic/role are private; the current player may
+  submit exactly one stroke for the active turn.
+- `voting`: the complete canvas is public; eligible players submit one suspect.
+- `agentGuess`: only the caught agent may submit a topic guess; other players
+  see a waiting state.
+- `reveal`: agent, topic, vote counts, outcome, and score delta are public.
+- `ended`: final scoreboard remains visible; `PlatformAdapter.vue` shows the
+  standard replay/return actions.
+
+## 3. Core contracts
+
+### Public `RoomView`
+
+```ts
+{
+  roomCode: string;
+  phase: 'lobby' | 'drawing' | 'voting' | 'agentGuess' | 'reveal' | 'ended';
+  currentRound: number;
+  totalRounds: number;
+  category: string | null;
+  strokes: StrokeView[];
+  players: PlayerView[];
+  votes: VoteStatus[];       // who has voted, not whom they selected
+  revealedAgentId: string | null;
+  revealedTopic: string | null;
+  voteCounts: VoteCount[];
+  roundResult: RoundResult | null;
+  scores: ScoreEntry[];
+}
+```
+
+`RoomView` never contains the secret topic or agent before `reveal`. A separate
+`privateAssignment` event is sent only to the authorized socket/player:
+
+```ts
+{ category: string; topic: string | null; isAgent: boolean }
+```
+
+### Socket events
+
+Client → server:
+
+- `autoJoinRoom`
+- `startGame` (host-only)
+- `submitStroke` (active player only)
+- `submitVote` (one vote per connected player)
+- `submitAgentGuess` (caught agent only)
+- `nextRound` (host-only, after reveal)
+- `restartGame` (host-only, after reveal or ended)
+- `syncAuthority`
+
+Server → client:
+
+- `roomUpdate`
+- `privateAssignment`
+- `phaseChange`
+- `error`
+
+Every action uses acknowledgement responses, validates `unknown` payloads, and
+records expected rejections separately from unexpected failures.
+
+## 4. Data library
+
+File: `games/kritzelagent/server/data/topics.csv`
+
+```csv
+category,topic
+Tiere,Pinguin
+Essen,Spaghetti
+Orte,Leuchtturm
+Berufe,Feuerwehrmann
+Natur,Vulkan
+```
+
+The loader validates UTF-8 CSV rows, rejects empty category/topic values and
+requires at least one valid entry. It shuffles a no-repeat deck per match and
+resets the deck on restart. Tests inject a file reader rather than mocking
+`node:fs`.
+
+## 5. Implementation checklist
+
+> Each phase is a coherent checkpoint. Tests are written before the behavior
+> implementation wherever practical.
+
+### Phase 0 — Scaffold and all platform wiring
+
+- [ ] `games/kritzelagent/package.json`
+- [ ] `games/kritzelagent/core/src/{types,constants,events}.ts`
+- [ ] `games/kritzelagent/server/src/index.ts`
+- [ ] `games/kritzelagent/ui-vue/{tsconfig.json,env.d.ts}`
+- [ ] `games/kritzelagent/ui-vue/src/{App.vue,PlatformAdapter.vue}`
+- [ ] `apps/platform/server/registry/index.ts`
+- [ ] `apps/platform/src/games/index.ts`
+- [ ] `apps/platform/vite.config.ts` (`@kritzelagent-ui` alias)
+- [ ] `apps/platform/env.d.ts`
+- [ ] `apps/platform/src/styles/main.css` (Kritzelagent tokens)
+- [ ] `vitest.projects.ts`
+- [ ] root `package.json` (`test:kritzelagent`)
+- [ ] `Dockerfile` package manifest copies
+- [ ] `pnpm install --lockfile-only` if required by workspace wiring
+- [ ] `pnpm typecheck`, focused lint and `git diff --check`
+
+### Phase 1 — Topic library and pure drawing/vote rules
+
+- [ ] `server/src/utils/topicLibrary.ts`
+- [ ] `server/data/topics.csv` (at least 40 original DE topics)
+- [ ] `core/src/drawing.ts` (normalize/validate bounded strokes)
+- [ ] `server/src/managers/scoreManager.ts`
+- [ ] `__tests__/topicLibrary.test.ts`
+- [ ] `__tests__/drawing.test.ts`
+- [ ] `__tests__/scoreManager.test.ts`
+
+### Phase 2 — Authoritative room and round lifecycle
+
+- [ ] `server/src/models/player.ts`
+- [ ] `server/src/models/room.ts`
+- [ ] `server/src/managers/roundManager.ts`
+- [ ] `server/src/managers/broadcastManager.ts`
+- [ ] Tests for connected-player quorum, turn order, no-repeat topics,
+      private/public state separation, reconnect, cleanup, and tie handling
+
+### Phase 3 — Socket handlers and security boundary
+
+- [ ] `server/src/socketHandlers.ts`
+- [ ] `core/src/events.ts` finalized against runtime handlers
+- [ ] `__tests__/socketHandlers.test.ts`
+- [ ] Authorization tests for `joinToken`, resume token, host-only actions,
+      active-turn ownership, self-vote rejection, agent-only guess, malformed
+      strokes, and hidden topic/role leakage
+- [ ] Shared namespace connection and per-handler metrics instrumentation
+- [ ] Structured lifecycle logs without secrets or hidden game state
+
+### Phase 4 — Vue state and socket shell
+
+- [ ] `ui-vue/src/stores/game.ts`
+- [ ] `ui-vue/src/composables/useSocket.ts`
+- [ ] `ui-vue/src/App.vue`
+- [ ] `ui-vue/src/PlatformAdapter.vue`
+- [ ] transport/join-pending/retry/error states and private assignment handling
+
+### Phase 5 — Drawing UI
+
+- [ ] `ui-vue/src/components/Lobby.vue`
+- [ ] `ui-vue/src/components/DrawingCanvas.vue`
+- [ ] `ui-vue/src/components/DrawingView.vue`
+- [ ] responsive pointer/touch canvas with keyboard-safe surrounding controls
+- [ ] visible turn indicator, category/topic disclosure, stroke status,
+      disconnected-player status, and accessible live announcements
+- [ ] no color-only role/outcome signaling; focus-visible controls; reduced
+      motion support; mobile-first layout
+
+### Phase 6 — Voting, reveal, and end UI
+
+- [ ] `ui-vue/src/components/VotingView.vue`
+- [ ] `ui-vue/src/components/AgentGuessView.vue`
+- [ ] `ui-vue/src/components/RevealView.vue`
+- [ ] `ui-vue/src/components/GameOver.vue`
+- [ ] vote lock state, agent-only guess form, result announcement, scoreboard,
+      and standard platform overlay
+
+### Phase 7 — E2E and runtime closure
+
+- [ ] `e2e/game.spec.ts`
+- [ ] host-as-player launch flow with 5 browser contexts
+- [ ] private assignment isolation (artist never sees agent topic)
+- [ ] two-turn stroke flow and public canvas reveal
+- [ ] voting, caught-agent correct/incorrect guess branches
+- [ ] tie vote behavior, disconnect/reconnect, final scoreboard
+- [ ] replay and return-to-party callbacks
+- [ ] mobile viewport and keyboard-visible controls
+
+### Phase 8 — Documentation and final gates
+
+- [ ] `games/kritzelagent/README.md`
+- [ ] `games/kritzelagent/docs/api.md`
+- [ ] `games/kritzelagent/docs/architecture.md`
+- [ ] `docs/games.md`, `docs/README.md`, `docs/observability-metrics.md`
+- [ ] full `pnpm install --frozen-lockfile`
+- [ ] `pnpm test:kritzelagent`
+- [ ] `pnpm test`
+- [ ] `pnpm typecheck`
+- [ ] `pnpm lint`
+- [ ] `pnpm format:check`
+- [ ] `pnpm build` plus production health/asset smoke
+- [ ] `pnpm test:e2e`
+- [ ] `pnpm audit --audit-level=high`
+- [ ] clean tree and exact local/remote SHA verification after push
+
+## 6. Best-practice guardrails
+
+- Build server/core truth before UI behavior; do not infer rules from the
+  canvas.
+- Keep secret topic and agent identity recipient-specific until reveal.
+- Use `authorizePartyJoin` and `syncRoomHostAfterJoin`; never trust client
+  `isHost`, `playerId`, `name`, or role claims for authorization.
+- Validate every socket payload from `unknown`; cap stroke points and reject
+  non-finite/out-of-range coordinates.
+- Keep scoring and stroke normalization pure and unit-tested.
+- Use Vue 3 `<script setup lang="ts">`, typed props/emits, Pinia setup stores,
+  component-scoped styles, shared design tokens, semantic controls, and
+  `focus-visible` states.
+- Use role/label locators and web-first Playwright assertions; type-check E2E
+  files separately.
+- Update user-facing docs in the same feature slice as the implementation.
+- Do not claim browser, production, provider, or remote verification unless the
+  corresponding gate has actually run.
