@@ -16,6 +16,7 @@ COPY games/secret-signals/package.json games/secret-signals/
 COPY games/flip7/package.json games/flip7/
 COPY games/scout/package.json games/scout/
 COPY games/estimate/package.json games/estimate/
+COPY games/kritzelagent/package.json games/kritzelagent/
 
 RUN --mount=type=cache,id=pnpm-store,target=/pnpm/store \
     pnpm config set store-dir /pnpm/store && \
@@ -36,6 +37,7 @@ COPY games/secret-signals/package.json games/secret-signals/
 COPY games/flip7/package.json games/flip7/
 COPY games/scout/package.json games/scout/
 COPY games/estimate/package.json games/estimate/
+COPY games/kritzelagent/package.json games/kritzelagent/
 
 RUN --mount=type=cache,id=pnpm-store,target=/pnpm/store \
     pnpm config set store-dir /pnpm/store && \

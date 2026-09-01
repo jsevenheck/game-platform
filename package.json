@@ -9,7 +9,7 @@
   },
   "scripts": {
     "dev": "pnpm -C apps/platform dev",
-    "build": "pnpm -C apps/platform build && node games/blackout/scripts/copy-db-assets.mjs && node games/estimate/scripts/copy-assets.mjs",
+    "build": "pnpm -C apps/platform build && node games/blackout/scripts/copy-db-assets.mjs && node games/estimate/scripts/copy-assets.mjs && node games/kritzelagent/scripts/copy-assets.mjs",
     "start": "pnpm -C apps/platform start",
     "typecheck": "pnpm -C apps/platform typecheck",
     "test": "vitest run",
@@ -20,6 +20,7 @@
     "test:flip7": "vitest run --project flip7",
     "test:scout": "vitest run --project scout",
     "test:estimate": "vitest run --project estimate",
+    "test:kritzelagent": "vitest run --project kritzelagent",
     "test:e2e": "playwright test",
     "lint": "eslint . --cache --max-warnings 0",
     "lint:fix": "eslint . --cache --fix",
