@@ -1,6 +1,6 @@
 # CLAUDE.md
 
-Single pnpm workspace monorepo: one platform app + six integrated games.
+Single pnpm workspace monorepo: one platform app + seven integrated games.
 
 ```text
 apps/platform/       <- Express + Socket.IO server, Vue 3 client (the only production app)
@@ -10,6 +10,7 @@ games/secret-signals/ <- internal platform module
 games/flip7/         <- internal platform module
 games/scout/         <- internal platform module
 games/estimate/      <- internal platform module
+games/kritzelagent/  <- internal platform module
 ```
 
 Games are **internal modules** and run only through the platform party flow. They have no own standalone runtime or toolchain. The platform owns the full lifecycle: create → join → launch game → replay / return to lobby.
@@ -21,7 +22,7 @@ pnpm install        # install all dependencies
 pnpm dev            # start platform (server + client)
 pnpm build          # build client + server for production
 pnpm start          # run production server from dist/
-pnpm test           # run all unit tests (vitest, all 6 games)
+pnpm test           # run all unit tests (vitest, all 7 games)
 pnpm test:blackout  # run Blackout unit tests
 pnpm test:imposter  # run Imposter unit tests
 pnpm test:secret-signals  # run Secret Signals unit tests
@@ -53,14 +54,14 @@ Game UI source is scanned via `@source` directives so Tailwind generates classes
 
 ### Design tokens (`@theme`)
 
-| Category        | Tokens                                                                                                         |
-| --------------- | -------------------------------------------------------------------------------------------------------------- |
-| Surfaces        | `canvas` (#050509), `shell`, `panel` (#111118), `card` (#15151f), `elevated`                                   |
-| Text            | `foreground`, `muted`, `muted-foreground`                                                                      |
-| Borders         | `border`, `border-strong`, `ring`                                                                              |
-| Platform accent | `accent` (orange #f97316)                                                                                      |
-| Game accents    | `blackout` (violet), `imposter` (crimson), `signals` (cyan), `flip7` (amber), `scout` (teal), `estimate` (sky) |
-| Semantic        | `danger`, `success`, `warning` plus `-muted` variants                                                          |
+| Category        | Tokens                                                                                                                                  |
+| --------------- | --------------------------------------------------------------------------------------------------------------------------------------- |
+| Surfaces        | `canvas` (#050509), `shell`, `panel` (#111118), `card` (#15151f), `elevated`                                                            |
+| Text            | `foreground`, `muted`, `muted-foreground`                                                                                               |
+| Borders         | `border`, `border-strong`, `ring`                                                                                                       |
+| Platform accent | `accent` (orange #f97316)                                                                                                               |
+| Game accents    | `blackout` (violet), `imposter` (crimson), `signals` (cyan), `flip7` (amber), `scout` (teal), `estimate` (sky), `kritzelagent` (orange) |
+| Semantic        | `danger`, `success`, `warning` plus `-muted` variants                                                                                   |
 
 ### Shared component classes (`@layer components`)
 

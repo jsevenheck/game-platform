@@ -99,9 +99,33 @@ function advanceDrawingTurn(room: ServerRoom): void {
   if (allConnectedPlayersDrew(room)) room.phase = 'voting';
 }
 
-export function skipDisconnectedDrawingTurn(room: ServerRoom): void {
-  if (room.phase !== 'drawing') return;
-  advanceDrawingTurn(room);
+function resolveVotingIfReady(room: ServerRoom): void {
+  if (room.phase !== 'voting' || !allConnectedPlayersVoted(room)) return;
+
+  const leaders = getVoteLeaders(room.votes);
+  const agentWasCaught = leaders.length === 1 && leaders[0] === room.agentId;
+  const agentConnected = connectedPlayers(room).some((player) => player.id === room.agentId);
+
+  if (agentWasCaught && agentConnected) {
+    room.phase = 'agentGuess';
+    return;
+  }
+
+  // A disconnected caught agent cannot submit the private guess. Treat the
+  // missing guess as incorrect so the remaining players are not stranded.
+  resolveVotes(room, agentWasCaught ? false : null);
+}
+
+/** Re-evaluate phase completion after a player disconnects. */
+export function recheckAfterDisconnect(room: ServerRoom): void {
+  if (room.phase === 'drawing') advanceDrawingTurn(room);
+  if (room.phase === 'voting') resolveVotingIfReady(room);
+  if (
+    room.phase === 'agentGuess' &&
+    !connectedPlayers(room).some((player) => player.id === room.agentId)
+  ) {
+    resolveVotes(room, false);
+  }
 }
 
 export function submitStroke(room: ServerRoom, playerId: string, points: unknown): void {
@@ -162,11 +186,7 @@ export function submitVote(room: ServerRoom, playerId: string, targetId: string)
 
   room.votes.set(playerId, targetId);
   player.hasVoted = true;
-  if (allConnectedPlayersVoted(room)) {
-    const leaders = getVoteLeaders(room.votes);
-    room.phase = leaders.length === 1 && leaders[0] === room.agentId ? 'agentGuess' : 'reveal';
-    if (room.phase === 'reveal') resolveVotes(room, null);
-  }
+  resolveVotingIfReady(room);
 }
 
 export function submitAgentGuess(room: ServerRoom, playerId: string, guess: string): void {

@@ -180,7 +180,7 @@ resets the deck on restart. Tests inject a file reader rather than mocking
 - [x] `__tests__/topicLibrary.test.ts`
 - [x] `__tests__/drawing.test.ts`
 - [x] `__tests__/scoreManager.test.ts`
-- [x] **Focused result:** 22 tests passed
+- [x] **Focused result:** 24 tests passed
 
 ### Phase 2 — Authoritative room and round lifecycle
 
@@ -246,8 +246,8 @@ resets the deck on restart. Tests inject a file reader rather than mocking
 - [x] `games/kritzelagent/docs/architecture.md`
 - [x] `docs/games.md`, `docs/README.md`, `docs/observability-metrics.md`, root `README.md`
 - [x] full `pnpm install --frozen-lockfile`
-- [x] `pnpm test:kritzelagent` — 5 files / 22 tests passed
-- [x] `pnpm test` — 41 files / 390 tests passed
+- [x] `pnpm test:kritzelagent` — 5 files / 24 tests passed
+- [x] `pnpm test` — 41 files / 392 tests passed
 - [x] `pnpm typecheck`
 - [x] `pnpm lint`
 - [x] `pnpm format:check`

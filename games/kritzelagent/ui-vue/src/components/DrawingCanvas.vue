@@ -64,8 +64,8 @@ function move(event: PointerEvent) {
   redraw();
 }
 
-function finish(event: PointerEvent) {
-  if (drawing.value.length < 2) {
+function finish(event: PointerEvent, canceled = false) {
+  if (canceled || drawing.value.length < 2) {
     drawing.value = [];
     redraw();
     return;
@@ -96,7 +96,7 @@ onBeforeUnmount(() => resizeObserver?.disconnect());
     @pointerdown="start"
     @pointermove="move"
     @pointerup="finish"
-    @pointercancel="finish"
+    @pointercancel="finish($event, true)"
   />
 </template>
 
@@ -109,7 +109,7 @@ onBeforeUnmount(() => resizeObserver?.disconnect());
   touch-action: none;
   border: 2px solid var(--color-kritzelagent, #f97316);
   border-radius: var(--radius-lg, 0.75rem);
-  background: var(--color-surface, #11111a);
+  background: var(--color-panel);
   cursor: crosshair;
 }
 .kritzelagent-canvas--disabled {

@@ -289,4 +289,9 @@ onBeforeUnmount(() => {
   color: var(--color-danger, #fca5a5);
   border-color: currentColor;
 }
+@media (max-width: 640px) {
+  .kritzelagent-app {
+    padding-top: 4rem;
+  }
+}
 </style>

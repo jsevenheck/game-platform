@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { computed } from 'vue';
+import { MAX_PLAYERS, MIN_PLAYERS } from '@shared/constants';
 import type { PlayerView } from '@shared/types';
 
 const props = defineProps<{
@@ -20,10 +21,12 @@ defineEmits<{ start: [] }>();
     data-testid="kritzelagent-lobby"
     aria-labelledby="lobby-title"
   >
-    <p class="text-sm text-muted-foreground">5–12 Spieler · Zeichnen und Deduktion</p>
+    <p class="text-sm text-muted-foreground">
+      {{ MIN_PLAYERS }}–{{ MAX_PLAYERS }} Spieler · Zeichnen und Deduktion
+    </p>
     <h2 id="lobby-title" data-phase-focus tabindex="-1">Bereit für die nächste Skizze?</h2>
     <p class="mt-2">Alle zeichnen gemeinsam. Eine Person kennt nur die Kategorie.</p>
-    <h3 class="mt-5 text-lg font-semibold">Spieler ({{ playerCount }}/12)</h3>
+    <h3 class="mt-5 text-lg font-semibold">Spieler ({{ playerCount }}/{{ MAX_PLAYERS }})</h3>
     <ul class="kritzelagent-player-list" aria-label="Spieler im Raum">
       <li v-for="player in players" :key="player.id">
         <span>{{ player.name }}<span v-if="player.isHost"> (Host)</span></span>
@@ -40,7 +43,11 @@ defineEmits<{ start: [] }>();
       @click="$emit('start')"
     >
       {{
-        pending ? 'Wird gestartet…' : canStart ? 'Spiel starten' : 'Warte auf mindestens 5 Spieler'
+        pending
+          ? 'Wird gestartet…'
+          : canStart
+            ? 'Spiel starten'
+            : `Warte auf mindestens ${MIN_PLAYERS} Spieler`
       }}
     </button>
     <p v-else class="mt-4 text-sm text-muted-foreground" role="status">

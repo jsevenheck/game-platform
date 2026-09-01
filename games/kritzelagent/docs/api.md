@@ -118,6 +118,13 @@ Artists receive the topic; the agent receives `topic: null`.
 returned through the acknowledgement; unexpected failures are logged without
 secrets and returned as a generic error.
 
+## Disconnect completion
+
+When a player leaves during drawing or voting, the server re-evaluates the
+connected-player quorum immediately. A voting quorum therefore cannot remain
+stuck behind a departed voter. If the caught agent leaves during `agentGuess`,
+the server records an incorrect guess and reveals the round.
+
 ## Security and operations
 
 - Party authorization runs before room mutation and before every protected action.

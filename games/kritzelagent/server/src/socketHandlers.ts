@@ -40,8 +40,8 @@ import { broadcastRoom } from './managers/broadcastManager';
 import {
   KritzelagentError,
   nextRound,
+  recheckAfterDisconnect,
   restartGame,
-  skipDisconnectedDrawingTurn,
   startGame,
   submitAgentGuess,
   submitStroke,
@@ -139,7 +139,7 @@ function applyDisconnectLifecycle(
   player.socketId = '';
   clearSocketIndex(socket.id);
   socket.leave(room.roomCode);
-  skipDisconnectedDrawingTurn(room);
+  recheckAfterDisconnect(room);
 
   if (player.isHost || !hasConnectedGameHost(room)) {
     if (!syncHostFromActiveParty(room)) restoreFallbackHost(room);

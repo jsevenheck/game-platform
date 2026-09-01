@@ -44,7 +44,9 @@ new socket to the existing authorized player, disconnects the superseded
 transport, and restores the private assignment through the new socket.
 
 Disconnecting players are marked unavailable, their socket index is removed,
-and the drawing/vote quorum is recalculated from connected eligible players.
+and the drawing/vote quorum is recalculated from connected eligible players. If
+voting becomes complete after a disconnect, the game resolves immediately. A
+caught agent who disconnects during `agentGuess` is treated as a missed guess.
 When all game sockets disconnect, a 30-minute cleanup timer is scheduled.
 
 ## Drawing validation

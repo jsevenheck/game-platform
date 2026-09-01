@@ -4,6 +4,7 @@ import { privateAssignmentFor, buildRoomView } from '../server/src/managers/broa
 import {
   currentDrawingPlayerId,
   nextRound,
+  recheckAfterDisconnect,
   startGame,
   submitAgentGuess,
   submitStroke,
@@ -155,6 +156,51 @@ describe('round lifecycle', () => {
     expect(room.phase).toBe('drawing');
     expect(room.currentRound).toBe(2);
     expect(room.strokes).toHaveLength(0);
+  });
+
+  it('resolves voting when the last unsubmitted voter disconnects', () => {
+    const { room } = setupRoom();
+    startGame(room);
+    finishDrawing(room);
+
+    const missingVoter = room.players.at(-1)!;
+    const targetId = room.players.find(
+      (player) => player.id !== room.agentId && player.id !== missingVoter.id
+    )!.id;
+    const alternateTarget = room.players.find(
+      (player) => player.id !== targetId && player.id !== missingVoter.id
+    )!.id;
+    for (const player of room.players.slice(0, -1)) {
+      submitVote(room, player.id, player.id === targetId ? alternateTarget : targetId);
+    }
+    expect(room.phase).toBe('voting');
+
+    missingVoter.connected = false;
+    recheckAfterDisconnect(room);
+
+    expect(room.phase).toBe('reveal');
+    expect(room.roundResult).not.toBeNull();
+  });
+
+  it('resolves a caught agent as a miss when that agent disconnects before guessing', () => {
+    const { room } = setupRoom();
+    startGame(room);
+    finishDrawing(room);
+
+    const agentId = room.agentId!;
+    const agent = findPlayer(room, agentId)!;
+    const artistTarget = room.players.find((player) => player.id !== agentId)!.id;
+    for (const player of room.players) {
+      submitVote(room, player.id, player.id === agentId ? artistTarget : agentId);
+    }
+    expect(room.phase).toBe('agentGuess');
+
+    agent.connected = false;
+    recheckAfterDisconnect(room);
+
+    expect(room.phase).toBe('reveal');
+    expect(room.roundResult?.agentCaught).toBe(true);
+    expect(room.roundResult?.agentGuessed).toBe(false);
   });
 });
 

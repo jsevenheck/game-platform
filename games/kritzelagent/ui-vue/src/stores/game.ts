@@ -1,4 +1,5 @@
 import { defineStore } from 'pinia';
+import { MIN_PLAYERS } from '@shared/constants';
 import type { PrivateAssignment, RoomView, StoredSession } from '@shared/types';
 
 const SESSION_KEY = 'kritzelagent.session';
@@ -22,7 +23,7 @@ export const useGameStore = defineStore('kritzelagent-game', {
     phase: (state) => state.room?.phase ?? 'lobby',
     connectedPlayers: (state) => state.room?.players.filter((player) => player.connected) ?? [],
     canStart(): boolean {
-      return this.connectedPlayers.length >= 5 && this.phase === 'lobby';
+      return this.connectedPlayers.length >= MIN_PLAYERS && this.phase === 'lobby';
     },
     canDraw(): boolean {
       return this.phase === 'drawing' && this.room?.activePlayerId === this.playerId;

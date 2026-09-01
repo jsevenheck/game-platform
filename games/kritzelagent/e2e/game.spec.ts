@@ -92,7 +92,9 @@ async function completeDrawing(session: Session): Promise<void> {
 }
 
 test.describe('Kritzelagent game', () => {
-  test('runs a private five-player drawing, vote, and reveal round', async ({ browser }) => {
+  test('runs all five rounds, preserves private assignments, and renders the platform overlay', async ({
+    browser,
+  }) => {
     const session = await createSession(browser);
     try {
       await launchGame(session);
@@ -120,7 +122,7 @@ test.describe('Kritzelagent game', () => {
       await expect(session.pages[agentIndex]!.locator('body')).not.toContainText(topic!);
 
       await completeDrawing(session);
-      const agentName = `Spieler ${agentIndex + 1}`;
+      const agentName = agentIndex === 0 ? 'Jona' : `Spieler ${agentIndex + 1}`;
       const fallbackTarget = agentIndex === 0 ? 'Spieler 2' : 'Jona';
       await Promise.all(
         session.pages.map(async (page, index) => {
@@ -143,6 +145,58 @@ test.describe('Kritzelagent game', () => {
         session.pages.map((page) => expect(page.getByTestId('kritzelagent-reveal')).toBeVisible())
       );
       await expect(session.pages[0]!.getByText('Die Auflösung')).toBeVisible();
+
+      const playerNames = ['Jona', 'Spieler 2', 'Spieler 3', 'Spieler 4', 'Spieler 5'];
+      for (let round = 2; round <= 5; round += 1) {
+        await session.pages[0]!.getByRole('button', { name: 'Nächste Runde' }).click();
+        await Promise.all(
+          session.pages.map((page) =>
+            expect(page.getByTestId('kritzelagent-drawing')).toBeVisible()
+          )
+        );
+
+        let nextAgentIndex = -1;
+        for (let index = 0; index < session.pages.length; index += 1) {
+          if (
+            await session.pages[index]!.getByText(
+              'Du bist der Kritzelagent. Finde heraus, was gezeichnet wird.'
+            ).isVisible()
+          ) {
+            nextAgentIndex = index;
+            break;
+          }
+        }
+        expect(nextAgentIndex).toBeGreaterThanOrEqual(0);
+        await completeDrawing(session);
+
+        const nextAgentName = playerNames[nextAgentIndex]!;
+        const nextFallbackTarget = playerNames[nextAgentIndex === 0 ? 1 : 0]!;
+        await Promise.all(
+          session.pages.map(async (page, index) => {
+            const targetName = index === nextAgentIndex ? nextFallbackTarget : nextAgentName;
+            await page.getByRole('radio', { name: targetName }).check();
+            await page.getByRole('button', { name: 'Stimme abgeben' }).click();
+          })
+        );
+        await expect(
+          session.pages[nextAgentIndex]!.getByTestId('kritzelagent-agent-guess')
+        ).toBeVisible();
+        await session.pages[nextAgentIndex]!.getByLabel('Dein Motiv-Tipp').fill(
+          'Unbekanntes Motiv'
+        );
+        await session.pages[nextAgentIndex]!.getByRole('button', { name: 'Motiv raten' }).click();
+        await Promise.all(
+          session.pages.map((page) => expect(page.getByTestId('kritzelagent-reveal')).toBeVisible())
+        );
+      }
+
+      await session.pages[0]!.getByRole('button', { name: 'Ergebnis anzeigen' }).click();
+      await Promise.all(
+        session.pages.map((page) =>
+          expect(page.getByTestId('kritzelagent-game-over')).toBeVisible()
+        )
+      );
+      await expect(session.pages[0]!.getByTestId('platform-replay')).toBeVisible();
     } finally {
       await closeSession(session);
     }

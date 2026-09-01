@@ -127,7 +127,7 @@ function onPhaseChange(phase: string) {
   margin: 0 auto 1rem;
   border: 1px solid var(--color-border-strong);
   border-radius: var(--radius-lg, 0.75rem);
-  background: var(--color-surface, #11111a);
+  background: var(--color-panel);
   padding: 1.5rem;
   text-align: center;
 }

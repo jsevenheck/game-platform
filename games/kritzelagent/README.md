@@ -31,7 +31,9 @@ runtime.
 
 Disconnected players do not block the current completion quorum. Their accepted
 strokes remain visible, and a valid resume token restores the authorized slot
-and private assignment.
+and private assignment. If a missing voter disconnects, voting resolves from
+the remaining connected players; a caught agent who disconnects before guessing
+is treated as having missed the topic.
 
 ## Development
 
