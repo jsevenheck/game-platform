@@ -80,4 +80,27 @@ describe('round lifecycle', () => {
     submitAnswer(room, ids[0]!, 'x');
     expect(room.phase).toBe('answering');
   });
+  it('blocks a player with the Pink Cow from winning at the target', () => {
+    const { room, ids } = roomWithFour();
+    room.cows.set(ids[3]!, 8);
+    submitAnswer(room, ids[0]!, 'Pizza');
+    submitAnswer(room, ids[1]!, 'Pizza');
+    submitAnswer(room, ids[2]!, 'Pizza');
+    submitAnswer(room, ids[3]!, 'Salat');
+    revealAnswers(room);
+    expect(room.pinkCowPlayerId).toBe(ids[3]);
+    expect(room.roundResult?.winnerIds).toEqual([]);
+    expect(room.phase).toBe('reveal');
+  });
+  it('ends immediately when a non-pink player reaches eight cows', () => {
+    const { room, ids } = roomWithFour();
+    room.cows.set(ids[0]!, 7);
+    submitAnswer(room, ids[0]!, 'Pizza');
+    submitAnswer(room, ids[1]!, 'Pizza');
+    submitAnswer(room, ids[2]!, 'Pizza');
+    submitAnswer(room, ids[3]!, 'Salat');
+    revealAnswers(room);
+    expect(room.roundResult?.winnerIds).toEqual([ids[0]]);
+    expect(room.phase).toBe('ended');
+  });
 });

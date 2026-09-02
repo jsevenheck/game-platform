@@ -74,3 +74,18 @@ function submit() {
     </form>
   </section>
 </template>
+
+<style scoped>
+[data-testid='herd-mentality-question'] {
+  width: 100%;
+  min-width: 0;
+  max-width: 100%;
+  box-sizing: border-box;
+}
+[data-testid='herd-mentality-question'] h2 {
+  max-width: 100%;
+  white-space: normal;
+  overflow-wrap: anywhere;
+  word-break: break-word;
+}
+</style>

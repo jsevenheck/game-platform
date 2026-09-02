@@ -41,18 +41,33 @@ const { socket, connected } = useSocket({
 const joinState = ref<'connecting' | 'joining' | 'ready' | 'error'>('connecting');
 const pending = ref<'start' | 'answer' | 'reveal' | 'next' | null>(null);
 const phaseRegion = ref<HTMLElement | null>(null);
+const joinAck = ref(false);
+const roomSnapshot = ref(false);
+const joinInFlight = ref(false);
+let joinAttempt = 0;
 let joinTimeout: ReturnType<typeof setTimeout> | undefined;
 
 function fail(message: string) {
+  joinInFlight.value = false;
   joinState.value = 'error';
   store.setError(message);
 }
 function joinRoom() {
-  if (!connected.value) return;
+  if (!connected.value) {
+    socket.connect();
+    return;
+  }
+  if (joinInFlight.value) return;
+  const attempt = ++joinAttempt;
+  joinInFlight.value = true;
+  joinAck.value = false;
+  roomSnapshot.value = false;
   joinState.value = 'joining';
   const saved = store.loadSession();
   if (joinTimeout) clearTimeout(joinTimeout);
-  joinTimeout = setTimeout(() => fail('Der Spielraum konnte nicht geladen werden.'), 8000);
+  joinTimeout = setTimeout(() => {
+    if (attempt === joinAttempt) fail('Der Spielraum konnte nicht geladen werden.');
+  }, 8000);
   socket.emit(
     'autoJoinRoom',
     {
@@ -62,6 +77,7 @@ function joinRoom() {
       resumeToken: saved?.sessionId === props.sessionId ? saved.resumeToken : undefined,
     },
     (response) => {
+      if (attempt !== joinAttempt) return;
       if (!response.ok) {
         fail(response.error);
         return;
@@ -73,7 +89,9 @@ function joinRoom() {
       store.resumeToken = response.resumeToken;
       store.saveSession();
       if (joinTimeout) clearTimeout(joinTimeout);
-      joinState.value = 'ready';
+      joinAck.value = true;
+      joinInFlight.value = false;
+      if (roomSnapshot.value) joinState.value = 'ready';
     }
   );
 }
@@ -136,12 +154,17 @@ watch(
 onMounted(() => {
   socket.on('roomUpdate', (room: RoomView) => {
     store.setRoom(room);
-    joinState.value = 'ready';
+    roomSnapshot.value = true;
+    if (joinAck.value) joinState.value = 'ready';
   });
   socket.on('phaseChange', ({ phase }) => emit('phase-change', phase));
   socket.on('error', ({ message }) => store.setError(message));
   socket.on('connect', joinRoom);
   socket.on('disconnect', () => {
+    joinAttempt += 1;
+    joinInFlight.value = false;
+    joinAck.value = false;
+    roomSnapshot.value = false;
     joinState.value = 'connecting';
   });
   socket.on('connect_error', (error) => fail(error.message || 'Verbindung fehlgeschlagen.'));
@@ -232,10 +255,24 @@ onBeforeUnmount(() => {
   flex-direction: column;
   gap: 1rem;
   width: min(100%, 64rem);
+  min-width: 0;
   min-height: 100%;
   margin: 0 auto;
   padding: clamp(1rem, 4vw, 2rem);
+  box-sizing: border-box;
   outline: none;
+}
+.herd-mentality-app > * {
+  width: 100%;
+  min-width: 0;
+  max-width: 100%;
+  box-sizing: border-box;
+}
+.herd-mentality-app h2,
+.herd-mentality-app p,
+.herd-mentality-app li,
+.herd-mentality-app strong {
+  overflow-wrap: anywhere;
 }
 .herd-error {
   display: flex;

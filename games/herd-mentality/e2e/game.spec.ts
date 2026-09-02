@@ -59,11 +59,17 @@ test.describe('Herd Mentality', () => {
       await expect(host!.getByTestId('herd-mentality-question')).toBeVisible();
       await expect(ben!.getByTestId('herd-mentality-question')).toBeVisible();
 
+      await host!.getByTestId('herd-mentality-answer-submit').click();
+      await expect(host!.getByText('Bitte eine Antwort eingeben.')).toBeVisible();
+      await expect(host!.getByTestId('herd-mentality-question')).toBeVisible();
       await host!.getByTestId('herd-mentality-answer-input').fill('Pizza');
       await host!.getByTestId('herd-mentality-answer-submit').click();
       await expect(host!.getByTestId('herd-mentality-waiting')).toBeVisible();
-      await expect(ben!.getByText('Pizza')).toHaveCount(0);
-      await expect(clara!.getByText('Pizza')).toHaveCount(0);
+      for (const page of [ben!, clara!, david!]) {
+        await expect(page.getByText('Pizza', { exact: true })).toHaveCount(0);
+      }
+      await host!.reload();
+      await expect(host!.getByTestId('herd-mentality-waiting')).toBeVisible();
 
       await ben!.getByTestId('herd-mentality-answer-input').fill('pizza');
       await ben!.getByTestId('herd-mentality-answer-submit').click();
@@ -73,17 +79,99 @@ test.describe('Herd Mentality', () => {
       await david!.getByTestId('herd-mentality-answer-submit').click();
 
       await expect(host!.getByTestId('herd-mentality-reveal')).toBeVisible();
-      await expect(host!.getByTestId('herd-mentality-groups')).toHaveCount(0);
-      await expect(host!.getByTestId('herd-mentality-reveal-button')).toBeVisible();
-      await expect(ben!.getByTestId('herd-mentality-reveal-button')).toHaveCount(0);
+      for (const page of session.pages) {
+        await expect(page.getByTestId('herd-mentality-groups')).toHaveCount(0);
+        await expect(page.getByText('Pizza', { exact: true })).toHaveCount(0);
+      }
+      let revealer: Page | undefined;
+      for (const page of session.pages) {
+        if ((await page.getByTestId('herd-mentality-reveal-button').count()) > 0) {
+          revealer = page;
+          break;
+        }
+      }
+      expect(revealer).toBeDefined();
+      if (!revealer) throw new Error('No authoritative host can reveal the round');
+      for (const page of session.pages) {
+        if (page !== revealer) {
+          await expect(page.getByTestId('herd-mentality-reveal-button')).toHaveCount(0);
+        }
+      }
 
-      await host!.getByTestId('herd-mentality-reveal-button').click();
-      await expect(host!.getByTestId('herd-mentality-groups')).toBeVisible();
-      await expect(host!.getByTestId('herd-mentality-groups')).toContainText('pizza');
-      await expect(host!.getByTestId('herd-mentality-next-button')).toBeVisible();
-      await host!.getByTestId('herd-mentality-next-button').click();
+      await revealer.getByTestId('herd-mentality-reveal-button').click();
+      await expect(revealer.getByTestId('herd-mentality-groups')).toBeVisible();
+      await expect(revealer.getByTestId('herd-mentality-groups')).toContainText('pizza');
+      await expect(revealer.getByTestId('herd-mentality-next-button')).toBeVisible();
+      await revealer.getByTestId('herd-mentality-next-button').click();
+      await expect(revealer.getByTestId('herd-mentality-question')).toBeVisible();
+      await expect(revealer.getByTestId('herd-mentality-answer-input')).toHaveValue('');
+      await revealer.setViewportSize({ width: 320, height: 800 });
+      await revealer.evaluate(() => {
+        document.documentElement.style.fontSize = '200%';
+      });
+      await expect
+        .poll(() =>
+          revealer!.evaluate(
+            () => document.documentElement.scrollWidth <= document.documentElement.clientWidth
+          )
+        )
+        .toBe(true);
+    } finally {
+      await closeSession(session);
+    }
+  });
+
+  test('reaches the target, shows the final scoreboard, and replays through the platform overlay', async ({
+    browser,
+  }) => {
+    const session = await openSession(browser);
+    try {
+      await launch(session);
+      const [host, ben, clara, david] = session.pages;
+      await host!.getByRole('button', { name: 'Spiel starten' }).click();
       await expect(host!.getByTestId('herd-mentality-question')).toBeVisible();
-      await expect(host!.getByTestId('herd-mentality-answer-input')).toHaveValue('');
+
+      for (let round = 1; round <= 8; round += 1) {
+        for (const page of [host!, ben!, clara!, david!]) {
+          await page.getByTestId('herd-mentality-answer-input').fill('Gemeinsam');
+          await page.getByTestId('herd-mentality-answer-submit').click();
+        }
+        await expect(host!.getByTestId('herd-mentality-reveal')).toBeVisible();
+        await host!.getByTestId('herd-mentality-reveal-button').click();
+        if (round < 8) {
+          await expect(host!.getByTestId('herd-mentality-next-button')).toBeVisible();
+          await host!.getByTestId('herd-mentality-next-button').click();
+          await expect(host!.getByTestId('herd-mentality-question')).toBeVisible();
+        }
+      }
+
+      await expect(host!.getByTestId('herd-mentality-gameover')).toBeVisible();
+      await expect(host!.getByRole('dialog', { name: 'Spiel beendet' })).toBeVisible();
+      await expect(host!.getByTestId('platform-replay')).toBeFocused();
+      await expect(host!.getByTestId('platform-return')).toBeVisible();
+      await expect(ben!.getByText('Warte auf die Entscheidung des Hosts…')).toBeVisible();
+
+      await host!.getByTestId('platform-replay').click();
+      await expect(host!.getByTestId('herd-mentality-lobby')).toBeVisible({ timeout: 15_000 });
+      await expect(ben!.getByTestId('herd-mentality-lobby')).toBeVisible({ timeout: 15_000 });
+
+      await host!.getByRole('button', { name: 'Spiel starten' }).click();
+      for (let round = 1; round <= 8; round += 1) {
+        for (const page of [host!, ben!, clara!, david!]) {
+          await page.getByTestId('herd-mentality-answer-input').fill('Gemeinsam');
+          await page.getByTestId('herd-mentality-answer-submit').click();
+        }
+        await expect(host!.getByTestId('herd-mentality-reveal')).toBeVisible();
+        await host!.getByTestId('herd-mentality-reveal-button').click();
+        if (round < 8) {
+          await host!.getByTestId('herd-mentality-next-button').click();
+          await expect(host!.getByTestId('herd-mentality-question')).toBeVisible();
+        }
+      }
+      await expect(host!.getByRole('dialog', { name: 'Spiel beendet' })).toBeVisible();
+      await host!.getByTestId('platform-return').click();
+      await expect(host!).toHaveURL(/\/party\/[A-Z0-9]+$/);
+      await expect(ben!).toHaveURL(/\/party\/[A-Z0-9]+$/);
     } finally {
       await closeSession(session);
     }

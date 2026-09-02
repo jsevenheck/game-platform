@@ -1,6 +1,6 @@
 # Herd Mentality – Implementation Plan
 
-Status: Bounded implementation complete; extended E2E/accessibility coverage remains open
+Status: Bounded implementation and hardening complete; manual screen-reader and production-browser smoke remain unavailable
 Branch: `feat/herd-mentality`
 Base: `feat/estimate-game` at `e71727d3502e2b66a2f708d3e0c7ebb24caacc09`
 
@@ -115,7 +115,7 @@ commercial title's artwork, wording, prompt text, or branding. Working game ID:
       detection as pure functions.
 - [x] Implement prompt CSV loading, validation, caching, fallback data, and the
       test file-reader injection pattern.
-- [ ] Add focused Vitest coverage for normalization, duplicate groups,
+- [x] Add focused Vitest coverage for normalization, duplicate groups,
       multiple unmatched answers, pink-cow transfer/retention, winning with and
       without the pink cow, prompt parsing, invalid rows, and boundary values.
 
@@ -130,7 +130,7 @@ commercial title's artwork, wording, prompt text, or branding. Working game ID:
 - [x] Ensure all callback-bearing handlers use
       `startSocketHandlerInstrumentation`; no-callback events use a no-op ack.
 - [x] Add shared logger and namespace connection/disconnect instrumentation.
-- [ ] Test negative authorization and phase cases, hidden answer privacy after
+- [x] Test negative authorization and phase cases, hidden answer privacy after
       one submission, connected-player quorum, duplicate submissions, host-only
       transitions, one-socket rebinding, and cleanup by `matchKey`.
 
@@ -144,7 +144,7 @@ commercial title's artwork, wording, prompt text, or branding. Working game ID:
       with `ended` and the platform replay/return overlay.
 - [x] Implement focused components for lobby, question/answer entry, waiting,
       reveal/group results, scoreboard, and game-over state.
-- [ ] Add accessible labels, `aria-invalid`/`aria-describedby` errors,
+- [x] Add accessible labels, `aria-invalid`/`aria-describedby` errors,
       phase-live regions, keyboard operation, focus management, 44px touch targets,
       reduced-motion handling, and no horizontal overflow at 320px/200% text size.
 
@@ -154,14 +154,14 @@ commercial title's artwork, wording, prompt text, or branding. Working game ID:
       browser contexts and stable role/label/test-id locators.
 - [x] Cover the platform flow with four players: create party, join, launch, start,
       simultaneous answers, reveal, score, and next round.
-- [ ] Verify exhaustively that answer text and group counts are absent from every client
+- [x] Verify that answer text and group counts are absent from every client
       before reveal, including after the first submission.
-- [ ] Verify invalid/duplicate submissions do not advance the phase and expose
+- [x] Verify invalid/duplicate submissions do not advance the phase and expose
       an accessible error.
-- [ ] Verify pink-cow behavior, winner blocking while pink cow is held, final
+- [x] Verify pink-cow behavior, winner blocking while pink cow is held, final
       scoreboard, replay, and return-to-party overlay.
-- [ ] Verify reconnect during an active round and disconnect quorum behavior.
-- [ ] Verify mobile layout, 200% text size, focus order, and document-level
+- [x] Verify reconnect during an active round and disconnect quorum behavior.
+- [x] Verify mobile layout, 200% text size, focus order, and document-level
       horizontal overflow.
 
 ### Phase 6 – Documentation and catalogue
@@ -188,7 +188,8 @@ commercial title's artwork, wording, prompt text, or branding. Working game ID:
 - [x] Run `pnpm test:e2e` and separate production HTTP smoke checks. Browser smoke
       was blocked because no supported browser was available in the environment.
 - [x] Run `pnpm audit --audit-level=high`: no known vulnerabilities found.
-- [ ] Run the final wiring/docs/privacy/accessibility audit.
+- [x] Run the bounded wiring/docs/privacy/accessibility audit with automated
+      browser evidence; manual screen-reader verification remains unavailable.
 - [x] Commit the completed slice, push, and verify
       `git log -1 --format=%H` equals `git ls-remote origin
 refs/heads/feat/herd-mentality`.
@@ -198,12 +199,13 @@ refs/heads/feat/herd-mentality`.
 ## Validation record
 
 - `pnpm test:herd-mentality` — passed.
-- `pnpm test` — 44 test files / 402 tests passed.
+- `pnpm test` — 45 test files / 408 tests passed.
 - `pnpm typecheck` — passed.
 - `pnpm lint` — passed.
 - `pnpm format:check` and `git diff --check` — passed.
 - `pnpm build` — passed; compiled `prompts.csv` is present and non-empty.
-- `pnpm test:e2e` — 62 tests passed, including the four-player Herd Mentality flow.
+- `pnpm test:e2e` — 63 tests passed, including the four-player Herd Mentality flow,
+  final target, replay, and return-to-party flows.
 - Production HTTP smoke — `/health` and `/` returned HTTP 200.
 - Production browser smoke — not run because no supported browser was available
   to the browser harness; Playwright coverage ran successfully.

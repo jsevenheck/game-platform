@@ -69,3 +69,20 @@ const groupText = (group: { playerNames: string[]; count: number }) =>
     </p>
   </section>
 </template>
+
+<style scoped>
+[data-testid='herd-mentality-reveal'] {
+  width: 100%;
+  min-width: 0;
+  max-width: 100%;
+  box-sizing: border-box;
+}
+[data-testid='herd-mentality-reveal'] h2,
+[data-testid='herd-mentality-reveal'] li,
+[data-testid='herd-mentality-reveal'] strong {
+  max-width: 100%;
+  white-space: normal;
+  overflow-wrap: anywhere;
+  word-break: break-word;
+}
+</style>
