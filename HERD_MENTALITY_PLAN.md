@@ -1,6 +1,6 @@
 # Herd Mentality – Implementation Plan
 
-Status: Bounded implementation and hardening complete; production browser smoke verified; manual screen-reader verification remains unavailable
+Status: Bounded implementation and hardening complete; production browser smoke and Graphify refresh verified; manual screen-reader verification remains unavailable
 Branch: `feat/herd-mentality`
 Base: `feat/estimate-game` at `e71727d3502e2b66a2f708d3e0c7ebb24caacc09`
 
@@ -215,8 +215,10 @@ refs/heads/feat/herd-mentality`.
 - `pnpm audit` and `pnpm audit --audit-level=high` — no known vulnerabilities
   found after the workspace override `qs: 6.16.0`; `pnpm why` confirms one qs
   version on both Express paths.
-- Graphify refresh/query — not verified: the available CLI probe timed out;
-  no Graphify result is claimed.
+- Graphify refresh/query — `graphify 0.9.53`, `graphify update .` completed with
+  2,854 nodes, 5,823 edges, and 162 communities; `check-update` clean. Targeted
+  English wiring query returned the Herd UI, handlers, room model, registries,
+  Vite, and build relationships.
 
 ## Explicit non-goals for the first slice
 
