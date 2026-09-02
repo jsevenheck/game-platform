@@ -22,7 +22,7 @@ pnpm install        # install all dependencies
 pnpm dev            # start platform (server + client)
 pnpm build          # build client + server for production
 pnpm start          # run production server from dist/
-pnpm test           # run all unit tests (vitest, all 7 games)
+pnpm test           # run all unit tests (vitest, all 8 games)
 pnpm test:blackout  # run Blackout unit tests
 pnpm test:imposter  # run Imposter unit tests
 pnpm test:secret-signals  # run Secret Signals unit tests

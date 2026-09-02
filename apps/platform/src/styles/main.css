@@ -63,6 +63,10 @@
   --color-kritzelagent-hover: #ea580c;
   --color-kritzelagent-muted: rgba(249, 115, 22, 0.12);
 
+  --color-herd-mentality: #d97706;
+  --color-herd-mentality-hover: #b45309;
+  --color-herd-mentality-muted: rgba(217, 119, 6, 0.12);
+
   /* Semantic */
   --color-danger: #ef4444;
   --color-danger-muted: rgba(239, 68, 68, 0.12);
@@ -215,7 +219,8 @@
   .ui-btn-primary[class*='bg-flip7'],
   .ui-btn-primary[class*='bg-scout'],
   .ui-btn-primary[class*='bg-estimate'],
-  .ui-btn-primary[class*='bg-kritzelagent'] {
+  .ui-btn-primary[class*='bg-kritzelagent'],
+  .ui-btn-primary[class*='bg-herd-mentality'] {
     background-image: none !important;
   }
 

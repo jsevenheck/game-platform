@@ -1,6 +1,6 @@
 # Herd Mentality – Implementation Plan
 
-Status: Phase 0 – plan committed before implementation
+Status: Bounded implementation complete; extended E2E/accessibility coverage remains open
 Branch: `feat/herd-mentality`
 Base: `feat/estimate-game` at `e71727d3502e2b66a2f708d3e0c7ebb24caacc09`
 
@@ -58,7 +58,7 @@ commercial title's artwork, wording, prompt text, or branding. Working game ID:
   target-score detection, host checks, connection quorum, and all phase
   transitions are server-owned.
 - **Content:** original German prompts in
-  `games/herd-mentality/server/data/questions.csv`, loaded once with a tested
+  `games/herd-mentality/server/data/prompts.csv`, loaded once with a tested
   file-reader injection and a built-in fallback. No database, admin UI, or hot
   reload in the first slice.
 - **Privacy:** public room views redact submitted answer text and all group
@@ -93,106 +93,121 @@ commercial title's artwork, wording, prompt text, or branding. Working game ID:
 
 ### Phase 1 – Scaffold and platform wiring
 
-- [ ] Create `games/herd-mentality/package.json` as a private CommonJS
-  workspace package.
-- [ ] Add core contracts: `constants.ts`, `types.ts`, and `events.ts`.
-- [ ] Add server/UI directory structure and strict UI TypeScript config.
-- [ ] Add server `index.ts` exports for `definition`, `register`, and
-  `cleanupMatch`.
-- [ ] Add the game to the server registry and client registry.
-- [ ] Add both Vite changes: `@herd-mentality-ui` alias and the
-  `sharedAliasPlugin()` branch.
-- [ ] Add the platform Vue module declaration and Herd accent tokens.
-- [ ] Add the Vitest project, root `test:herd-mentality` script, and Docker
-  manifest-layer `COPY` entry.
-- [ ] Run `pnpm install` and `pnpm typecheck` after the workspace scaffold.
+- [x] Create `games/herd-mentality/package.json` as a private CommonJS
+      workspace package.
+- [x] Add core contracts: `constants.ts`, `types.ts`, and `events.ts`.
+- [x] Add server/UI directory structure and strict UI TypeScript config.
+- [x] Add server `index.ts` exports for `definition`, `register`, and
+      `cleanupMatch`.
+- [x] Add the game to the server registry and client registry.
+- [x] Add both Vite changes: `@herd-mentality-ui` alias and the
+      `sharedAliasPlugin()` branch.
+- [x] Add the platform Vue module declaration and Herd accent tokens.
+- [x] Add the Vitest project, root `test:herd-mentality` script, and Docker
+      manifest-layer `COPY` entry.
+- [x] Run `pnpm install --lockfile-only` and `pnpm typecheck` after the workspace scaffold.
 
 ### Phase 2 – Core rules and prompt library
 
-- [ ] Implement deterministic answer normalization with explicit length and
-  empty-input boundaries.
-- [ ] Implement answer grouping, cow allocation, pink-cow transfer, and winner
-  detection as pure functions.
-- [ ] Implement prompt CSV loading, validation, caching, fallback data, and the
-  test file-reader injection pattern.
+- [x] Implement deterministic answer normalization with explicit length and
+      empty-input boundaries.
+- [x] Implement answer grouping, cow allocation, pink-cow transfer, and winner
+      detection as pure functions.
+- [x] Implement prompt CSV loading, validation, caching, fallback data, and the
+      test file-reader injection pattern.
 - [ ] Add focused Vitest coverage for normalization, duplicate groups,
-  multiple unmatched answers, pink-cow transfer/retention, winning with and
-  without the pink cow, prompt parsing, invalid rows, and boundary values.
+      multiple unmatched answers, pink-cow transfer/retention, winning with and
+      without the pink cow, prompt parsing, invalid rows, and boundary values.
 
 ### Phase 3 – Authoritative server
 
-- [ ] Implement `Player`, `Room`, round state, and indexed socket/session
-  ownership following the current game patterns.
-- [ ] Implement `roundManager`, `scoreManager`, and `broadcastManager` with
-  phase-safe public views.
-- [ ] Implement and test `autoJoinRoom`, reconnect/resume, `startGame`,
-  `submitAnswer`, `nextRound`, `requestState`, and disconnect handling.
-- [ ] Ensure all callback-bearing handlers use
-  `startSocketHandlerInstrumentation`; no-callback events use a no-op ack.
-- [ ] Add shared logger and namespace connection/disconnect instrumentation.
+- [x] Implement `Player`, `Room`, round state, and indexed socket/session
+      ownership following the current game patterns.
+- [x] Implement `roundManager`, `scoreManager`, and `broadcastManager` with
+      phase-safe public views.
+- [x] Implement `autoJoinRoom`, reconnect/resume, `startGame`,
+      `submitAnswer`, `nextRound`, `requestState`, and disconnect handling.
+- [x] Ensure all callback-bearing handlers use
+      `startSocketHandlerInstrumentation`; no-callback events use a no-op ack.
+- [x] Add shared logger and namespace connection/disconnect instrumentation.
 - [ ] Test negative authorization and phase cases, hidden answer privacy after
-  one submission, connected-player quorum, duplicate submissions, host-only
-  transitions, one-socket rebinding, and cleanup by `matchKey`.
+      one submission, connected-player quorum, duplicate submissions, host-only
+      transitions, one-socket rebinding, and cleanup by `matchKey`.
 
 ### Phase 4 – Vue game client
 
-- [ ] Implement `useSocket` with `joinToken` in handshake auth and guaranteed
-  disconnect on unmount.
-- [ ] Implement the Pinia game store with typed room updates, action errors,
-  reconnect state, and session persistence.
-- [ ] Implement `App.vue` and `PlatformAdapter.vue`, including `phase-change`
-  with `ended` and the platform replay/return overlay.
-- [ ] Implement focused components for lobby, question/answer entry, waiting,
-  reveal/group results, scoreboard, and game-over state.
+- [x] Implement `useSocket` with `joinToken` in handshake auth and guaranteed
+      disconnect on unmount.
+- [x] Implement the Pinia game store with typed room updates, action errors,
+      reconnect state, and session persistence.
+- [x] Implement `App.vue` and `PlatformAdapter.vue`, including `phase-change`
+      with `ended` and the platform replay/return overlay.
+- [x] Implement focused components for lobby, question/answer entry, waiting,
+      reveal/group results, scoreboard, and game-over state.
 - [ ] Add accessible labels, `aria-invalid`/`aria-describedby` errors,
-  phase-live regions, keyboard operation, focus management, 44px touch targets,
-  reduced-motion handling, and no horizontal overflow at 320px/200% text size.
+      phase-live regions, keyboard operation, focus management, 44px touch targets,
+      reduced-motion handling, and no horizontal overflow at 320px/200% text size.
 
 ### Phase 5 – Full-flow E2E
 
-- [ ] Add `games/herd-mentality/e2e/game.spec.ts` using separate platform
-  browser contexts and stable role/label/test-id locators.
-- [ ] Cover the complete platform flow with four players: create party, join,
-  launch, start, simultaneous answers, reveal, score, and next round.
-- [ ] Verify that answer text and group counts are absent from every client
-  before reveal, including after the first submission.
+- [x] Add `games/herd-mentality/e2e/game.spec.ts` using separate platform
+      browser contexts and stable role/label/test-id locators.
+- [x] Cover the platform flow with four players: create party, join, launch, start,
+      simultaneous answers, reveal, score, and next round.
+- [ ] Verify exhaustively that answer text and group counts are absent from every client
+      before reveal, including after the first submission.
 - [ ] Verify invalid/duplicate submissions do not advance the phase and expose
-  an accessible error.
+      an accessible error.
 - [ ] Verify pink-cow behavior, winner blocking while pink cow is held, final
-  scoreboard, replay, and return-to-party overlay.
+      scoreboard, replay, and return-to-party overlay.
 - [ ] Verify reconnect during an active round and disconnect quorum behavior.
 - [ ] Verify mobile layout, 200% text size, focus order, and document-level
-  horizontal overflow.
+      horizontal overflow.
 
 ### Phase 6 – Documentation and catalogue
 
-- [ ] Add `games/herd-mentality/README.md` with original rules, limits, prompt
-  data policy, and platform-only runtime instructions.
-- [ ] Add `games/herd-mentality/docs/api.md` with exact Socket.IO payloads,
-  acknowledgements, privacy boundaries, and errors.
-- [ ] Add `games/herd-mentality/docs/architecture.md` with state machine,
-  ownership, scoring decisions, lifecycle logs, and cleanup behavior.
-- [ ] Update `docs/games.md` and `docs/README.md` with the user-facing entry.
-- [ ] Update the root README's stale game-count/test comments while preserving
-  historical statements as historical where applicable.
-- [ ] Reconcile this plan's checklist and validation results in the same
-  commits as the corresponding implementation slices.
+- [x] Add `games/herd-mentality/README.md` with original rules, limits, prompt
+      data policy, and platform-only runtime instructions.
+- [x] Add `games/herd-mentality/docs/api.md` with exact Socket.IO payloads,
+      acknowledgements, privacy boundaries, and errors.
+- [x] Add `games/herd-mentality/docs/architecture.md` with state machine,
+      ownership, scoring decisions, lifecycle logs, and cleanup behavior.
+- [x] Update `docs/games.md` and `docs/README.md` with the user-facing entry.
+- [x] Update the root README's stale game-count/test comments while preserving
+      historical statements as historical where applicable.
+- [x] Reconcile this plan's checklist and validation results in the same
+      commits as the corresponding implementation slices.
 
 ### Phase 7 – Release gates and checkpoint
 
-- [ ] Run focused tests: `pnpm test:herd-mentality`.
-- [ ] Run complete gates: `pnpm typecheck`, `pnpm lint`, `pnpm format:check`,
-  `pnpm test`, and `pnpm build`.
-- [ ] Verify the built prompt asset is present and non-empty at its compiled
-  server path.
-- [ ] Run `pnpm test:e2e` and separate production HTTP/browser smoke checks.
-- [ ] Run `pnpm audit --audit-level=high` and record the actual result.
+- [x] Run focused tests: `pnpm test:herd-mentality`.
+- [x] Run complete gates: `pnpm typecheck`, `pnpm lint`, `pnpm format:check`,
+      `pnpm test`, and `pnpm build`.
+- [x] Verify the built prompt asset is present and non-empty at its compiled
+      server path.
+- [x] Run `pnpm test:e2e` and separate production HTTP smoke checks. Browser smoke
+      was blocked because no supported browser was available in the environment.
+- [x] Run `pnpm audit --audit-level=high`: no known vulnerabilities found.
 - [ ] Run the final wiring/docs/privacy/accessibility audit.
 - [ ] Commit the completed slice, push, and verify
-  `git log -1 --format=%H` equals `git ls-remote origin
-  refs/heads/feat/herd-mentality`.
+      `git log -1 --format=%H` equals `git ls-remote origin
+refs/heads/feat/herd-mentality`.
 - [ ] Verify a clean worktree and that the branch remains based on the chosen
-  Estimate base.
+      Estimate base.
+
+## Validation record
+
+- `pnpm test:herd-mentality` — passed.
+- `pnpm test` — 44 test files / 402 tests passed.
+- `pnpm typecheck` — passed.
+- `pnpm lint` — passed.
+- `pnpm format:check` and `git diff --check` — passed.
+- `pnpm build` — passed; compiled `prompts.csv` is present and non-empty.
+- `pnpm test:e2e` — 62 tests passed, including the four-player Herd Mentality flow.
+- Production HTTP smoke — `/health` and `/` returned HTTP 200.
+- Production browser smoke — not run because no supported browser was available
+  to the browser harness; Playwright coverage ran successfully.
+- `pnpm audit --audit-level=high` — no known vulnerabilities found.
 
 ## Explicit non-goals for the first slice
 

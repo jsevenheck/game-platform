@@ -173,6 +173,8 @@ importers:
 
   games/flip7: {}
 
+  games/herd-mentality: {}
+
   games/imposter: {}
 
   games/kritzelagent: {}

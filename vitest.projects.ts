@@ -103,6 +103,19 @@ export const kritzelagentProject = {
   },
 };
 
+export const herdMentalityProject = {
+  resolve: {
+    alias: [{ find: '@shared', replacement: resolve(GAMES_ROOT, 'herd-mentality/core/src') }],
+  },
+  test: {
+    name: 'herd-mentality',
+    include: ['games/herd-mentality/__tests__/**/*.test.ts'],
+    environment: 'node',
+    globals: true,
+    clearMocks: true,
+  },
+};
+
 export const allProjects = [
   platformProject,
   blackoutProject,
@@ -112,4 +125,5 @@ export const allProjects = [
   scoutProject,
   estimateProject,
   kritzelagentProject,
+  herdMentalityProject,
 ];

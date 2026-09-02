@@ -125,7 +125,21 @@ const kritzelagentModule: GameServerModule = {
   cleanupMatch: kritzelagentCleanup,
 };
 
-// ─── Registry ─────────────────────────────────────────────────────────────────
+// ─── Herd Mentality ────────────────────────────────────────────────────────────
+
+import {
+  definition as herdMentalityDef,
+  register as herdMentalityRegister,
+  cleanupMatch as herdMentalityCleanup,
+} from '../../../../games/herd-mentality/server/src/index';
+
+const herdMentalityModule: GameServerModule = {
+  definition: herdMentalityDef,
+  registerServer(io: Server, namespacePath: string) {
+    herdMentalityRegister(io, namespacePath);
+  },
+  cleanupMatch: herdMentalityCleanup,
+};
 
 export const gameRegistry = new Map<string, GameServerModule>([
   ['blackout', blackoutModule],
@@ -135,6 +149,7 @@ export const gameRegistry = new Map<string, GameServerModule>([
   ['scout', scoutModule],
   ['estimate', estimateModule],
   ['kritzelagent', kritzelagentModule],
+  ['herd-mentality', herdMentalityModule],
 ]);
 
 export function getGame(gameId: string): GameServerModule | undefined {
