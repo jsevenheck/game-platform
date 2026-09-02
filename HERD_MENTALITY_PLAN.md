@@ -185,9 +185,10 @@ commercial title's artwork, wording, prompt text, or branding. Working game ID:
       `pnpm test`, and `pnpm build`.
 - [x] Verify the built prompt asset is present and non-empty at its compiled
       server path.
-- [x] Run `pnpm test:e2e` and separate production HTTP smoke checks. Browser smoke
-      was blocked because no supported browser was available in the environment.
-- [x] Run `pnpm audit --audit-level=high`: no known vulnerabilities found.
+- [x] Run `pnpm test:e2e` and separate production HTTP smoke checks. Production
+      browser smoke is verified separately against port 3000.
+- [x] Run `pnpm audit --audit-level=high`: no known vulnerabilities found after
+      pinning transitive `qs` to the published patched `6.16.0` release.
 - [x] Run the bounded wiring/docs/privacy/accessibility audit with automated
       browser evidence; manual screen-reader verification remains unavailable.
 - [x] Commit the completed slice, push, and verify
@@ -195,6 +196,8 @@ commercial title's artwork, wording, prompt text, or branding. Working game ID:
 refs/heads/feat/herd-mentality`.
 - [x] Verify a clean worktree and that the branch remains based on the chosen
       Estimate base.
+- [x] Re-run `pnpm install --frozen-lockfile` and the complete local gate chain
+      after the dependency override.
 
 ## Validation record
 
@@ -207,9 +210,13 @@ refs/heads/feat/herd-mentality`.
 - `pnpm test:e2e` — 63 tests passed, including the four-player Herd Mentality flow,
   final target, replay, and return-to-party flows.
 - Production HTTP smoke — `/health` and `/` returned HTTP 200.
-- Production browser smoke — not run because no supported browser was available
-  to the browser harness; Playwright coverage ran successfully.
-- `pnpm audit --audit-level=high` — no known vulnerabilities found.
+- Production browser smoke — `1/1` passed against the freshly built server on
+  `http://127.0.0.1:3000`; server stopped afterward.
+- `pnpm audit` and `pnpm audit --audit-level=high` — no known vulnerabilities
+  found after the workspace override `qs: 6.16.0`; `pnpm why` confirms one qs
+  version on both Express paths.
+- Graphify refresh/query — not verified: the available CLI probe timed out;
+  no Graphify result is claimed.
 
 ## Explicit non-goals for the first slice
 
