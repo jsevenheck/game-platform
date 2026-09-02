@@ -1,6 +1,6 @@
 # Herd Mentality – Implementation Plan
 
-Status: Bounded implementation and hardening complete; manual screen-reader and production-browser smoke remain unavailable
+Status: Bounded implementation and hardening complete; production browser smoke verified; manual screen-reader verification remains unavailable
 Branch: `feat/herd-mentality`
 Base: `feat/estimate-game` at `e71727d3502e2b66a2f708d3e0c7ebb24caacc09`
 
