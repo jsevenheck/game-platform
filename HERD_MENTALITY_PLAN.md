@@ -189,10 +189,10 @@ commercial title's artwork, wording, prompt text, or branding. Working game ID:
       was blocked because no supported browser was available in the environment.
 - [x] Run `pnpm audit --audit-level=high`: no known vulnerabilities found.
 - [ ] Run the final wiring/docs/privacy/accessibility audit.
-- [ ] Commit the completed slice, push, and verify
+- [x] Commit the completed slice, push, and verify
       `git log -1 --format=%H` equals `git ls-remote origin
 refs/heads/feat/herd-mentality`.
-- [ ] Verify a clean worktree and that the branch remains based on the chosen
+- [x] Verify a clean worktree and that the branch remains based on the chosen
       Estimate base.
 
 ## Validation record
