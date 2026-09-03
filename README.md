@@ -13,6 +13,7 @@ A real-time multiplayer party game platform built as a single **pnpm workspace m
 | **Scout**          | Ladder-climbing card game about timing, scouting, and hand management                 | 2-5     |
 | **Estimate**       | Numeric trivia where the closest estimate wins each round                             | 2-12    |
 | **Kritzelagent**   | Shared drawing and hidden-role deduction: find the player who knows only the category | 5-12    |
+| **Herd Mentality** | Secret majority answers, cows, and Pink Cow                                           | 4-20    |
 
 ## Tech Stack
 
@@ -113,13 +114,14 @@ pnpm dev                  # start dev server (Express + Vite HMR)
 pnpm build                # build client + server for production
 pnpm start                # run production build
 
-pnpm test                 # run all unit tests (Vitest, all 6 game projects)
+pnpm test                 # run all unit tests (Vitest, all 8 game projects)
 pnpm test:blackout        # run Blackout tests only
 pnpm test:imposter        # run Imposter tests only
 pnpm test:secret-signals  # run Secret Signals tests only
 pnpm test:flip7           # run Flip 7 tests only
 pnpm test:scout           # run Scout tests only
 pnpm test:estimate        # run Estimate tests only
+pnpm test:herd-mentality  # run Herd Mentality tests only
 pnpm test:e2e             # run Playwright E2E tests (starts server automatically)
 
 pnpm lint                 # ESLint across all source (zero warnings)
@@ -165,3 +167,4 @@ See [docs/adding-a-new-game.md](docs/adding-a-new-game.md) for the full integrat
 - [games/flip7/docs/](games/flip7/docs/) - Flip 7 API and architecture
 - [games/scout/docs/](games/scout/docs/) - Scout API and architecture
 - [games/estimate/docs/](games/estimate/docs/) - Estimate API and architecture
+- [games/herd-mentality/](games/herd-mentality/) - Herd Mentality rules, API, and architecture

@@ -8,6 +8,7 @@ const expectedGames = [
   'Scout',
   'Estimate',
   'Kritzelagent',
+  'Herd Mentality',
 ];
 
 test.describe('home library', () => {

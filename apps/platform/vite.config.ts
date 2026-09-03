@@ -32,6 +32,8 @@ function sharedAliasPlugin(): Plugin {
         baseDir = resolve(GAMES_ROOT, 'estimate/core/src');
       } else if (normalized.includes('/games/kritzelagent/')) {
         baseDir = resolve(GAMES_ROOT, 'kritzelagent/core/src');
+      } else if (normalized.includes('/games/herd-mentality/')) {
+        baseDir = resolve(GAMES_ROOT, 'herd-mentality/core/src');
       }
       if (!baseDir) return null;
       // Delegate to Vite's resolver so .ts / index.ts extensions are handled
@@ -57,6 +59,7 @@ export default defineConfig({
       { find: '@scout-ui', replacement: resolve(GAMES_ROOT, 'scout/ui-vue/src') },
       { find: '@estimate-ui', replacement: resolve(GAMES_ROOT, 'estimate/ui-vue/src') },
       { find: '@kritzelagent-ui', replacement: resolve(GAMES_ROOT, 'kritzelagent/ui-vue/src') },
+      { find: '@herd-mentality-ui', replacement: resolve(GAMES_ROOT, 'herd-mentality/ui-vue/src') },
     ],
     // Force a single copy of shared framework deps across platform + game code
     dedupe: ['vue', 'pinia', 'vue-router'],

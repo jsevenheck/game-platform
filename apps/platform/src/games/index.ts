@@ -133,8 +133,23 @@ export const clientGameRegistry: PlatformGameModule[] = [
     },
     loadClient: () => import('@kritzelagent-ui/PlatformAdapter.vue'),
   },
+  {
+    definition: {
+      id: 'herd-mentality',
+      name: 'Herd Mentality',
+      minPlayers: 4,
+      maxPlayers: 20,
+    },
+    platformMeta: {
+      icon: '🐄',
+      gradFrom: '#3f2a14',
+      gradTo: '#1d1208',
+      description: 'Find the answer the largest part of the herd will choose',
+      category: 'Mehrheit · Party',
+    },
+    loadClient: () => import('@herd-mentality-ui/PlatformAdapter.vue'),
+  },
 ];
-
 export function getClientGame(gameId: string): PlatformGameModule | undefined {
   return clientGameRegistry.find((g) => g.definition.id === gameId);
 }
