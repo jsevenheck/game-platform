@@ -77,12 +77,12 @@ Use **different** values for local dev and production.
 
 The platform applies several rate limits to protect against abuse:
 
-| Scope | Limit | Config |
-| ----- | ----- | ----- |
-| `createParty` / `joinParty` (per socket id) | 5 actions / 10 s | Hardcoded in `partyHandlers.ts`; reset via `resetPartyActionRateLimit()` in tests |
-| Socket.IO engine connections (per IP) | 20 connections / 10 s | Hardcoded in `index.ts`; respects `X-Forwarded-For` |
-| Admin API (per IP) | 20 requests / 60 s | Hardcoded in `admin.ts` |
-| Admin login (per IP) | 5 attempts / 60 s | Hardcoded in `admin.ts` |
+| Scope                                       | Limit                 | Config                                                                            |
+| ------------------------------------------- | --------------------- | --------------------------------------------------------------------------------- |
+| `createParty` / `joinParty` (per socket id) | 5 actions / 10 s      | Hardcoded in `partyHandlers.ts`; reset via `resetPartyActionRateLimit()` in tests |
+| Socket.IO engine connections (per IP)       | 20 connections / 10 s | Hardcoded in `index.ts`; respects `X-Forwarded-For`                               |
+| Admin API (per IP)                          | 20 requests / 60 s    | Hardcoded in `admin.ts`                                                           |
+| Admin login (per IP)                        | 5 attempts / 60 s     | Hardcoded in `admin.ts`                                                           |
 
 ### Security headers
 
@@ -90,9 +90,9 @@ All HTTP responses include `X-Content-Type-Options: nosniff`, `X-Frame-Options: 
 
 ### Optional game flags
 
-| Variable | Default | Purpose |
-| -------- | ------- | ------- |
-| `IMPOSTER_PERSIST_WORDS` | `true` | When `false`, submitted Imposter words are kept in-memory only (prevents file divergence in multi-instance deployments) |
+| Variable                 | Default | Purpose                                                                                                                 |
+| ------------------------ | ------- | ----------------------------------------------------------------------------------------------------------------------- |
+| `IMPOSTER_PERSIST_WORDS` | `true`  | When `false`, submitted Imposter words are kept in-memory only (prevents file divergence in multi-instance deployments) |
 
 ### Required GitHub secrets
 

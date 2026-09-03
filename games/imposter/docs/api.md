@@ -35,8 +35,8 @@ All callback responses follow one of these shapes:
 ### Session
 
 #### `autoJoinRoom`
-> **Authorization:** The server validates `joinToken` against the active platform party member via `authorizePartyJoin` from `apps/platform/server/party/gameAuth.ts`. Host identity is derived from `party.hostPlayerId`, not from the client-supplied `isHost` flag.
 
+> **Authorization:** The server validates `joinToken` against the active platform party member via `authorizePartyJoin` from `apps/platform/server/party/gameAuth.ts`. Host identity is derived from `party.hostPlayerId`, not from the client-supplied `isHost` flag.
 
 Platform-driven join flow. The server maps `sessionId -> roomCode` and reuses the stable platform
 `playerId` when reconnecting the same player.

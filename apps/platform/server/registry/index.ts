@@ -93,7 +93,53 @@ const scoutModule: GameServerModule = {
   cleanupMatch: scoutCleanup,
 };
 
-// ─── Registry ─────────────────────────────────────────────────────────────────
+// ─── Estimate ─────────────────────────────────────────────────────────────────
+
+import {
+  definition as estimateDef,
+  register as estimateRegister,
+  cleanupMatch as estimateCleanup,
+} from '../../../../games/estimate/server/src/index';
+
+const estimateModule: GameServerModule = {
+  definition: estimateDef,
+  registerServer(io: Server, namespacePath: string) {
+    estimateRegister(io, namespacePath);
+  },
+  cleanupMatch: estimateCleanup,
+};
+
+// ─── Kritzelagent ──────────────────────────────────────────────────────────────
+
+import {
+  definition as kritzelagentDef,
+  register as kritzelagentRegister,
+  cleanupMatch as kritzelagentCleanup,
+} from '../../../../games/kritzelagent/server/src/index';
+
+const kritzelagentModule: GameServerModule = {
+  definition: kritzelagentDef,
+  registerServer(io: Server, namespacePath: string) {
+    kritzelagentRegister(io, namespacePath);
+  },
+  cleanupMatch: kritzelagentCleanup,
+};
+
+// ─── Herd Mentality ────────────────────────────────────────────────────────────
+
+import {
+  definition as herdMentalityDef,
+  register as herdMentalityRegister,
+  cleanupMatch as herdMentalityCleanup,
+} from '../../../../games/herd-mentality/server/src/index';
+
+const herdMentalityModule: GameServerModule = {
+  definition: herdMentalityDef,
+  registerServer(io: Server, namespacePath: string) {
+    herdMentalityRegister(io, namespacePath);
+  },
+  cleanupMatch: herdMentalityCleanup,
+};
 
 export const gameRegistry = new Map<string, GameServerModule>([
   ['blackout', blackoutModule],
@@ -101,6 +147,9 @@ export const gameRegistry = new Map<string, GameServerModule>([
   ['secret-signals', secretSignalsModule],
   ['flip7', flip7Module],
   ['scout', scoutModule],
+  ['estimate', estimateModule],
+  ['kritzelagent', kritzelagentModule],
+  ['herd-mentality', herdMentalityModule],
 ]);
 
 export function getGame(gameId: string): GameServerModule | undefined {

@@ -101,8 +101,55 @@ export const clientGameRegistry: PlatformGameModule[] = [
     },
     loadClient: () => import('@scout-ui/PlatformAdapter.vue'),
   },
+  {
+    definition: {
+      id: 'estimate',
+      name: 'Estimate',
+      minPlayers: 2,
+      maxPlayers: 12,
+    },
+    platformMeta: {
+      icon: '📏',
+      gradFrom: '#0c4a6e',
+      gradTo: '#082f49',
+      description: 'Guess a number for each question — closest to the truth wins the round',
+      category: 'Trivia · Numbers',
+    },
+    loadClient: () => import('@estimate-ui/PlatformAdapter.vue'),
+  },
+  {
+    definition: {
+      id: 'kritzelagent',
+      name: 'Kritzelagent',
+      minPlayers: 5,
+      maxPlayers: 12,
+    },
+    platformMeta: {
+      icon: '✏️',
+      gradFrom: '#7c2d12',
+      gradTo: '#2a120b',
+      description: 'Zeichnet gemeinsam — findet den Agenten ohne Motivkenntnis',
+      category: 'Zeichnen · Deduktion',
+    },
+    loadClient: () => import('@kritzelagent-ui/PlatformAdapter.vue'),
+  },
+  {
+    definition: {
+      id: 'herd-mentality',
+      name: 'Herd Mentality',
+      minPlayers: 4,
+      maxPlayers: 20,
+    },
+    platformMeta: {
+      icon: '🐄',
+      gradFrom: '#3f2a14',
+      gradTo: '#1d1208',
+      description: 'Find the answer the largest part of the herd will choose',
+      category: 'Mehrheit · Party',
+    },
+    loadClient: () => import('@herd-mentality-ui/PlatformAdapter.vue'),
+  },
 ];
-
 export function getClientGame(gameId: string): PlatformGameModule | undefined {
   return clientGameRegistry.find((g) => g.definition.id === gameId);
 }
