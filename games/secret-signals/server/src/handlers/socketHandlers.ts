@@ -15,6 +15,7 @@ import {
   recordNamespaceConnection,
   recordNamespaceDisconnect,
 } from '../../../../../apps/platform/server/observability/socketNamespaceMetrics';
+import { createSocketRateLimiter } from '../../../../../apps/platform/server/observability/rateLimit';
 import {
   authorizePartyJoin,
   normalizeJoinToken,
@@ -60,6 +61,15 @@ import {
 } from '../models/room';
 
 const GAME_ID = 'secret-signals';
+
+// Per-socket rate limit shared by the in-match gameplay actions
+// (focusCard, giveSignal, revealCard) — each is otherwise unbounded once a
+// socket is authorized into a room, so a scripted client could flood any of
+// them at an arbitrary rate. Generous relative to real play (turn/phase
+// checks already prevent a legitimate player from acting out of turn), so
+// this only bounds automated flooding. See docs/adding-a-new-game.md's
+// "Rate limiting" section for the pattern.
+const gameplayRateLimit = createSocketRateLimiter({ windowMs: 1_000, max: 20 });
 
 type GameSocket = Socket<ClientToServerEvents, ServerToClientEvents>;
 
@@ -429,6 +439,9 @@ export function registerGame(io: Server, namespace = `/g/${GAME_ID}`): void {
       const instrumentation = startSocketHandlerInstrumentation(namespace, 'focusCard', GAME_ID);
       const respond = instrumentation.wrapCallback(cb);
       try {
+        if (!gameplayRateLimit.check(socket.id)) {
+          return respond({ ok: false, error: 'Too many requests — slow down' });
+        }
         const room = getRoom(data.roomCode);
         if (!room) return respond({ ok: false, error: 'Room not found' });
         if (room.phase !== 'playing') return respond({ ok: false, error: 'Game not in progress' });
@@ -614,6 +627,9 @@ export function registerGame(io: Server, namespace = `/g/${GAME_ID}`): void {
       const instrumentation = startSocketHandlerInstrumentation(namespace, 'giveSignal', GAME_ID);
       const respond = instrumentation.wrapCallback(cb);
       try {
+        if (!gameplayRateLimit.check(socket.id)) {
+          return respond({ ok: false, error: 'Too many requests — slow down' });
+        }
         const room = getRoom(data.roomCode);
         if (!room) return respond({ ok: false, error: 'Room not found' });
         if (room.phase !== 'playing') return respond({ ok: false, error: 'Game not in progress' });
@@ -660,6 +676,9 @@ export function registerGame(io: Server, namespace = `/g/${GAME_ID}`): void {
       const instrumentation = startSocketHandlerInstrumentation(namespace, 'revealCard', GAME_ID);
       const respond = instrumentation.wrapCallback(cb);
       try {
+        if (!gameplayRateLimit.check(socket.id)) {
+          return respond({ ok: false, error: 'Too many requests — slow down' });
+        }
         const room = getRoom(data.roomCode);
         if (!room) return respond({ ok: false, error: 'Room not found' });
         if (room.phase !== 'playing') return respond({ ok: false, error: 'Game not in progress' });

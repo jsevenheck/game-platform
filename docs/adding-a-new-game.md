@@ -209,6 +209,29 @@ This is the critical integration point. The handler must:
 - For host-only actions, re-sync host state from the active party first, then verify the socket index, room code, player id, `player.connected === true`, and `player.socketId === socket.id`.
 - Do not trust client-provided `isHost` for authorization.
 
+### Rate Limiting
+
+Once a socket is authorized into a room, its in-match gameplay events are otherwise unbounded — turn/phase checks stop a legitimate player from acting out of turn, but nothing stops a scripted client from calling the same event at an arbitrary rate. Rate-limit any event that is high-frequency or otherwise attacker-shaped (real-time input like drawing strokes, or any mutating action a client can call directly without waiting on a server round-trip).
+
+Use `createSocketRateLimiter` from `apps/platform/server/observability/rateLimit.ts` — it owns the map and a self-pruning interval so each game doesn't have to hand-roll that bookkeeping:
+
+```ts
+import { createSocketRateLimiter } from '../../../../apps/platform/server/observability/rateLimit';
+
+// One limiter can be shared across every event it should bound.
+const gameplayRateLimit = createSocketRateLimiter({ windowMs: 1_000, max: 20 });
+
+socket.on('someEvent', (data: unknown, cb: unknown) => {
+  const respond = /* ... */;
+  if (!gameplayRateLimit.check(socket.id)) {
+    return respond({ ok: false, error: 'Too many requests — slow down' });
+  }
+  // ... handler logic ...
+});
+```
+
+Check the limit before any room/auth lookup — rejecting cheaply on a flood matters more than the ordering of error messages. Pick a threshold well above any plausible legitimate rate (kritzelagent's stroke submission uses 10/second since each call is one completed pointer-up stroke, not a per-point event; turn-based actions bounded by phase checks use a more generous ~20/second so it never affects real play). See `apps/platform/__tests__/rateLimit.test.ts` for the primitive's own test coverage, and any of flip7/imposter/secret-signals/kritzelagent's socket handler tests for the per-game pattern.
+
 ### `cleanupMatch` Contract
 
 - Remove the room/session mapped to the given matchKey.

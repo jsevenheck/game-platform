@@ -1,8 +1,12 @@
 import { nanoid } from 'nanoid';
 import type { Player } from '../../../core/src/types';
+import { createSocketIndex } from '../../../../../apps/platform/server/party/gameAuth';
 
-// Map from socket.id → { roomCode, playerId }
-const socketIndex = new Map<string, { roomCode: string; playerId: string }>();
+// Map from socket.id → { roomCode, playerId }. Factored into a shared
+// helper (apps/platform/server/party/gameAuth.ts) since this was previously
+// hand-rolled identically in every game — see that module's "Socket index
+// helper" section for why.
+const socketIndex = createSocketIndex();
 
 export function createPlayer(name: string, isHost: boolean, id = nanoid(8)): Player {
   return {
@@ -17,7 +21,7 @@ export function createPlayer(name: string, isHost: boolean, id = nanoid(8)): Pla
 }
 
 export function setSocketIndex(socketId: string, roomCode: string, playerId: string): void {
-  socketIndex.set(socketId, { roomCode, playerId });
+  socketIndex.set(socketId, roomCode, playerId);
 }
 
 export function getSocketIndex(
@@ -37,9 +41,5 @@ export function deleteSocketIndex(socketId: string): void {
  * otherwise it accumulates indefinitely in this process-lifetime map.
  */
 export function deleteSocketIndexesForRoom(roomCode: string): void {
-  for (const [socketId, index] of socketIndex.entries()) {
-    if (index.roomCode === roomCode) {
-      socketIndex.delete(socketId);
-    }
-  }
+  socketIndex.deleteForRoom(roomCode);
 }

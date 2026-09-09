@@ -258,4 +258,26 @@ describe('secret-signals socketHandlers', () => {
 
     expect(getSocketIndex('socket-1')).toBeUndefined();
   });
+
+  // Regression: focusCard/giveSignal/revealCard previously had no rate
+  // limit, unlike kritzelagent's submitStroke — a scripted client could
+  // flood any of them at an arbitrary rate once connected. Rate limiting
+  // is checked before the room lookup, so a raw connected socket and a
+  // nonexistent room code are enough to exercise it.
+  it('rate-limits rapid giveSignal calls from the same socket', () => {
+    const { namespace, connectionHandler } = setupGame();
+    const socket = createSocket('socket-flood-signal');
+    namespace.sockets.set(socket.id, socket);
+    connectionHandler(socket);
+
+    const responses: Array<{ ok: boolean; error?: string }> = [];
+    for (let i = 0; i < 21; i += 1) {
+      const cb = vi.fn();
+      socket.handlers.giveSignal({ roomCode: 'nonexistent', word: 'x', number: 1 }, cb);
+      responses.push(cb.mock.calls[0][0]);
+    }
+
+    expect(responses.slice(0, 20).every((r) => r.error === 'Room not found')).toBe(true);
+    expect(responses[20]).toEqual({ ok: false, error: 'Too many requests — slow down' });
+  });
 });

@@ -15,6 +15,7 @@ import {
   recordNamespaceConnection,
   recordNamespaceDisconnect,
 } from '../../../../apps/platform/server/observability/socketNamespaceMetrics';
+import { createSocketRateLimiter } from '../../../../apps/platform/server/observability/rateLimit';
 import {
   assignHost,
   authorizePartyJoin,
@@ -64,6 +65,15 @@ import {
 type Flip7Socket = Socket<ClientToServerEvents, ServerToClientEvents>;
 
 const GAME_ID = 'flip7';
+
+// Per-socket rate limit shared by the in-match gameplay actions (hit, stay,
+// chooseActionTarget) — each is otherwise unbounded once a socket is
+// authorized into a room, so a scripted client could flood any of them at
+// an arbitrary rate. Generous relative to real play (turn order and phase
+// checks already prevent a legitimate player from acting out of turn), so
+// this only bounds automated flooding. See docs/adding-a-new-game.md's
+// "Rate limiting" section for the pattern.
+const gameplayRateLimit = createSocketRateLimiter({ windowMs: 1_000, max: 20 });
 
 /**
  * Re-derive `room.hostId` from the live platform party before checking it.
@@ -357,6 +367,7 @@ export function registerFlip7(io: Server, namespace = '/g/flip7'): void {
     socket.on('hit', (data) => {
       const instrumentation = startSocketHandlerInstrumentation(namespace, 'hit', gameId);
       try {
+        if (!gameplayRateLimit.check(socket.id)) return instrumentation.finishRejected();
         const room = getRoom(data.roomCode);
         if (!room || room.phase !== 'playing') return instrumentation.finishRejected();
         const playerId = verifyPlayerInRoom(socket, data.roomCode);
@@ -400,6 +411,7 @@ export function registerFlip7(io: Server, namespace = '/g/flip7'): void {
     socket.on('stay', (data) => {
       const instrumentation = startSocketHandlerInstrumentation(namespace, 'stay', gameId);
       try {
+        if (!gameplayRateLimit.check(socket.id)) return instrumentation.finishRejected();
         const room = getRoom(data.roomCode);
         if (!room || room.phase !== 'playing') return instrumentation.finishRejected();
         const playerId = verifyPlayerInRoom(socket, data.roomCode);
@@ -438,6 +450,7 @@ export function registerFlip7(io: Server, namespace = '/g/flip7'): void {
         gameId
       );
       try {
+        if (!gameplayRateLimit.check(socket.id)) return instrumentation.finishRejected();
         const room = getRoom(data.roomCode);
         if (!room || room.phase !== 'playing') return instrumentation.finishRejected();
         const playerId = verifyPlayerInRoom(socket, data.roomCode);

@@ -164,6 +164,54 @@ export function readArrayIndex(value: unknown): number | undefined {
   return n !== undefined && Number.isInteger(n) && n >= 0 ? n : undefined;
 }
 
+// ─── Socket index helper ─────────────────────────────────────────────────────
+//
+// Every game maintains its own socket→{roomCode, playerId} index (used to
+// resolve which room/player a raw socket event belongs to) and must remove a
+// room's entries from it when that room is deleted — otherwise the index
+// accumulates indefinitely in this process-lifetime map. Blackout, Imposter,
+// Secret Signals, and Flip 7 each hand-rolled an identical implementation of
+// this; `createSocketIndex` factors it into one canonical implementation so
+// a future change to this logic (or a future ninth game) doesn't have to be
+// copy-pasted and kept in sync by hand. Each game still gets its own private
+// `Map` — call this once per game module, not once globally.
+
+export interface SocketIndexEntry {
+  roomCode: string;
+  playerId: string;
+}
+
+export interface SocketIndex {
+  set(socketId: string, roomCode: string, playerId: string): void;
+  get(socketId: string): SocketIndexEntry | undefined;
+  delete(socketId: string): void;
+  /** Remove every entry pointing at `roomCode` (called when the room is deleted). */
+  deleteForRoom(roomCode: string): void;
+}
+
+/** Create a new, private socket→{roomCode, playerId} index for one game module. */
+export function createSocketIndex(): SocketIndex {
+  const socketIndex = new Map<string, SocketIndexEntry>();
+  return {
+    set(socketId, roomCode, playerId) {
+      socketIndex.set(socketId, { roomCode, playerId });
+    },
+    get(socketId) {
+      return socketIndex.get(socketId);
+    },
+    delete(socketId) {
+      socketIndex.delete(socketId);
+    },
+    deleteForRoom(roomCode) {
+      for (const [socketId, index] of socketIndex.entries()) {
+        if (index.roomCode === roomCode) {
+          socketIndex.delete(socketId);
+        }
+      }
+    },
+  };
+}
+
 // ─── Host-sync helpers ───────────────────────────────────────────────────────
 
 /**

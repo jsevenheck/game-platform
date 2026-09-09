@@ -488,4 +488,54 @@ describe('socketHandlers autoJoinRoom', () => {
 
     expect(getSocketIndex('socket-1')).toBeUndefined();
   });
+
+  // Regression: submitVote/submitDescription previously had no rate limit,
+  // unlike kritzelagent's submitStroke — a scripted client could flood
+  // either at an arbitrary rate once connected. Rate limiting is checked
+  // before any room/auth lookup, so a raw connected socket is enough to
+  // exercise it.
+  it('rate-limits rapid submitVote calls from the same socket', () => {
+    const namespace = createNamespace();
+    const io = { of: vi.fn(() => namespace) } as unknown as Server;
+    registerGame(io);
+
+    const connectionHandler = namespace.getConnectionHandler();
+    const socket = createSocket('socket-flood-vote');
+    namespace.sockets.set(socket.id, socket);
+    connectionHandler!(socket);
+
+    const responses: Array<{ ok: boolean; error?: string }> = [];
+    for (let i = 0; i < 21; i += 1) {
+      const cb = vi.fn();
+      socket.handlers.submitVote({ roomCode: 'nonexistent', playerId: 'x', targetId: 'y' }, cb);
+      responses.push(cb.mock.calls[0][0]);
+    }
+
+    expect(responses.slice(0, 20).every((r) => r.error === 'Unauthorized')).toBe(true);
+    expect(responses[20]).toEqual({ ok: false, error: 'Too many requests — slow down' });
+  });
+
+  it('rate-limits rapid submitDescription calls from the same socket', () => {
+    const namespace = createNamespace();
+    const io = { of: vi.fn(() => namespace) } as unknown as Server;
+    registerGame(io);
+
+    const connectionHandler = namespace.getConnectionHandler();
+    const socket = createSocket('socket-flood-desc');
+    namespace.sockets.set(socket.id, socket);
+    connectionHandler!(socket);
+
+    const responses: Array<{ ok: boolean; error?: string }> = [];
+    for (let i = 0; i < 21; i += 1) {
+      const cb = vi.fn();
+      socket.handlers.submitDescription(
+        { roomCode: 'nonexistent', playerId: 'x', description: 'hi' },
+        cb
+      );
+      responses.push(cb.mock.calls[0][0]);
+    }
+
+    expect(responses.slice(0, 20).every((r) => r.error === 'Unauthorized')).toBe(true);
+    expect(responses[20]).toEqual({ ok: false, error: 'Too many requests — slow down' });
+  });
 });
