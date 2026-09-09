@@ -22,6 +22,11 @@ import {
   recordNamespaceConnection,
   recordNamespaceDisconnect,
 } from '../../../../apps/platform/server/observability/socketNamespaceMetrics';
+import {
+  checkFixedWindowRateLimit,
+  pruneExpiredRateLimitEntries,
+  type RateLimitRecord,
+} from '../../../../apps/platform/server/observability/rateLimit';
 import { ROOM_IDLE_TIMEOUT_MS } from '../../core/src/constants';
 import type { ClientToServerEvents, ServerToClientEvents } from '../../core/src/events';
 import type { ServerRoom } from '../../core/src/types';
@@ -53,6 +58,23 @@ type KritzelagentNamespace = Namespace<ClientToServerEvents, ServerToClientEvent
 
 const GAME_ID = 'kritzelagent';
 const INVALID_REQUEST_ERROR = 'Invalid request';
+
+// Per-socket rate limit for stroke submission — the one high-frequency,
+// attacker-shaped payload in this game (real-time drawing input). Well
+// above any plausible human drawing rate (each `submitStroke` is one
+// completed pointer-up stroke, not a per-point event — see
+// ui-vue/src/components/DrawingCanvas.vue), so it only bounds automated
+// flooding, never real play. No other event in this game (or, at the time
+// of writing, any other game in the platform) is submitted at a comparable
+// rate; see docs/adding-a-new-game.md before adding one that is.
+const STROKE_RATE_LIMIT = new Map<string, RateLimitRecord>();
+const STROKE_RATE_LIMIT_WINDOW_MS = 1_000;
+const STROKE_RATE_LIMIT_MAX = 10;
+const strokeRateLimitPruneInterval = setInterval(
+  () => pruneExpiredRateLimitEntries(STROKE_RATE_LIMIT),
+  60_000
+);
+strokeRateLimitPruneInterval.unref?.();
 
 type ActionResponse = { ok: true } | { ok: false; error: string };
 
@@ -368,6 +390,14 @@ export function registerKritzelagent(
       const instrumentation = startSocketHandlerInstrumentation(namespace, 'submitStroke', GAME_ID);
       const respond = createResponder<ActionResponse>(instrumentation, callback);
       try {
+        if (
+          !checkFixedWindowRateLimit(STROKE_RATE_LIMIT, socket.id, {
+            windowMs: STROKE_RATE_LIMIT_WINDOW_MS,
+            max: STROKE_RATE_LIMIT_MAX,
+          })
+        ) {
+          return respond({ ok: false, error: 'Too many strokes — slow down' });
+        }
         if (!isObjectPayload(data)) return respond({ ok: false, error: INVALID_REQUEST_ERROR });
         const roomCode = requiredString(data.roomCode);
         const room = roomCode ? getRoomByCode(roomCode) : undefined;

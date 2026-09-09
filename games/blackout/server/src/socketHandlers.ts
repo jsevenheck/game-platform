@@ -4,6 +4,7 @@ import type { Language, Room } from '../../core/src/types';
 import {
   createComponentLogger,
   readLoggingConfig,
+  toLoggableError,
 } from '../../../../apps/platform/server/logging/logger';
 import {
   attachSocketEventDebugLogging,
@@ -19,6 +20,7 @@ import {
   authorizePartyJoin,
   normalizeJoinToken,
   normalizeStablePlayerId,
+  readString,
   syncRoomHostAfterJoin,
 } from '../../../../apps/platform/server/party/gameAuth';
 import {
@@ -179,7 +181,7 @@ export function registerBlackout(io: Server, namespace = '/g/blackout'): void {
       const instrumentation = startSocketHandlerInstrumentation(namespace, 'autoJoinRoom', gameId);
       const respond = instrumentation.wrapCallback(cb);
       try {
-        const sessionId = data.sessionId?.trim();
+        const sessionId = readString(data?.sessionId)?.trim();
         if (!sessionId) {
           return respond({ ok: false, error: 'Missing session info' });
         }
@@ -312,7 +314,8 @@ export function registerBlackout(io: Server, namespace = '/g/blackout'): void {
         respond({ ok: true, roomCode: room.code, playerId: hostId, resumeToken });
       } catch (err) {
         instrumentation.finishError();
-        throw err;
+        socketLogger.error({ err: toLoggableError(err) }, 'autoJoinRoom failed unexpectedly');
+        respond({ ok: false, error: 'Internal error' });
       }
     });
 
@@ -349,7 +352,8 @@ export function registerBlackout(io: Server, namespace = '/g/blackout'): void {
         respond({ ok: true });
       } catch (err) {
         instrumentation.finishError();
-        throw err;
+        socketLogger.error({ err: toLoggableError(err) }, 'resumePlayer failed unexpectedly');
+        respond({ ok: false, error: 'Internal error' });
       }
     });
 
@@ -413,7 +417,7 @@ export function registerBlackout(io: Server, namespace = '/g/blackout'): void {
         instrumentation.finishSuccess();
       } catch (err) {
         instrumentation.finishError();
-        throw err;
+        socketLogger.error({ err: toLoggableError(err) }, 'leaveRoom failed unexpectedly');
       }
     });
 
@@ -485,7 +489,8 @@ export function registerBlackout(io: Server, namespace = '/g/blackout'): void {
         respond({ ok: true });
       } catch (err) {
         instrumentation.finishError();
-        throw err;
+        socketLogger.error({ err: toLoggableError(err) }, 'startGame failed unexpectedly');
+        respond({ ok: false, error: 'Internal error' });
       }
     });
 
@@ -520,6 +525,11 @@ export function registerBlackout(io: Server, namespace = '/g/blackout'): void {
       try {
         const room = getRoom(data.roomCode);
         if (!room || !room.currentRound) return;
+        // Guard against a duplicated/double-fired event re-scoring or
+        // re-advancing a round that's already been finalized: advanceRound
+        // moves the room out of 'playing' as its very first observable
+        // effect, so a second call for the same round is rejected here.
+        if (room.phase !== 'playing') return;
         if (!verifyPlayer(socket, data.roomCode, room.hostId ?? '')) return;
         if (!room.currentRound.revealed) return;
         if (!room.players[data.winnerId]?.connected) return;
@@ -538,6 +548,8 @@ export function registerBlackout(io: Server, namespace = '/g/blackout'): void {
       try {
         const room = getRoom(data.roomCode);
         if (!room || !room.currentRound) return;
+        // Same duplicate-advance guard as selectWinner above.
+        if (room.phase !== 'playing') return;
         const socketIdx = getSocketIndex(socket.id);
         if (!socketIdx || socketIdx.roomCode !== data.roomCode) return;
         const canSkip = socketIdx.playerId === room.hostId || socketIdx.playerId === room.ownerId;
@@ -549,35 +561,43 @@ export function registerBlackout(io: Server, namespace = '/g/blackout'): void {
     });
 
     socket.on('restartGame', (data) => {
-      const room = getRoom(data.roomCode);
-      if (!room) return;
-      if (!verifyPlayer(socket, data.roomCode, room.hostId ?? '')) {
-        socketLogger.warn(
-          { roomCode: data.roomCode, playerId: data.playerId },
-          'restartGame rejected: actor is not blackout host'
-        );
-        return;
-      }
+      try {
+        const room = getRoom(data.roomCode);
+        if (!room) return;
+        if (!verifyPlayer(socket, data.roomCode, room.hostId ?? '')) {
+          socketLogger.warn(
+            { roomCode: data.roomCode, playerId: data.playerId },
+            'restartGame rejected: actor is not blackout host'
+          );
+          return;
+        }
 
-      resetScores(room);
-      transitionToLobby(room);
-      broadcastRoom(nsp, room);
-      socketLogger.info(
-        {
-          roomCode: room.code,
-          hostPlayerId: room.hostId,
-        },
-        'restarted blackout game'
-      );
+        resetScores(room);
+        transitionToLobby(room);
+        broadcastRoom(nsp, room);
+        socketLogger.info(
+          {
+            roomCode: room.code,
+            hostPlayerId: room.hostId,
+          },
+          'restarted blackout game'
+        );
+      } catch (err) {
+        gameLogger.error({ err, event: 'restartGame' }, 'blackout handler error');
+      }
     });
 
     socket.on('requestState', (data) => {
-      const room = getRoom(data.roomCode);
-      if (!room) return;
-      const socketIdx = getSocketIndex(socket.id);
-      if (!socketIdx || socketIdx.roomCode !== data.roomCode) return;
+      try {
+        const room = getRoom(data.roomCode);
+        if (!room) return;
+        const socketIdx = getSocketIndex(socket.id);
+        if (!socketIdx || socketIdx.roomCode !== data.roomCode) return;
 
-      sendRoomToPlayer(nsp, room, socketIdx.playerId);
+        sendRoomToPlayer(nsp, room, socketIdx.playerId);
+      } catch (err) {
+        gameLogger.error({ err, event: 'requestState' }, 'blackout handler error');
+      }
     });
 
     socket.on('disconnect', (reason) => {
@@ -640,7 +660,7 @@ export function registerBlackout(io: Server, namespace = '/g/blackout'): void {
         instrumentation.finishSuccess();
       } catch (err) {
         instrumentation.finishError();
-        throw err;
+        socketLogger.error({ err: toLoggableError(err) }, 'blackout disconnect handling failed');
       }
     });
   });

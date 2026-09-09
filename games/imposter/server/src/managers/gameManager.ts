@@ -1,6 +1,7 @@
 import type { Room, RoundResult } from '../../../core/src/types';
 import {
   DEFAULT_INFILTRATOR_COUNT,
+  MAX_INFILTRATOR_COUNT,
   DESCRIPTION_MAX_LENGTH,
   WORD_MAX_LENGTH,
   MIN_DISCUSSION_DURATION_MS,
@@ -36,8 +37,8 @@ export function initGameState(room: Room): void {
 
 export function setInfiltratorCount(room: Room, count: number): string | null {
   const connectedCount = Object.values(room.players).filter((player) => player.connected).length;
-  if (count < 0 || count >= connectedCount) {
-    return 'Infiltrator count must be between 0 and player count - 1';
+  if (count < 0 || count > MAX_INFILTRATOR_COUNT || count >= connectedCount) {
+    return `Infiltrator count must be between 0 and ${Math.min(MAX_INFILTRATOR_COUNT, Math.max(connectedCount - 1, 0))}`;
   }
 
   room.infiltratorCount = count;

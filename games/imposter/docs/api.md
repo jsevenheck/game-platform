@@ -131,7 +131,11 @@ configureLobby(
 
 Notes:
 
-- `infiltratorCount` may be `0` for paranoia mode.
+- `infiltratorCount` may be `0` for paranoia mode, otherwise capped at
+  `MAX_INFILTRATOR_COUNT` (currently `1`). Vote resolution can only ever
+  mark one player per round as "caught," with no mechanism to accumulate
+  catches across rounds — configuring more than one infiltrator would make
+  a civilian win permanently unreachable, so the server rejects it.
 - `discussionDurationMs` is server-validated in fixed steps.
 - `targetScore` controls when the match ends.
 
@@ -173,6 +177,7 @@ Requirements:
 
 - at least 3 connected players
 - `infiltratorCount < connectedPlayerCount`
+- `infiltratorCount <= MAX_INFILTRATOR_COUNT` (currently `1`; see `configureLobby` notes above)
 
 ### Description Phase
 

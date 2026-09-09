@@ -222,7 +222,9 @@ Rules:
 
 Host-only lobby controls currently include:
 
-- configure infiltrator count
+- configure infiltrator count (`0`–`MAX_INFILTRATOR_COUNT`, currently `0` or `1` —
+  see the `configureLobby` notes in `docs/api.md` for why more than one
+  infiltrator isn't currently winnable for the civilian team)
 - configure discussion timer
 - configure target score
 - start game

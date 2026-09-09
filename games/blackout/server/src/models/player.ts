@@ -29,3 +29,17 @@ export function getSocketIndex(
 export function deleteSocketIndex(socketId: string): void {
   socketIndex.delete(socketId);
 }
+
+/**
+ * Remove every `socketIndex` entry pointing at `roomCode`. Called when a
+ * room is deleted so a still-connected (or never-cleanly-disconnected)
+ * socket's stale index entry can't outlive the room it referenced —
+ * otherwise it accumulates indefinitely in this process-lifetime map.
+ */
+export function deleteSocketIndexesForRoom(roomCode: string): void {
+  for (const [socketId, index] of socketIndex.entries()) {
+    if (index.roomCode === roomCode) {
+      socketIndex.delete(socketId);
+    }
+  }
+}
