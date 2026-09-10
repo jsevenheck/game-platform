@@ -35,8 +35,8 @@ All callback responses follow one of these shapes:
 ### Session
 
 #### `autoJoinRoom`
-> **Authorization:** The server validates `joinToken` against the active platform party member via `authorizePartyJoin` from `apps/platform/server/party/gameAuth.ts`. Host identity is derived from `party.hostPlayerId`, not from the client-supplied `isHost` flag.
 
+> **Authorization:** The server validates `joinToken` against the active platform party member via `authorizePartyJoin` from `apps/platform/server/party/gameAuth.ts`. Host identity is derived from `party.hostPlayerId`, not from the client-supplied `isHost` flag.
 
 Platform-driven join flow. The server maps `sessionId -> roomCode` and reuses the stable platform
 `playerId` when reconnecting the same player.
@@ -131,7 +131,11 @@ configureLobby(
 
 Notes:
 
-- `infiltratorCount` may be `0` for paranoia mode.
+- `infiltratorCount` may be `0` for paranoia mode, otherwise capped at
+  `MAX_INFILTRATOR_COUNT` (currently `1`). Vote resolution can only ever
+  mark one player per round as "caught," with no mechanism to accumulate
+  catches across rounds — configuring more than one infiltrator would make
+  a civilian win permanently unreachable, so the server rejects it.
 - `discussionDurationMs` is server-validated in fixed steps.
 - `targetScore` controls when the match ends.
 
@@ -173,6 +177,7 @@ Requirements:
 
 - at least 3 connected players
 - `infiltratorCount < connectedPlayerCount`
+- `infiltratorCount <= MAX_INFILTRATOR_COUNT` (currently `1`; see `configureLobby` notes above)
 
 ### Description Phase
 
@@ -192,6 +197,7 @@ Rules:
 - only the current `currentDescriberId` may submit
 - max clue length is 30 characters
 - once all connected turns are completed or skipped, the server transitions to `discussion`
+- rate-limited to 20 requests/second per socket; a call beyond that returns `{ ok: false, error: 'Too many requests — slow down' }` (shared with `submitVote`)
 
 #### `skipDescriptionTurn`
 
@@ -233,6 +239,7 @@ Rules:
 - self-votes are rejected
 - one vote per connected player
 - once all connected players have voted, votes are resolved automatically
+- rate-limited to 20 requests/second per socket (shared with `submitDescription`)
 
 ### Reveal Phase
 

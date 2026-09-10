@@ -7,6 +7,7 @@ import {
   DISCUSSION_DURATION_STEP_MS,
   MIN_TARGET_SCORE,
   MAX_TARGET_SCORE,
+  MAX_INFILTRATOR_COUNT,
 } from '@shared/constants';
 import { useGameStore } from '../stores/game';
 
@@ -126,7 +127,9 @@ function handleSubmitWord() {
             }}</span>
             <button
               class="stepper-btn ui-stepper-btn hover-border-imposter"
-              :disabled="infiltratorCount >= Math.max(connectedCount - 1, 1)"
+              :disabled="
+                infiltratorCount >= Math.min(MAX_INFILTRATOR_COUNT, Math.max(connectedCount - 1, 1))
+              "
               @click="handleConfigChange({ infiltratorCount: infiltratorCount + 1 })"
             >
               +

@@ -16,20 +16,48 @@ import {
   pruneExpiredRateLimitEntries,
   type RateLimitRecord,
 } from './observability/rateLimit';
+import { getTrustedProxyHops, resolveClientIp } from './observability/clientIp';
 
 const app = express();
 const httpServer = createServer(app);
 const serverLogger = createComponentLogger('platform-server');
 
+// Trust exactly one reverse-proxy hop (Traefik — see docker-compose.yml) so
+// Express's own req.ip resolves to the real client address rather than
+// Traefik's. Without this, every request's req.ip is the same value (the
+// proxy's), which the admin login/action rate limiters key on — collapsing
+// them into one shared bucket any anonymous caller can use to lock out
+// every legitimate admin. See observability/clientIp.ts for the same
+// calculation applied to the raw Socket.IO connection handler below, which
+// has no req.ip of its own.
+app.set('trust proxy', getTrustedProxyHops());
+
 registerProcessLogging(serverLogger);
 app.use(express.json());
 app.use(cookieParser());
 app.use(requestLogger);
+// Scoped to what the app actually loads: same-origin hashed build assets
+// and websocket/fetch traffic, plus Google Fonts (main.css imports Syne +
+// JetBrains Mono). No game renders an <img> or loads any other external
+// resource — every visual is text/emoji/CSS or canvas drawing (data: URIs).
+const CONTENT_SECURITY_POLICY = [
+  "default-src 'self'",
+  "script-src 'self'",
+  "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com",
+  "font-src 'self' https://fonts.gstatic.com",
+  "img-src 'self' data: blob:",
+  "connect-src 'self'",
+  "object-src 'none'",
+  "base-uri 'self'",
+  "frame-ancestors 'none'",
+].join('; ');
+
 app.use((_req, res, next) => {
   res.setHeader('X-Content-Type-Options', 'nosniff');
   res.setHeader('X-Frame-Options', 'DENY');
   res.setHeader('Referrer-Policy', 'strict-origin-when-cross-origin');
   res.setHeader('X-XSS-Protection', '0');
+  res.setHeader('Content-Security-Policy', CONTENT_SECURITY_POLICY);
   next();
 });
 registerMetricsRoutes(app, serverLogger);
@@ -39,6 +67,11 @@ const io = new Server(httpServer, {
     origin: process.env.NODE_ENV === 'production' ? false : '*',
     methods: ['GET', 'POST'],
   },
+  // Socket.IO defaults to 1 MB per message. No legitimate payload in this
+  // app (the largest is Kritzelagent's drawing stroke — at most 80 points,
+  // a few KB JSON-encoded) comes close to that; 64 KB leaves generous
+  // headroom while meaningfully bounding an oversized-message flood.
+  maxHttpBufferSize: 64 * 1024,
 });
 
 initializeMetrics();
@@ -66,10 +99,7 @@ connPruneInterval.unref?.();
 io.engine.on('connection', (engineSocket) => {
   if (CONN_RATE_LIMIT_ENABLED) {
     const forwarded = engineSocket.request?.headers?.['x-forwarded-for'];
-    const ip =
-      (typeof forwarded === 'string' ? forwarded.split(',')[0]?.trim() : undefined) ||
-      engineSocket.remoteAddress ||
-      'unknown';
+    const ip = resolveClientIp(forwarded, engineSocket.remoteAddress);
     if (
       !checkFixedWindowRateLimit(connRateLimit, ip, {
         windowMs: CONN_RATE_LIMIT_WINDOW_MS,

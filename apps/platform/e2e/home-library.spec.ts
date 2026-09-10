@@ -1,6 +1,15 @@
 import { expect, test } from '@playwright/test';
 
-const gameNames = ['Blackout', 'Imposter', 'Secret Signals', 'Flip 7', 'Scout'];
+const expectedGames = [
+  'Blackout',
+  'Imposter',
+  'Secret Signals',
+  'Flip 7',
+  'Scout',
+  'Estimate',
+  'Kritzelagent',
+  'Herd Mentality',
+];
 
 test.describe('home library', () => {
   test.beforeEach(async ({ page }) => {
@@ -10,9 +19,9 @@ test.describe('home library', () => {
 
   test('renders every registered game', async ({ page }) => {
     await page.goto('/');
-    await expect(page.getByTestId('game-library-card')).toHaveCount(5);
+    await expect(page.getByTestId('game-library-card')).toHaveCount(expectedGames.length);
 
-    for (const name of gameNames) {
+    for (const name of expectedGames) {
       await expect(page.getByTestId('game-library-card').filter({ hasText: name })).toBeVisible();
     }
   });
