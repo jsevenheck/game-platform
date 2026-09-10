@@ -118,7 +118,26 @@ export function deleteParty(partyId: string): void {
   parties.delete(partyId);
 }
 
-export function schedulePartyCleanup(partyId: string): void {
+/**
+ * Schedule idle-party deletion after {@link PARTY_IDLE_TIMEOUT_MS} of
+ * nobody being connected.
+ *
+ * `onExpire`, when given, runs synchronously right before the party is
+ * deleted — the caller uses it to end the party's active match (via the
+ * game module's `cleanupMatch`) exactly as every other path that ends a
+ * match already does (`triggerMatchTimeout`, `returnToLobby`, `replayGame`,
+ * admin kick/cleanup). Without it, a party that goes idle while
+ * `activeMatch` is still set would be deleted here with no path left to
+ * ever call `cleanupMatch` for that match: `deleteParty` also cancels the
+ * 2-hour match-timeout timer that would otherwise have been the backstop.
+ * partyStore intentionally has no dependency on the game registry, so this
+ * is passed in by the caller (`partyHandlers.ts`) rather than looked up
+ * here.
+ */
+export function schedulePartyCleanup(
+  partyId: string,
+  onExpire?: (party: PartySession) => void
+): void {
   clearPartyCleanup(partyId);
   partyCleanupTimers.set(
     partyId,
@@ -128,6 +147,7 @@ export function schedulePartyCleanup(partyId: string): void {
       if (!party) return;
       const anyConnected = Array.from(party.members.values()).some((m) => m.connected);
       if (!anyConnected) {
+        onExpire?.(party);
         deleteParty(partyId);
       }
     }, PARTY_IDLE_TIMEOUT_MS)
@@ -194,7 +214,12 @@ export function partyToView(party: PartySession) {
     partyId: party.partyId,
     inviteCode: party.inviteCode,
     hostPlayerId: party.hostPlayerId,
-    members: Array.from(party.members.values()).map(({ resumeToken: _rt, ...pub }) => pub),
+    // Strip resumeToken (secret) and socketId (an internal server detail no
+    // client ever reads — an unnecessary exposure of another player's
+    // implementation-level identifier) from the broadcast view.
+    members: Array.from(party.members.values()).map(
+      ({ resumeToken: _rt, socketId: _sid, ...pub }) => pub
+    ),
     selectedGameId: party.selectedGameId,
     activeMatch: party.activeMatch,
     status: party.status,

@@ -12,7 +12,7 @@ import {
   getSessionRoom,
   setSessionToRoom,
 } from '../server/src/models/room';
-import { deleteSocketIndex } from '../server/src/models/player';
+import { deleteSocketIndex, getSocketIndex } from '../server/src/models/player';
 
 describe('room model session mapping cleanup', () => {
   test('deleteRoom removes the embedded session to room mapping', () => {
@@ -26,5 +26,14 @@ describe('room model session mapping cleanup', () => {
     deleteSocketIndex('socket-host');
 
     expect(getSessionRoom(sessionId)).toBeUndefined();
+  });
+
+  test('deleteRoom clears the socket index for every player in the room (F3 regression)', () => {
+    const { room, hostId } = createRoom('Host', 'socket-host-2', 'hub-host-2');
+    expect(getSocketIndex('socket-host-2')).toEqual({ roomCode: room.code, playerId: hostId });
+
+    deleteRoom(room.code);
+
+    expect(getSocketIndex('socket-host-2')).toBeUndefined();
   });
 });

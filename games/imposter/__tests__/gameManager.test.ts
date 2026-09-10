@@ -93,9 +93,9 @@ describe('gameManager', () => {
   describe('setInfiltratorCount', () => {
     test('accepts valid count', () => {
       const room = makeRoom(4);
-      const err = setInfiltratorCount(room, 2);
+      const err = setInfiltratorCount(room, 1);
       expect(err).toBeNull();
-      expect(room.infiltratorCount).toBe(2);
+      expect(room.infiltratorCount).toBe(1);
     });
 
     test('accepts zero (paranoia mode)', () => {
@@ -115,6 +115,17 @@ describe('gameManager', () => {
       const room = makeRoom(4);
       const err = setInfiltratorCount(room, -1);
       expect(err).not.toBeNull();
+    });
+
+    // F2 regression: resolveVotes/finalizeRound can never mark more than one
+    // infiltrator "caught" in a match, so civilians could never win a room
+    // configured with 2+ infiltrators. setInfiltratorCount must reject that
+    // configuration outright rather than silently accepting an unwinnable one.
+    test('rejects a count above MAX_INFILTRATOR_COUNT even when the player count allows it', () => {
+      const room = makeRoom(6);
+      const err = setInfiltratorCount(room, 2);
+      expect(err).not.toBeNull();
+      expect(room.infiltratorCount).toBe(1); // unchanged from the default
     });
   });
 

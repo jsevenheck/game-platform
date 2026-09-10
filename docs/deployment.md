@@ -77,16 +77,30 @@ Use **different** values for local dev and production.
 
 The platform applies several rate limits to protect against abuse:
 
-| Scope                                       | Limit                 | Config                                                                            |
-| ------------------------------------------- | --------------------- | --------------------------------------------------------------------------------- |
-| `createParty` / `joinParty` (per socket id) | 5 actions / 10 s      | Hardcoded in `partyHandlers.ts`; reset via `resetPartyActionRateLimit()` in tests |
-| Socket.IO engine connections (per IP)       | 20 connections / 10 s | Hardcoded in `index.ts`; respects `X-Forwarded-For`                               |
-| Admin API (per IP)                          | 20 requests / 60 s    | Hardcoded in `admin.ts`                                                           |
-| Admin login (per IP)                        | 5 attempts / 60 s     | Hardcoded in `admin.ts`                                                           |
+| Scope                                                                    | Limit                 | Config                                                                                                                          |
+| ------------------------------------------------------------------------ | --------------------- | ------------------------------------------------------------------------------------------------------------------------------- |
+| `createParty` / `joinParty` / `resumeParty` (per socket id)              | 5 actions / 10 s      | Hardcoded in `partyHandlers.ts`; reset via `resetPartyActionRateLimit()` in tests                                               |
+| Kritzelagent `submitStroke` (per socket id)                              | 10 strokes / 1 s      | Hardcoded in `games/kritzelagent/server/src/socketHandlers.ts`                                                                  |
+| Flip 7 `hit` / `stay` / `chooseActionTarget` (per socket id)             | 20 requests / 1 s     | Hardcoded in `games/flip7/server/src/socketHandlers.ts`                                                                         |
+| Secret Signals `focusCard` / `giveSignal` / `revealCard` (per socket id) | 20 requests / 1 s     | Hardcoded in `games/secret-signals/server/src/handlers/socketHandlers.ts`                                                       |
+| Imposter `submitDescription` / `submitVote` (per socket id)              | 20 requests / 1 s     | Hardcoded in `games/imposter/server/src/handlers/socketHandlers.ts`                                                             |
+| Socket.IO engine connections (per IP)                                    | 20 connections / 10 s | Hardcoded in `index.ts`; resolves the real client IP via `TRUST_PROXY_HOPS` reverse-proxy hops of `X-Forwarded-For` (see below) |
+| Admin API (per IP)                                                       | 20 requests / 60 s    | Hardcoded in `admin.ts`                                                                                                         |
+| Admin login (per IP)                                                     | 5 attempts / 60 s     | Hardcoded in `admin.ts`                                                                                                         |
+
+The per-game gameplay limits above all use the shared `createSocketRateLimiter` helper (`apps/platform/server/observability/rateLimit.ts`) — see `docs/adding-a-new-game.md`'s "Rate Limiting" section when adding a new high-frequency event.
+
+#### `TRUST_PROXY_HOPS`
+
+| Variable           | Default | Purpose                                                                                                                                                                                                                                        |
+| ------------------ | ------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `TRUST_PROXY_HOPS` | `1`     | Reverse-proxy hops between the client and this server trusted to have correctly appended their own peer address to `X-Forwarded-For`. The deployed topology (one Traefik hop) matches the default — only change this if that topology changes. |
+
+Both Express's own `req.ip` (`app.set('trust proxy', TRUST_PROXY_HOPS)`, used by the admin rate limiters) and the raw Socket.IO connection limiter derive the client IP from this same hop count, via `apps/platform/server/observability/clientIp.ts`. Setting it too high lets a client spoof its own IP by injecting fake `X-Forwarded-For` entries; too low collapses every real client behind the proxy onto one shared IP.
 
 ### Security headers
 
-All HTTP responses include `X-Content-Type-Options: nosniff`, `X-Frame-Options: DENY`, `Referrer-Policy: strict-origin-when-cross-origin`, and `X-XSS-Protection: 0` via middleware in `index.ts`.
+All HTTP responses include `X-Content-Type-Options: nosniff`, `X-Frame-Options: DENY`, `Referrer-Policy: strict-origin-when-cross-origin`, `X-XSS-Protection: 0`, and a `Content-Security-Policy` via middleware in `index.ts`. The CSP restricts scripts and fetch/WebSocket connections to same-origin, allows styles and fonts from Google Fonts (the platform's only external resource — `main.css` imports Syne + JetBrains Mono) plus inline styles (Vue's `:style` bindings compile to inline `style` attributes), and sets `object-src 'none'` and `frame-ancestors 'none'`.
 
 ### Optional game flags
 

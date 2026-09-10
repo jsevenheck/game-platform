@@ -1,7 +1,7 @@
 import { nanoid } from 'nanoid';
 import { DEFAULT_ASSASSIN_PENALTY_MODE, getActiveTeamColors } from '../../../core/src/constants';
 import type { Room } from '../../../core/src/types';
-import { createPlayer, setSocketIndex } from './player';
+import { createPlayer, setSocketIndex, deleteSocketIndexesForRoom } from './player';
 
 const rooms = new Map<string, Room>();
 const sessionToRoom = new Map<string, string>();
@@ -83,6 +83,7 @@ export function deleteRoom(code: string): void {
       sessionToRoom.delete(sessionId);
     }
   }
+  deleteSocketIndexesForRoom(code);
 }
 
 export interface RoomStoreSnapshot {

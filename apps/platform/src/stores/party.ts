@@ -5,7 +5,6 @@ export interface PartyMemberView {
   playerId: string;
   name: string;
   connected: boolean;
-  socketId: string | null;
 }
 
 export interface PartyMatchView {

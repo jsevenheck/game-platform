@@ -22,6 +22,7 @@ import {
   recordNamespaceConnection,
   recordNamespaceDisconnect,
 } from '../../../../apps/platform/server/observability/socketNamespaceMetrics';
+import { createSocketRateLimiter } from '../../../../apps/platform/server/observability/rateLimit';
 import { ROOM_IDLE_TIMEOUT_MS } from '../../core/src/constants';
 import type { ClientToServerEvents, ServerToClientEvents } from '../../core/src/events';
 import type { ServerRoom } from '../../core/src/types';
@@ -53,6 +54,15 @@ type KritzelagentNamespace = Namespace<ClientToServerEvents, ServerToClientEvent
 
 const GAME_ID = 'kritzelagent';
 const INVALID_REQUEST_ERROR = 'Invalid request';
+
+// Per-socket rate limit for stroke submission — the one high-frequency,
+// attacker-shaped payload in this game (real-time drawing input). Well
+// above any plausible human drawing rate (each `submitStroke` is one
+// completed pointer-up stroke, not a per-point event — see
+// ui-vue/src/components/DrawingCanvas.vue), so it only bounds automated
+// flooding, never real play. See docs/adding-a-new-game.md's "Rate
+// limiting" section for the pattern and when a game event needs one.
+const strokeRateLimit = createSocketRateLimiter({ windowMs: 1_000, max: 10 });
 
 type ActionResponse = { ok: true } | { ok: false; error: string };
 
@@ -368,6 +378,9 @@ export function registerKritzelagent(
       const instrumentation = startSocketHandlerInstrumentation(namespace, 'submitStroke', GAME_ID);
       const respond = createResponder<ActionResponse>(instrumentation, callback);
       try {
+        if (!strokeRateLimit.check(socket.id)) {
+          return respond({ ok: false, error: 'Too many strokes — slow down' });
+        }
         if (!isObjectPayload(data)) return respond({ ok: false, error: INVALID_REQUEST_ERROR });
         const roomCode = requiredString(data.roomCode);
         const room = roomCode ? getRoomByCode(roomCode) : undefined;

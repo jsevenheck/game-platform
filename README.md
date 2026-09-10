@@ -167,4 +167,5 @@ See [docs/adding-a-new-game.md](docs/adding-a-new-game.md) for the full integrat
 - [games/flip7/docs/](games/flip7/docs/) - Flip 7 API and architecture
 - [games/scout/docs/](games/scout/docs/) - Scout API and architecture
 - [games/estimate/docs/](games/estimate/docs/) - Estimate API and architecture
+- [games/kritzelagent/docs/](games/kritzelagent/docs/) - Kritzelagent API and architecture
 - [games/herd-mentality/](games/herd-mentality/) - Herd Mentality rules, API, and architecture

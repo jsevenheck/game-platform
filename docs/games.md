@@ -6,10 +6,10 @@ architecture: shared `core/` types, Socket.IO server module, Vue `ui-vue/` clien
 
 | Game           | Players | Round count       | Core mechanic                                     |
 | -------------- | ------- | ----------------- | ------------------------------------------------- |
-| Blackout       | 4–10    | 1 (one big round) | Cooperative dice-grid memory reveal               |
-| Imposter       | 3–10    | until reveal      | Social deduction: secret word + clues + vote      |
-| Secret Signals | 4–8     | 3–6               | Cooperative code-breaking with asymmetric roles   |
-| Flip 7         | 2–8     | until first bust  | Press-your-luck card-collection with busts        |
+| Blackout       | 3–20    | 1 (one big round) | Cooperative dice-grid memory reveal               |
+| Imposter       | 3–16    | until reveal      | Social deduction: secret word + clues + vote      |
+| Secret Signals | 4–24    | 3–6               | Cooperative code-breaking with asymmetric roles   |
+| Flip 7         | 3–18    | until first bust  | Press-your-luck card-collection with busts        |
 | Scout          | 2–5     | = player count    | Trick-taking with scout / flip actions            |
 | Estimate       | 2–12    | 5 (default)       | Number-estimation party game; closest guess wins  |
 | Kritzelagent   | 5–12    | 5 (default)       | Shared drawing, hidden topic, and agent deduction |

@@ -121,6 +121,97 @@ export function normalizeStablePlayerId(value: unknown): string | null {
   return trimmed.length > 0 ? trimmed : null;
 }
 
+// ─── Payload-shape helpers ────────────────────────────────────────────────────
+//
+// Socket.IO does not enforce an event's compile-time payload types at
+// runtime — a connected client can send any JSON value for any field,
+// regardless of what the `ClientToServerEvents` interface declares. Every
+// socket handler (platform party layer and every game) must read a field
+// through one of these helpers before calling a string/number-only method
+// on it (`.trim()`, `.toUpperCase()`, arithmetic, array indexing). Calling
+// such a method directly on an unchecked field throws a TypeError that is
+// not caught anywhere in the Socket.IO dispatch path (see
+// `apps/platform/server/logging/logger.ts`'s `uncaughtException` handler),
+// which crashes the entire server process for every connected user — not
+// just the connection that sent the bad payload.
+
+/**
+ * Read a client-supplied field as a string, or `undefined` if it isn't one.
+ * Does not trim or otherwise validate content — callers still apply their
+ * own `.trim()`/length/format checks on the returned value.
+ */
+export function readString(value: unknown): string | undefined {
+  return typeof value === 'string' ? value : undefined;
+}
+
+/**
+ * Read a client-supplied field as a finite number, or `undefined` if it
+ * isn't one. Rejects `NaN`, `Infinity`, and non-number types (including
+ * numeric strings) so arithmetic and range checks downstream can't be
+ * bypassed by a wrong-typed payload.
+ */
+export function readFiniteNumber(value: unknown): number | undefined {
+  return typeof value === 'number' && Number.isFinite(value) ? value : undefined;
+}
+
+/**
+ * Read a client-supplied field as a finite, non-negative integer index (for
+ * array/board-position lookups such as a card or cell index), or
+ * `undefined` if it isn't one.
+ */
+export function readArrayIndex(value: unknown): number | undefined {
+  const n = readFiniteNumber(value);
+  return n !== undefined && Number.isInteger(n) && n >= 0 ? n : undefined;
+}
+
+// ─── Socket index helper ─────────────────────────────────────────────────────
+//
+// Every game maintains its own socket→{roomCode, playerId} index (used to
+// resolve which room/player a raw socket event belongs to) and must remove a
+// room's entries from it when that room is deleted — otherwise the index
+// accumulates indefinitely in this process-lifetime map. Blackout, Imposter,
+// Secret Signals, and Flip 7 each hand-rolled an identical implementation of
+// this; `createSocketIndex` factors it into one canonical implementation so
+// a future change to this logic (or a future ninth game) doesn't have to be
+// copy-pasted and kept in sync by hand. Each game still gets its own private
+// `Map` — call this once per game module, not once globally.
+
+export interface SocketIndexEntry {
+  roomCode: string;
+  playerId: string;
+}
+
+export interface SocketIndex {
+  set(socketId: string, roomCode: string, playerId: string): void;
+  get(socketId: string): SocketIndexEntry | undefined;
+  delete(socketId: string): void;
+  /** Remove every entry pointing at `roomCode` (called when the room is deleted). */
+  deleteForRoom(roomCode: string): void;
+}
+
+/** Create a new, private socket→{roomCode, playerId} index for one game module. */
+export function createSocketIndex(): SocketIndex {
+  const socketIndex = new Map<string, SocketIndexEntry>();
+  return {
+    set(socketId, roomCode, playerId) {
+      socketIndex.set(socketId, { roomCode, playerId });
+    },
+    get(socketId) {
+      return socketIndex.get(socketId);
+    },
+    delete(socketId) {
+      socketIndex.delete(socketId);
+    },
+    deleteForRoom(roomCode) {
+      for (const [socketId, index] of socketIndex.entries()) {
+        if (index.roomCode === roomCode) {
+          socketIndex.delete(socketId);
+        }
+      }
+    },
+  };
+}
+
 // ─── Host-sync helpers ───────────────────────────────────────────────────────
 
 /**
