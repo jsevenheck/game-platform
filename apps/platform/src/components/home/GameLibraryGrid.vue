@@ -32,6 +32,8 @@ interface CardView {
   playerRange: string;
   category?: string;
   description?: string;
+  language?: string;
+  languageLabel?: string;
 }
 
 const cards = computed<CardView[]>(() =>
@@ -44,9 +46,14 @@ const cards = computed<CardView[]>(() =>
       icon: meta?.icon ?? '🎮',
       gradFrom: meta?.gradFrom ?? '#1a1a2e',
       gradTo: meta?.gradTo ?? '#0a0a14',
-      playerRange: `${minPlayers}\u2013${maxPlayers} players`,
+      playerRange: `${minPlayers}–${maxPlayers} players`,
       category: meta?.category,
       description: meta?.description,
+      language: meta?.language,
+      // Shown so players know what language a game is in before launching it
+      // — the shell is English but three games are German-only.
+      languageLabel:
+        meta?.language === 'de' ? 'Deutsch' : meta?.language === 'en' ? 'English' : undefined,
     };
   })
 );
@@ -85,7 +92,12 @@ function handleSelect(id: string) {
             <p class="game-library-card__name">{{ card.name }}</p>
             <span v-if="card.category" class="game-library-card__chip">{{ card.category }}</span>
           </div>
-          <p class="game-library-card__range">{{ card.playerRange }}</p>
+          <p class="game-library-card__range">
+            {{ card.playerRange }}
+            <span v-if="card.languageLabel" class="game-library-card__lang" :lang="card.language">{{
+              card.languageLabel
+            }}</span>
+          </p>
           <p v-if="card.description" class="game-library-card__desc">{{ card.description }}</p>
         </div>
       </article>
@@ -112,7 +124,12 @@ function handleSelect(id: string) {
             <p class="game-library-card__name">{{ card.name }}</p>
             <span v-if="card.category" class="game-library-card__chip">{{ card.category }}</span>
           </div>
-          <p class="game-library-card__range">{{ card.playerRange }}</p>
+          <p class="game-library-card__range">
+            {{ card.playerRange }}
+            <span v-if="card.languageLabel" class="game-library-card__lang" :lang="card.language">{{
+              card.languageLabel
+            }}</span>
+          </p>
           <p v-if="card.description" class="game-library-card__desc">{{ card.description }}</p>
         </div>
       </button>
@@ -225,6 +242,19 @@ function handleSelect(id: string) {
   font-family: 'JetBrains Mono', monospace;
   color: var(--color-muted);
   letter-spacing: 0.02em;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+}
+
+.game-library-card__lang {
+  border: 1px solid var(--color-border-strong);
+  border-radius: 999px;
+  padding: 0.05rem 0.4rem;
+  font-size: 0.65rem;
+  letter-spacing: 0.04em;
+  color: var(--color-muted-foreground);
 }
 
 .game-library-card__desc {

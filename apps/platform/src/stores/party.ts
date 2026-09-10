@@ -83,10 +83,40 @@ export const usePartyStore = defineStore('platform-party', () => {
     localStorage.setItem(SESSION_KEY, JSON.stringify(session));
   }
 
+  /**
+   * Shape-check a persisted session before trusting it.
+   *
+   * `localStorage` is user-writable and survives across app versions, so a
+   * corrupted or hand-edited entry would otherwise be cast straight to
+   * `PersistedSession` and its undefined fields sent to the server. The
+   * server rejects them, but the client would sit in a confusing half-resumed
+   * state rather than simply starting over.
+   */
+  function isPersistedSession(value: unknown): value is PersistedSession {
+    if (typeof value !== 'object' || value === null) return false;
+    const candidate = value as Record<string, unknown>;
+    return (
+      typeof candidate.inviteCode === 'string' &&
+      candidate.inviteCode.length > 0 &&
+      typeof candidate.playerId === 'string' &&
+      candidate.playerId.length > 0 &&
+      typeof candidate.playerName === 'string' &&
+      candidate.playerName.length > 0 &&
+      typeof candidate.resumeToken === 'string' &&
+      candidate.resumeToken.length > 0
+    );
+  }
+
   function loadSession(): PersistedSession | null {
     try {
       const raw = localStorage.getItem(SESSION_KEY);
-      return raw ? (JSON.parse(raw) as PersistedSession) : null;
+      if (!raw) return null;
+      const parsed: unknown = JSON.parse(raw);
+      if (!isPersistedSession(parsed)) {
+        localStorage.removeItem(SESSION_KEY);
+        return null;
+      }
+      return parsed;
     } catch {
       return null;
     }

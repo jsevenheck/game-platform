@@ -6,7 +6,7 @@ import { Server } from 'socket.io';
 import { requestLogger } from './logging/requestLogger';
 import { createComponentLogger, registerProcessLogging } from './logging/logger';
 import { registerPartyHandlers } from './party/partyHandlers';
-import { gameRegistry } from './registry/index';
+import { gameRegistry, unregisterGame } from './registry/index';
 import { registerHttpRoutes } from './httpRoutes';
 import { registerAdminRoutes } from './admin';
 import { initializeMetrics, setActiveConnections } from './metrics/collectors';
@@ -76,17 +76,29 @@ const io = new Server(httpServer, {
 
 initializeMetrics();
 
+// A game that fails to register is unavailable — it must not prevent the
+// platform and the other seven games from starting. `getGame()` already
+// returns undefined for an unknown id, and the lobby handles that, so an
+// unregistered game simply cannot be selected or launched.
 for (const [gameId, game] of gameRegistry) {
   const namespacePath = `/g/${gameId}`;
-  game.registerServer(io, namespacePath);
-  serverLogger.info(
-    {
-      gameId,
-      gameName: game.definition.name,
-      namespacePath,
-    },
-    'registered game namespace'
-  );
+  try {
+    game.registerServer(io, namespacePath);
+    serverLogger.info(
+      {
+        gameId,
+        gameName: game.definition.name,
+        namespacePath,
+      },
+      'registered game namespace'
+    );
+  } catch (err) {
+    unregisterGame(gameId);
+    serverLogger.error(
+      { err, gameId, namespacePath },
+      'failed to register game namespace — game is unavailable, platform continues'
+    );
+  }
 }
 
 const connRateLimit = new Map<string, RateLimitRecord>();

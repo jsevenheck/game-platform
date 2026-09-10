@@ -1,5 +1,10 @@
 import type { Server } from 'socket.io';
-import { getAllParties, isJoinablePublicParty, connectedMemberCount } from './partyStore';
+import {
+  getAllParties,
+  isJoinablePublicParty,
+  connectedMemberCount,
+  PARTY_MAX_MEMBERS,
+} from './partyStore';
 import type { PartySession } from './types';
 import { getGame } from '../registry/index';
 
@@ -39,12 +44,25 @@ function toJoinablePartyView(party: PartySession): JoinablePartyView {
 }
 
 /**
+ * Whether a party still has room for another member. Mirrors the capacity
+ * check in `joinParty` so a lobby stops advertising itself the moment it is
+ * full, rather than inviting joins the server will reject.
+ */
+function hasRoomForAnotherMember(party: PartySession): boolean {
+  const game = party.selectedGameId ? getGame(party.selectedGameId) : undefined;
+  const capacity = game
+    ? Math.min(game.definition.maxPlayers, PARTY_MAX_MEMBERS)
+    : PARTY_MAX_MEMBERS;
+  return party.members.size < capacity;
+}
+
+/**
  * Full snapshot of currently public, joinable lobbies, newest-first.
  * Full snapshots are simpler and safer than diffs at this scale.
  */
 export function getJoinablePublicPartiesSnapshot(): JoinablePartyView[] {
   return getAllParties()
-    .filter(isJoinablePublicParty)
+    .filter((party) => isJoinablePublicParty(party) && hasRoomForAnotherMember(party))
     .map(toJoinablePartyView)
     .sort((a, b) => b.listedAt - a.listedAt);
 }
