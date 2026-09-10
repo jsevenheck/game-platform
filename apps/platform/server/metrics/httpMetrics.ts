@@ -74,7 +74,20 @@ export function registerMetricsRoutes(
   if (config.authToken) {
     logger.info('metrics endpoint enabled with token protection');
   } else if (config.production) {
-    logger.warn('metrics endpoint enabled without token protection');
+    // Fail closed. Serving unauthenticated metrics in production leaks
+    // operational detail to anyone who can reach the host, and the deployed
+    // topology (see docker-compose.yml) routes every path to this container,
+    // so there is no network policy standing in for the missing token.
+    logger.error(
+      'metrics endpoint refused: METRICS_ENABLED=true in production requires METRICS_AUTH_TOKEN'
+    );
+    app.get('/metrics', (_req, res) => {
+      res.status(503).json({
+        ok: false,
+        error: 'Metrics endpoint requires METRICS_AUTH_TOKEN in production',
+      });
+    });
+    return;
   }
 
   app.get('/metrics', async (req, res, next) => {

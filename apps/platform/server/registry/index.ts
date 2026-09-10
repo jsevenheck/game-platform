@@ -13,7 +13,7 @@ export interface GameServerModule {
   cleanupMatch: (matchKey: string) => void;
 }
 
-// ─── Blackout ─────────────────────────────────────────────────────────────────
+// ─── Blackout ───────────────────────────────────────────────────────────────────────────
 
 import {
   definition as blackoutDef,
@@ -29,7 +29,7 @@ const blackoutModule: GameServerModule = {
   cleanupMatch: blackoutCleanup,
 };
 
-// ─── Imposter ─────────────────────────────────────────────────────────────────
+// ─── Imposter ───────────────────────────────────────────────────────────────────────────
 
 import {
   definition as imposterDef,
@@ -45,7 +45,7 @@ const imposterModule: GameServerModule = {
   cleanupMatch: imposterCleanup,
 };
 
-// ─── Secret Signals ───────────────────────────────────────────────────────────
+// ─── Secret Signals ─────────────────────────────────────────────────────────────────────
 
 import {
   definition as secretSignalsDef,
@@ -61,7 +61,7 @@ const secretSignalsModule: GameServerModule = {
   cleanupMatch: secretSignalsCleanup,
 };
 
-// ─── Flip 7 ───────────────────────────────────────────────────────────────────
+// ─── Flip 7 ─────────────────────────────────────────────────────────────────────────────
 
 import {
   definition as flip7Def,
@@ -77,7 +77,7 @@ const flip7Module: GameServerModule = {
   cleanupMatch: flip7Cleanup,
 };
 
-// ─── Scout ────────────────────────────────────────────────────────────────────
+// ─── Scout ─────────────────────────────────────────────────────────────────────────────────
 
 import {
   definition as scoutDef,
@@ -93,7 +93,7 @@ const scoutModule: GameServerModule = {
   cleanupMatch: scoutCleanup,
 };
 
-// ─── Estimate ─────────────────────────────────────────────────────────────────
+// ─── Estimate ───────────────────────────────────────────────────────────────────────────
 
 import {
   definition as estimateDef,
@@ -109,7 +109,7 @@ const estimateModule: GameServerModule = {
   cleanupMatch: estimateCleanup,
 };
 
-// ─── Kritzelagent ──────────────────────────────────────────────────────────────
+// ─── Kritzelagent ───────────────────────────────────────────────────────────────────────
 
 import {
   definition as kritzelagentDef,
@@ -125,7 +125,7 @@ const kritzelagentModule: GameServerModule = {
   cleanupMatch: kritzelagentCleanup,
 };
 
-// ─── Herd Mentality ────────────────────────────────────────────────────────────
+// ─── Herd Mentality ──────────────────────────────────────────────────────────────────────
 
 import {
   definition as herdMentalityDef,
@@ -154,4 +154,13 @@ export const gameRegistry = new Map<string, GameServerModule>([
 
 export function getGame(gameId: string): GameServerModule | undefined {
   return gameRegistry.get(gameId);
+}
+
+/**
+ * Remove a game that failed to initialize, so the lobby stops offering a
+ * namespace nothing is listening on. Called by the server bootstrap when
+ * `registerServer` throws — one game's bad state must not stop the platform.
+ */
+export function unregisterGame(gameId: string): void {
+  gameRegistry.delete(gameId);
 }

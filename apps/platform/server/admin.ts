@@ -5,6 +5,7 @@ import jwt from 'jsonwebtoken';
 import bcrypt from 'bcryptjs';
 import { createComponentLogger } from './logging/logger';
 import {
+  clearActiveMatch,
   clearAllParties,
   clearMatchTimeout,
   deleteParty,
@@ -110,7 +111,8 @@ function cleanupActiveMatch(party: PartySession): boolean {
 
   game.cleanupMatch(matchKey);
   clearMatchTimeout(party.partyId);
-  party.activeMatch = null;
+  // Via the store so the matchKey → party index is released with it.
+  clearActiveMatch(party);
   party.pendingCleanupMatchKey = null;
   party.returnAcks = new Set();
   party.status = 'lobby';
@@ -225,6 +227,7 @@ function kickPartyMember(
 const rateLimitPruneInterval = setInterval(() => {
   pruneExpiredRateLimitEntries(rateLimitMap);
   pruneExpiredRateLimitEntries(loginRateLimitMap);
+  pruneRevokedAdminTokens();
 }, RATE_LIMIT_PRUNE_INTERVAL_MS);
 rateLimitPruneInterval.unref?.();
 
@@ -266,6 +269,7 @@ const JWT_MAX_AGE_MS = 60 * 60 * 1000; // 1 hour
 interface AdminJwtPayload extends jwt.JwtPayload {
   role: 'admin';
   csrfToken: string;
+  jti: string;
 }
 
 function isAdminJwtPayload(payload: string | jwt.JwtPayload): payload is AdminJwtPayload {
@@ -273,13 +277,36 @@ function isAdminJwtPayload(payload: string | jwt.JwtPayload): payload is AdminJw
     typeof payload !== 'string' &&
     payload.role === 'admin' &&
     typeof payload.csrfToken === 'string' &&
-    payload.csrfToken.length > 0
+    payload.csrfToken.length > 0 &&
+    typeof payload.jti === 'string' &&
+    payload.jti.length > 0
   );
+}
+
+/**
+ * Revoked admin session ids (`jti`), so logout is a real server-side
+ * invalidation rather than a client-side cookie clear that leaves a stolen
+ * token valid for the rest of its hour. Entries are dropped once the token
+ * they refer to would have expired anyway, which bounds the map.
+ */
+const revokedAdminTokens = new Map<string, number>();
+
+function revokeAdminToken(jti: string, expiresAtMs: number): void {
+  revokedAdminTokens.set(jti, expiresAtMs);
+}
+
+function pruneRevokedAdminTokens(now: number = Date.now()): void {
+  for (const [jti, expiresAt] of revokedAdminTokens) {
+    if (now > expiresAt) revokedAdminTokens.delete(jti);
+  }
 }
 
 function signAdminJwt(csrfToken: string): string {
   const secret = readJwtSecret()!;
-  return jwt.sign({ role: 'admin', csrfToken }, secret, { expiresIn: '1h' });
+  return jwt.sign({ role: 'admin', csrfToken }, secret, {
+    expiresIn: '1h',
+    jwtid: randomUUID(),
+  });
 }
 
 function verifyAdminJwt(token: string): AdminJwtPayload | null {
@@ -287,7 +314,9 @@ function verifyAdminJwt(token: string): AdminJwtPayload | null {
   if (!secret) return null;
   try {
     const payload = jwt.verify(token, secret);
-    return isAdminJwtPayload(payload) ? payload : null;
+    if (!isAdminJwtPayload(payload)) return null;
+    if (revokedAdminTokens.has(payload.jti)) return null;
+    return payload;
   } catch {
     return null;
   }
@@ -389,7 +418,7 @@ function requireAdminCsrf(req: Request, res: Response, next: NextFunction): void
 }
 
 export function registerAdminRoutes(app: Express, io?: Server): void {
-  app.post('/api/admin/login', (req, res) => {
+  app.post('/api/admin/login', async (req, res) => {
     if (!isAdminEnabled()) {
       res.status(503).json({
         ok: false,
@@ -419,7 +448,10 @@ export function registerAdminRoutes(app: Express, io?: Server): void {
     const expectedUsername = readAdminUsername()!;
     const hash = readAdminPasswordHash()!;
     const usernameOk = username === expectedUsername;
-    const passwordOk = bcrypt.compareSync(password, hash);
+    // Async: bcryptjs is a pure-JS implementation, so the sync variant would
+    // block the single event loop that also serves every game's real-time
+    // traffic for the full duration of the comparison.
+    const passwordOk = await bcrypt.compare(password, hash);
     if (!usernameOk || !passwordOk) {
       adminLogger.warn({ ip, username }, 'admin login failed');
       res.status(401).json({ ok: false, error: 'Invalid credentials' });
@@ -449,7 +481,15 @@ export function registerAdminRoutes(app: Express, io?: Server): void {
     res.json({ ok: true, authenticated: true, csrfToken: session.csrfToken });
   });
 
-  app.post('/api/admin/logout', (_req, res) => {
+  app.post('/api/admin/logout', authenticateAdmin, requireAdminCsrf, (req, res) => {
+    const token = getAdminTokenFromCookie(req);
+    const session = token ? verifyAdminJwt(token) : null;
+    if (session) {
+      // `exp` is in seconds; fall back to the full max age when absent.
+      const expiresAtMs = session.exp ? session.exp * 1000 : Date.now() + JWT_MAX_AGE_MS;
+      revokeAdminToken(session.jti, expiresAtMs);
+      adminLogger.info({ ip: req.ip ?? 'unknown' }, 'admin logged out');
+    }
     clearAdminCookies(res);
     res.json({ ok: true });
   });
