@@ -15,6 +15,9 @@ import {
   clearMatchTimeout,
   setPartyPublic,
   connectedMemberCount,
+  setActiveMatch,
+  clearActiveMatch,
+  PARTY_MAX_MEMBERS,
 } from './partyStore';
 import {
   broadcastJoinableParties,
@@ -135,6 +138,17 @@ function cleanupActiveMatchOnPartyExpire(party: PartySession): void {
   }
 }
 
+/**
+ * Maximum members a party may hold. The selected game's `maxPlayers` is the
+ * meaningful bound once a game is chosen; before that (and for an unknown
+ * game id) fall back to the platform-wide ceiling so the map can never grow
+ * without limit.
+ */
+function partyCapacity(party: PartySession): number {
+  const game = party.selectedGameId ? getGame(party.selectedGameId) : undefined;
+  return game ? Math.min(game.definition.maxPlayers, PARTY_MAX_MEMBERS) : PARTY_MAX_MEMBERS;
+}
+
 function broadcastParty(io: Server, party: PartySession): void {
   io.of('/party').to(party.partyId).emit('partyUpdate', partyToView(party));
 }
@@ -179,8 +193,7 @@ export function registerPartyHandlers(io: Server): void {
   function triggerMatchTimeout(party: PartySession): void {
     if (party.status !== 'in-match' || !party.activeMatch) return;
 
-    const matchToClean = party.activeMatch;
-    party.activeMatch = null;
+    const matchToClean = clearActiveMatch(party)!;
     party.status = 'returning';
     party.returnAcks = new Set();
 
@@ -316,6 +329,24 @@ export function registerPartyHandlers(io: Server): void {
             reason: 'party_not_lobby',
           });
           return respond({ ok: false, error: 'Party is already in a match' });
+        }
+
+        // Capacity is bounded at join time, not only at launch: without this
+        // a party can be pushed past the selected game's maxPlayers, a state
+        // launchGame rejects — so the host could never start. Public lobbies
+        // broadcast their invite code by design, making that trivial to do.
+        const capacity = partyCapacity(party);
+        if (party.members.size >= capacity) {
+          socketLogger.warn(
+            { partyId: party.partyId, memberCount: party.members.size, capacity },
+            'joinParty rejected: party is full'
+          );
+          incrementPartyLifecycle({
+            event: 'joinParty',
+            result: 'rejected',
+            reason: 'party_full',
+          });
+          return respond({ ok: false, error: 'Party is full' });
         }
 
         const nameExists = Array.from(party.members.values()).some(
@@ -499,7 +530,7 @@ export function registerPartyHandlers(io: Server): void {
               'transferred host after leave'
             );
           } else {
-            deleteParty(party.partyId);
+            deleteParty(party.partyId, cleanupActiveMatchOnPartyExpire);
             socketLogger.info(
               {
                 partyId: party.partyId,
@@ -515,7 +546,7 @@ export function registerPartyHandlers(io: Server): void {
         }
 
         if (party.members.size === 0) {
-          deleteParty(party.partyId);
+          deleteParty(party.partyId, cleanupActiveMatchOnPartyExpire);
           socketLogger.info(
             {
               partyId: party.partyId,
@@ -575,6 +606,9 @@ export function registerPartyHandlers(io: Server): void {
             'selectGame rejected: actor is not party host'
           );
           return respond({ ok: false, error: 'Only the host can select a game' });
+        }
+        if (party.status !== 'lobby') {
+          return respond({ ok: false, error: 'Party is not in lobby' });
         }
         if (!getGame(data.gameId)) {
           return respond({ ok: false, error: 'Unknown game' });
@@ -643,12 +677,12 @@ export function registerPartyHandlers(io: Server): void {
         const matchKey = nanoid(16);
         const namespace = `/g/${party.selectedGameId}`;
 
-        party.activeMatch = {
+        setActiveMatch(party, {
           gameId: party.selectedGameId,
           matchKey,
           namespace,
           startedAt: Date.now(),
-        };
+        });
         party.status = 'in-match';
         party.pendingCleanupMatchKey = null;
         scheduleMatchTimeout(party.partyId, () => triggerMatchTimeout(party));
@@ -717,12 +751,12 @@ export function registerPartyHandlers(io: Server): void {
         const newMatchKey = nanoid(16);
 
         party.pendingCleanupMatchKey = previousMatchKey;
-        party.activeMatch = {
+        setActiveMatch(party, {
           gameId: currentGameId,
           matchKey: newMatchKey,
           namespace: party.activeMatch.namespace,
           startedAt: Date.now(),
-        };
+        });
         scheduleMatchTimeout(party.partyId, () => triggerMatchTimeout(party));
 
         broadcastParty(io, party);
@@ -798,8 +832,7 @@ export function registerPartyHandlers(io: Server): void {
           return respond({ ok: false, error: 'No active match' });
         }
 
-        const matchToClean = party.activeMatch;
-        party.activeMatch = null;
+        const matchToClean = clearActiveMatch(party)!;
         party.status = 'returning';
         party.returnAcks = new Set();
         clearMatchTimeout(party.partyId);
