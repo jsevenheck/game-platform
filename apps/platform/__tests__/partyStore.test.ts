@@ -16,8 +16,19 @@ import {
 
 vi.mock('nanoid', () => {
   let counter = 0;
+  let alphabetCounter = 0;
   return {
     nanoid: (size?: number) => `id-${size ?? 0}-${++counter}`,
+    customAlphabet: (alphabet: string, size: number) => () => {
+      // Deterministic but unique per call — generateInviteCode retries while
+      // a code is already taken, so a constant value would loop forever.
+      const n = ++alphabetCounter;
+      return n
+        .toString(36)
+        .toUpperCase()
+        .padStart(size, alphabet[0] ?? 'A')
+        .slice(-size);
+    },
   };
 });
 
@@ -214,9 +225,9 @@ describe('partyStore', () => {
     });
   });
 
-  // ────────────────────────────────────────────────────────────────
+  // ──────────────────────────────────────────────
   // Public listing helpers
-  // ────────────────────────────────────────────────────────────────
+  // ──────────────────────────────────────────────
   describe('public listing', () => {
     it('new party defaults to private with null publicListedAt', () => {
       const { party } = createTestParty();
