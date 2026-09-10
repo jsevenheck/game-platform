@@ -5,6 +5,7 @@ import {
   getPartyByInviteCode,
   deleteParty,
   clearPartyCleanup,
+  setActiveMatch,
 } from '../server/party/partyStore';
 import {
   getJoinablePublicPartiesSnapshot,
@@ -13,8 +14,19 @@ import {
 
 vi.mock('nanoid', () => {
   let counter = 0;
+  let alphabetCounter = 0;
   return {
     nanoid: (size?: number) => `id-${size ?? 0}-${++counter}`,
+    customAlphabet: (alphabet: string, size: number) => () => {
+      // Deterministic but unique per call — generateInviteCode retries while
+      // a code is already taken, so a constant value would loop forever.
+      const n = ++alphabetCounter;
+      return n
+        .toString(36)
+        .toUpperCase()
+        .padStart(size, alphabet[0] ?? 'A')
+        .slice(-size);
+    },
   };
 });
 
@@ -110,9 +122,9 @@ describe('partyHandlers', () => {
     return { socket, res };
   }
 
-  // ────────────────────────────────────────────────────────────────
+  // ──────────────────────────────────────────────
   // createParty / joinParty basics
-  // ────────────────────────────────────────────────────────────────
+  // ──────────────────────────────────────────────
 
   it('creates a party and returns valid state', () => {
     const ctx = setup();
@@ -203,9 +215,9 @@ describe('partyHandlers', () => {
     expect(cb.mock.calls[0][0].error).toContain('Name already taken');
   });
 
-  // ────────────────────────────────────────────────────────────────
+  // ──────────────────────────────────────────────
   // resumeParty
-  // ────────────────────────────────────────────────────────────────
+  // ──────────────────────────────────────────────
 
   it('resumes a session with valid resume token', () => {
     const ctx = setup();
@@ -268,9 +280,9 @@ describe('partyHandlers', () => {
     expect(getParty(partyId)).toBeDefined();
   });
 
-  // ────────────────────────────────────────────────────────────────
+  // ──────────────────────────────────────────────
   // leaveParty + host transfer
-  // ────────────────────────────────────────────────────────────────
+  // ──────────────────────────────────────────────
 
   it('transfers host when host leaves', () => {
     const ctx = setup();
@@ -329,9 +341,9 @@ describe('partyHandlers', () => {
     partyIds.pop();
   });
 
-  // ────────────────────────────────────────────────────────────────
+  // ──────────────────────────────────────────────
   // disconnect: host transfer + GC scheduling
-  // ────────────────────────────────────────────────────────────────
+  // ──────────────────────────────────────────────
 
   it('transfers host to next connected member on disconnect', () => {
     const ctx = setup();
@@ -371,6 +383,85 @@ describe('partyHandlers', () => {
     partyIds.pop();
   });
 
+  // Regression: `leaveParty` had two deleteParty paths (last host leaves, and
+  // last member leaves) that destroyed the party WITHOUT ending its active
+  // match — and deleteParty also cancels the 2-hour match-timeout timer, so
+  // no platform-side path was left to reclaim the game module's room.
+  it('calls cleanupMatch when the last member leaves during an active match', () => {
+    const ctx = setup();
+    const { socket: hostSocket, res: hostRes } = createPartyViaSocket(ctx, 'sock-host');
+    const joinSocket = connectSocket(ctx, 'sock-join');
+    const joinCb = vi.fn();
+    joinSocket.handlers.joinParty(
+      { inviteCode: hostRes.partyView.inviteCode, playerName: 'P2' },
+      joinCb
+    );
+    const joinRes = joinCb.mock.calls[0][0];
+
+    hostSocket.handlers.selectGame({ playerId: hostRes.playerId, gameId: 'test-game' }, vi.fn());
+    hostSocket.handlers.launchGame({ playerId: hostRes.playerId }, vi.fn());
+
+    const party = getParty(hostRes.partyView.partyId)!;
+    expect(party.status).toBe('in-match');
+    const matchKey = party.activeMatch!.matchKey;
+
+    joinSocket.handlers.leaveParty({ playerId: joinRes.playerId });
+    hostSocket.handlers.leaveParty({ playerId: hostRes.playerId });
+
+    expect(getParty(hostRes.partyView.partyId)).toBeUndefined();
+    expect(cleanupMatchMock).toHaveBeenCalledWith(matchKey);
+    partyIds.pop();
+  });
+
+  it('calls cleanupMatch when the host leaves an active match with no one left', () => {
+    const ctx = setup();
+    const { socket, res } = createPartyViaSocket(ctx, 'sock-solo');
+    const party = getParty(res.partyView.partyId)!;
+    party.status = 'in-match';
+    setActiveMatch(party, {
+      gameId: 'test-game',
+      matchKey: 'host-left-match',
+      namespace: '/g/test-game',
+      startedAt: Date.now(),
+    });
+
+    socket.handlers.leaveParty({ playerId: res.playerId });
+
+    expect(getParty(party.partyId)).toBeUndefined();
+    expect(cleanupMatchMock).toHaveBeenCalledWith('host-left-match');
+    partyIds.pop();
+  });
+
+  // Regression: joinParty enforced no ceiling at all, so a public lobby could
+  // be pushed past the selected game's maxPlayers — a state launchGame
+  // rejects, leaving the host permanently unable to start.
+  it('rejects a join once the party is at the selected game capacity', () => {
+    const ctx = setup();
+    const { socket: hostSocket, res: hostRes } = createPartyViaSocket(ctx, 'sock-cap-host');
+    const inviteCode = hostRes.partyView.inviteCode;
+    hostSocket.handlers.selectGame({ playerId: hostRes.playerId, gameId: 'test-game' }, vi.fn());
+
+    // test-game allows 10 players; the host already occupies one slot.
+    for (let i = 0; i < 9; i++) {
+      resetPartyActionRateLimit();
+      const s = connectSocket(ctx, `sock-cap-${i}`);
+      const cb = vi.fn();
+      s.handlers.joinParty({ inviteCode, playerName: `P${i}` }, cb);
+      expect(cb.mock.calls[0][0].ok).toBe(true);
+    }
+
+    const party = getParty(hostRes.partyView.partyId)!;
+    expect(party.members.size).toBe(10);
+
+    resetPartyActionRateLimit();
+    const overflow = connectSocket(ctx, 'sock-cap-overflow');
+    const overflowCb = vi.fn();
+    overflow.handlers.joinParty({ inviteCode, playerName: 'TooMany' }, overflowCb);
+
+    expect(overflowCb.mock.calls[0][0]).toEqual({ ok: false, error: 'Party is full' });
+    expect(party.members.size).toBe(10);
+  });
+
   // F7 regression: a party that goes idle (everyone disconnects) while it
   // still has an active match previously vanished with no path left to
   // ever call that game's cleanupMatch — orphaning the game module's own
@@ -401,9 +492,9 @@ describe('partyHandlers', () => {
     partyIds.pop();
   });
 
-  // ────────────────────────────────────────────────────────────────
+  // ──────────────────────────────────────────────
   // selectGame + launchGame
-  // ────────────────────────────────────────────────────────────────
+  // ──────────────────────────────────────────────
 
   it('only the host can select a game', () => {
     const ctx = setup();
@@ -478,9 +569,9 @@ describe('partyHandlers', () => {
     expect(cb.mock.calls[0][0]).toEqual({ ok: false, error: 'Unknown game' });
   });
 
-  // ────────────────────────────────────────────────────────────────
+  // ──────────────────────────────────────────────
   // ackReturnedToLobby — socket validation
-  // ────────────────────────────────────────────────────────────────
+  // ──────────────────────────────────────────────
 
   it('rejects ackReturnedToLobby from a socket that does not own the playerId', () => {
     const ctx = setup();
@@ -526,9 +617,9 @@ describe('partyHandlers', () => {
     expect(party.returnAcks.has(joinerId)).toBe(true);
   });
 
-  // ────────────────────────────────────────────────────────────────
+  // ──────────────────────────────────────────────
   // Public lobby discovery
-  // ────────────────────────────────────────────────────────────────
+  // ──────────────────────────────────────────────
   describe('public lobbies', () => {
     it('subscribe joins the watcher room and pushes an initial snapshot', () => {
       const ctx = setup();
@@ -670,7 +761,7 @@ describe('partyHandlers', () => {
     });
   });
 
-  // ────────────────────────────────────────────────────────────────
+  // ──────────────────────────────────────────────
   // Malformed-payload safety (F1 regression coverage)
   //
   // Every field read from a client payload must be type-checked before a
@@ -679,7 +770,7 @@ describe('partyHandlers', () => {
   // handler that throws synchronously crashes the whole server process
   // (see apps/platform/server/logging/logger.ts's uncaughtException
   // handler) — so these must reject cleanly, never throw.
-  // ────────────────────────────────────────────────────────────────
+  // ──────────────────────────────────────────────
 
   describe('malformed payload safety', () => {
     it('createParty rejects a non-string playerName instead of throwing', () => {
