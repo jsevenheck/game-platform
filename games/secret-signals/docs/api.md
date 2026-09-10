@@ -225,6 +225,9 @@ Outcome details:
 - revealing the assassin either ends the whole game (`instant-loss`) or eliminates the guessing
   team and continues (`elimination`)
 
+`focusCard`, `giveSignal`, and `revealCard` share a per-socket rate limit (20 requests/second) —
+a call beyond that returns `{ ok: false, error: 'Too many requests — slow down' }`.
+
 #### `endTurn`
 
 ```ts

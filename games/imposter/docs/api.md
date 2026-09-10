@@ -197,6 +197,7 @@ Rules:
 - only the current `currentDescriberId` may submit
 - max clue length is 30 characters
 - once all connected turns are completed or skipped, the server transitions to `discussion`
+- rate-limited to 20 requests/second per socket; a call beyond that returns `{ ok: false, error: 'Too many requests — slow down' }` (shared with `submitVote`)
 
 #### `skipDescriptionTurn`
 
@@ -238,6 +239,7 @@ Rules:
 - self-votes are rejected
 - one vote per connected player
 - once all connected players have voted, votes are resolved automatically
+- rate-limited to 20 requests/second per socket (shared with `submitDescription`)
 
 ### Reveal Phase
 

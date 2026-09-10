@@ -200,14 +200,16 @@ This is the critical integration point. The handler must:
 5. **Call back** with `{ ok: true, roomCode, playerId, resumeToken }` on success or `{ ok: false, error }` on failure.
 6. The server-issued `resumeToken` must never be included in any broadcast room view sent to clients.
 
-> **Use the shared helpers** — `authorizePartyJoin`, `syncRoomHostAfterJoin`, `assignHost`, `restoreHostToFirstConnectedPlayer`, `normalizeJoinToken`, and `normalizeStablePlayerId` are all exported from `apps/platform/server/party/gameAuth.ts`. Do not re-implement them per game.
+> **Use the shared helpers** — `authorizePartyJoin`, `syncRoomHostAfterJoin`, `assignHost`, `restoreHostToFirstConnectedPlayer`, `normalizeJoinToken`, `normalizeStablePlayerId`, `readString`, `readFiniteNumber`, `readArrayIndex`, and `createSocketIndex` are all exported from `apps/platform/server/party/gameAuth.ts`. Do not re-implement them per game.
 
 ### Socket Handler Validation and Authorization
 
 - Type Socket.IO handler input as `unknown` on the server and validate shape before reading fields.
-- Normalize required strings, validate enums/booleans/integers, and respond with `{ ok: false, error: 'Invalid request' }` for malformed payloads.
+- Normalize required strings, validate enums/booleans/integers, and respond with `{ ok: false, error: 'Invalid request' }` for malformed payloads. Use `readString`/`readFiniteNumber`/`readArrayIndex` from `gameAuth.ts` rather than calling a string/number-only method (`.trim()`, `.toUpperCase()`, arithmetic, array indexing) directly on an unchecked field — Socket.IO does not validate a payload against the compile-time event types at runtime, and a wrong-typed field throws a `TypeError` that isn't caught anywhere in the dispatch path, crashing the entire process (see the `catch` guidance immediately below for the other half of this).
+- Do not `catch (err) { instrumentation.finishError(); throw err; }` — that logs a metric and then re-raises, which is exactly the throw described above. Catch, finish instrumentation, and respond with a sanitized error instead.
 - For host-only actions, re-sync host state from the active party first, then verify the socket index, room code, player id, `player.connected === true`, and `player.socketId === socket.id`.
 - Do not trust client-provided `isHost` for authorization.
+- Use `createSocketIndex()` from `gameAuth.ts` for the game's socket→{roomCode, playerId} index rather than hand-rolling a `Map` — call it once per game module; each call returns its own private, isolated index.
 
 ### Rate Limiting
 
@@ -235,8 +237,8 @@ Check the limit before any room/auth lookup — rejecting cheaply on a flood mat
 ### `cleanupMatch` Contract
 
 - Remove the room/session mapped to the given matchKey.
-- Remove socket indexes/session mappings associated with that room so stale sockets cannot pass later authorization checks.
-- Clean up any active timers, intervals, or scheduled tasks for that room.
+- Remove socket indexes/session mappings associated with that room so stale sockets cannot pass later authorization checks — if using `createSocketIndex()`, call its `deleteForRoom(roomCode)`.
+- Clean up any active timers, intervals, or scheduled tasks for that room — including any cleanup-timer map entry keyed by the room code itself; clear it here, not only when the timer fires.
 
 ### Server Logging
 

@@ -132,6 +132,8 @@ Every game server module exposes:
 
 `apps/platform/server/party/gameAuth.ts` exports `authorizePartyJoin`, `syncRoomHostAfterJoin`, and supporting helpers (`assignHost`, `clearHost`, `isConnectedPlayer`, `restoreHostToFirstConnectedPlayer`, `normalizeJoinToken`, `normalizeStablePlayerId`). Every game's `autoJoinRoom` handler MUST call `authorizePartyJoin(gameId, sessionId, playerId, joinToken)` at the top and use the returned `member.playerId` / `member.name` as the authoritative identity — never trust client-supplied `playerId` / `name` / `isHost`.
 
+The same module also exports the payload-shape helpers `readString`, `readFiniteNumber`, `readArrayIndex` — use these to read any client-supplied field before calling a string/number-only method on it (`.trim()`, `.toUpperCase()`, arithmetic, array indexing). Socket.IO does not validate a payload against the compile-time event types at runtime, and calling such a method directly on an unchecked field throws a `TypeError` that crashes the entire process (nothing in the Socket.IO dispatch path catches a synchronous throw from a handler, and the platform's `uncaughtException` handler exits on it) — not just the connection that sent the bad payload. Also exports `createSocketIndex()`, a factory for the socket→{roomCode, playerId} index every game maintains — call it once per game module rather than hand-rolling the map.
+
 ### Props passed to PlatformAdapter.vue
 
 ```ts
@@ -200,12 +202,13 @@ Each entry maps a game ID to its `PlatformAdapter.vue` via lazy `import('@{game}
 
 ## Security Rules
 
-- **Party action rate limiting**: `createParty` and `joinParty` are rate-limited per socket id (5 actions / 10 s). Uses `checkFixedWindowRateLimit` from `apps/platform/server/observability/rateLimit.ts`. Reset in tests via `resetPartyActionRateLimit()`.
-- **Connection rate limiting**: the Socket.IO engine limits new connections per IP (20 / 10 s), respecting `X-Forwarded-For` for reverse-proxy deployments. Exceeding sockets are destroyed.
-- **Security headers**: `X-Content-Type-Options: nosniff`, `X-Frame-Options: DENY`, `Referrer-Policy: strict-origin-when-cross-origin`, `X-XSS-Protection: 0` are set on all HTTP responses via middleware in `index.ts`.
+- **Party action rate limiting**: `createParty`, `joinParty`, and `resumeParty` are rate-limited per socket id (5 actions / 10 s). Uses `checkFixedWindowRateLimit` from `apps/platform/server/observability/rateLimit.ts`. Reset in tests via `resetPartyActionRateLimit()`.
+- **In-match gameplay rate limiting**: high-frequency or otherwise attacker-shaped gameplay events are rate-limited per socket via `createSocketRateLimiter` (also from `observability/rateLimit.ts`) — e.g. Kritzelagent's `submitStroke` (10/s), and the shared gameplay limiter used by Flip 7 (`hit`/`stay`/`chooseActionTarget`), Secret Signals (`focusCard`/`giveSignal`/`revealCard`), and Imposter (`submitDescription`/`submitVote`) at 20/s. See `docs/adding-a-new-game.md`'s "Rate Limiting" section for the pattern and when a new event needs one.
+- **Connection rate limiting**: the Socket.IO engine limits new connections per IP (20 / 10 s). Client IP is resolved via `resolveClientIp`/`getTrustedProxyHops` in `apps/platform/server/observability/clientIp.ts`, which trusts exactly `TRUST_PROXY_HOPS` (default `1`) reverse-proxy hops of `X-Forwarded-For` — reading the Nth-from-right entry, never the client-controlled leftmost one. `app.set('trust proxy', ...)` uses the same hop count so Express's own `req.ip` (used by the admin rate limiters) resolves consistently. Exceeding sockets are destroyed.
+- **Security headers**: `X-Content-Type-Options: nosniff`, `X-Frame-Options: DENY`, `Referrer-Policy: strict-origin-when-cross-origin`, `X-XSS-Protection: 0`, and `Content-Security-Policy` (same-origin scripts/connections, Google Fonts for styles/fonts, `object-src 'none'`, `frame-ancestors 'none'`) are set on all HTTP responses via middleware in `index.ts`.
 - **Admin CSRF**: double-submit cookie pattern (`admin_csrf` cookie + `X-CSRF-Token` header).
 - **Game join authorization**: every game validates the platform `joinToken` against the party member's `resumeToken` via `authorizePartyJoin`. Host identity is derived from `party.hostPlayerId`, never from client-supplied `isHost`.
-- **Word persistence** (Imposter): `IMPOSTER_PERSIST_WORDS` env flag (default `true`) controls whether submitted words are written to `words.txt`. Set to `false` in multi-instance deployments to avoid file divergence.
+- **Word persistence** (Imposter): `IMPOSTER_PERSIST_WORDS` env flag (default `true`) controls whether submitted words are written to `words.txt`. Set to `false` in multi-instance deployments to avoid file divergence. The library is capped at `WORD_LIBRARY_MAX_SIZE` (2000) entries; new submissions are dropped once it's at capacity.
 
 ## Adding a New Game
 

@@ -49,6 +49,10 @@ any client-supplied identity is ignored. The sender must be the active drawing
 player. The server accepts one normalized contiguous stroke of at most 80
 finite points with coordinates in `[0, 1]`.
 
+Rate-limited to 10 strokes/second per socket; a call beyond that returns
+`{ ok: false, error: 'Too many strokes — slow down' }` without touching room
+state.
+
 ### `submitVote`
 
 ```ts
