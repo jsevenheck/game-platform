@@ -15,6 +15,18 @@ services:
     environment:
       - NODE_ENV=production
       - PORT=3002
+    # A memory ceiling turns "one runaway room exhausts the host" into "the
+    # container restarts", which `restart: unless-stopped` above then handles.
+    # Without it a single unbounded allocation takes the whole VPS with it.
+    mem_limit: 1g
+    memswap_limit: 1g
+    cpus: 1.5
+    # Bound the log files too, so a noisy failure loop cannot fill the disk.
+    logging:
+      driver: json-file
+      options:
+        max-size: '10m'
+        max-file: '3'
     labels:
       - traefik.enable=true
 
