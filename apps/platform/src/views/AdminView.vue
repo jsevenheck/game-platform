@@ -55,6 +55,8 @@ const selectedPartyId = ref('');
 const kickingPlayerId = ref('');
 const actionMessage = ref('');
 const errorMessage = ref('');
+const showCleanupConfirm = ref(false);
+const cleaningUp = ref(false);
 
 const levelFilter = ref('');
 const componentFilter = ref('');
@@ -283,34 +285,38 @@ async function kickMember(member: AdminPartyMember): Promise<void> {
   }
 }
 
-async function cleanupAll(): Promise<void> {
+async function confirmCleanupAll(): Promise<void> {
   errorMessage.value = '';
   actionMessage.value = '';
-  if (!confirm('Delete ALL parties and disconnect every connected player?')) return;
-
-  const res = await fetch('/api/admin/cleanup', {
-    method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-      'X-CSRF-Token': csrfToken.value,
-    },
-    credentials: 'include',
-    body: JSON.stringify({ csrfToken: csrfToken.value }),
-  });
-  const json = await res.json();
-  if (!res.ok || !json.ok) {
-    errorMessage.value = json.error ?? 'Cleanup failed';
-    if (res.status === 401) {
-      authenticated.value = false;
-      csrfToken.value = '';
+  cleaningUp.value = true;
+  try {
+    const res = await fetch('/api/admin/cleanup', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'X-CSRF-Token': csrfToken.value,
+      },
+      credentials: 'include',
+      body: JSON.stringify({ csrfToken: csrfToken.value }),
+    });
+    const json = await res.json();
+    if (!res.ok || !json.ok) {
+      errorMessage.value = json.error ?? 'Cleanup failed';
+      if (res.status === 401) {
+        authenticated.value = false;
+        csrfToken.value = '';
+      }
+      return;
     }
-    return;
-  }
 
-  actionMessage.value = `Cleanup complete. Removed ${json.partiesRemoved} parties and ${json.membersRemoved} members.`;
-  parties.value = [];
-  selectedPartyId.value = '';
-  await fetchActiveSection();
+    actionMessage.value = `Cleanup complete. Removed ${json.partiesRemoved} parties and ${json.membersRemoved} members.`;
+    parties.value = [];
+    selectedPartyId.value = '';
+    await fetchActiveSection();
+  } finally {
+    cleaningUp.value = false;
+    showCleanupConfirm.value = false;
+  }
 }
 
 function toggleAutoRefresh(): void {
@@ -411,7 +417,11 @@ function formatStartedAt(startedAt: number): string {
       >
         {{ loggingIn ? 'Signing in…' : 'Sign In' }}
       </button>
-      <p v-if="loginError" class="border border-danger bg-danger-muted p-3 text-sm text-danger">
+      <p
+        v-if="loginError"
+        role="alert"
+        class="border border-danger bg-danger-muted p-3 text-sm text-danger"
+      >
         {{ loginError }}
       </p>
     </section>
@@ -460,7 +470,7 @@ function formatStartedAt(startedAt: number): string {
         >
           {{ loadingParties ? 'Loading…' : 'Refresh Parties' }}
         </button>
-        <button class="ui-btn-danger" @click="cleanupAll">Delete All Parties</button>
+        <button class="ui-btn-danger" @click="showCleanupConfirm = true">Delete All Parties</button>
         <button class="ui-btn-ghost ml-auto" @click="doLogout">Logout</button>
       </section>
 
@@ -496,12 +506,15 @@ function formatStartedAt(startedAt: number): string {
 
       <p
         v-if="errorMessage"
+        role="alert"
         class="ui-panel border border-danger bg-danger-muted p-3 text-sm text-danger"
       >
         {{ errorMessage }}
       </p>
       <p
         v-if="actionMessage"
+        role="status"
+        aria-live="polite"
         class="ui-panel border border-success bg-success-muted p-3 text-sm text-success"
       >
         {{ actionMessage }}
@@ -522,6 +535,7 @@ function formatStartedAt(startedAt: number): string {
               :key="party.partyId"
               class="admin-party-card"
               :class="{ 'admin-party-card-active': selectedPartyId === party.partyId }"
+              :aria-pressed="selectedPartyId === party.partyId"
               @click="selectedPartyId = party.partyId"
             >
               <span class="flex items-center justify-between gap-2">
@@ -635,11 +649,11 @@ function formatStartedAt(startedAt: number): string {
           <table v-if="filteredLogs.length" class="w-full text-left text-xs">
             <thead class="bg-shell sticky top-0">
               <tr>
-                <th class="px-4 py-3 font-medium">Time</th>
-                <th class="px-4 py-3 font-medium">Level</th>
-                <th class="px-4 py-3 font-medium">Component</th>
-                <th class="px-4 py-3 font-medium">Namespace</th>
-                <th class="px-4 py-3 font-medium">Message</th>
+                <th scope="col" class="px-4 py-3 font-medium">Time</th>
+                <th scope="col" class="px-4 py-3 font-medium">Level</th>
+                <th scope="col" class="px-4 py-3 font-medium">Component</th>
+                <th scope="col" class="px-4 py-3 font-medium">Namespace</th>
+                <th scope="col" class="px-4 py-3 font-medium">Message</th>
               </tr>
             </thead>
             <tbody class="divide-y divide-border">
@@ -665,11 +679,61 @@ function formatStartedAt(startedAt: number): string {
           <p v-else class="p-4 text-sm text-muted-foreground">No logs loaded.</p>
         </div>
       </section>
+
+      <!-- "Delete All Parties" confirmation — the console's single most
+           destructive action gets its own dialog (not a bare browser
+           confirm()) naming exactly what's about to happen. -->
+      <Transition name="fade">
+        <div v-if="showCleanupConfirm" class="ui-overlay">
+          <div class="ui-dialog">
+            <div class="admin-dialog-icon">⚠️</div>
+            <h2 class="admin-dialog-title">Delete All Parties?</h2>
+            <p class="admin-dialog-desc">
+              This disconnects every connected player and permanently deletes
+              <strong>{{ parties.length }}</strong> {{ parties.length === 1 ? 'party' : 'parties' }}
+              from the server. This cannot be undone.
+            </p>
+            <div class="flex flex-col gap-3">
+              <button class="ui-btn-danger" :disabled="cleaningUp" @click="confirmCleanupAll">
+                {{ cleaningUp ? 'Deleting…' : 'Delete All Parties' }}
+              </button>
+              <button
+                class="ui-btn-secondary"
+                :disabled="cleaningUp"
+                @click="showCleanupConfirm = false"
+              >
+                Cancel
+              </button>
+            </div>
+          </div>
+        </div>
+      </Transition>
     </template>
   </main>
 </template>
 
 <style scoped>
+.admin-dialog-icon {
+  font-size: 2rem;
+  margin-bottom: 0.75rem;
+  line-height: 1;
+}
+
+.admin-dialog-title {
+  font-size: 1.25rem;
+  font-weight: 700;
+  color: var(--color-foreground);
+  margin-bottom: 0.5rem;
+  letter-spacing: -0.01em;
+}
+
+.admin-dialog-desc {
+  font-size: 0.875rem;
+  color: var(--color-muted-foreground);
+  margin-bottom: 1.75rem;
+  line-height: 1.5;
+}
+
 .admin-select option {
   background-color: var(--color-panel);
   color: var(--color-foreground);

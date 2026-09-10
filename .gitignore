@@ -11,10 +11,12 @@ test-results/
 .eslintcache 
 .playwright-cli
 .playwright-mcp/
+.pnpm-store/
 
 graphify-out/cache/
 graphify-out/graph.html
 graphify-out/.graphify_labels.json
+graphify-out/.graphify_labels.json.sig
 graphify-out/.graphify_root
 graphify-out/GRAPH_TREE.html
 # Dated backups of the previous graph, created on every `graphify update`

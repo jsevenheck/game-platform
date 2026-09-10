@@ -200,20 +200,45 @@ This is the critical integration point. The handler must:
 5. **Call back** with `{ ok: true, roomCode, playerId, resumeToken }` on success or `{ ok: false, error }` on failure.
 6. The server-issued `resumeToken` must never be included in any broadcast room view sent to clients.
 
-> **Use the shared helpers** — `authorizePartyJoin`, `syncRoomHostAfterJoin`, `assignHost`, `restoreHostToFirstConnectedPlayer`, `normalizeJoinToken`, and `normalizeStablePlayerId` are all exported from `apps/platform/server/party/gameAuth.ts`. Do not re-implement them per game.
+> **Use the shared helpers** — `authorizePartyJoin`, `syncRoomHostAfterJoin`, `assignHost`, `restoreHostToFirstConnectedPlayer`, `normalizeJoinToken`, `normalizeStablePlayerId`, `readString`, `readFiniteNumber`, `readArrayIndex`, and `createSocketIndex` are all exported from `apps/platform/server/party/gameAuth.ts`. Do not re-implement them per game.
 
 ### Socket Handler Validation and Authorization
 
 - Type Socket.IO handler input as `unknown` on the server and validate shape before reading fields.
-- Normalize required strings, validate enums/booleans/integers, and respond with `{ ok: false, error: 'Invalid request' }` for malformed payloads.
+- Normalize required strings, validate enums/booleans/integers, and respond with `{ ok: false, error: 'Invalid request' }` for malformed payloads. Use `readString`/`readFiniteNumber`/`readArrayIndex` from `gameAuth.ts` rather than calling a string/number-only method (`.trim()`, `.toUpperCase()`, arithmetic, array indexing) directly on an unchecked field — Socket.IO does not validate a payload against the compile-time event types at runtime, and a wrong-typed field throws a `TypeError` that isn't caught anywhere in the dispatch path, crashing the entire process (see the `catch` guidance immediately below for the other half of this).
+- Do not `catch (err) { instrumentation.finishError(); throw err; }` — that logs a metric and then re-raises, which is exactly the throw described above. Catch, finish instrumentation, and respond with a sanitized error instead.
 - For host-only actions, re-sync host state from the active party first, then verify the socket index, room code, player id, `player.connected === true`, and `player.socketId === socket.id`.
 - Do not trust client-provided `isHost` for authorization.
+- Use `createSocketIndex()` from `gameAuth.ts` for the game's socket→{roomCode, playerId} index rather than hand-rolling a `Map` — call it once per game module; each call returns its own private, isolated index.
+
+### Rate Limiting
+
+Once a socket is authorized into a room, its in-match gameplay events are otherwise unbounded — turn/phase checks stop a legitimate player from acting out of turn, but nothing stops a scripted client from calling the same event at an arbitrary rate. Rate-limit any event that is high-frequency or otherwise attacker-shaped (real-time input like drawing strokes, or any mutating action a client can call directly without waiting on a server round-trip).
+
+Use `createSocketRateLimiter` from `apps/platform/server/observability/rateLimit.ts` — it owns the map and a self-pruning interval so each game doesn't have to hand-roll that bookkeeping:
+
+```ts
+import { createSocketRateLimiter } from '../../../../apps/platform/server/observability/rateLimit';
+
+// One limiter can be shared across every event it should bound.
+const gameplayRateLimit = createSocketRateLimiter({ windowMs: 1_000, max: 20 });
+
+socket.on('someEvent', (data: unknown, cb: unknown) => {
+  const respond = /* ... */;
+  if (!gameplayRateLimit.check(socket.id)) {
+    return respond({ ok: false, error: 'Too many requests — slow down' });
+  }
+  // ... handler logic ...
+});
+```
+
+Check the limit before any room/auth lookup — rejecting cheaply on a flood matters more than the ordering of error messages. Pick a threshold well above any plausible legitimate rate (kritzelagent's stroke submission uses 10/second since each call is one completed pointer-up stroke, not a per-point event; turn-based actions bounded by phase checks use a more generous ~20/second so it never affects real play). See `apps/platform/__tests__/rateLimit.test.ts` for the primitive's own test coverage, and any of flip7/imposter/secret-signals/kritzelagent's socket handler tests for the per-game pattern.
 
 ### `cleanupMatch` Contract
 
 - Remove the room/session mapped to the given matchKey.
-- Remove socket indexes/session mappings associated with that room so stale sockets cannot pass later authorization checks.
-- Clean up any active timers, intervals, or scheduled tasks for that room.
+- Remove socket indexes/session mappings associated with that room so stale sockets cannot pass later authorization checks — if using `createSocketIndex()`, call its `deleteForRoom(roomCode)`.
+- Clean up any active timers, intervals, or scheduled tasks for that room — including any cleanup-timer map entry keyed by the room code itself; clear it here, not only when the timer fires.
 
 ### Server Logging
 
@@ -352,7 +377,7 @@ onBeforeUnmount(() => {
 
 > **Key:** Emit `phase-change` with the value `'ended'` when the game is over. The `PlatformAdapter` watches for this to show the replay/return overlay.
 >
-> If you extract socket creation into a `useSocket()` composable, keep ownership explicit: return the socket (and/or a cleanup function) and disconnect in the owning `App.vue` `onBeforeUnmount()`. Do not hide parent-owned socket teardown inside a composable lifecycle hook.
+> If you extract socket creation into a `useSocket()` composable, keep ownership explicit: the composable owns the socket and disconnects it in `onUnmounted()`. The owning `App.vue` remains responsible for unregistering its event listeners; do not duplicate socket ownership across both layers.
 >
 > **Required:** The `useSocket` composable must accept and forward `joinToken` in the socket `auth` object. Without it, `authorizePartyJoin` will reject the join. Every game's `useSocket` must also call `socket.disconnect()` in `onUnmounted()` to prevent socket leaks.
 

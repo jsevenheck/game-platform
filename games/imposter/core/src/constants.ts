@@ -1,6 +1,15 @@
 export const MIN_PLAYERS = 3;
 export const MAX_PLAYERS = 16;
 export const DEFAULT_INFILTRATOR_COUNT = 1;
+/**
+ * The vote-resolution logic can only ever mark ONE player per round as
+ * "caught," and there is no mechanism to accumulate catches of separate
+ * infiltrators across rounds — so civilians can only ever win when the room
+ * has at most one infiltrator. 0 ("paranoia mode" — no infiltrator at all)
+ * is unaffected. Keep the lobby UI's stepper and the server's
+ * `setInfiltratorCount` validation both bounded by this constant.
+ */
+export const MAX_INFILTRATOR_COUNT = 1;
 export const DESCRIPTION_MAX_LENGTH = 30;
 export const DEFAULT_DISCUSSION_DURATION_MS = 90_000; // 90 seconds
 export const MIN_DISCUSSION_DURATION_MS = 30_000;
