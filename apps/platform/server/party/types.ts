@@ -24,7 +24,7 @@ export interface PartySession {
   selectedGameId: string | null;
   activeMatch: PartyMatch | null;
   status: PartyStatus;
-  /** socketIds that have acknowledged returning to lobby */
+  /** playerIds that have acknowledged returning to lobby */
   returnAcks: Set<string>;
   /** matchKey of match currently being cleaned up after replay */
   pendingCleanupMatchKey: string | null;
