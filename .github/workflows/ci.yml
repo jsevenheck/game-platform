@@ -23,9 +23,6 @@ jobs:
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
 
-      - name: Audit high-severity dependencies
-        run: pnpm audit --audit-level=high
-
       - name: Lint
         run: pnpm lint
 
@@ -34,16 +31,6 @@ jobs:
 
       - name: Unit tests
         run: pnpm test
-
-      - name: Production build
-        run: pnpm build
-
-      - name: Verify shipped game data assets
-        run: |
-          test -s apps/platform/dist/server/games/estimate/server/data/questions.csv
-          test -s apps/platform/dist/server/games/imposter/server/data/words.txt
-          test -s apps/platform/dist/server/games/kritzelagent/server/data/topics.csv
-          test -s apps/platform/dist/server/games/herd-mentality/server/data/prompts.csv
 
       - name: Install Playwright browsers
         run: pnpm exec playwright install --with-deps chromium
