@@ -1,9 +1,12 @@
 {
   "mcpServers": {
-    "playwright": {
+    "graft": {
       "command": "npx",
-      "args": ["-y", "@playwright/mcp@latest"],
-      "lifecycle": "lazy"
+      "args": [
+        "-y",
+        "@nanonets/graft",
+        "mcp"
+      ]
     }
   }
 }
