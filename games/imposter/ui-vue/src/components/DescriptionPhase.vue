@@ -197,7 +197,7 @@ function handleSubmit() {
         <div
           class="ui-progress-fill btn-imposter"
           :style="{
-            width: `${((store.room?.submittedDescriptionIds.length ?? 0) / (store.connectedPlayers.length || 1)) * 100}%`,
+            transform: `scaleX(${(store.room?.submittedDescriptionIds.length ?? 0) / (store.connectedPlayers.length || 1)})`,
           }"
         ></div>
       </div>

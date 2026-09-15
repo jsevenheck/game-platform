@@ -268,13 +268,16 @@ onBeforeUnmount(() => {
 <style scoped>
 .kritzelagent-app {
   display: flex;
-  flex: 1 1 auto;
+  flex: 0 1 64rem;
   flex-direction: column;
   gap: 1rem;
-  width: min(100%, 64rem);
+  width: 100%;
+  max-width: 64rem;
+  min-width: 0;
   min-height: 100%;
   margin: 0 auto;
   padding: clamp(1rem, 4vw, 2rem);
+  box-sizing: border-box;
   outline: none;
 }
 .kritzelagent-error,

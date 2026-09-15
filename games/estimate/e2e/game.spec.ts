@@ -118,6 +118,23 @@ async function hostAdvances(hostPage: Page): Promise<void> {
 }
 
 test.describe('Estimate game', () => {
+  test('desktop game shell stays centered and bounded', async ({ browser }) => {
+    const session = await createTwoPlayerEstimateSession(browser, 'Shell Host', 'Shell Guest');
+    try {
+      await session.hostPage.setViewportSize({ width: 1280, height: 900 });
+      await launchEstimateGame(session.hostPage, session.guestPage);
+      await expect(session.hostPage.getByTestId('estimate-lobby')).toBeVisible({ timeout: 15_000 });
+
+      const shell = await session.hostPage.locator('[data-testid="estimate-app"]').boundingBox();
+      expect(shell).not.toBeNull();
+      expect(shell?.width).toBeLessThanOrEqual(1024);
+      expect(shell?.x).toBeGreaterThan(0);
+      expect((shell?.x ?? 0) + (shell?.width ?? 0)).toBeLessThanOrEqual(1280);
+    } finally {
+      await closeSession(session);
+    }
+  });
+
   test('happy path: 2 players play 1 round end-to-end', async ({ browser }) => {
     const session = await createTwoPlayerEstimateSession(browser, 'Alice', 'Bob');
     try {

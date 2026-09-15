@@ -251,10 +251,11 @@ onBeforeUnmount(() => {
 <style scoped>
 .herd-mentality-app {
   display: flex;
-  flex: 1 1 auto;
+  flex: 0 1 64rem;
   flex-direction: column;
   gap: 1rem;
-  width: min(100%, 64rem);
+  width: 100%;
+  max-width: 64rem;
   min-width: 0;
   min-height: 100%;
   margin: 0 auto;

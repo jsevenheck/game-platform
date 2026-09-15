@@ -81,7 +81,9 @@ function submitStroke(points: { x: number; y: number }[]) {
 .kritzelagent-assignment {
   display: grid;
   gap: 0.2rem;
-  border-left: 3px solid var(--color-kritzelagent);
-  padding-left: 0.75rem;
+  border: 1px solid var(--color-kritzelagent);
+  border-radius: var(--radius-md);
+  background: var(--color-kritzelagent-muted);
+  padding: 0.75rem;
 }
 </style>

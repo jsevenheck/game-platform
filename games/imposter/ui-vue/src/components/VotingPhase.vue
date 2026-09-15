@@ -184,7 +184,7 @@ function getDescriptionText(playerId: string): string {
           <div
             class="ui-progress-fill btn-imposter"
             :style="{
-              width: `${((store.room?.submittedVoteIds.length ?? 0) / (store.connectedPlayers.length || 1)) * 100}%`,
+              transform: `scaleX(${(store.room?.submittedVoteIds.length ?? 0) / (store.connectedPlayers.length || 1)})`,
             }"
           ></div>
         </div>
