@@ -1,4 +1,9 @@
-import { DEFAULT_TOTAL_ROUNDS, MAX_PLAYERS, MIN_PLAYERS } from '../../../core/src/constants';
+import {
+  DEFAULT_TOTAL_ROUNDS,
+  MAX_PLAYERS,
+  MIN_PLAYERS,
+  TARGET_COWS,
+} from '../../../core/src/constants';
 import type { Phase, ServerRoom } from '../../../core/src/types';
 import { __resetSocketIndexForTests, clearSocketIndexesForRoom, createPlayer } from './player';
 
@@ -41,6 +46,7 @@ export function createRoom(hostName: string, options: CreateRoomOptions): Server
     phase: 'lobby' as Phase,
     currentRound: 0,
     totalRounds: options.totalRounds ?? DEFAULT_TOTAL_ROUNDS,
+    targetCows: TARGET_COWS,
     prompt: null,
     promptDeck: [],
     players: [host],

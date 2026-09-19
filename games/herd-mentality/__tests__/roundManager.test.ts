@@ -49,8 +49,8 @@ describe('round lifecycle', () => {
     expect(room.phase).toBe('answering');
     expect(() => submitAnswer(room, ids[0]!, 'pizza')).toThrow('already submitted');
     submitAnswer(room, ids[1]!, 'pizza');
-    submitAnswer(room, ids[2]!, 'salad');
-    submitAnswer(room, ids[3]!, 'salad');
+    submitAnswer(room, ids[2]!, 'pizza');
+    submitAnswer(room, ids[3]!, 'pizza');
     expect(room.phase).toBe('allSubmitted');
     expect(buildRoomView(room).answers).toEqual([]);
     expect(buildRoomView(room).result).toBeNull();
@@ -59,7 +59,7 @@ describe('round lifecycle', () => {
     expect(room.cows.get(ids[0]!)).toBe(1);
     expect(room.cows.get(ids[1]!)).toBe(1);
     expect(room.pinkCowPlayerId).toBeNull();
-    expect(room.roundResult?.groups[0]?.count).toBe(2);
+    expect(room.roundResult?.groups[0]?.count).toBe(4);
   });
   it('gives a sole unmatched answer the Pink Cow and advances to a fresh prompt', () => {
     const { room, ids } = roomWithFour();
@@ -102,5 +102,34 @@ describe('round lifecycle', () => {
     revealAnswers(room);
     expect(room.roundResult?.winnerIds).toEqual([ids[0]]);
     expect(room.phase).toBe('ended');
+  });
+  it('does not award cows when the most common answers are tied', () => {
+    const { room, ids } = roomWithFour();
+    submitAnswer(room, ids[0]!, 'Pizza');
+    submitAnswer(room, ids[1]!, 'Pizza');
+    submitAnswer(room, ids[2]!, 'Salat');
+    submitAnswer(room, ids[3]!, 'Salat');
+    revealAnswers(room);
+
+    expect(room.cows.get(ids[0]!)).toBe(0);
+    expect(room.cows.get(ids[1]!)).toBe(0);
+    expect(room.cows.get(ids[2]!)).toBe(0);
+    expect(room.cows.get(ids[3]!)).toBe(0);
+    expect(room.pinkCowPlayerId).toBeNull();
+    expect(room.roundResult?.majorityAnswer).toBeNull();
+  });
+  it('raises the target when multiple players reach it in the same round', () => {
+    const { room, ids } = roomWithFour();
+    room.cows.set(ids[0]!, 7);
+    room.cows.set(ids[1]!, 7);
+    submitAnswer(room, ids[0]!, 'Pizza');
+    submitAnswer(room, ids[1]!, 'Pizza');
+    submitAnswer(room, ids[2]!, 'Pizza');
+    submitAnswer(room, ids[3]!, 'Pizza');
+    revealAnswers(room);
+
+    expect(room.targetCows).toBe(9);
+    expect(room.roundResult?.winnerIds).toEqual([]);
+    expect(room.phase).toBe('reveal');
   });
 });

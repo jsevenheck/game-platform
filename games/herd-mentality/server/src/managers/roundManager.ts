@@ -1,5 +1,5 @@
 import { MAX_PLAYERS, MIN_PLAYERS, TARGET_COWS } from '../../../core/src/constants';
-import { normalizeAnswer, resolveRound } from '../../../core/src/rules';
+import { normalizeAnswer, getMajorityGroup, resolveRound } from '../../../core/src/rules';
 import type { Phase, ServerRoom } from '../../../core/src/types';
 import { findPlayer } from '../models/room';
 import { pickRandomPrompts } from '../utils/promptLibrary';
@@ -28,6 +28,7 @@ export function startGame(room: ServerRoom): void {
   if (room.promptDeck.length < room.totalRounds)
     throw new HerdMentalityError('Not enough unique prompts');
   for (const player of room.players) room.cows.set(player.id, 0);
+  room.targetCows = TARGET_COWS;
   room.pinkCowPlayerId = null;
   room.currentRound = 0;
   advanceRound(room);
@@ -59,21 +60,28 @@ export function revealAnswers(room: ServerRoom): void {
     throw new HerdMentalityError(`Cannot reveal in phase ${room.phase}`);
   const entries = [...room.answers.entries()].map(([playerId, answer]) => ({ playerId, answer }));
   const result = resolveRound(entries);
+  const majorityGroup = getMajorityGroup(result.groups);
   for (const group of result.groups) {
     group.playerNames = group.playerIds.map((id) => findPlayer(room, id)?.name ?? '');
-    if (group.count >= 2) {
-      for (const id of group.playerIds) room.cows.set(id, (room.cows.get(id) ?? 0) + 1);
+  }
+  if (majorityGroup) {
+    for (const id of majorityGroup.playerIds) {
+      room.cows.set(id, (room.cows.get(id) ?? 0) + 1);
     }
   }
   if (result.pinkCowPlayerId) {
     room.pinkCowPlayerId = result.pinkCowPlayerId;
   }
-  const winnerIds = room.players
-    .filter(
-      (player) =>
-        (room.cows.get(player.id) ?? 0) >= TARGET_COWS && room.pinkCowPlayerId !== player.id
-    )
-    .map((player) => player.id);
+  const qualifiedPlayers = room.players.filter(
+    (player) =>
+      (room.cows.get(player.id) ?? 0) >= room.targetCows && room.pinkCowPlayerId !== player.id
+  );
+  const winnerIds = qualifiedPlayers.length === 1 ? [qualifiedPlayers[0]!.id] : [];
+  if (qualifiedPlayers.length > 1) {
+    // Official tiebreaker: if multiple players reach the target in one round,
+    // raise the target by one and continue until one player leads.
+    room.targetCows += 1;
+  }
   result.winnerIds = winnerIds;
   room.roundResult = result;
   room.phase = winnerIds.length > 0 || room.currentRound >= room.totalRounds ? 'ended' : 'reveal';
@@ -94,5 +102,6 @@ export function restartGame(room: ServerRoom): void {
   room.answers.clear();
   room.roundResult = null;
   room.pinkCowPlayerId = null;
+  room.targetCows = TARGET_COWS;
   for (const player of room.players) room.cows.set(player.id, 0);
 }

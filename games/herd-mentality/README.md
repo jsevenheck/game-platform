@@ -1,23 +1,31 @@
 # Herd Mentality
 
-Herd Mentality ist ein eigenständiges Mehrheitsantwort-Spiel für **4–20 Spieler**.
-Alle beantworten dieselbe Frage geheim. Wer dieselbe Antwort wie mindestens eine
-weitere Person gibt, erhält eine Kuh. Eine einzelne abweichende Antwort erhält
-die Pink Cow und kann damit nicht gewinnen.
+Herd Mentality ist eine digitale Plattform-Adaption des gleichnamigen
+Mehrheitsantwort-Spiels für **4–20 Spieler**. Alle beantworten dieselbe Frage geheim.
+Die eindeutig häufigste Antwort erhält eine Kuh pro beteiligter Person. Eine einzelne
+abweichende Antwort erhält die Pink Cow und kann damit nicht gewinnen.
+
+Die digitale Variante behält den offiziellen Kern bei, nutzt aber einen konfigurierten
+Fragenvorrat und eine begrenzte Zahl von Fragen pro Match. Bei einem Gleichstand der
+häufigsten Antwort gibt es keine Kühe und keine Pink Cow. Erreichen mehrere Spieler das
+Ziel in derselben Runde, wird das Ziel gemäß dem offiziellen Tiebreaker um eine Kuh erhöht.
 
 ## Spielablauf
 
 1. Der Host startet das Spiel ab vier verbundenen Spielern.
 2. Alle schreiben gleichzeitig eine kurze Antwort auf die angezeigte Frage.
 3. Nach der letzten Antwort löst der Host die Runde auf.
-4. Gleiche Antworten werden gruppiert und die Kühe werden verteilt.
-5. Der Host startet die nächste Runde. Wer acht Kühe ohne Pink Cow erreicht,
-   gewinnt sofort; andernfalls endet das Spiel nach acht Fragen.
+4. Nur die eindeutig häufigste Antwort erhält Kühe; Gleichstände geben keine Kühe.
+5. Eine einzelne Antwort außerhalb einer eindeutigen Mehrheit erhält die Pink Cow.
+6. Wer das aktuelle Kuhziel ohne Pink Cow erreicht, gewinnt. Bei einem Gleichstand wird
+   das Ziel um eine Kuh erhöht.
 
-Antworten werden für die erste Version deterministisch verglichen: Unicode-NFKC,
+Antworten werden für die digitale Variante deterministisch verglichen: Unicode-NFKC,
 Trim, zusammengefasste Leerzeichen und Kleinschreibung. Synonyme und semantische
-Gleichheit werden nicht automatisch erkannt. Die Fragen und das Branding sind
-originär für diese Plattform erstellt.
+Gleichheit werden nicht automatisch erkannt.
+
+**Regelquellen:** [Big Potato – How to Play](https://bigpotato.co.uk/blogs/how-to-play/herd-mentality)
+und [offizielles Regelblatt](https://c.tabletopia.com/games/herd-mentality/rules/hm-usa-rules-4-mar-2020/en).
 
 ## Entwicklung
 

@@ -39,6 +39,8 @@ export interface ScoreEntry {
 
 export interface RoundResult {
   groups: AnswerGroup[];
+  /** The answer with a unique highest count, or null on a majority tie. */
+  majorityAnswer: string | null;
   unmatchedPlayerIds: string[];
   pinkCowPlayerId: string | null;
   winnerIds: string[];
@@ -49,6 +51,7 @@ export interface RoomView {
   phase: Phase;
   currentRound: number;
   totalRounds: number;
+  targetCows: number;
   prompt: { id: string; text: string } | null;
   players: PlayerView[];
   answers: AnswerEntry[];
@@ -73,6 +76,8 @@ export interface ServerRoom {
   phase: Phase;
   currentRound: number;
   totalRounds: number;
+  /** Current target after official same-round tie-break escalation. */
+  targetCows: number;
   prompt: Prompt | null;
   promptDeck: Prompt[];
   players: ServerPlayer[];

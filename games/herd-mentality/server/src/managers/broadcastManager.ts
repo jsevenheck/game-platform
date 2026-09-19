@@ -36,6 +36,7 @@ export function buildRoomView(room: ServerRoom): RoomView {
     phase: room.phase,
     currentRound: room.currentRound,
     totalRounds: room.totalRounds,
+    targetCows: room.targetCows,
     prompt: room.prompt ? { id: room.prompt.id, text: room.prompt.text } : null,
     players,
     answers,

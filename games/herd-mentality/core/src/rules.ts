@@ -29,13 +29,29 @@ export function groupAnswers(answers: AnswerEntry[]): AnswerGroup[] {
   return [...groups.values()].sort((a, b) => b.count - a.count || a.answer.localeCompare(b.answer));
 }
 
+/**
+ * Returns the unique most-common answer. A tied top count is not a majority,
+ * so no group receives a cow in that case.
+ */
+export function getMajorityGroup(groups: AnswerGroup[]): AnswerGroup | null {
+  const [top, runnerUp] = groups;
+  if (!top || top.count < 2 || runnerUp?.count === top.count) return null;
+  return top;
+}
+
 export function resolveRound(answers: AnswerEntry[]): RoundResult {
   const groups = groupAnswers(answers);
+  const majorityGroup = getMajorityGroup(groups);
   const unmatchedPlayerIds = groups
     .filter((group) => group.count === 1)
     .flatMap((group) => group.playerIds);
-  const hasMajority = groups.some((group) => group.count >= 2);
   const pinkCowPlayerId =
-    hasMajority && unmatchedPlayerIds.length === 1 ? unmatchedPlayerIds[0]! : null;
-  return { groups, unmatchedPlayerIds, pinkCowPlayerId, winnerIds: [] };
+    majorityGroup && unmatchedPlayerIds.length === 1 ? unmatchedPlayerIds[0]! : null;
+  return {
+    groups,
+    majorityAnswer: majorityGroup?.answer ?? null,
+    unmatchedPlayerIds,
+    pinkCowPlayerId,
+    winnerIds: [],
+  };
 }

@@ -14,7 +14,7 @@ const groupText = (group: { playerNames: string[]; count: number }) =>
     aria-labelledby="herd-mentality-reveal-title"
   >
     <p class="text-sm text-muted-foreground">
-      Frage {{ room.currentRound }} von {{ room.totalRounds }}
+      Frage {{ room.currentRound }} von {{ room.totalRounds }} · Ziel: {{ room.targetCows }} Kühe
     </p>
     <h2
       id="herd-mentality-reveal-title"
@@ -29,7 +29,9 @@ const groupText = (group: { playerNames: string[]; count: number }) =>
       <ul class="mt-3 space-y-2" aria-label="Antwortgruppen">
         <li v-for="group in room.result.groups" :key="group.answer" class="ui-panel">
           <strong>{{ group.answer }}</strong> · {{ groupText(group) }}
-          <span v-if="group.count >= 2" class="ml-2 text-success">+1 Kuh pro Person</span>
+          <span v-if="room.result.majorityAnswer === group.answer" class="ml-2 text-success"
+            >+1 Kuh pro Person</span
+          >
         </li>
       </ul>
       <p v-if="room.result.pinkCowPlayerId" class="mt-3 text-warning">

@@ -38,4 +38,31 @@ describe('Herd Mentality answer rules', () => {
       ]).pinkCowPlayerId
     ).toBeNull();
   });
+
+  it('does not score a tied majority or assign a Pink Cow', () => {
+    const result = resolveRound([
+      { playerId: 'a', answer: 'Pizza' },
+      { playerId: 'b', answer: 'Pizza' },
+      { playerId: 'c', answer: 'Salat' },
+      { playerId: 'd', answer: 'Salat' },
+      { playerId: 'e', answer: 'Suppe' },
+    ]);
+
+    expect(result.majorityAnswer).toBeNull();
+    expect(result.pinkCowPlayerId).toBeNull();
+    expect(result.unmatchedPlayerIds).toEqual(['e']);
+  });
+
+  it('identifies only the unique largest group as the majority', () => {
+    const result = resolveRound([
+      { playerId: 'a', answer: 'Pizza' },
+      { playerId: 'b', answer: 'pizza' },
+      { playerId: 'c', answer: 'Pizza' },
+      { playerId: 'd', answer: 'Salat' },
+      { playerId: 'e', answer: 'Suppe' },
+    ]);
+
+    expect(result.majorityAnswer).toBe('pizza');
+    expect(result.pinkCowPlayerId).toBeNull();
+  });
 });
