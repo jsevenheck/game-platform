@@ -1,6 +1,7 @@
 Please follow the instructions in CLAUDE.md
 
 <!-- graft:start -->
+
 ## Graft — repo context graph
 
 This repo is indexed in `graft/`: small linked markdown nodes that explain each
