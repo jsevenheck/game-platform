@@ -77,7 +77,7 @@ onBeforeUnmount(() => {
 </script>
 
 <template>
-  <div class="home-root">
+  <main class="home-root">
     <div class="home-card" :class="activeTab === 'browse' ? 'home-card-wide' : 'home-card-compact'">
       <!-- Top accent line -->
       <div class="home-top-line" />
@@ -165,7 +165,7 @@ onBeforeUnmount(() => {
         </div>
       </Transition>
     </div>
-  </div>
+  </main>
 </template>
 
 <style scoped>
@@ -240,10 +240,7 @@ onBeforeUnmount(() => {
   font-size: 1.625rem;
   font-weight: 800;
   letter-spacing: -0.02em;
-  background: linear-gradient(135deg, #f0f0f5 0%, #7878a0 100%);
-  -webkit-background-clip: text;
-  -webkit-text-fill-color: transparent;
-  background-clip: text;
+  color: var(--color-foreground);
   margin-bottom: 0.25rem;
   line-height: 1.2;
 }

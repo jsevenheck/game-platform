@@ -42,6 +42,7 @@ function submit() {
     <div class="flex items-center gap-2 flex-wrap justify-center">
       <input
         v-model="word"
+        aria-label="Clue word"
         type="text"
         placeholder="Clue word"
         class="ui-input !w-40 !bg-white/5 !border-white/10 focus:!border-signals uppercase"
@@ -52,7 +53,8 @@ function submit() {
         class="flex items-center bg-panel border-2 border-border-strong rounded-[--radius-sm] overflow-hidden"
       >
         <button
-          class="w-8 h-9 bg-transparent border-none text-foreground/80 text-lg font-bold cursor-pointer hover:bg-border-strong disabled:opacity-30 disabled:cursor-not-allowed"
+          aria-label="Decrease signal number"
+          class="w-11 h-11 bg-transparent border-none text-foreground/80 text-lg font-bold cursor-pointer hover:bg-border-strong disabled:opacity-30 disabled:cursor-not-allowed"
           :disabled="disabled || number <= 0"
           @click="number--"
         >
@@ -60,7 +62,8 @@ function submit() {
         </button>
         <span class="w-7 text-center text-foreground font-bold">{{ number }}</span>
         <button
-          class="w-8 h-9 bg-transparent border-none text-foreground/80 text-lg font-bold cursor-pointer hover:bg-border-strong disabled:opacity-30 disabled:cursor-not-allowed"
+          aria-label="Increase signal number"
+          class="w-11 h-11 bg-transparent border-none text-foreground/80 text-lg font-bold cursor-pointer hover:bg-border-strong disabled:opacity-30 disabled:cursor-not-allowed"
           :disabled="disabled || number >= MAX_SIGNAL_NUMBER"
           @click="number++"
         >
@@ -80,7 +83,7 @@ function submit() {
         Send Signal
       </button>
     </div>
-    <p v-if="error" class="text-danger text-xs">{{ error }}</p>
+    <p v-if="error" role="alert" class="text-danger text-xs">{{ error }}</p>
     <p class="text-muted-foreground text-xs">0 = unlimited guesses</p>
   </div>
 </template>

@@ -4,6 +4,7 @@ import type { Room } from '../../core/src/types';
 import {
   createComponentLogger,
   readLoggingConfig,
+  toLoggableError,
 } from '../../../../apps/platform/server/logging/logger';
 import {
   attachSocketEventDebugLogging,
@@ -14,12 +15,15 @@ import {
   recordNamespaceConnection,
   recordNamespaceDisconnect,
 } from '../../../../apps/platform/server/observability/socketNamespaceMetrics';
+import { createSocketRateLimiter } from '../../../../apps/platform/server/observability/rateLimit';
 import {
   assignHost,
   authorizePartyJoin,
   normalizeJoinToken,
   normalizeStablePlayerId,
+  readString,
   syncRoomHostAfterJoin,
+  syncRoomHostFromParty,
 } from '../../../../apps/platform/server/party/gameAuth';
 import {
   MIN_PLAYERS,
@@ -27,11 +31,13 @@ import {
   ROOM_IDLE_TIMEOUT_MS,
   ROOM_ENDED_CLEANUP_MS,
 } from '../../core/src/constants';
+import { getPartyByActiveMatch } from '../../../../apps/platform/server/party/partyStore';
 import {
   createRoom,
   getRoom,
   setSessionToRoom,
   getSessionRoom,
+  getRoomSession,
   clearRoomCleanup,
   scheduleRoomCleanup,
 } from './models/room';
@@ -58,9 +64,42 @@ import {
 
 type Flip7Socket = Socket<ClientToServerEvents, ServerToClientEvents>;
 
+const GAME_ID = 'flip7';
+
+// Per-socket rate limit shared by the in-match gameplay actions (hit, stay,
+// chooseActionTarget) — each is otherwise unbounded once a socket is
+// authorized into a room, so a scripted client could flood any of them at
+// an arbitrary rate. Generous relative to real play (turn order and phase
+// checks already prevent a legitimate player from acting out of turn), so
+// this only bounds automated flooding. See docs/adding-a-new-game.md's
+// "Rate limiting" section for the pattern.
+const gameplayRateLimit = createSocketRateLimiter({ windowMs: 1_000, max: 20 });
+
+/**
+ * Re-derive `room.hostId` from the live platform party before checking it.
+ * Without this, if the platform party's host changes while both the old
+ * and new host remain connected to this room, the room's own `hostId`
+ * pointer stays stale until the next join/disconnect event — letting a
+ * former host keep host-only privileges and blocking the real new host.
+ * Mirrors Scout's `syncRoomHostFromActiveParty`, the gold-standard pattern
+ * this contract is documented against.
+ */
+function syncRoomHostFromActiveParty(room: Room): boolean {
+  const sessionId = getRoomSession(room.code);
+  const party = sessionId ? getPartyByActiveMatch(sessionId, GAME_ID) : undefined;
+  if (!party) return false;
+  syncRoomHostFromParty(room, party.hostPlayerId);
+  return true;
+}
+
 function verifyIsHost(socket: Flip7Socket, room: Room): boolean {
+  syncRoomHostFromActiveParty(room);
+
   const index = getSocketIndex(socket.id);
-  return index !== undefined && index.roomCode === room.code && index.playerId === room.hostId;
+  if (!index || index.roomCode !== room.code || index.playerId !== room.hostId) return false;
+
+  const player = room.players[index.playerId];
+  return player?.connected === true && player.socketId === socket.id;
 }
 
 function verifyPlayerInRoom(socket: Flip7Socket, roomCode: string): string | null {
@@ -167,7 +206,7 @@ export function registerFlip7(io: Server, namespace = '/g/flip7'): void {
       const instrumentation = startSocketHandlerInstrumentation(namespace, 'autoJoinRoom', gameId);
       const respond = instrumentation.wrapCallback(cb);
       try {
-        const sessionId = data.sessionId?.trim();
+        const sessionId = readString(data?.sessionId)?.trim();
         if (!sessionId) {
           return respond({ ok: false, error: 'Missing session info' });
         }
@@ -277,7 +316,8 @@ export function registerFlip7(io: Server, namespace = '/g/flip7'): void {
         respond({ ok: true, roomCode: room.code, playerId: hostId, resumeToken });
       } catch (err) {
         instrumentation.finishError();
-        throw err;
+        socketLogger.error({ err: toLoggableError(err) }, 'autoJoinRoom failed unexpectedly');
+        respond({ ok: false, error: 'Internal error' });
       }
     });
 
@@ -318,122 +358,173 @@ export function registerFlip7(io: Server, namespace = '/g/flip7'): void {
         respond({ ok: true });
       } catch (err) {
         instrumentation.finishError();
-        throw err;
+        socketLogger.error({ err: toLoggableError(err) }, 'startGame failed unexpectedly');
+        respond({ ok: false, error: 'Internal error' });
       }
     });
 
     // ── hit ───────────────────────────────────────────────────────────────────
     socket.on('hit', (data) => {
-      const room = getRoom(data.roomCode);
-      if (!room || room.phase !== 'playing') return;
-      const playerId = verifyPlayerInRoom(socket, data.roomCode);
-      if (!playerId) return;
-
+      const instrumentation = startSocketHandlerInstrumentation(namespace, 'hit', gameId);
       try {
-        playerHit(room, playerId);
+        if (!gameplayRateLimit.check(socket.id)) return instrumentation.finishRejected();
+        const room = getRoom(data.roomCode);
+        if (!room || room.phase !== 'playing') return instrumentation.finishRejected();
+        const playerId = verifyPlayerInRoom(socket, data.roomCode);
+        if (!playerId) return instrumentation.finishRejected();
+
+        try {
+          playerHit(room, playerId);
+        } catch (err) {
+          socketLogger.error(
+            { err: toLoggableError(err), roomCode: data.roomCode, playerId, event: 'hit' },
+            'flip7 hit threw — broadcasting current room state'
+          );
+          broadcastRoom(nsp, room);
+          instrumentation.finishError();
+          return;
+        }
+
+        // Broadcast all queued action announcements before room state.
+        let resolved = popResolvedAction(data.roomCode);
+        while (resolved) {
+          broadcastActionResolved(nsp, room, resolved);
+          resolved = popResolvedAction(data.roomCode);
+        }
+
+        // roundManager already calls finalizeRound internally when round ends.
+        // We only need to trigger the phase transition from here.
+        if (room.currentRound?.roundEndReason) {
+          broadcastRoom(nsp, room);
+          advanceAfterRound(data.roomCode);
+        } else {
+          broadcastRoom(nsp, room);
+        }
+        instrumentation.finishSuccess();
       } catch (err) {
-        socketLogger.error(
-          { err, roomCode: data.roomCode, playerId, event: 'hit' },
-          'flip7 hit threw — broadcasting current room state'
-        );
-        broadcastRoom(nsp, room);
-        return;
-      }
-
-      // Broadcast all queued action announcements before room state.
-      let resolved = popResolvedAction(data.roomCode);
-      while (resolved) {
-        broadcastActionResolved(nsp, room, resolved);
-        resolved = popResolvedAction(data.roomCode);
-      }
-
-      // roundManager already calls finalizeRound internally when round ends.
-      // We only need to trigger the phase transition from here.
-      if (room.currentRound?.roundEndReason) {
-        broadcastRoom(nsp, room);
-        advanceAfterRound(data.roomCode);
-      } else {
-        broadcastRoom(nsp, room);
+        instrumentation.finishError();
+        socketLogger.error({ err: toLoggableError(err) }, 'hit failed unexpectedly');
       }
     });
 
     // ── stay ──────────────────────────────────────────────────────────────────
     socket.on('stay', (data) => {
-      const room = getRoom(data.roomCode);
-      if (!room || room.phase !== 'playing') return;
-      const playerId = verifyPlayerInRoom(socket, data.roomCode);
-      if (!playerId) return;
-
+      const instrumentation = startSocketHandlerInstrumentation(namespace, 'stay', gameId);
       try {
-        playerStay(room, playerId);
-      } catch (err) {
-        socketLogger.error(
-          { err, roomCode: data.roomCode, playerId, event: 'stay' },
-          'flip7 stay threw — broadcasting current room state'
-        );
-        broadcastRoom(nsp, room);
-        return;
-      }
+        if (!gameplayRateLimit.check(socket.id)) return instrumentation.finishRejected();
+        const room = getRoom(data.roomCode);
+        if (!room || room.phase !== 'playing') return instrumentation.finishRejected();
+        const playerId = verifyPlayerInRoom(socket, data.roomCode);
+        if (!playerId) return instrumentation.finishRejected();
 
-      if (room.currentRound?.roundEndReason) {
-        broadcastRoom(nsp, room);
-        advanceAfterRound(data.roomCode);
-      } else {
-        broadcastRoom(nsp, room);
+        try {
+          playerStay(room, playerId);
+        } catch (err) {
+          socketLogger.error(
+            { err: toLoggableError(err), roomCode: data.roomCode, playerId, event: 'stay' },
+            'flip7 stay threw — broadcasting current room state'
+          );
+          broadcastRoom(nsp, room);
+          instrumentation.finishError();
+          return;
+        }
+
+        if (room.currentRound?.roundEndReason) {
+          broadcastRoom(nsp, room);
+          advanceAfterRound(data.roomCode);
+        } else {
+          broadcastRoom(nsp, room);
+        }
+        instrumentation.finishSuccess();
+      } catch (err) {
+        instrumentation.finishError();
+        socketLogger.error({ err: toLoggableError(err) }, 'stay failed unexpectedly');
       }
     });
 
     // ── chooseActionTarget ────────────────────────────────────────────────────
     socket.on('chooseActionTarget', (data) => {
-      const room = getRoom(data.roomCode);
-      if (!room || room.phase !== 'playing') return;
-      const playerId = verifyPlayerInRoom(socket, data.roomCode);
-      if (!playerId) return;
-
+      const instrumentation = startSocketHandlerInstrumentation(
+        namespace,
+        'chooseActionTarget',
+        gameId
+      );
       try {
-        chooseActionTarget(room, playerId, data.targetPlayerId);
+        if (!gameplayRateLimit.check(socket.id)) return instrumentation.finishRejected();
+        const room = getRoom(data.roomCode);
+        if (!room || room.phase !== 'playing') return instrumentation.finishRejected();
+        const playerId = verifyPlayerInRoom(socket, data.roomCode);
+        if (!playerId) return instrumentation.finishRejected();
+
+        try {
+          chooseActionTarget(room, playerId, data.targetPlayerId);
+        } catch (err) {
+          socketLogger.error(
+            {
+              err: toLoggableError(err),
+              roomCode: data.roomCode,
+              playerId,
+              event: 'chooseActionTarget',
+            },
+            'flip7 chooseActionTarget threw — broadcasting current room state'
+          );
+          broadcastRoom(nsp, room);
+          instrumentation.finishError();
+          return;
+        }
+
+        // Broadcast all queued action announcements before room state.
+        let resolved = popResolvedAction(data.roomCode);
+        while (resolved) {
+          broadcastActionResolved(nsp, room, resolved);
+          resolved = popResolvedAction(data.roomCode);
+        }
+
+        if (room.currentRound?.roundEndReason) {
+          broadcastRoom(nsp, room);
+          advanceAfterRound(data.roomCode);
+        } else {
+          broadcastRoom(nsp, room);
+        }
+        instrumentation.finishSuccess();
       } catch (err) {
-        socketLogger.error(
-          { err, roomCode: data.roomCode, playerId, event: 'chooseActionTarget' },
-          'flip7 chooseActionTarget threw — broadcasting current room state'
-        );
-        broadcastRoom(nsp, room);
-        return;
-      }
-
-      // Broadcast all queued action announcements before room state.
-      let resolved = popResolvedAction(data.roomCode);
-      while (resolved) {
-        broadcastActionResolved(nsp, room, resolved);
-        resolved = popResolvedAction(data.roomCode);
-      }
-
-      if (room.currentRound?.roundEndReason) {
-        broadcastRoom(nsp, room);
-        advanceAfterRound(data.roomCode);
-      } else {
-        broadcastRoom(nsp, room);
+        instrumentation.finishError();
+        socketLogger.error({ err: toLoggableError(err) }, 'chooseActionTarget failed unexpectedly');
       }
     });
 
     // ── playAgain ─────────────────────────────────────────────────────────────
     socket.on('playAgain', (data) => {
-      const room = getRoom(data.roomCode);
-      if (!room || room.phase !== 'ended') return;
-      if (!verifyIsHost(socket, room)) return;
+      const instrumentation = startSocketHandlerInstrumentation(namespace, 'playAgain', gameId);
+      try {
+        const room = getRoom(data.roomCode);
+        if (!room || room.phase !== 'ended') return instrumentation.finishRejected();
+        if (!verifyIsHost(socket, room)) return instrumentation.finishRejected();
 
-      transitionToLobby(room);
-      broadcastRoom(nsp, room);
-      socketLogger.info({ roomCode: room.code }, 'flip7 game restarted to lobby');
+        transitionToLobby(room);
+        broadcastRoom(nsp, room);
+        socketLogger.info({ roomCode: room.code }, 'flip7 game restarted to lobby');
+        instrumentation.finishSuccess();
+      } catch (err) {
+        instrumentation.finishError();
+        socketLogger.error({ err: toLoggableError(err) }, 'playAgain failed unexpectedly');
+      }
     });
 
     // ── requestState ──────────────────────────────────────────────────────────
     socket.on('requestState', (data) => {
-      const room = getRoom(data.roomCode);
-      if (!room) return;
-      const playerId = verifyPlayerInRoom(socket, data.roomCode);
-      if (!playerId) return;
-      sendRoomToPlayer(nsp, room, playerId);
+      const instrumentation = startSocketHandlerInstrumentation(namespace, 'requestState', gameId);
+      try {
+        const room = getRoom(data.roomCode);
+        if (!room) return instrumentation.finishRejected();
+        const playerId = verifyPlayerInRoom(socket, data.roomCode);
+        if (!playerId) return instrumentation.finishRejected();
+        sendRoomToPlayer(nsp, room, playerId);
+        instrumentation.finishSuccess();
+      } catch (err) {
+        instrumentation.finishError();
+        socketLogger.error({ err: toLoggableError(err) }, 'requestState failed unexpectedly');
+      }
     });
 
     // ── disconnect ────────────────────────────────────────────────────────────
@@ -490,7 +581,7 @@ export function registerFlip7(io: Server, namespace = '/g/flip7'): void {
         instrumentation.finishSuccess();
       } catch (err) {
         instrumentation.finishError();
-        throw err;
+        socketLogger.error({ err: toLoggableError(err) }, 'flip7 disconnect handling failed');
       }
     });
   });

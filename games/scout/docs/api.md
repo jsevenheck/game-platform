@@ -7,8 +7,8 @@ All client events use Socket.IO acknowledgements. Successful acknowledgement pay
 ## Client → server events
 
 ### `autoJoinRoom`
-> **Authorization:** The server validates `joinToken` against the active platform party member via `authorizePartyJoin` from `apps/platform/server/party/gameAuth.ts`. Host identity is derived from `party.hostPlayerId`, not from the client-supplied `isHost` flag.
 
+> **Authorization:** The server validates `joinToken` against the active platform party member via `authorizePartyJoin` from `apps/platform/server/party/gameAuth.ts`. Host identity is derived from `party.hostPlayerId`, not from the client-supplied `isHost` flag.
 
 Creates, joins, or resumes the room associated with the platform `sessionId`.
 

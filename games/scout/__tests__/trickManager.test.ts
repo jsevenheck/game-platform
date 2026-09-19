@@ -1,8 +1,9 @@
 import { describe, expect, it } from 'vitest';
 import type { Room } from '../core/src/types';
+import type { PlayedSet } from '../core/src/types';
 import type { ScoutCard } from '../core/src/deck';
+import { analyzePlay } from '../core/src/analyzePlay';
 import {
-  beatsCurrentPlay,
   comparePlays,
   currentTurnPlayerId,
   handlePlayerDisconnected,
@@ -13,6 +14,21 @@ import {
   startTrick,
 } from '../server/src/managers/trickManager';
 import { createPlayer } from '../server/src/models/player';
+
+// Test-local helper: trickManager no longer exports beatsCurrentPlay (it was
+// unused dead code — production validates and compares plays inline in
+// commitPlay). Rebuilt here from the exports it's actually composed of so
+// these plain-language "does this beat the current play" assertions stay
+// easy to read, without reintroducing an unused production export.
+function beatsCurrentPlay(cards: ScoutCard[], current: PlayedSet | null): boolean {
+  try {
+    analyzePlay(cards);
+    if (!current) return true;
+    return comparePlays({ cards }, current) > 0;
+  } catch {
+    return false;
+  }
+}
 
 function card(id: string, playValue: number, scoutPoints = playValue): ScoutCard {
   return { id, kind: 'scout', playValue, scoutPoints, flipped: false };

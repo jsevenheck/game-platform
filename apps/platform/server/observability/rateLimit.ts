@@ -40,3 +40,31 @@ export function pruneExpiredRateLimitEntries(
     }
   }
 }
+
+export interface SocketRateLimiter {
+  /** Returns `true` when the call is allowed under the limit (and counts it). */
+  check(key: string): boolean;
+}
+
+/**
+ * Convenience wrapper around {@link checkFixedWindowRateLimit} /
+ * {@link pruneExpiredRateLimitEntries} for the common case: a per-socket
+ * rate limit on one or more in-match gameplay events, owned by one game
+ * module. Handles the map + self-pruning interval (unref'd so it never
+ * keeps the process alive) so each game doesn't have to hand-roll that
+ * boilerplate — call this once per limiter at module scope and share the
+ * returned instance across every event it should bound.
+ */
+export function createSocketRateLimiter(options: {
+  windowMs: number;
+  max: number;
+}): SocketRateLimiter {
+  const map = new Map<string, RateLimitRecord>();
+  const pruneInterval = setInterval(() => pruneExpiredRateLimitEntries(map), 60_000);
+  pruneInterval.unref?.();
+  return {
+    check(key: string): boolean {
+      return checkFixedWindowRateLimit(map, key, options);
+    },
+  };
+}

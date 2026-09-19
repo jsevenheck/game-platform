@@ -21,8 +21,8 @@ Shared enums used below:
 ### Session and room lifecycle
 
 #### `autoJoinRoom`
-> **Authorization:** The server validates `joinToken` against the active platform party member via `authorizePartyJoin` from `apps/platform/server/party/gameAuth.ts`. Host identity is derived from `party.hostPlayerId`, not from the client-supplied `isHost` flag.
 
+> **Authorization:** The server validates `joinToken` against the active platform party member via `authorizePartyJoin` from `apps/platform/server/party/gameAuth.ts`. Host identity is derived from `party.hostPlayerId`, not from the client-supplied `isHost` flag.
 
 Creates or rejoins a room keyed by `sessionId` (the platform match key).
 
@@ -224,6 +224,9 @@ Outcome details:
 - revealing a neutral card ends the turn immediately
 - revealing the assassin either ends the whole game (`instant-loss`) or eliminates the guessing
   team and continues (`elimination`)
+
+`focusCard`, `giveSignal`, and `revealCard` share a per-socket rate limit (20 requests/second) —
+a call beyond that returns `{ ok: false, error: 'Too many requests — slow down' }`.
 
 #### `endTurn`
 

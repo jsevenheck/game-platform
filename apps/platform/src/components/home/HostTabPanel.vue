@@ -118,6 +118,8 @@ function onInput(event: Event): void {
 }
 
 .home-preselect-clear {
+  min-width: 44px;
+  min-height: 44px;
   padding: 0.15rem 0.5rem;
   font-size: 0.8rem;
   line-height: 1;

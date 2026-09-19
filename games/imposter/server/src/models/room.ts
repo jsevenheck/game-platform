@@ -1,7 +1,7 @@
 import { nanoid } from 'nanoid';
 import type { Room } from '../../../core/src/types';
 import { createPlayer } from './player';
-import { setSocketIndex } from './player';
+import { setSocketIndex, deleteSocketIndexesForRoom } from './player';
 import { initGameState } from '../managers/gameManager';
 import { DISCUSSION_DURATION_MS } from '../config/constants';
 
@@ -98,12 +98,14 @@ export function setHost(room: Room, nextHostId: string | null): void {
 }
 
 export function deleteRoom(code: string): void {
+  clearRoomCleanup(code);
   rooms.delete(code);
   for (const [sessionId, roomCode] of sessionToRoom.entries()) {
     if (roomCode === code) {
       sessionToRoom.delete(sessionId);
     }
   }
+  deleteSocketIndexesForRoom(code);
 }
 
 export interface RoomStoreSnapshot {

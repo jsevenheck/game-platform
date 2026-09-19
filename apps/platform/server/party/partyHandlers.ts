@@ -37,6 +37,7 @@ import {
 } from '../observability/socketNamespaceMetrics';
 import { incrementPartyLifecycle } from '../metrics/metrics';
 import { getGame } from '../registry/index';
+import { readString } from './gameAuth';
 
 interface PartyClientToServerEvents {
   createParty: (
@@ -109,6 +110,30 @@ interface PartyServerToClientEvents {
 }
 
 type PartySocket = Socket<PartyClientToServerEvents, PartyServerToClientEvents>;
+
+const idleCleanupLogger = createComponentLogger('party', { namespace: '/party' });
+
+/**
+ * `onExpire` callback for {@link schedulePartyCleanup}: if the idle party
+ * being deleted still has an active match, end it the same way every other
+ * teardown path does — via the game module's own `cleanupMatch` — instead
+ * of silently deleting the party record and orphaning the game's room
+ * state for that match indefinitely.
+ */
+function cleanupActiveMatchOnPartyExpire(party: PartySession): void {
+  if (!party.activeMatch) return;
+  const { gameId, matchKey } = party.activeMatch;
+  const game = getGame(gameId);
+  if (!game) return;
+  try {
+    game.cleanupMatch(matchKey);
+  } catch (err) {
+    idleCleanupLogger.warn(
+      { partyId: party.partyId, gameId, matchKey, err: toLoggableError(err) },
+      'cleanupMatch failed while expiring idle party'
+    );
+  }
+}
 
 function broadcastParty(io: Server, party: PartySession): void {
   io.of('/party').to(party.partyId).emit('partyUpdate', partyToView(party));
@@ -199,7 +224,7 @@ export function registerPartyHandlers(io: Server): void {
           return respond({ ok: false, error: 'Too many requests' });
         }
 
-        const name = data.playerName?.trim();
+        const name = readString(data?.playerName)?.trim();
         if (!name || name.length > 20) {
           incrementPartyLifecycle({
             event: 'createParty',
@@ -232,7 +257,8 @@ export function registerPartyHandlers(io: Server): void {
         incrementPartyLifecycle({ event: 'createParty', result: 'ok' });
       } catch (err) {
         instrumentation.finishError();
-        throw err;
+        socketLogger.error({ err: toLoggableError(err) }, 'createParty failed unexpectedly');
+        respond({ ok: false, error: 'Internal error' });
       }
     });
 
@@ -254,8 +280,8 @@ export function registerPartyHandlers(io: Server): void {
           return respond({ ok: false, error: 'Too many requests' });
         }
 
-        const name = data.playerName?.trim();
-        const inviteCode = data.inviteCode?.trim().toUpperCase();
+        const name = readString(data?.playerName)?.trim();
+        const inviteCode = readString(data?.inviteCode)?.trim().toUpperCase();
         if (!name || name.length > 20) {
           incrementPartyLifecycle({
             event: 'joinParty',
@@ -263,6 +289,14 @@ export function registerPartyHandlers(io: Server): void {
             reason: 'invalid_name',
           });
           return respond({ ok: false, error: 'Invalid player name' });
+        }
+        if (!inviteCode) {
+          incrementPartyLifecycle({
+            event: 'joinParty',
+            result: 'rejected',
+            reason: 'party_not_found',
+          });
+          return respond({ ok: false, error: 'Party not found' });
         }
 
         const party = getPartyByInviteCode(inviteCode);
@@ -327,7 +361,8 @@ export function registerPartyHandlers(io: Server): void {
         incrementPartyLifecycle({ event: 'joinParty', result: 'ok' });
       } catch (err) {
         instrumentation.finishError();
-        throw err;
+        socketLogger.error({ err: toLoggableError(err) }, 'joinParty failed unexpectedly');
+        respond({ ok: false, error: 'Internal error' });
       }
     });
 
@@ -335,8 +370,33 @@ export function registerPartyHandlers(io: Server): void {
       const instrumentation = startSocketHandlerInstrumentation('/party', 'resumeParty');
       const respond = instrumentation.wrapCallback(cb);
       try {
-        const inviteCode = data.inviteCode?.trim().toUpperCase();
-        const playerId = data.playerId?.trim();
+        // Same limiter as createParty/joinParty: resumeParty also accepts an
+        // invite code, so it needs the same anti-brute-force ceiling.
+        if (
+          !checkFixedWindowRateLimit(partyActionRateLimit, socket.id, {
+            windowMs: PARTY_ACTION_RATE_LIMIT_WINDOW_MS,
+            max: PARTY_ACTION_RATE_LIMIT_MAX,
+          })
+        ) {
+          incrementPartyLifecycle({
+            event: 'resumeParty',
+            result: 'rejected',
+            reason: 'rate_limited',
+          });
+          return respond({ ok: false, error: 'Too many requests' });
+        }
+
+        const inviteCode = readString(data?.inviteCode)?.trim().toUpperCase();
+        const playerId = readString(data?.playerId)?.trim();
+
+        if (!inviteCode || !playerId) {
+          incrementPartyLifecycle({
+            event: 'resumeParty',
+            result: 'rejected',
+            reason: 'party_not_found',
+          });
+          return respond({ ok: false, error: 'Party not found' });
+        }
 
         const party = getPartyByInviteCode(inviteCode);
         if (!party) {
@@ -400,7 +460,8 @@ export function registerPartyHandlers(io: Server): void {
         respond({ ok: true, partyView: partyToView(party) });
       } catch (err) {
         instrumentation.finishError();
-        throw err;
+        socketLogger.error({ err: toLoggableError(err) }, 'resumeParty failed unexpectedly');
+        respond({ ok: false, error: 'Internal error' });
       }
     });
 
@@ -469,7 +530,7 @@ export function registerPartyHandlers(io: Server): void {
         }
 
         if (connectedMemberCount(party) === 0) {
-          schedulePartyCleanup(party.partyId);
+          schedulePartyCleanup(party.partyId, cleanupActiveMatchOnPartyExpire);
           partyLogger.info(
             {
               partyId: party.partyId,
@@ -492,7 +553,7 @@ export function registerPartyHandlers(io: Server): void {
         instrumentation.finishSuccess();
       } catch (err) {
         instrumentation.finishError();
-        throw err;
+        socketLogger.error({ err: toLoggableError(err) }, 'leaveParty failed unexpectedly');
       }
     });
 
@@ -532,7 +593,8 @@ export function registerPartyHandlers(io: Server): void {
         respond({ ok: true });
       } catch (err) {
         instrumentation.finishError();
-        throw err;
+        socketLogger.error({ err: toLoggableError(err) }, 'selectGame failed unexpectedly');
+        respond({ ok: false, error: 'Internal error' });
       }
     });
 
@@ -605,7 +667,8 @@ export function registerPartyHandlers(io: Server): void {
         respond({ ok: true });
       } catch (err) {
         instrumentation.finishError();
-        throw err;
+        socketLogger.error({ err: toLoggableError(err) }, 'launchGame failed unexpectedly');
+        respond({ ok: false, error: 'Internal error' });
       }
     });
 
@@ -706,7 +769,8 @@ export function registerPartyHandlers(io: Server): void {
         respond({ ok: true });
       } catch (err) {
         instrumentation.finishError();
-        throw err;
+        socketLogger.error({ err: toLoggableError(err) }, 'replayGame failed unexpectedly');
+        respond({ ok: false, error: 'Internal error' });
       }
     });
 
@@ -755,37 +819,53 @@ export function registerPartyHandlers(io: Server): void {
         );
         scheduleReturnCleanup(io, party, matchToClean.matchKey, game?.cleanupMatch, partyLogger);
       } catch (err) {
+        // Note: `respond({ ok: true })` above may already have been sent to
+        // the client by the time an error occurs here — do not respond
+        // again (the ack callback should fire at most once).
         instrumentation.finishError();
-        throw err;
+        socketLogger.error({ err: toLoggableError(err) }, 'returnToLobby failed unexpectedly');
       }
     });
 
     socket.on('ackReturnedToLobby', (data) => {
-      const party = getPartyBySocket(socket.id);
-      if (!party || party.status !== 'returning') return;
+      const instrumentation = startSocketHandlerInstrumentation('/party', 'ackReturnedToLobby');
+      try {
+        const party = getPartyBySocket(socket.id);
+        if (!party || party.status !== 'returning') {
+          instrumentation.finishRejected();
+          return;
+        }
 
-      const member = party.members.get(data.playerId);
-      if (!member || member.socketId !== socket.id) return;
+        const member = party.members.get(data?.playerId);
+        if (!member || member.socketId !== socket.id) {
+          instrumentation.finishRejected();
+          return;
+        }
 
-      party.returnAcks.add(data.playerId);
+        party.returnAcks.add(data.playerId);
 
-      const connected = Array.from(party.members.values())
-        .filter((m) => m.connected)
-        .map((m) => m.playerId);
+        const connected = Array.from(party.members.values())
+          .filter((m) => m.connected)
+          .map((m) => m.playerId);
 
-      const allAcked = connected.every((id) => party.returnAcks.has(id));
-      if (allAcked && party.status === 'returning') {
-        party.status = 'lobby';
-        party.returnAcks = new Set();
-        broadcastPartyAndLobbies(io, party);
-        socketLogger.info(
-          {
-            partyId: party.partyId,
-            inviteCode: party.inviteCode,
-            acknowledgedPlayers: connected.length,
-          },
-          'all connected players acknowledged lobby return'
-        );
+        const allAcked = connected.every((id) => party.returnAcks.has(id));
+        if (allAcked && party.status === 'returning') {
+          party.status = 'lobby';
+          party.returnAcks = new Set();
+          broadcastPartyAndLobbies(io, party);
+          socketLogger.info(
+            {
+              partyId: party.partyId,
+              inviteCode: party.inviteCode,
+              acknowledgedPlayers: connected.length,
+            },
+            'all connected players acknowledged lobby return'
+          );
+        }
+        instrumentation.finishSuccess();
+      } catch (err) {
+        instrumentation.finishError();
+        socketLogger.error({ err: toLoggableError(err) }, 'ackReturnedToLobby failed unexpectedly');
       }
     });
 
@@ -802,7 +882,10 @@ export function registerPartyHandlers(io: Server): void {
         instrumentation.finishSuccess();
       } catch (err) {
         instrumentation.finishError();
-        throw err;
+        socketLogger.error(
+          { err: toLoggableError(err) },
+          'subscribeJoinableParties failed unexpectedly'
+        );
       }
     });
 
@@ -816,7 +899,10 @@ export function registerPartyHandlers(io: Server): void {
         instrumentation.finishSuccess();
       } catch (err) {
         instrumentation.finishError();
-        throw err;
+        socketLogger.error(
+          { err: toLoggableError(err) },
+          'unsubscribeJoinableParties failed unexpectedly'
+        );
       }
     });
 
@@ -841,7 +927,11 @@ export function registerPartyHandlers(io: Server): void {
         incrementPartyLifecycle({ event: 'listJoinableParties', result: 'ok' });
       } catch (err) {
         instrumentation.finishError();
-        throw err;
+        socketLogger.error(
+          { err: toLoggableError(err) },
+          'listJoinableParties failed unexpectedly'
+        );
+        respond({ ok: false, error: 'Internal error' });
       }
     });
 
@@ -903,7 +993,8 @@ export function registerPartyHandlers(io: Server): void {
         respond({ ok: true, isPublic: party.isPublic });
       } catch (err) {
         instrumentation.finishError();
-        throw err;
+        socketLogger.error({ err: toLoggableError(err) }, 'setPartyPublic failed unexpectedly');
+        respond({ ok: false, error: 'Internal error' });
       }
     });
 
@@ -935,7 +1026,7 @@ export function registerPartyHandlers(io: Server): void {
 
         const anyConnected = Array.from(party.members.values()).some((m) => m.connected);
         if (!anyConnected) {
-          schedulePartyCleanup(party.partyId);
+          schedulePartyCleanup(party.partyId, cleanupActiveMatchOnPartyExpire);
           partyLogger.info(
             {
               partyId: party.partyId,
@@ -960,7 +1051,7 @@ export function registerPartyHandlers(io: Server): void {
         instrumentation.finishSuccess();
       } catch (err) {
         instrumentation.finishError();
-        throw err;
+        socketLogger.error({ err: toLoggableError(err) }, 'party disconnect handling failed');
       }
     });
   });

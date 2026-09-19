@@ -6,7 +6,12 @@ import {
 } from '../../../apps/platform/server/party/partyStore';
 import { registerGame } from '../server/src/handlers/socketHandlers';
 import { deleteRoom, getRoom } from '../server/src/models/room';
-import { deleteSocketIndex } from '../server/src/models/player';
+import { deleteSocketIndex, getSocketIndex } from '../server/src/models/player';
+
+vi.mock('../server/src/utils/wordLibrary', () => ({
+  persistWord: vi.fn(),
+  getGlobalWordLibrary: vi.fn(() => ['Existing']),
+}));
 
 vi.mock('nanoid', () => {
   let counter = 0;
@@ -425,5 +430,112 @@ describe('socketHandlers autoJoinRoom', () => {
     expect(room?.players[guestPlayerId]).toBeUndefined();
 
     deleteRoom(roomCode);
+  });
+
+  // F1 regression: submitWord's word.trim() previously crashed the entire
+  // server process when `word` was a non-string payload value — reproduced
+  // live against a running server during the codebase review. It must now
+  // reject cleanly instead.
+  it('submitWord rejects a non-string word instead of throwing', () => {
+    const namespace = createNamespace();
+    const io = { of: vi.fn(() => namespace) } as unknown as Server;
+    registerGame(io);
+
+    const connectionHandler = namespace.getConnectionHandler();
+    const ownerSocket = createSocket('socket-1');
+    namespace.sockets.set(ownerSocket.id, ownerSocket);
+    connectionHandler!(ownerSocket);
+    const createCb = autoJoin(ownerSocket, {
+      sessionId: 'session-submit-word',
+      playerId: 'owner-word',
+      name: 'Owner',
+      isHost: true,
+    });
+    const roomCode = createCb.mock.calls[0]?.[0]?.roomCode as string;
+    const ownerPlayerId = createCb.mock.calls[0]?.[0]?.playerId as string;
+
+    const wordCb = vi.fn();
+    expect(() =>
+      ownerSocket.handlers.submitWord({ roomCode, playerId: ownerPlayerId, word: 12345 }, wordCb)
+    ).not.toThrow();
+    expect(wordCb).toHaveBeenCalledWith({ ok: false, error: 'Word must be text' });
+
+    deleteRoom(roomCode);
+  });
+
+  // F3 regression: deleteRoom previously left the departed players' socket
+  // index entries in place forever.
+  it('deleteRoom clears the socket index for every player in the room', () => {
+    const namespace = createNamespace();
+    const io = { of: vi.fn(() => namespace) } as unknown as Server;
+    registerGame(io);
+
+    const connectionHandler = namespace.getConnectionHandler();
+    const ownerSocket = createSocket('socket-1');
+    namespace.sockets.set(ownerSocket.id, ownerSocket);
+    connectionHandler!(ownerSocket);
+    const createCb = autoJoin(ownerSocket, {
+      sessionId: 'session-delete-room-index',
+      playerId: 'owner-index',
+      name: 'Owner',
+      isHost: true,
+    });
+    const roomCode = createCb.mock.calls[0]?.[0]?.roomCode as string;
+
+    expect(getSocketIndex('socket-1')).toEqual({ roomCode, playerId: 'owner-index' });
+
+    deleteRoom(roomCode);
+
+    expect(getSocketIndex('socket-1')).toBeUndefined();
+  });
+
+  // Regression: submitVote/submitDescription previously had no rate limit,
+  // unlike kritzelagent's submitStroke — a scripted client could flood
+  // either at an arbitrary rate once connected. Rate limiting is checked
+  // before any room/auth lookup, so a raw connected socket is enough to
+  // exercise it.
+  it('rate-limits rapid submitVote calls from the same socket', () => {
+    const namespace = createNamespace();
+    const io = { of: vi.fn(() => namespace) } as unknown as Server;
+    registerGame(io);
+
+    const connectionHandler = namespace.getConnectionHandler();
+    const socket = createSocket('socket-flood-vote');
+    namespace.sockets.set(socket.id, socket);
+    connectionHandler!(socket);
+
+    const responses: Array<{ ok: boolean; error?: string }> = [];
+    for (let i = 0; i < 21; i += 1) {
+      const cb = vi.fn();
+      socket.handlers.submitVote({ roomCode: 'nonexistent', playerId: 'x', targetId: 'y' }, cb);
+      responses.push(cb.mock.calls[0][0]);
+    }
+
+    expect(responses.slice(0, 20).every((r) => r.error === 'Unauthorized')).toBe(true);
+    expect(responses[20]).toEqual({ ok: false, error: 'Too many requests — slow down' });
+  });
+
+  it('rate-limits rapid submitDescription calls from the same socket', () => {
+    const namespace = createNamespace();
+    const io = { of: vi.fn(() => namespace) } as unknown as Server;
+    registerGame(io);
+
+    const connectionHandler = namespace.getConnectionHandler();
+    const socket = createSocket('socket-flood-desc');
+    namespace.sockets.set(socket.id, socket);
+    connectionHandler!(socket);
+
+    const responses: Array<{ ok: boolean; error?: string }> = [];
+    for (let i = 0; i < 21; i += 1) {
+      const cb = vi.fn();
+      socket.handlers.submitDescription(
+        { roomCode: 'nonexistent', playerId: 'x', description: 'hi' },
+        cb
+      );
+      responses.push(cb.mock.calls[0][0]);
+    }
+
+    expect(responses.slice(0, 20).every((r) => r.error === 'Unauthorized')).toBe(true);
+    expect(responses[20]).toEqual({ ok: false, error: 'Too many requests — slow down' });
   });
 });

@@ -1,542 +1,753 @@
-# Graph Report - game-platform  (2026-07-04)
+# Graph Report - game-platform  (2026-09-15)
 
 ## Corpus Check
-- 253 files · ~95,347 words
+- 358 files · ~141,305 words
 - Verdict: corpus is large enough that graph structure adds value.
 
 ## Summary
-- 1510 nodes · 2193 edges · 185 communities (147 shown, 38 thin omitted)
-- Extraction: 98% EXTRACTED · 2% INFERRED · 0% AMBIGUOUS · INFERRED: 36 edges (avg confidence: 0.8)
+- 2903 nodes · 5985 edges · 167 communities (132 shown, 24 thin omitted)
+- Extraction: 99% EXTRACTED · 1% INFERRED · 0% AMBIGUOUS · INFERRED: 30 edges (avg confidence: 0.85)
 - Token cost: 0 input · 0 output
 
 ## Graph Freshness
-- Built from commit: `70096908`
+- Built from commit: `6b9d0936`
 - Run `git rev-parse HEAD` and compare to check if the graph is stale.
 - Run `graphify update .` after code changes (no API cost).
 
 ## Community Hubs (Navigation)
-- [[_COMMUNITY_Community 0|Community 0]]
-- [[_COMMUNITY_Community 1|Community 1]]
-- [[_COMMUNITY_Community 2|Community 2]]
-- [[_COMMUNITY_Community 3|Community 3]]
-- [[_COMMUNITY_Community 4|Community 4]]
-- [[_COMMUNITY_Community 5|Community 5]]
-- [[_COMMUNITY_Community 6|Community 6]]
-- [[_COMMUNITY_Community 7|Community 7]]
-- [[_COMMUNITY_Community 8|Community 8]]
-- [[_COMMUNITY_Community 9|Community 9]]
-- [[_COMMUNITY_Community 10|Community 10]]
-- [[_COMMUNITY_Community 11|Community 11]]
-- [[_COMMUNITY_Community 12|Community 12]]
-- [[_COMMUNITY_Community 13|Community 13]]
-- [[_COMMUNITY_Community 14|Community 14]]
-- [[_COMMUNITY_Community 15|Community 15]]
-- [[_COMMUNITY_Community 16|Community 16]]
-- [[_COMMUNITY_Community 17|Community 17]]
-- [[_COMMUNITY_Community 18|Community 18]]
-- [[_COMMUNITY_Community 19|Community 19]]
-- [[_COMMUNITY_Community 20|Community 20]]
-- [[_COMMUNITY_Community 21|Community 21]]
-- [[_COMMUNITY_Community 22|Community 22]]
-- [[_COMMUNITY_Community 23|Community 23]]
-- [[_COMMUNITY_Community 24|Community 24]]
-- [[_COMMUNITY_Community 25|Community 25]]
-- [[_COMMUNITY_Community 26|Community 26]]
-- [[_COMMUNITY_Community 27|Community 27]]
-- [[_COMMUNITY_Community 28|Community 28]]
-- [[_COMMUNITY_Community 29|Community 29]]
-- [[_COMMUNITY_Community 30|Community 30]]
-- [[_COMMUNITY_Community 31|Community 31]]
-- [[_COMMUNITY_Community 32|Community 32]]
-- [[_COMMUNITY_Community 33|Community 33]]
-- [[_COMMUNITY_Community 34|Community 34]]
-- [[_COMMUNITY_Community 35|Community 35]]
-- [[_COMMUNITY_Community 36|Community 36]]
-- [[_COMMUNITY_Community 37|Community 37]]
-- [[_COMMUNITY_Community 38|Community 38]]
-- [[_COMMUNITY_Community 39|Community 39]]
-- [[_COMMUNITY_Community 40|Community 40]]
-- [[_COMMUNITY_Community 41|Community 41]]
-- [[_COMMUNITY_Community 42|Community 42]]
-- [[_COMMUNITY_Community 43|Community 43]]
-- [[_COMMUNITY_Community 44|Community 44]]
-- [[_COMMUNITY_Community 45|Community 45]]
-- [[_COMMUNITY_Community 46|Community 46]]
-- [[_COMMUNITY_Community 47|Community 47]]
-- [[_COMMUNITY_Community 48|Community 48]]
-- [[_COMMUNITY_Community 49|Community 49]]
-- [[_COMMUNITY_Community 50|Community 50]]
-- [[_COMMUNITY_Community 51|Community 51]]
-- [[_COMMUNITY_Community 52|Community 52]]
-- [[_COMMUNITY_Community 53|Community 53]]
-- [[_COMMUNITY_Community 54|Community 54]]
-- [[_COMMUNITY_Community 55|Community 55]]
-- [[_COMMUNITY_Community 56|Community 56]]
-- [[_COMMUNITY_Community 57|Community 57]]
-- [[_COMMUNITY_Community 58|Community 58]]
-- [[_COMMUNITY_Community 59|Community 59]]
-- [[_COMMUNITY_Community 60|Community 60]]
-- [[_COMMUNITY_Community 61|Community 61]]
-- [[_COMMUNITY_Community 62|Community 62]]
-- [[_COMMUNITY_Community 63|Community 63]]
-- [[_COMMUNITY_Community 64|Community 64]]
-- [[_COMMUNITY_Community 65|Community 65]]
-- [[_COMMUNITY_Community 66|Community 66]]
-- [[_COMMUNITY_Community 67|Community 67]]
-- [[_COMMUNITY_Community 68|Community 68]]
-- [[_COMMUNITY_Community 69|Community 69]]
-- [[_COMMUNITY_Community 70|Community 70]]
-- [[_COMMUNITY_Community 71|Community 71]]
-- [[_COMMUNITY_Community 72|Community 72]]
-- [[_COMMUNITY_Community 73|Community 73]]
-- [[_COMMUNITY_Community 74|Community 74]]
-- [[_COMMUNITY_Community 75|Community 75]]
-- [[_COMMUNITY_Community 76|Community 76]]
-- [[_COMMUNITY_Community 77|Community 77]]
-- [[_COMMUNITY_Community 78|Community 78]]
-- [[_COMMUNITY_Community 79|Community 79]]
-- [[_COMMUNITY_Community 80|Community 80]]
-- [[_COMMUNITY_Community 81|Community 81]]
-- [[_COMMUNITY_Community 82|Community 82]]
-- [[_COMMUNITY_Community 83|Community 83]]
-- [[_COMMUNITY_Community 86|Community 86]]
-- [[_COMMUNITY_Community 88|Community 88]]
-- [[_COMMUNITY_Community 89|Community 89]]
-- [[_COMMUNITY_Community 90|Community 90]]
-- [[_COMMUNITY_Community 91|Community 91]]
-- [[_COMMUNITY_Community 94|Community 94]]
-- [[_COMMUNITY_Community 95|Community 95]]
-- [[_COMMUNITY_Community 96|Community 96]]
-- [[_COMMUNITY_Community 97|Community 97]]
-- [[_COMMUNITY_Community 98|Community 98]]
-- [[_COMMUNITY_Community 99|Community 99]]
-- [[_COMMUNITY_Community 101|Community 101]]
-- [[_COMMUNITY_Community 102|Community 102]]
-- [[_COMMUNITY_Community 104|Community 104]]
-- [[_COMMUNITY_Community 105|Community 105]]
-- [[_COMMUNITY_Community 106|Community 106]]
-- [[_COMMUNITY_Community 108|Community 108]]
-- [[_COMMUNITY_Community 109|Community 109]]
-- [[_COMMUNITY_Community 110|Community 110]]
-- [[_COMMUNITY_Community 111|Community 111]]
-- [[_COMMUNITY_Community 112|Community 112]]
-- [[_COMMUNITY_Community 113|Community 113]]
-- [[_COMMUNITY_Community 114|Community 114]]
-- [[_COMMUNITY_Community 117|Community 117]]
-- [[_COMMUNITY_Community 118|Community 118]]
-- [[_COMMUNITY_Community 119|Community 119]]
-- [[_COMMUNITY_Community 120|Community 120]]
-- [[_COMMUNITY_Community 121|Community 121]]
-- [[_COMMUNITY_Community 122|Community 122]]
-- [[_COMMUNITY_Community 123|Community 123]]
-- [[_COMMUNITY_Community 125|Community 125]]
-- [[_COMMUNITY_Community 126|Community 126]]
-- [[_COMMUNITY_Community 127|Community 127]]
-- [[_COMMUNITY_Community 128|Community 128]]
-- [[_COMMUNITY_Community 155|Community 155]]
-- [[_COMMUNITY_Community 156|Community 156]]
-- [[_COMMUNITY_Community 168|Community 168]]
-- [[_COMMUNITY_Community 169|Community 169]]
-- [[_COMMUNITY_Community 179|Community 179]]
-- [[_COMMUNITY_Community 180|Community 180]]
-- [[_COMMUNITY_Community 181|Community 181]]
+- trickManager.ts
+- flip7/server/src/managers/roundManager.ts
+- estimate/server/src/socketHandlers.ts
+- AdminView.vue
+- scout/server/src/socketHandlers.ts
+- server/index.ts
+- secret-signals/core/src/constants.ts
+- devDependencies
+- devDependencies
+- usePartySocket.ts
+- admin.ts
+- socketHandlerMetrics.ts
+- gameAuth.ts
+- estimate/server/src/models/room.ts
+- partyHandlers.ts
+- imposter/ui-vue/src/App.vue
+- gameManager.ts
+- herd-mentality/server/src/socketHandlers.ts
+- logger.ts
+- flip7/server/src/socketHandlers.ts
+- imposter/server/src/handlers/socketHandlers.ts
+- scout/e2e/game.spec.ts
+- compilerOptions
+- compilerOptions
+- compilerOptions
+- compilerOptions
+- compilerOptions
+- dependencies
+- TeamColor
+- database.ts
+- secret-signals/ui-vue/src/App.vue
+- flip7/server/src/managers/broadcastManager.ts
+- RoomView
+- compilerOptions
+- useHomeTabs.ts
+- flip7/core/src/types.ts
+- compilerOptions
+- include
+- vitest.projects.ts
+- HomeTabBar.vue
+- scout/ui-vue/src/components/GameTable.vue
+- import-db-csv.mjs
+- herd-mentality/server/src/models/room.ts
+- registry/index.ts
+- TeamSetup.vue
+- imposter/e2e/game.spec.ts
+- imposter/core/src/constants.ts
+- HomeView.vue
+- estimate/ui-vue/src/App.vue
+- secret-signals/server/src/handlers/socketHandlers.ts
+- PartyView.vue
+- requestLogger.ts
+- include
+- GameView.vue
+- copy-db-assets.mjs
+- kritzelagent/core/src/types.ts
+- scout/core/src/types.ts
+- estimate/core/src/types.ts
+- questionLibrary.ts
+- compilerOptions
+- blackout/package.json
+- blackout/server/src/models/room.ts
+- secret-signals/e2e/game.spec.ts
+- flip7/package.json
+- kritzelagent/server/src/models/room.ts
+- herd-mentality/server/src/managers/roundManager.ts
+- blackout/server/src/socketHandlers.ts
+- imposter/server/src/managers/phaseManager.ts
+- imposter/package.json
+- scout/package.json
+- secret-signals/package.json
+- GameRound.vue
+- blackout/server/src/managers/roundManager.ts
+- estimate/e2e/game.spec.ts
+- imposter/core/src/types.ts
+- estimate/__tests__/socketHandlers.test.ts
+- secret-signals/core/src/types.ts
+- estimate/ui-vue/src/components/NumberLine.vue
+- estimate/scripts/copy-assets.mjs
+- dev-server.cjs
+- party/types.ts
+- flip7/ui-vue/src/components/GameTable.vue
+- estimate/package.json
+- GamePlay.vue
+- env.ts
+- blackout/ui-vue/src/App.vue
+- router/index.ts
+- games/index.ts
+- promptLibrary.ts
+- blackout/ui-vue/src/components/Lobby.vue
+- herd-mentality/__tests__/socketHandlers.test.ts
+- scout/server/src/managers/broadcastManager.ts
+- imposter/ui-vue/src/vite-env.d.ts
+- secret-signals/ui-vue/src/vite-env.d.ts
+- herd-mentality/core/src/types.ts
+- PublicLobbiesSection.vue
+- kritzelagent/server/src/socketHandlers.ts
+- herd-mentality/ui-vue/src/App.vue
+- compilerOptions
+- flip7/ui-vue/src/App.vue
+- kritzelagent/server/src/managers/roundManager.ts
+- estimate/ui-vue/env.d.ts
+- flip7/ui-vue/env.d.ts
+- scout/ui-vue/env.d.ts
+- pinia
+- pino-pretty
+- vite.config.ts
+- @playwright/test
+- compilerOptions
+- blackout/core/src/types.ts
+- kritzelagent/ui-vue/src/App.vue
+- kritzelagent/core/src/events.ts
+- tsx
+- @types/better-sqlite3
+- scripts
+- flip7/core/src/constants.ts
+- typescript
+- typescript-eslint
+- topicLibrary.ts
+- scout/ui-vue/src/App.vue
+- vitest
+- vue
+- collectors.ts
+- Database
+- vue-tsc
+- home-library.spec.ts
+- VotingPhase.vue
+- kritzelagent/__tests__/roundManager.test.ts
+- wordLibrary.ts
+- secret-signals/server/src/config/constants.ts
+- RevealPhase.vue
+- herd-mentality/ui-vue/src/PlatformAdapter.vue
+- @types/express
+- ScoutDialog.vue
+- kritzelagent/e2e/game.spec.ts
+- vite
+- kritzelagent/ui-vue/src/PlatformAdapter.vue
+- package.json
+- Room
+- herd-mentality/ui-vue/src/components/QuestionView.vue
+- herd-mentality/e2e/game.spec.ts
+- herd-mentality/package.json
+- herd-mentality/scripts/copy-assets.mjs
+- kritzelagent/scripts/copy-assets.mjs
+- AgentGuessView.vue
+- kritzelagent/package.json
+- herd-mentality/ui-vue/env.d.ts
+- kritzelagent/ui-vue/env.d.ts
+- @types/cookie-parser
+- estimate/ui-vue/src/PlatformAdapter.vue
+- herd-mentality/ui-vue/src/composables/useSocket.ts
+- estimate/ui-vue/src/components/QuestionView.vue
+- estimate/ui-vue/src/components/RevealView.vue
+- flip7/ui-vue/src/PlatformAdapter.vue
+- JoinTabPanel.vue
+- platform/env.d.ts
 
 ## God Nodes (most connected - your core abstractions)
-1. `createComponentLogger()` - 24 edges
-2. `scripts` - 17 edges
-3. `readLoggingConfig()` - 16 edges
-4. `compilerOptions` - 15 edges
-5. `compilerOptions` - 15 edges
-6. `compilerOptions` - 15 edges
-7. `compilerOptions` - 15 edges
-8. `compilerOptions` - 15 edges
-9. `passAndScout()` - 14 edges
-10. `createParty()` - 12 edges
+1. `registerGame()` - 52 edges
+2. `registerGame()` - 47 edges
+3. `registerScout()` - 45 edges
+4. `registerBlackout()` - 43 edges
+5. `registerFlip7()` - 41 edges
+6. `registerPartyHandlers()` - 36 edges
+7. `registerKritzelagent()` - 34 edges
+8. `registerGameHandlers()` - 32 edges
+9. `registerGameHandlers()` - 32 edges
+10. `createComponentLogger()` - 31 edges
 
 ## Surprising Connections (you probably didn't know these)
-- `useSocket()` --calls--> `io`  [INFERRED]
-  games/imposter/ui-vue/src/composables/useSocket.ts → apps/platform/server/index.ts
-- `useSocket()` --calls--> `io`  [INFERRED]
-  games/secret-signals/ui-vue/src/composables/useSocket.ts → apps/platform/server/index.ts
-- `registerScout()` --calls--> `readLoggingConfig()`  [INFERRED]
-  games/scout/server/src/socketHandlers.ts → apps/platform/server/logging/logger.ts
-- `registerScout()` --calls--> `createComponentLogger()`  [INFERRED]
-  games/scout/server/src/socketHandlers.ts → apps/platform/server/logging/logger.ts
-- `useSocket()` --calls--> `io`  [INFERRED]
-  games/blackout/ui-vue/src/composables/useSocket.ts → apps/platform/server/index.ts
+- `setupParty()` --calls--> `createParty()`  [EXTRACTED]
+  games/estimate/__tests__/socketHandlers.test.ts → apps/platform/server/party/partyStore.ts
+- `setupParty()` --calls--> `createParty()`  [EXTRACTED]
+  games/herd-mentality/__tests__/socketHandlers.test.ts → apps/platform/server/party/partyStore.ts
+- `setupParty()` --calls--> `createParty()`  [EXTRACTED]
+  games/kritzelagent/__tests__/socketHandlers.test.ts → apps/platform/server/party/partyStore.ts
+- `setupParty()` --calls--> `createParty()`  [EXTRACTED]
+  games/scout/__tests__/socketHandlers.test.ts → apps/platform/server/party/partyStore.ts
+- `registerBlackout()` --calls--> `readLoggingConfig()`  [EXTRACTED]
+  games/blackout/server/src/socketHandlers.ts → apps/platform/server/logging/logger.ts
 
 ## Import Cycles
 - None detected.
 
-## Communities (185 total, 38 thin omitted)
+## Communities (167 total, 24 thin omitted)
 
-### Community 0 - "Community 0"
-Cohesion: 0.06
-Nodes (64): Player, PlayerView, Room, RoomView, RoundHistoryEntry, StoredSession, broadcastRoom(), sendRoomToPlayer() (+56 more)
+### Community 0 - "trickManager.ts"
+Cohesion: 0.15
+Nodes (32): buildDeck(), advanceTurn(), allOtherPlayersScouted(), beginFirstTrickIfReady(), buildE2EDeck(), buildPlayerCountDeck(), cardHasValue(), commitPlay() (+24 more)
 
-### Community 1 - "Community 1"
-Cohesion: 0.06
-Nodes (49): Phase, Player, PlayerView, Room, RoomView, RoundHistoryEntry, RoundView, StoredSession (+41 more)
+### Community 1 - "flip7/server/src/managers/roundManager.ts"
+Cohesion: 0.21
+Nodes (19): draw(), advanceTurnOrFinalize(), applyNumberCard(), continueInitialDeal(), enqueueResolvedAction(), finalizeRound(), getActivePlayers(), getCurrentTurnPlayer() (+11 more)
 
-### Community 2 - "Community 2"
+### Community 2 - "estimate/server/src/socketHandlers.ts"
+Cohesion: 0.17
+Nodes (28): getPartyByActiveMatch(), allConnectedPlayersSubmitted(), isFiniteGuess(), submitGuess(), clearSocketIndex(), setSocketIndex(), findPlayer(), getRoomByCode() (+20 more)
+
+### Community 3 - "AdminView.vue"
 Cohesion: 0.05
-Nodes (38): Phase, Player, PlayerView, Room, RoomView, RoundResult, RoundView, StoredSession (+30 more)
+Nodes (38): actionMessage, activeSection, AdminLog, AdminParty, AdminPartyMember, authenticated, autoRefresh, buildQueryParams() (+30 more)
 
-### Community 3 - "Community 3"
-Cohesion: 0.06
-Nodes (16): app, router, actionMessage, autoRefresh, componentFilter, errorMessage, filteredLogs, kickingPlayerId (+8 more)
-
-### Community 4 - "Community 4"
+### Community 4 - "scout/server/src/socketHandlers.ts"
 Cohesion: 0.09
-Nodes (24): AutoJoinRoomData, AutoJoinRoomResponse, ClientToServerEvents, ErrorResponse, ServerToClientEvents, bindPlayerToSocket(), detachIndexedSocket(), verifyIsHost() (+16 more)
+Nodes (50): flipPlayerRow(), keepPlayerRow(), playCards(), resetToLobby(), startGame(), createPlayer(), deleteSocketIndex(), deleteSocketIndexesForRoom() (+42 more)
 
-### Community 5 - "Community 5"
+### Community 5 - "server/index.ts"
+Cohesion: 0.11
+Nodes (19): rateLimitPruneInterval, registerHttpRoutes(), app, connPruneInterval, connRateLimit, CONTENT_SECURITY_POLICY, httpServer, io (+11 more)
+
+### Community 6 - "secret-signals/core/src/constants.ts"
+Cohesion: 0.07
+Nodes (35): getMinimumPlayersForTeamCount(), GRID_SIZE, LEGACY_CARD_DISTRIBUTION, MIN_NEUTRAL_CARDS, MIN_SIGNAL_NUMBER, MIN_TEAM_PLAYERS, TEAM_COLORS, TEAM_DEFINITIONS (+27 more)
+
+### Community 7 - "devDependencies"
+Cohesion: 0.07
+Nodes (29): eslint, eslint-config-prettier, @eslint/js, eslint-plugin-prettier, eslint-plugin-vue, devDependencies, concurrently, eslint (+21 more)
+
+### Community 8 - "devDependencies"
+Cohesion: 0.05
+Nodes (39): dependencies, pinia, vue, vue-router, devDependencies, concurrently, socket.io-client, tsx (+31 more)
+
+### Community 9 - "usePartySocket.ts"
+Cohesion: 0.16
+Nodes (10): JoinableListResponse, PartyClientToServerEvents, PartyServerToClientEvents, PartySocket, SetPartyPublicResponse, usePublicLobbies(), PartyView, JoinablePartyView (+2 more)
+
+### Community 10 - "admin.ts"
+Cohesion: 0.11
+Nodes (37): AdminJwtPayload, adminLogger, AdminPartyMemberView, authenticateAdmin(), checkLoginRateLimit(), checkRateLimit(), chooseNextHost(), cleanupActiveMatch() (+29 more)
+
+### Community 11 - "socketHandlerMetrics.ts"
 Cohesion: 0.08
-Nodes (24): registerProcessLogging(), activeConnectionsGauge, initializeMetrics(), partiesActiveGauge, partyMembersConnectedGauge, publicLobbiesGauge, roomPlayersConnectedGauge, roomsActiveGauge (+16 more)
+Nodes (34): parseBooleanEnv(), MetricsHttpConfig, metricsScrapeTotal, readBearerToken(), readMetricsAccessToken(), readMetricsHttpConfig(), registerMetricsRoutes(), MetricResult (+26 more)
 
-### Community 6 - "Community 6"
-Cohesion: 0.12
-Nodes (24): ActivePartyMatch, ClearAllPartiesResult, clearMatchTimeout(), clearPartyCleanup(), deleteParty(), getActivePartyMatches(), getPartyByInviteCode(), getPartyBySocket() (+16 more)
-
-### Community 7 - "Community 7"
-Cohesion: 0.07
-Nodes (28): devDependencies, concurrently, eslint, eslint-config-prettier, @eslint/js, eslint-plugin-prettier, eslint-plugin-vue, pinia (+20 more)
-
-### Community 8 - "Community 8"
-Cohesion: 0.07
-Nodes (27): dependencies, pinia, vue, vue-router, devDependencies, concurrently, socket.io-client, tsx (+19 more)
-
-### Community 9 - "Community 9"
-Cohesion: 0.13
-Nodes (18): readStr(), useHomePartyActions(), JoinableListResponse, PartyClientToServerEvents, PartyServerToClientEvents, PartySocket, SetPartyPublicResponse, usePartySocket() (+10 more)
-
-### Community 10 - "Community 10"
-Cohesion: 0.12
-Nodes (23): checkFixedWindowRateLimit(), pruneExpiredRateLimitEntries(), RateLimitRecord, AdminJwtPayload, adminLogger, AdminPartyMemberView, authenticateAdmin(), checkLoginRateLimit() (+15 more)
-
-### Community 11 - "Community 11"
-Cohesion: 0.13
-Nodes (23): incrementPartyLifecycle(), MetricResult, namespaceConnectionsGauge, partyLifecycleTotal, recordSocketEventEnd(), recordSocketEventStart(), setNamespaceConnectionCount(), socketEventDurationSeconds (+15 more)
-
-### Community 12 - "Community 12"
-Cohesion: 0.14
-Nodes (16): bindPlayerToSocket(), detachIndexedSocket(), GameSocket, assignHost(), authorizePartyJoin(), AuthorizePartyJoinFailure, AuthorizePartyJoinResult, clearHost() (+8 more)
-
-### Community 13 - "Community 13"
-Cohesion: 0.10
-Nodes (14): HandlerMap, autoJoin(), setupParty(), clearAllParties(), createParty(), generateInviteCode(), getParty(), registerAdminRoutes() (+6 more)
-
-### Community 14 - "Community 14"
-Cohesion: 0.14
-Nodes (22): toLoggableError(), broadcastParty(), broadcastPartyAndLobbies(), joinableListPruneInterval, joinableListRateLimit, JoinableListResponse, partyActionPruneInterval, partyActionRateLimit (+14 more)
-
-### Community 15 - "Community 15"
-Cohesion: 0.10
-Nodes (12): socketIndex, cleanupInterval, clearRoomCleanup(), createRoom(), deleteRoom(), generateRoomCode(), rooms, RoomStoreSnapshot (+4 more)
-
-### Community 16 - "Community 16"
-Cohesion: 0.21
-Nodes (20): addWordToLibrary(), advanceDescriptionTurn(), allDescriptionsSubmitted(), allVotesSubmitted(), getConnectedPlayerOrder(), getDescriptionOrder(), getRandomDescriptionOrder(), initGameState() (+12 more)
-
-### Community 17 - "Community 17"
-Cohesion: 0.12
-Nodes (17): BlackoutSocket, Flip7Socket, ScoutSocket, normalizeNamespace(), resolveSocketUrl(), useSocket(), normalizeNamespace(), resolveSocketUrl() (+9 more)
-
-### Community 18 - "Community 18"
-Cohesion: 0.15
-Nodes (18): appendLogEntry(), BufferedLogEntry, getRecentLogs(), logBuffer, ALWAYS_REDACT_PATHS, buildLoggerOptions(), createLogBufferStream(), createRootLogger() (+10 more)
-
-### Community 19 - "Community 19"
-Cohesion: 0.14
-Nodes (16): definition, GameDefinition, gameLogger, handler, register(), definition, GameDefinition, gameLogger (+8 more)
-
-### Community 20 - "Community 20"
-Cohesion: 0.14
-Nodes (15): GameSocket, cleanupMatch(), definition, gameLogger, handler, clearDiscussionTimer(), clearGuessTimer(), clearRoomTimers() (+7 more)
-
-### Community 21 - "Community 21"
+### Community 12 - "gameAuth.ts"
 Cohesion: 0.16
-Nodes (13): confirmSetupKeep(), createTwoPlayerScoutSession(), hostStartsFromLobby(), launchScout(), playerRow(), playSelectedRowCards(), ScoutSession, startScoutAndCompleteSetup() (+5 more)
+Nodes (16): assignHost(), authorizePartyJoin(), AuthorizePartyJoinFailure, AuthorizePartyJoinResult, clearHost(), createSocketIndex(), GameRoomLike, isConnectedPlayer() (+8 more)
 
-### Community 22 - "Community 22"
+### Community 13 - "estimate/server/src/models/room.ts"
 Cohesion: 0.11
-Nodes (18): compilerOptions, baseUrl, esModuleInterop, forceConsistentCasingInFileNames, isolatedModules, jsx, lib, module (+10 more)
+Nodes (21): ServerPlayer, clearSocketIndexesForRoom(), createPlayer(), getSocketIndex(), __resetSocketIndexForTests(), socketIndex, attachPlayerToRoom(), clearRoomCleanup() (+13 more)
 
-### Community 23 - "Community 23"
-Cohesion: 0.11
-Nodes (18): compilerOptions, baseUrl, esModuleInterop, forceConsistentCasingInFileNames, isolatedModules, jsx, lib, module (+10 more)
+### Community 14 - "partyHandlers.ts"
+Cohesion: 0.08
+Nodes (56): registerProcessLogging(), toLoggableError(), incrementPartyLifecycle(), broadcastParty(), broadcastPartyAndLobbies(), cleanupActiveMatchOnPartyExpire(), idleCleanupLogger, joinableListRateLimit (+48 more)
 
-### Community 24 - "Community 24"
-Cohesion: 0.11
-Nodes (18): compilerOptions, baseUrl, esModuleInterop, forceConsistentCasingInFileNames, isolatedModules, jsx, lib, module (+10 more)
+### Community 15 - "imposter/ui-vue/src/App.vue"
+Cohesion: 0.09
+Nodes (27): autoJoinInFlight, embeddedError, emit, emitAutoJoinRoom(), handleConfigureLobby(), handleEmbeddedConnect(), handleEndGame(), handleGuessWord() (+19 more)
 
-### Community 25 - "Community 25"
-Cohesion: 0.11
-Nodes (18): compilerOptions, baseUrl, esModuleInterop, forceConsistentCasingInFileNames, isolatedModules, jsx, lib, module (+10 more)
+### Community 16 - "gameManager.ts"
+Cohesion: 0.14
+Nodes (30): DEFAULT_TARGET_SCORE, addWordToLibrary(), advanceDescriptionTurn(), allDescriptionsSubmitted(), allVotesSubmitted(), finalizeRound(), getConnectedPlayerOrder(), getDescriptionOrder() (+22 more)
 
-### Community 26 - "Community 26"
-Cohesion: 0.11
-Nodes (18): compilerOptions, baseUrl, esModuleInterop, forceConsistentCasingInFileNames, isolatedModules, jsx, lib, module (+10 more)
+### Community 17 - "herd-mentality/server/src/socketHandlers.ts"
+Cohesion: 0.18
+Nodes (26): buildRoomView(), clearSocketIndex(), getSocketIndex(), setSocketIndex(), findPlayer(), getRoomByCode(), applyDisconnectLifecycle(), applyHostSync() (+18 more)
 
-### Community 27 - "Community 27"
-Cohesion: 0.12
-Nodes (17): scripts, build, dev, format, format:check, lint, lint:fix, start (+9 more)
-
-### Community 28 - "Community 28"
-Cohesion: 0.21
-Nodes (9): WORD_LIST, transitionToLobby(), transitionToPlaying(), generateBoard(), validateTeamSetup(), getActiveTeamColors(), getCardDistribution(), CardType (+1 more)
-
-### Community 29 - "Community 29"
-Cohesion: 0.17
-Nodes (11): counts, db, dbLogger, finalCounts, hasColumn(), needsSchemaReset(), parseCsv(), readCsvRows() (+3 more)
-
-### Community 30 - "Community 30"
-Cohesion: 0.15
-Nodes (10): cleanupInterval, clearRoomCleanup(), createRoom(), deleteRoom(), generateRoomCode(), rooms, RoomStoreSnapshot, roomTimers (+2 more)
-
-### Community 31 - "Community 31"
-Cohesion: 0.17
-Nodes (13): AutoJoinRoomData, AutoJoinRoomResponse, ClientToServerEvents, ErrorResponse, ServerToClientEvents, broadcastRoom(), sendRoomToPlayer(), toPlayerViews() (+5 more)
-
-### Community 32 - "Community 32"
-Cohesion: 0.23
-Nodes (12): createRequestId(), createRequestLogger(), httpLogger, isStaticAssetRequest(), normalizeRequestPath(), requestLogger, resolveHttpLogLevel(), shouldIgnoreHttpRequest() (+4 more)
-
-### Community 33 - "Community 33"
+### Community 18 - "logger.ts"
 Cohesion: 0.16
-Nodes (8): clearRoomCleanup(), createRoom(), generateRoomCode(), roomCleanupTimers, rooms, RoomStoreSnapshot, scheduleRoomCleanup(), sessionToRoom
+Nodes (18): appendLogEntry(), BufferedLogEntry, logBuffer, ALWAYS_REDACT_PATHS, buildLoggerOptions(), createLogBufferStream(), createRootLogger(), logger (+10 more)
 
-### Community 34 - "Community 34"
-Cohesion: 0.19
-Nodes (9): definition, GameDefinition, gameLogger, register(), makeIo(), makeNamespace(), registerScout(), setupScoutServer() (+1 more)
+### Community 19 - "flip7/server/src/socketHandlers.ts"
+Cohesion: 0.08
+Nodes (49): createComponentLogger(), readString(), ROOM_ENDED_CLEANUP_MS, ROOM_IDLE_TIMEOUT_MS, Room, cleanupMatch(), GameDefinition, gameLogger (+41 more)
 
-### Community 35 - "Community 35"
+### Community 20 - "imposter/server/src/handlers/socketHandlers.ts"
+Cohesion: 0.09
+Nodes (43): Player, DISCUSSION_DURATION_MS, clearDiscussionTimer(), clearGuessTimer(), clearRoomTimers(), discussionTimers, gameplayRateLimit, GameSocket (+35 more)
+
+### Community 21 - "scout/e2e/game.spec.ts"
+Cohesion: 0.16
+Nodes (13): confirmSetupKeep(), createParty(), createTwoPlayerScoutSession(), hostStartsFromLobby(), joinParty(), launchScout(), playerRow(), playSelectedRowCards() (+5 more)
+
+### Community 22 - "compilerOptions"
+Cohesion: 0.08
+Nodes (25): compilerOptions, baseUrl, esModuleInterop, forceConsistentCasingInFileNames, isolatedModules, jsx, lib, module (+17 more)
+
+### Community 23 - "compilerOptions"
+Cohesion: 0.08
+Nodes (25): compilerOptions, baseUrl, esModuleInterop, forceConsistentCasingInFileNames, isolatedModules, jsx, lib, module (+17 more)
+
+### Community 24 - "compilerOptions"
+Cohesion: 0.08
+Nodes (25): compilerOptions, baseUrl, esModuleInterop, forceConsistentCasingInFileNames, isolatedModules, jsx, lib, module (+17 more)
+
+### Community 25 - "compilerOptions"
+Cohesion: 0.08
+Nodes (25): compilerOptions, baseUrl, esModuleInterop, forceConsistentCasingInFileNames, isolatedModules, jsx, lib, module (+17 more)
+
+### Community 26 - "compilerOptions"
+Cohesion: 0.08
+Nodes (25): compilerOptions, baseUrl, esModuleInterop, forceConsistentCasingInFileNames, isolatedModules, jsx, lib, module (+17 more)
+
+### Community 27 - "dependencies"
+Cohesion: 0.10
+Nodes (21): bcryptjs, better-sqlite3, cookie-parser, express, jsonwebtoken, nanoid, dependencies, bcryptjs (+13 more)
+
+### Community 28 - "TeamColor"
+Cohesion: 0.12
+Nodes (23): BOARD_SIZE, getActiveTeamColors(), getCardDistribution(), MAX_TEAMS, Card, Room, TeamColor, TeamConfig (+15 more)
+
+### Community 29 - "database.ts"
 Cohesion: 0.18
-Nodes (9): clearRoomCleanup(), createRoom(), deleteRoom(), generateRoomCode(), roomCleanupTimers, rooms, RoomStoreSnapshot, scheduleRoomCleanup() (+1 more)
+Nodes (13): counts, db, dbLogger, finalCounts, hasColumn(), needsSchemaReset(), normalizeLetter(), parseCsv() (+5 more)
 
-### Community 36 - "Community 36"
-Cohesion: 0.14
-Nodes (13): compilerOptions, baseUrl, isolatedModules, jsx, lib, module, moduleResolution, target (+5 more)
+### Community 30 - "secret-signals/ui-vue/src/App.vue"
+Cohesion: 0.10
+Nodes (26): autoJoinInFlight, embeddedError, emit, emitAutoJoinRoom(), handleAssignRole(), handleAssignTeam(), handleEndTurn(), handleFocusCard() (+18 more)
 
-### Community 37 - "Community 37"
-Cohesion: 0.14
-Nodes (13): compilerOptions, baseUrl, module, moduleResolution, outDir, paths, target, extends (+5 more)
+### Community 31 - "flip7/server/src/managers/broadcastManager.ts"
+Cohesion: 0.16
+Nodes (17): ActionResolvedEvent, AutoJoinRoomData, AutoJoinRoomResponse, ClientToServerEvents, ErrorResponse, ServerToClientEvents, RoomView, RoundView (+9 more)
 
-### Community 38 - "Community 38"
+### Community 32 - "RoomView"
+Cohesion: 0.24
+Nodes (9): ClientToServerEvents, ServerToClientEvents, RoomView, StoredSession, EstimateSocket, normalizeNamespace(), resolveSocketUrl(), useSocket() (+1 more)
+
+### Community 33 - "compilerOptions"
+Cohesion: 0.08
+Nodes (25): compilerOptions, baseUrl, esModuleInterop, forceConsistentCasingInFileNames, isolatedModules, jsx, lib, module (+17 more)
+
+### Community 34 - "useHomeTabs.ts"
 Cohesion: 0.21
-Nodes (8): allProjects, blackoutProject, flip7Project, GAMES_ROOT, imposterProject, platformProject, scoutProject, secretSignalsProject
+Nodes (13): HOME_TABS, HomeTab, HomeTabId, normalizeHomeTab(), readStoredTab(), resolveInitialHomeTab(), useHomeTabs(), setTab() (+5 more)
 
-### Community 39 - "Community 39"
-Cohesion: 0.23
-Nodes (9): HOME_TABS, HomeTab, HomeTabId, normalizeHomeTab(), readStoredTab(), resolveInitialHomeTab(), useHomeTabs(), VALID_TABS (+1 more)
+### Community 35 - "flip7/core/src/types.ts"
+Cohesion: 0.11
+Nodes (22): ActionCard, Card, DeferredAction, PendingAction, PendingActionView, Phase, Player, PlayerView (+14 more)
 
-### Community 40 - "Community 40"
-Cohesion: 0.18
-Nodes (7): HandlerMap, AuthorizePartyJoinSuccess, PartyMatch, PartyMember, PartySession, PartyStatus, AdminPartyView
+### Community 36 - "compilerOptions"
+Cohesion: 0.08
+Nodes (24): compilerOptions, baseUrl, isolatedModules, jsx, lib, module, moduleResolution, target (+16 more)
 
-### Community 41 - "Community 41"
+### Community 37 - "include"
+Cohesion: 0.07
+Nodes (27): compilerOptions, baseUrl, module, moduleResolution, outDir, paths, target, extends (+19 more)
+
+### Community 38 - "vitest.projects.ts"
+Cohesion: 0.16
+Nodes (11): allProjects, blackoutProject, estimateProject, flip7Project, GAMES_ROOT, herdMentalityProject, imposterProject, kritzelagentProject (+3 more)
+
+### Community 39 - "HomeTabBar.vue"
+Cohesion: 0.33
+Nodes (9): activate(), emit, focusedIndex, focusPanelFirstControl(), moveFocus(), onKeydown(), panelId(), props (+1 more)
+
+### Community 40 - "scout/ui-vue/src/components/GameTable.vue"
+Cohesion: 0.15
+Nodes (9): cardClasses, props, currentPlay, currentTurnName, emit, handleScout(), room, scoutDialogOpen (+1 more)
+
+### Community 41 - "import-db-csv.mjs"
 Cohesion: 0.15
 Nodes (7): args, dataRows, db, headers, raw, rows, schemaSql
 
-### Community 42 - "Community 42"
+### Community 42 - "herd-mentality/server/src/models/room.ts"
+Cohesion: 0.11
+Nodes (17): Phase, ServerPlayer, clearSocketIndexesForRoom(), __resetSocketIndexForTests(), socketIndex, cleanupTimers, clearRoomCleanup(), codeByPlayer (+9 more)
+
+### Community 43 - "registry/index.ts"
+Cohesion: 0.11
+Nodes (20): blackoutModule, estimateModule, flip7Module, GameServerModule, herdMentalityModule, imposterModule, kritzelagentModule, scoutModule (+12 more)
+
+### Community 44 - "TeamSetup.vue"
 Cohesion: 0.17
-Nodes (11): Phase, Player, PlayerView, Room, RoomView, StoredSession, FocusMarker, LogEntry (+3 more)
+Nodes (14): ASSASSIN_PENALTY_MODES, MIN_TEAMS, activeTeams, currentPlayer, currentPlayerTeam, emit, isDirectorUnavailable(), isSetupValid (+6 more)
 
-### Community 43 - "Community 43"
-Cohesion: 0.30
-Nodes (9): advanceToNextTeam(), checkWinCondition(), clearFocusedCard(), clearFocusedCardAtIndex(), giveSignal(), GuessResult, outcomeToEndReason(), processGuess() (+1 more)
+### Community 45 - "imposter/e2e/game.spec.ts"
+Cohesion: 0.31
+Nodes (9): castVote(), createParty(), findCurrentTurnPage(), joinParty(), launchGame(), playFullRound(), setupThreePlayers(), submitDescription() (+1 more)
 
-### Community 44 - "Community 44"
-Cohesion: 0.20
-Nodes (8): activeTeams, currentPlayer, currentPlayerTeam, isDirectorUnavailable(), isSetupValid, teamCountOptions, teamPlayers(), unassigned
+### Community 46 - "imposter/core/src/constants.ts"
+Cohesion: 0.08
+Nodes (31): DEFAULT_DISCUSSION_DURATION_MS, DEFAULT_INFILTRATOR_COUNT, DESCRIPTION_MAX_LENGTH, DISCUSSION_DURATION_STEP_MS, GUESS_TIMEOUT_MS, MAX_DISCUSSION_DURATION_MS, MAX_INFILTRATOR_COUNT, MAX_PLAYERS (+23 more)
 
-### Community 45 - "Community 45"
-Cohesion: 0.29
-Nodes (8): findCurrentTurnPage(), playFullRound(), setupThreePlayers(), submitDescription(), submitDescriptionsInTurnOrder(), createParty(), joinParty(), launchGame()
+### Community 47 - "HomeView.vue"
+Cohesion: 0.12
+Nodes (14): readStr(), useHomePartyActions(), writeStr(), usePartySocket(), PartyMatchView, PartyMemberView, PartyStatus, PersistedSession (+6 more)
 
-### Community 46 - "Community 46"
-Cohesion: 0.22
-Nodes (7): DEFAULT_WORD_LIBRARY, getGlobalWordLibrary(), loadFromFile(), PERSIST_ENABLED, persistWord(), wordLogger, WORDS_FILE
+### Community 48 - "estimate/ui-vue/src/App.vue"
+Cohesion: 0.11
+Nodes (28): ActionName, clearJoinTimer(), clearPendingAction(), connectionMessage, emit, failJoin(), focusKey, handleConnectError() (+20 more)
 
-### Community 47 - "Community 47"
-Cohesion: 0.18
-Nodes (10): engines, node, pnpm, name, overrides, diff, esbuild, packageManager (+2 more)
+### Community 49 - "secret-signals/server/src/handlers/socketHandlers.ts"
+Cohesion: 0.10
+Nodes (41): DEFAULT_ASSASSIN_PENALTY_MODE, MIN_PLAYERS, addLogEntry(), gameplayRateLimit, GameSocket, reassignHost(), registerGame(), removePlayerFromRoom() (+33 more)
 
-### Community 48 - "Community 48"
-Cohesion: 0.18
-Nodes (11): dependencies, bcryptjs, better-sqlite3, cookie-parser, express, jsonwebtoken, nanoid, pino (+3 more)
+### Community 50 - "PartyView.vue"
+Cohesion: 0.09
+Nodes (14): getClientGame(), loadGameComponent(), selectedGameName, activeGameName, defaultGameConfig, error, gameInProgress, getGameConfig() (+6 more)
 
-### Community 49 - "Community 49"
-Cohesion: 0.24
-Nodes (7): CARD_HEX_BY_TYPE, ASSASSIN_PENALTY_MODES, LEGACY_CARD_DISTRIBUTION, TEAM_COLORS, TEAM_HEX_BY_COLOR, TEAM_NAME_BY_COLOR, TEAM_TEXT_HEX_BY_COLOR
+### Community 51 - "requestLogger.ts"
+Cohesion: 0.42
+Nodes (8): createRequestId(), createRequestLogger(), httpLogger, isStaticAssetRequest(), normalizeRequestPath(), requestLogger, resolveHttpLogLevel(), shouldIgnoreHttpRequest()
 
-### Community 50 - "Community 50"
-Cohesion: 0.27
-Nodes (8): parseBooleanEnv(), MetricsHttpConfig, metricsScrapeTotal, readBearerToken(), readMetricsAccessToken(), readMetricsHttpConfig(), registerMetricsRoutes(), metricsRegistry
+### Community 52 - "include"
+Cohesion: 0.08
+Nodes (25): apps/platform/e2e/**/*, apps/platform/server/**/*, apps/platform/src, games/*/core/src/**/*, games/*/e2e/**/*, games/*/server/src/**/*, games/*/__tests__/**/*, games/*/ui-vue (+17 more)
 
-### Community 51 - "Community 51"
-Cohesion: 0.29
-Nodes (8): registerPartyHandlers(), resetPartyActionRateLimit(), connectSocket(), createNamespace(), createPartyViaSocket(), createSocket(), Handler, setup()
+### Community 53 - "GameView.vue"
+Cohesion: 0.12
+Nodes (10): actionError, gameComponent, loadError, matchKey, namespace, props, router, showLeaveConfirm (+2 more)
 
-### Community 52 - "Community 52"
-Cohesion: 0.20
-Nodes (9): compilerOptions, module, moduleResolution, noEmit, resolveJsonModule, types, exclude, extends (+1 more)
-
-### Community 53 - "Community 53"
-Cohesion: 0.28
-Nodes (7): broadcastRoom(), GameNamespace, sendRoomToPlayer(), toRoomView(), useGameStore, getMinimumPlayersForTeamCount(), CardView
-
-### Community 54 - "Community 54"
+### Community 54 - "copy-db-assets.mjs"
 Cohesion: 0.22
 Nodes (8): dbPath, __dirname, __filename, gameDir, legacySeedPath, sourceDir, targetDir, workspaceRoot
 
-### Community 55 - "Community 55"
-Cohesion: 0.25
-Nodes (7): canStay, currentTurnPlayerName, playerMap, round, showFlipThreePrompt, showHitStay, store
+### Community 55 - "kritzelagent/core/src/types.ts"
+Cohesion: 0.10
+Nodes (25): MIN_PLAYERS, PlayerView, PrivateAssignment, ScoreEntry, ServerPlayer, StoredSession, StrokeView, VoteCount (+17 more)
 
-### Community 56 - "Community 56"
-Cohesion: 0.25
-Nodes (7): Phase, Player, PlayerView, Room, RoomView, RoundResult, StoredSession
+### Community 56 - "scout/core/src/types.ts"
+Cohesion: 0.09
+Nodes (33): analyzePlay(), comparePlayAnalyses(), PlayAnalysis, PlayKind, ScoutCard, GamePhase, PlayedSet, PlayedSetView (+25 more)
 
-### Community 57 - "Community 57"
-Cohesion: 0.39
-Nodes (6): activate(), focusedIndex, focusPanelFirstControl(), moveFocus(), onKeydown(), tabId()
+### Community 57 - "estimate/core/src/types.ts"
+Cohesion: 0.13
+Nodes (23): computeDisplayRange(), DisplayRange, GuessEntry, Phase, PlayerView, ScoreEntry, ServerRoom, WinnerEntry (+15 more)
 
-### Community 58 - "Community 58"
-Cohesion: 0.25
-Nodes (4): importHttpMetrics(), importMetrics(), importSocketHandlerMetrics(), importSocketNamespaceMetrics()
+### Community 58 - "questionLibrary.ts"
+Cohesion: 0.11
+Nodes (26): DEFAULT_QUESTIONS, DEFAULT_TOTAL_ROUNDS, GUESS_VALUE_LIMIT, MAX_PLAYERS, MIN_DISPLAY_SPAN, MIN_PLAYERS, Question, cleanupMatch() (+18 more)
 
-### Community 59 - "Community 59"
-Cohesion: 0.25
-Nodes (7): compilerOptions, esModuleInterop, forceConsistentCasingInFileNames, lib, skipLibCheck, strict, target
+### Community 59 - "compilerOptions"
+Cohesion: 0.22
+Nodes (8): compilerOptions, esModuleInterop, forceConsistentCasingInFileNames, lib, skipLibCheck, strict, target, ES2020
 
-### Community 60 - "Community 60"
+### Community 60 - "blackout/package.json"
 Cohesion: 0.29
 Nodes (6): name, private, scripts, test, type, version
 
-### Community 61 - "Community 61"
-Cohesion: 0.29
-Nodes (4): confirmCard, leftRosterTeams, rightRosterTeams, rosterTeams
+### Community 61 - "blackout/server/src/models/room.ts"
+Cohesion: 0.13
+Nodes (17): CLEANUP_INTERVAL_MS, DEFAULT_EXCLUDED_LETTERS, DEFAULT_LANGUAGE, DEFAULT_ROUNDS, ROOM_ENDED_CLEANUP_MS, ROOM_IDLE_TIMEOUT_MS, ROUND_END_DISPLAY_MS, ROUND_TIMER_MS (+9 more)
 
-### Community 62 - "Community 62"
+### Community 62 - "secret-signals/e2e/game.spec.ts"
 Cohesion: 0.52
-Nodes (6): chooseRole(), chooseTeam(), setupFourPlayers(), createParty(), joinParty(), launchGame()
+Nodes (6): chooseRole(), chooseTeam(), createParty(), joinParty(), launchGame(), setupFourPlayers()
 
-### Community 63 - "Community 63"
+### Community 63 - "flip7/package.json"
 Cohesion: 0.29
 Nodes (6): name, private, scripts, test, type, version
 
-### Community 64 - "Community 64"
-Cohesion: 0.48
-Nodes (6): broadcastRoom(), sendRoomToPlayer(), toPlayerView(), toRoomView(), toRoundView(), BlackoutNamespace
+### Community 64 - "kritzelagent/server/src/models/room.ts"
+Cohesion: 0.12
+Nodes (14): Phase, createPlayer(), __resetSocketIndexForTests(), attachPlayerToRoom(), codeByPlayer, codeBySession, createRoom(), CreateRoomOptions (+6 more)
 
-### Community 65 - "Community 65"
-Cohesion: 0.48
-Nodes (4): addPoint(), getLeaderboard(), getWinners(), resetScores()
+### Community 65 - "herd-mentality/server/src/managers/roundManager.ts"
+Cohesion: 0.30
+Nodes (12): advanceRound(), allConnectedPlayersSubmitted(), HerdMentalityError, nextRound(), restartGame(), revealAnswers(), startGame(), submitAnswer() (+4 more)
 
-### Community 66 - "Community 66"
+### Community 66 - "blackout/server/src/socketHandlers.ts"
+Cohesion: 0.12
+Nodes (32): cleanupMatch(), GameDefinition, GameHandler, gameLogger, handler, register(), getRandomReader(), revealCategory() (+24 more)
+
+### Community 67 - "imposter/server/src/managers/phaseManager.ts"
 Cohesion: 0.33
-Nodes (3): bindPlayerToSocket(), detachIndexedSocket(), BlackoutSocket
+Nodes (7): Room, resetForLobby(), resetForNewRound(), transitionToEnded(), transitionToLobby(), transitionToNextRound(), transitionToPlaying()
 
-### Community 67 - "Community 67"
+### Community 68 - "imposter/package.json"
+Cohesion: 0.29
+Nodes (6): name, private, scripts, test, type, version
+
+### Community 69 - "scout/package.json"
+Cohesion: 0.29
+Nodes (6): name, private, scripts, test, type, version
+
+### Community 70 - "secret-signals/package.json"
+Cohesion: 0.29
+Nodes (6): name, private, scripts, test, type, version
+
+### Community 71 - "GameRound.vue"
+Cohesion: 0.10
+Nodes (18): StoredSession, sortedPlayers, store, topScore, winners, canSkip, isCategoryReused, isReader (+10 more)
+
+### Community 72 - "blackout/server/src/managers/roundManager.ts"
+Cohesion: 0.16
+Nodes (16): RoundResult, getAvailableLetters(), getUnusedPrompt(), randomItem(), transitionToEnded(), transitionToLobby(), transitionToPlaying(), transitionToRoundEnd() (+8 more)
+
+### Community 73 - "estimate/e2e/game.spec.ts"
+Cohesion: 0.22
+Nodes (4): createParty(), createTwoPlayerEstimateSession(), EstimateSession, joinParty()
+
+### Community 74 - "imposter/core/src/types.ts"
+Cohesion: 0.08
+Nodes (32): ClientToServerEvents, ServerToClientEvents, Phase, PlayerView, RoomView, RoundResult, StoredSession, broadcastRoom() (+24 more)
+
+### Community 75 - "estimate/__tests__/socketHandlers.test.ts"
+Cohesion: 0.19
+Nodes (8): ROOM_IDLE_TIMEOUT_MS, __listRoomsForTests(), firstRoom(), makeIo(), makeNamespace(), setupParty(), setupServer(), TestSocket
+
+### Community 76 - "secret-signals/core/src/types.ts"
+Cohesion: 0.14
+Nodes (20): ClientToServerEvents, ServerToClientEvents, AssassinPenaltyMode, FocusMarker, LogEntry, Player, PlayerRole, PlayerView (+12 more)
+
+### Community 77 - "estimate/ui-vue/src/components/NumberLine.vue"
+Cohesion: 0.14
+Nodes (19): axisValues, chartHeight, container, containerWidth, lineY, MarkerPosition, maxLane, numberFormatter (+11 more)
+
+### Community 78 - "estimate/scripts/copy-assets.mjs"
+Cohesion: 0.33
+Nodes (5): gameDir, scriptDir, sourceFile, targetDir, workspaceRoot
+
+### Community 79 - "dev-server.cjs"
+Cohesion: 0.29
+Nodes (6): child, envFilePath, { existsSync }, nodeArgs, path, { spawn }
+
+### Community 80 - "party/types.ts"
+Cohesion: 0.18
+Nodes (8): AdminPartyView, AuthorizePartyJoinSuccess, PartyMatch, PartyMember, PartySession, PartyStatus, setupParty(), TestSocket
+
+### Community 81 - "flip7/ui-vue/src/components/GameTable.vue"
+Cohesion: 0.06
+Nodes (30): StoredSession, meta, props, sentence, accentClasses, cardSubtext, cardText, label (+22 more)
+
+### Community 82 - "estimate/package.json"
+Cohesion: 0.29
+Nodes (6): name, private, scripts, test, type, version
+
+### Community 83 - "GamePlay.vue"
+Cohesion: 0.14
+Nodes (15): MAX_SIGNAL_NUMBER, confirmCard, confirmCardIndex, emit, handleCardPress(), handleConfirmReveal(), leftRosterTeams, rightRosterTeams (+7 more)
+
+### Community 85 - "env.ts"
+Cohesion: 0.70
+Nodes (4): findNearestEnvFile(), loadLocalEnvFile(), parseEnvFile(), stripOptionalQuotes()
+
+### Community 86 - "blackout/ui-vue/src/App.vue"
+Cohesion: 0.08
+Nodes (31): clearEmbeddedRetryTimer(), embeddedError, embeddedPlayerName(), emit, emitAutoJoinRoom(), error, handleEmbeddedConnect(), handleReroll() (+23 more)
+
+### Community 88 - "games/index.ts"
+Cohesion: 0.21
+Nodes (9): emit, cards, CardView, emit, handleSelect(), props, clientGameRegistry, PlatformGameMeta (+1 more)
+
+### Community 89 - "promptLibrary.ts"
+Cohesion: 0.11
+Nodes (24): DEFAULT_PROMPTS, DEFAULT_TOTAL_ROUNDS, MAX_PLAYERS, MIN_PLAYERS, ROOM_IDLE_TIMEOUT_MS, TARGET_COWS, Prompt, cleanupMatch() (+16 more)
+
+### Community 91 - "blackout/ui-vue/src/components/Lobby.vue"
+Cohesion: 0.22
+Nodes (11): MAX_ROUNDS, MIN_PLAYERS, MIN_ROUNDS, Language, adjustRounds(), emit, excludedLettersInput, parseExcludedLetters() (+3 more)
+
+### Community 93 - "herd-mentality/__tests__/socketHandlers.test.ts"
+Cohesion: 0.22
+Nodes (7): register(), __listRoomsForTests(), registerHerdMentality(), makeNamespace(), setupParty(), setupServer(), TestSocket
+
+### Community 94 - "scout/server/src/managers/broadcastManager.ts"
+Cohesion: 0.15
+Nodes (19): AutoJoinRoomData, AutoJoinRoomResponse, BasicResponse, ClientToServerEvents, ErrorResponse, ScoutActionPayload, ServerToClientEvents, RoomView (+11 more)
+
+### Community 97 - "herd-mentality/core/src/types.ts"
+Cohesion: 0.12
+Nodes (20): groupAnswers(), normalizeAnswer(), resolveRound(), AnswerEntry, AnswerGroup, PlayerView, RoomView, RoundResult (+12 more)
+
+### Community 98 - "PublicLobbiesSection.vue"
+Cohesion: 0.16
+Nodes (10): emit, handleJoin(), props, currentInviteCode, emit, handleJoinRoom(), isLoading, isReady (+2 more)
+
+### Community 99 - "kritzelagent/server/src/socketHandlers.ts"
+Cohesion: 0.15
+Nodes (31): normalizeJoinToken(), clearSocketIndex(), clearSocketIndexesForRoom(), getSocketIndex(), setSocketIndex(), socketIndex, clearRoomCleanup(), deleteRoomByCode() (+23 more)
+
+### Community 101 - "herd-mentality/ui-vue/src/App.vue"
+Cohesion: 0.14
+Nodes (20): action(), emit, fail(), focusKey, joinAck, joinInFlight, joinRoom(), joinState (+12 more)
+
+### Community 102 - "compilerOptions"
+Cohesion: 0.08
+Nodes (25): compilerOptions, baseUrl, esModuleInterop, forceConsistentCasingInFileNames, isolatedModules, jsx, lib, module (+17 more)
+
+### Community 103 - "flip7/ui-vue/src/App.vue"
+Cohesion: 0.15
+Nodes (19): cardToDrawnCardInfo(), clearRetryTimer(), commitRoomUpdate(), detectDrawnCard(), displayName(), embeddedError, emit, emitAutoJoinRoom() (+11 more)
+
+### Community 104 - "kritzelagent/server/src/managers/roundManager.ts"
+Cohesion: 0.18
+Nodes (22): RoundResult, advanceDrawingTurn(), allConnectedPlayersDrew(), allConnectedPlayersVoted(), connectedPlayers(), KritzelagentError, nextRound(), prepareTopicDeck() (+14 more)
+
+### Community 112 - "compilerOptions"
+Cohesion: 0.08
+Nodes (25): compilerOptions, baseUrl, esModuleInterop, forceConsistentCasingInFileNames, isolatedModules, jsx, lib, module (+17 more)
+
+### Community 113 - "blackout/core/src/types.ts"
+Cohesion: 0.18
+Nodes (17): ClientToServerEvents, ServerToClientEvents, Category, Phase, Player, PlayerView, RoomView, RoundData (+9 more)
+
+### Community 114 - "kritzelagent/ui-vue/src/App.vue"
+Cohesion: 0.16
+Nodes (21): clearJoinTimer(), emit, failJoin(), focusKey, hasJoinAck, joinRoom(), joinState, nextRound() (+13 more)
+
+### Community 116 - "kritzelagent/core/src/events.ts"
+Cohesion: 0.13
+Nodes (15): ActionResponse, ClientToServerEvents, JoinResponse, ServerToClientEvents, RoomView, StrokePoint, props, emit (+7 more)
+
+### Community 119 - "scripts"
+Cohesion: 0.10
+Nodes (20): scripts, build, dev, format, format:check, lint, lint:fix, start (+12 more)
+
+### Community 120 - "flip7/core/src/constants.ts"
+Cohesion: 0.12
+Nodes (18): ACTION_CARD_COUNT, DECK_MAX_NUMBER, DEFAULT_TARGET_SCORE, FLIP7_BONUS, FLIP7_CARD_COUNT, MAX_PLAYERS, MIN_PLAYERS, MODIFIER_ADD_VALUES (+10 more)
+
+### Community 123 - "topicLibrary.ts"
+Cohesion: 0.09
+Nodes (28): DEFAULT_TOPICS, DEFAULT_TOTAL_ROUNDS, DRAWING_TURNS_PER_PLAYER, MAX_COORDINATE, MAX_PLAYERS, MAX_STROKE_POINTS, ROOM_IDLE_TIMEOUT_MS, isPoint() (+20 more)
+
+### Community 124 - "scout/ui-vue/src/App.vue"
+Cohesion: 0.07
+Nodes (31): MIN_PLAYERS, StoredSession, clearRetryTimer(), commitRoomUpdate(), displayName(), embeddedError, emit, emitAutoJoinRoom() (+23 more)
+
+### Community 127 - "collectors.ts"
+Cohesion: 0.14
+Nodes (14): activeConnectionsGauge, initializeMetrics(), partiesActiveGauge, partyMembersConnectedGauge, publicLobbiesGauge, roomPlayersConnectedGauge, roomsActiveGauge, setActiveConnections() (+6 more)
+
+### Community 128 - "Database"
+Cohesion: 0.15
+Nodes (4): better-sqlite3, Database, DatabaseConstructor, Statement
+
+### Community 132 - "VotingPhase.vue"
+Cohesion: 0.17
+Nodes (11): emit, handleVote(), isDiscussion, isVoting, now, orderedPlayers, otherPlayers, selectedTarget (+3 more)
+
+### Community 133 - "kritzelagent/__tests__/roundManager.test.ts"
+Cohesion: 0.33
+Nodes (10): ServerRoom, broadcastRoom(), buildRoomView(), KritzelagentNamespace, privateAssignmentFor(), sendPrivateAssignment(), currentDrawingPlayerId(), submitStroke() (+2 more)
+
+### Community 134 - "wordLibrary.ts"
+Cohesion: 0.22
+Nodes (8): DEFAULT_WORD_LIBRARY, WORD_MAX_LENGTH, loadFromFile(), PERSIST_ENABLED, persistWord(), WORD_LIBRARY_MAX_SIZE, wordLogger, WORDS_FILE
+
+### Community 136 - "secret-signals/server/src/config/constants.ts"
+Cohesion: 0.20
+Nodes (9): MAX_PLAYERS, IS_E2E, MAX_PLAYER_NAME_LENGTH, MAX_PLAYERS, MIN_PLAYERS, PLAYER_ID, PORT, RESUME_TOKEN (+1 more)
+
+### Community 137 - "RevealPhase.vue"
+Cohesion: 0.24
+Nodes (9): emit, getPlayerName(), guess, guessError, handleGuess(), isHost, result, store (+1 more)
+
+### Community 138 - "herd-mentality/ui-vue/src/PlatformAdapter.vue"
+Cohesion: 0.22
+Nodes (6): dialog, gameEnded, gamePhase, Props, replayButton, showHostDialog
+
+### Community 141 - "ScoutDialog.vue"
+Cohesion: 0.07
+Nodes (25): CARD_VALUES, DECK_SIZE, ROOM_ENDED_CLEANUP_MS, ROOM_IDLE_TIMEOUT_MS, flipCard(), canScout, currentCards, currentOwnerName (+17 more)
+
+### Community 142 - "kritzelagent/e2e/game.spec.ts"
+Cohesion: 0.31
+Nodes (6): completeDrawing(), createParty(), createSession(), drawStroke(), joinParty(), Session
+
+### Community 144 - "kritzelagent/ui-vue/src/PlatformAdapter.vue"
+Cohesion: 0.22
+Nodes (6): dialog, gameEnded, gamePhase, Props, replayButton, showHostDialog
+
+### Community 145 - "package.json"
+Cohesion: 0.25
+Nodes (7): engines, node, pnpm, name, packageManager, private, version
+
+### Community 147 - "Room"
+Cohesion: 0.46
+Nodes (5): Room, addPoint(), getLeaderboard(), getWinners(), resetScores()
+
+### Community 148 - "herd-mentality/ui-vue/src/components/QuestionView.vue"
+Cohesion: 0.33
+Nodes (6): MAX_ANSWER_LENGTH, answer, emit, props, submit(), validationError
+
+### Community 149 - "herd-mentality/e2e/game.spec.ts"
 Cohesion: 0.38
-Nodes (4): transitionToLobby(), resetForLobby(), resetForNewRound(), transitionToNextRound()
+Nodes (4): createParty(), joinParty(), openSession(), Session
 
-### Community 68 - "Community 68"
+### Community 150 - "herd-mentality/package.json"
 Cohesion: 0.29
 Nodes (6): name, private, scripts, test, type, version
 
-### Community 69 - "Community 69"
-Cohesion: 0.29
-Nodes (6): name, private, scripts, test, type, version
-
-### Community 70 - "Community 70"
-Cohesion: 0.29
-Nodes (6): name, private, scripts, test, type, version
-
-### Community 71 - "Community 71"
+### Community 151 - "herd-mentality/scripts/copy-assets.mjs"
 Cohesion: 0.33
-Nodes (5): canSkip, isCategoryReused, isReader, selectablePlayers, taskText
+Nodes (5): gameDir, scriptDir, sourceFile, targetDir, workspaceRoot
 
-### Community 74 - "Community 74"
-Cohesion: 0.53
-Nodes (5): broadcastRoom(), GameNamespace, sendRoomToPlayer(), toPlayerView(), toRoomViewForPlayer()
-
-### Community 76 - "Community 76"
-Cohesion: 0.53
-Nodes (5): ClientToServerEvents, ServerToClientEvents, AssassinPenaltyMode, PlayerRole, TeamColor
-
-### Community 77 - "Community 77"
+### Community 152 - "kritzelagent/scripts/copy-assets.mjs"
 Cohesion: 0.33
-Nodes (3): definition, gameLogger, handler
+Nodes (5): gameDir, scriptDir, sourceFile, targetDir, workspaceRoot
 
-### Community 79 - "Community 79"
-Cohesion: 0.53
-Nodes (6): finalizeRound(), getVotedOutIds(), handleInfiltratorGuess(), isMatchOver(), resolveVotes(), skipGuess()
-
-### Community 80 - "Community 80"
+### Community 153 - "AgentGuessView.vue"
 Cohesion: 0.40
-Nodes (3): currentDescriber, isMyTurn, wasSkipped
+Nodes (5): emit, error, props, submit(), value
 
-### Community 81 - "Community 81"
+### Community 154 - "kritzelagent/package.json"
 Cohesion: 0.40
-Nodes (4): showControls, sortedPlayers, store, winners
+Nodes (4): name, private, type, version
 
-### Community 83 - "Community 83"
+### Community 159 - "estimate/ui-vue/src/PlatformAdapter.vue"
+Cohesion: 0.22
+Nodes (6): dialog, gameEnded, gamePhase, Props, replayButton, showHostDialog
+
+### Community 160 - "herd-mentality/ui-vue/src/composables/useSocket.ts"
+Cohesion: 0.39
+Nodes (6): ClientToServerEvents, ServerToClientEvents, HerdMentalitySocket, normalizeNamespace(), resolveSocketUrl(), useSocket()
+
+### Community 161 - "estimate/ui-vue/src/components/QuestionView.vue"
 Cohesion: 0.40
-Nodes (3): error, number, word
+Nodes (5): emit, input, parseAndSubmit(), props, validationError
 
-### Community 88 - "Community 88"
+### Community 162 - "estimate/ui-vue/src/components/RevealView.vue"
 Cohesion: 0.40
-Nodes (3): clientGameRegistry, PlatformGameMeta, PlatformGameModule
+Nodes (4): emit, isLastRound, numberFormatter, props
 
-### Community 89 - "Community 89"
-Cohesion: 0.50
-Nodes (3): accentClasses, cardSubtext, cardText
+### Community 177 - "JoinTabPanel.vue"
+Cohesion: 0.38
+Nodes (5): emit, onInput(), emit, onCodeInput(), onNameInput()
 
-### Community 90 - "Community 90"
-Cohesion: 0.50
-Nodes (3): canStart, connectedCount, isHost
-
-### Community 91 - "Community 91"
-Cohesion: 0.83
-Nodes (3): parseExcludedLetters(), saveExcludedLetters(), updateLanguage()
-
-### Community 94 - "Community 94"
-Cohesion: 0.50
-Nodes (3): useGameStore, ActionAnnouncement, DrawnCardInfo
-
-### Community 95 - "Community 95"
-Cohesion: 0.50
-Nodes (3): PLAYER_ID, RESUME_TOKEN, ROOM_CODE
-
-### Community 97 - "Community 97"
-Cohesion: 0.50
-Nodes (3): PLAYER_ID, RESUME_TOKEN, ROOM_CODE
-
-### Community 99 - "Community 99"
-Cohesion: 0.50
-Nodes (3): Database, DatabaseConstructor, Statement
+### Community 183 - "platform/env.d.ts"
+Cohesion: 0.22
+Nodes (8): @blackout-ui/PlatformAdapter.vue, @estimate-ui/PlatformAdapter.vue, @flip7-ui/PlatformAdapter.vue, @herd-mentality-ui/PlatformAdapter.vue, @imposter-ui/PlatformAdapter.vue, @kritzelagent-ui/PlatformAdapter.vue, @scout-ui/PlatformAdapter.vue, @secret-signals-ui/PlatformAdapter.vue
 
 ## Knowledge Gaps
-- **583 isolated node(s):** `HttpResponse`, `routerReplace`, `Handler`, `gameNames`, `name` (+578 more)
-  These have ≤1 connection - possible missing edges or undocumented components.
-- **38 thin communities (<3 nodes) omitted from report** — run `graphify query` to explore isolated nodes.
+- **1052 isolated node(s):** `HttpResponse`, `routerReplace`, `{ cleanupMatchMock }`, `Handler`, `expectedGames` (+1047 more)
+  These have ≤1 connection - possible missing edges or undocumented components. (Counts symbols only; 1247 node(s) total have ≤1 connection when file, concept and rationale nodes are included.)
+- **24 thin communities (<3 nodes) omitted from report** — run `graphify query` to explore isolated nodes.
 
 ## Suggested Questions
 _Questions this graph is uniquely positioned to answer:_
 
-- **Why does `createComponentLogger()` connect `Community 19` to `Community 32`, `Community 34`, `Community 66`, `Community 4`, `Community 5`, `Community 10`, `Community 12`, `Community 77`, `Community 14`, `Community 46`, `Community 18`, `Community 50`, `Community 20`, `Community 51`, `Community 29`?**
-  _High betweenness centrality (0.057) - this node is a cross-community bridge._
-- **Why does `io` connect `Community 17` to `Community 9`, `Community 5`?**
-  _High betweenness centrality (0.030) - this node is a cross-community bridge._
-- **Why does `usePartySocket()` connect `Community 9` to `Community 17`?**
-  _High betweenness centrality (0.018) - this node is a cross-community bridge._
-- **Are the 5 inferred relationships involving `createComponentLogger()` (e.g. with `registerGame()` and `registerGame()`) actually correct?**
-  _`createComponentLogger()` has 5 INFERRED edges - model-reasoned connections that need verification._
-- **Are the 5 inferred relationships involving `readLoggingConfig()` (e.g. with `registerGame()` and `registerGame()`) actually correct?**
-  _`readLoggingConfig()` has 5 INFERRED edges - model-reasoned connections that need verification._
-- **What connects `HttpResponse`, `routerReplace`, `Handler` to the rest of the system?**
-  _583 weakly-connected nodes found - possible documentation gaps or missing edges._
-- **Should `Community 0` be split into smaller, more focused modules?**
-  _Cohesion score 0.0609009009009009 - nodes in this community are weakly interconnected._
+- **Why does `createComponentLogger()` connect `flip7/server/src/socketHandlers.ts` to `blackout/server/src/socketHandlers.ts`, `kritzelagent/server/src/socketHandlers.ts`, `scout/server/src/socketHandlers.ts`, `server/index.ts`, `wordLibrary.ts`, `admin.ts`, `socketHandlerMetrics.ts`, `registry/index.ts`, `partyHandlers.ts`, `secret-signals/server/src/handlers/socketHandlers.ts`, `logger.ts`, `requestLogger.ts`, `imposter/server/src/handlers/socketHandlers.ts`, `promptLibrary.ts`, `questionLibrary.ts`, `topicLibrary.ts`, `database.ts`?**
+  _High betweenness centrality (0.051) - this node is a cross-community bridge._
+- **Why does `readLoggingConfig()` connect `logger.ts` to `estimate/server/src/socketHandlers.ts`, `blackout/server/src/socketHandlers.ts`, `kritzelagent/server/src/socketHandlers.ts`, `scout/server/src/socketHandlers.ts`, `socketHandlerMetrics.ts`, `partyHandlers.ts`, `herd-mentality/server/src/socketHandlers.ts`, `secret-signals/server/src/handlers/socketHandlers.ts`, `flip7/server/src/socketHandlers.ts`, `imposter/server/src/handlers/socketHandlers.ts`?**
+  _High betweenness centrality (0.015) - this node is a cross-community bridge._
+- **Why does `attachSocketEventDebugLogging()` connect `logger.ts` to `blackout/server/src/socketHandlers.ts`, `estimate/server/src/socketHandlers.ts`, `kritzelagent/server/src/socketHandlers.ts`, `scout/server/src/socketHandlers.ts`, `partyHandlers.ts`, `herd-mentality/server/src/socketHandlers.ts`, `secret-signals/server/src/handlers/socketHandlers.ts`, `flip7/server/src/socketHandlers.ts`, `imposter/server/src/handlers/socketHandlers.ts`?**
+  _High betweenness centrality (0.015) - this node is a cross-community bridge._
+- **What connects `HttpResponse`, `routerReplace`, `{ cleanupMatchMock }` to the rest of the system?**
+  _1052 weakly-connected nodes found - possible documentation gaps or missing edges._
+- **Should `trickManager.ts` be split into smaller, more focused modules?**
+  _Cohesion score 0.1497326203208556 - nodes in this community are weakly interconnected._
+- **Should `AdminView.vue` be split into smaller, more focused modules?**
+  _Cohesion score 0.05391120507399577 - nodes in this community are weakly interconnected._
+- **Should `scout/server/src/socketHandlers.ts` be split into smaller, more focused modules?**
+  _Cohesion score 0.08771929824561403 - nodes in this community are weakly interconnected._

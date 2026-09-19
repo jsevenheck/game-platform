@@ -4,6 +4,7 @@ import type { Room } from '../../../core/src/types';
 import {
   createComponentLogger,
   readLoggingConfig,
+  toLoggableError,
 } from '../../../../../apps/platform/server/logging/logger';
 import {
   attachSocketEventDebugLogging,
@@ -14,10 +15,13 @@ import {
   recordNamespaceConnection,
   recordNamespaceDisconnect,
 } from '../../../../../apps/platform/server/observability/socketNamespaceMetrics';
+import { createSocketRateLimiter } from '../../../../../apps/platform/server/observability/rateLimit';
 import {
   authorizePartyJoin,
   normalizeJoinToken,
   normalizeStablePlayerId,
+  readFiniteNumber,
+  readString,
   syncRoomHostAfterJoin,
 } from '../../../../../apps/platform/server/party/gameAuth';
 import { MIN_PLAYERS } from '../../../core/src/constants';
@@ -55,6 +59,15 @@ import {
 } from '../managers/gameManager';
 
 const GAME_ID = 'imposter';
+
+// Per-socket rate limit shared by the in-match gameplay actions
+// (submitDescription, submitVote) — each is otherwise unbounded once a
+// socket is authorized into a room, so a scripted client could flood
+// either at an arbitrary rate. Generous relative to real play (turn/phase
+// checks already prevent a legitimate player from acting out of turn), so
+// this only bounds automated flooding. See docs/adding-a-new-game.md's
+// "Rate limiting" section for the pattern.
+const gameplayRateLimit = createSocketRateLimiter({ windowMs: 1_000, max: 20 });
 
 type GameSocket = Socket<ClientToServerEvents, ServerToClientEvents>;
 
@@ -170,7 +183,7 @@ export function registerGame(io: Server, namespace = `/g/${GAME_ID}`): void {
       const instrumentation = startSocketHandlerInstrumentation(namespace, 'autoJoinRoom', GAME_ID);
       const respond = instrumentation.wrapCallback(cb);
       try {
-        const sessionId = data.sessionId?.trim();
+        const sessionId = readString(data?.sessionId)?.trim();
         if (!sessionId) {
           return respond({ ok: false, error: 'Missing session info' });
         }
@@ -303,7 +316,8 @@ export function registerGame(io: Server, namespace = `/g/${GAME_ID}`): void {
         });
       } catch (err) {
         instrumentation.finishError();
-        throw err;
+        socketLogger.error({ err: toLoggableError(err) }, 'autoJoinRoom failed unexpectedly');
+        respond({ ok: false, error: 'Internal error' });
       }
     });
 
@@ -348,7 +362,8 @@ export function registerGame(io: Server, namespace = `/g/${GAME_ID}`): void {
         respond({ ok: true });
       } catch (err) {
         instrumentation.finishError();
-        throw err;
+        socketLogger.error({ err: toLoggableError(err) }, 'resumePlayer failed unexpectedly');
+        respond({ ok: false, error: 'Internal error' });
       }
     });
 
@@ -419,124 +434,185 @@ export function registerGame(io: Server, namespace = `/g/${GAME_ID}`): void {
         respond({ ok: true });
       } catch (err) {
         instrumentation.finishError();
-        throw err;
+        socketLogger.error({ err: toLoggableError(err) }, 'leaveRoom failed unexpectedly');
+        respond({ ok: false, error: 'Internal error' });
       }
     });
 
     socket.on('kickPlayer', (data, cb) => {
-      if (!verifyPlayer(socket, data.roomCode, data.playerId)) {
-        return cb({ ok: false, error: 'Unauthorized' });
-      }
+      const instrumentation = startSocketHandlerInstrumentation(namespace, 'kickPlayer', GAME_ID);
+      const respond = instrumentation.wrapCallback(cb);
+      try {
+        if (!verifyPlayer(socket, data.roomCode, data.playerId)) {
+          return respond({ ok: false, error: 'Unauthorized' });
+        }
 
-      const room = getRoom(data.roomCode);
-      if (!room) return cb({ ok: false, error: 'Room not found' });
-      if (room.hostId !== data.playerId) {
-        return cb({ ok: false, error: 'Only host can kick players' });
-      }
-      if (room.phase !== 'lobby') {
-        return cb({ ok: false, error: 'Can only kick players in the lobby' });
-      }
-      if (data.targetId === data.playerId) {
-        return cb({ ok: false, error: 'Host cannot kick themselves' });
-      }
+        const room = getRoom(data.roomCode);
+        if (!room) return respond({ ok: false, error: 'Room not found' });
+        if (room.hostId !== data.playerId) {
+          return respond({ ok: false, error: 'Only host can kick players' });
+        }
+        if (room.phase !== 'lobby') {
+          return respond({ ok: false, error: 'Can only kick players in the lobby' });
+        }
+        if (data.targetId === data.playerId) {
+          return respond({ ok: false, error: 'Host cannot kick themselves' });
+        }
 
-      const target = room.players[data.targetId];
-      if (!target) {
-        return cb({ ok: false, error: 'Player not found' });
+        const target = room.players[data.targetId];
+        if (!target) {
+          return respond({ ok: false, error: 'Player not found' });
+        }
+
+        const kickedSocket = target.socketId ? nsp.sockets.get(target.socketId) : undefined;
+        if (target.socketId) {
+          deleteSocketIndex(target.socketId);
+        }
+        kickedSocket?.leave(room.code);
+        kickedSocket?.emit('kicked', 'You were removed from the lobby');
+
+        removePlayerFromRoom(room, data.targetId);
+
+        if (Object.keys(room.players).length === 0) {
+          clearDiscussionTimer(room.code);
+          clearGuessTimer(room.code);
+          deleteRoom(room.code);
+          socketLogger.info({ roomCode: room.code }, 'deleted empty imposter room after kick');
+          return respond({ ok: true });
+        }
+
+        broadcastRoom(nsp, room);
+        socketLogger.info(
+          {
+            roomCode: room.code,
+            hostPlayerId: data.playerId,
+            targetPlayerId: data.targetId,
+          },
+          'host kicked player from imposter room'
+        );
+        respond({ ok: true });
+      } catch (err) {
+        instrumentation.finishError();
+        socketLogger.error({ err: toLoggableError(err) }, 'kickPlayer failed unexpectedly');
+        respond({ ok: false, error: 'Internal error' });
       }
-
-      const kickedSocket = target.socketId ? nsp.sockets.get(target.socketId) : undefined;
-      if (target.socketId) {
-        deleteSocketIndex(target.socketId);
-      }
-      kickedSocket?.leave(room.code);
-      kickedSocket?.emit('kicked', 'You were removed from the lobby');
-
-      removePlayerFromRoom(room, data.targetId);
-
-      if (Object.keys(room.players).length === 0) {
-        clearDiscussionTimer(room.code);
-        clearGuessTimer(room.code);
-        deleteRoom(room.code);
-        socketLogger.info({ roomCode: room.code }, 'deleted empty imposter room after kick');
-        return cb({ ok: true });
-      }
-
-      broadcastRoom(nsp, room);
-      socketLogger.info(
-        {
-          roomCode: room.code,
-          hostPlayerId: data.playerId,
-          targetPlayerId: data.targetId,
-        },
-        'host kicked player from imposter room'
-      );
-      cb({ ok: true });
     });
 
     socket.on('requestState', (data) => {
-      if (!verifyPlayer(socket, data.roomCode, data.playerId)) return;
-      const room = getRoom(data.roomCode);
-      if (!room) return;
-      sendRoomToPlayer(nsp, room, data.playerId);
+      const instrumentation = startSocketHandlerInstrumentation(namespace, 'requestState', GAME_ID);
+      try {
+        if (!verifyPlayer(socket, data.roomCode, data.playerId)) {
+          instrumentation.finishRejected();
+          return;
+        }
+        const room = getRoom(data.roomCode);
+        if (!room) {
+          instrumentation.finishRejected();
+          return;
+        }
+        sendRoomToPlayer(nsp, room, data.playerId);
+        instrumentation.finishSuccess();
+      } catch (err) {
+        instrumentation.finishError();
+        socketLogger.error({ err: toLoggableError(err) }, 'requestState failed unexpectedly');
+      }
     });
 
     socket.on('configureLobby', (data, cb) => {
-      if (!verifyPlayer(socket, data.roomCode, data.playerId)) {
-        return cb({ ok: false, error: 'Unauthorized' });
-      }
-      const room = getRoom(data.roomCode);
-      if (!room) return cb({ ok: false, error: 'Room not found' });
-      if (room.hostId !== data.playerId) return cb({ ok: false, error: 'Only host can configure' });
-      if (room.phase !== 'lobby') return cb({ ok: false, error: 'Can only configure in lobby' });
-
-      const previousConfig = {
-        infiltratorCount: room.infiltratorCount,
-        discussionDurationMs: room.discussionDurationMs,
-        targetScore: room.targetScore,
-      };
-
-      const infiltratorError = setInfiltratorCount(room, data.infiltratorCount);
-      if (infiltratorError) {
-        return cb({ ok: false, error: infiltratorError });
-      }
-
-      if (data.discussionDurationMs !== room.discussionDurationMs) {
-        const timerError = setDiscussionDuration(room, data.discussionDurationMs);
-        if (timerError) {
-          room.infiltratorCount = previousConfig.infiltratorCount;
-          return cb({ ok: false, error: timerError });
+      const instrumentation = startSocketHandlerInstrumentation(
+        namespace,
+        'configureLobby',
+        GAME_ID
+      );
+      const respond = instrumentation.wrapCallback(cb);
+      try {
+        if (!verifyPlayer(socket, data.roomCode, data.playerId)) {
+          return respond({ ok: false, error: 'Unauthorized' });
         }
-      }
+        const room = getRoom(data.roomCode);
+        if (!room) return respond({ ok: false, error: 'Room not found' });
+        if (room.hostId !== data.playerId)
+          return respond({ ok: false, error: 'Only host can configure' });
+        if (room.phase !== 'lobby')
+          return respond({ ok: false, error: 'Can only configure in lobby' });
 
-      if (data.targetScore !== room.targetScore) {
-        const targetError = setTargetScore(room, data.targetScore);
-        if (targetError) {
-          room.infiltratorCount = previousConfig.infiltratorCount;
-          room.discussionDurationMs = previousConfig.discussionDurationMs;
-          return cb({ ok: false, error: targetError });
+        const infiltratorCount = readFiniteNumber(data.infiltratorCount);
+        const discussionDurationMs = readFiniteNumber(data.discussionDurationMs);
+        const targetScore = readFiniteNumber(data.targetScore);
+        if (
+          infiltratorCount === undefined ||
+          discussionDurationMs === undefined ||
+          targetScore === undefined
+        ) {
+          return respond({ ok: false, error: 'Invalid request' });
         }
-      }
 
-      broadcastRoom(nsp, room);
-      cb({ ok: true });
+        const previousConfig = {
+          infiltratorCount: room.infiltratorCount,
+          discussionDurationMs: room.discussionDurationMs,
+          targetScore: room.targetScore,
+        };
+
+        const infiltratorError = setInfiltratorCount(room, infiltratorCount);
+        if (infiltratorError) {
+          return respond({ ok: false, error: infiltratorError });
+        }
+
+        if (discussionDurationMs !== room.discussionDurationMs) {
+          const timerError = setDiscussionDuration(room, discussionDurationMs);
+          if (timerError) {
+            room.infiltratorCount = previousConfig.infiltratorCount;
+            return respond({ ok: false, error: timerError });
+          }
+        }
+
+        if (targetScore !== room.targetScore) {
+          const targetError = setTargetScore(room, targetScore);
+          if (targetError) {
+            room.infiltratorCount = previousConfig.infiltratorCount;
+            room.discussionDurationMs = previousConfig.discussionDurationMs;
+            return respond({ ok: false, error: targetError });
+          }
+        }
+
+        broadcastRoom(nsp, room);
+        respond({ ok: true });
+      } catch (err) {
+        instrumentation.finishError();
+        socketLogger.error({ err: toLoggableError(err) }, 'configureLobby failed unexpectedly');
+        respond({ ok: false, error: 'Internal error' });
+      }
     });
 
     socket.on('submitWord', (data, cb) => {
-      if (!verifyPlayer(socket, data.roomCode, data.playerId)) {
-        return cb({ ok: false, error: 'Unauthorized' });
+      const instrumentation = startSocketHandlerInstrumentation(namespace, 'submitWord', GAME_ID);
+      const respond = instrumentation.wrapCallback(cb);
+      try {
+        if (!verifyPlayer(socket, data.roomCode, data.playerId)) {
+          return respond({ ok: false, error: 'Unauthorized' });
+        }
+        const room = getRoom(data.roomCode);
+        if (!room) return respond({ ok: false, error: 'Room not found' });
+        if (!room.players[data.playerId]) return respond({ ok: false, error: 'Player not found' });
+        if (room.phase !== 'lobby')
+          return respond({ ok: false, error: 'Can only submit words in lobby' });
+
+        const word = readString(data.word);
+        if (word === undefined) {
+          return respond({ ok: false, error: 'Word must be text' });
+        }
+
+        const err = addWordToLibrary(room, word);
+        if (err) return respond({ ok: false, error: err });
+
+        persistWord(word.trim());
+        broadcastRoom(nsp, room);
+        respond({ ok: true });
+      } catch (err) {
+        instrumentation.finishError();
+        socketLogger.error({ err: toLoggableError(err) }, 'submitWord failed unexpectedly');
+        respond({ ok: false, error: 'Internal error' });
       }
-      const room = getRoom(data.roomCode);
-      if (!room) return cb({ ok: false, error: 'Room not found' });
-      if (!room.players[data.playerId]) return cb({ ok: false, error: 'Player not found' });
-      if (room.phase !== 'lobby') return cb({ ok: false, error: 'Can only submit words in lobby' });
-
-      const err = addWordToLibrary(room, data.word);
-      if (err) return cb({ ok: false, error: err });
-
-      persistWord(data.word.trim());
-      broadcastRoom(nsp, room);
-      cb({ ok: true });
     });
 
     socket.on('startGame', (data, cb) => {
@@ -579,201 +655,302 @@ export function registerGame(io: Server, namespace = `/g/${GAME_ID}`): void {
         respond({ ok: true });
       } catch (err) {
         instrumentation.finishError();
-        throw err;
+        socketLogger.error({ err: toLoggableError(err) }, 'startGame failed unexpectedly');
+        respond({ ok: false, error: 'Internal error' });
       }
     });
 
     socket.on('submitDescription', (data, cb) => {
-      if (!verifyPlayer(socket, data.roomCode, data.playerId)) {
-        return cb({ ok: false, error: 'Unauthorized' });
+      const instrumentation = startSocketHandlerInstrumentation(
+        namespace,
+        'submitDescription',
+        GAME_ID
+      );
+      const respond = instrumentation.wrapCallback(cb);
+      try {
+        if (!gameplayRateLimit.check(socket.id)) {
+          return respond({ ok: false, error: 'Too many requests — slow down' });
+        }
+        if (!verifyPlayer(socket, data.roomCode, data.playerId)) {
+          return respond({ ok: false, error: 'Unauthorized' });
+        }
+        const room = getRoom(data.roomCode);
+        if (!room) return respond({ ok: false, error: 'Room not found' });
+
+        const description = readString(data.description);
+        if (description === undefined) {
+          return respond({ ok: false, error: 'Description must be text' });
+        }
+
+        const err = submitDescription(room, data.playerId, description);
+        if (err) return respond({ ok: false, error: err });
+
+        if (room.phase === 'discussion') {
+          room.discussionEndsAt = Date.now() + room.discussionDurationMs;
+          clearDiscussionTimer(room.code);
+
+          const timer = setTimeout(() => {
+            if (room.phase === 'discussion') {
+              startVoting(room);
+              broadcastRoom(nsp, room);
+            }
+            discussionTimers.delete(room.code);
+          }, room.discussionDurationMs);
+
+          discussionTimers.set(room.code, timer);
+        }
+
+        broadcastRoom(nsp, room);
+        respond({ ok: true });
+      } catch (err) {
+        instrumentation.finishError();
+        socketLogger.error({ err: toLoggableError(err) }, 'submitDescription failed unexpectedly');
+        respond({ ok: false, error: 'Internal error' });
       }
-      const room = getRoom(data.roomCode);
-      if (!room) return cb({ ok: false, error: 'Room not found' });
-
-      const err = submitDescription(room, data.playerId, data.description);
-      if (err) return cb({ ok: false, error: err });
-
-      if (room.phase === 'discussion') {
-        room.discussionEndsAt = Date.now() + room.discussionDurationMs;
-        clearDiscussionTimer(room.code);
-
-        const timer = setTimeout(() => {
-          if (room.phase === 'discussion') {
-            startVoting(room);
-            broadcastRoom(nsp, room);
-          }
-          discussionTimers.delete(room.code);
-        }, room.discussionDurationMs);
-
-        discussionTimers.set(room.code, timer);
-      }
-
-      broadcastRoom(nsp, room);
-      cb({ ok: true });
     });
 
     socket.on('skipDescriptionTurn', (data, cb) => {
-      if (!verifyPlayer(socket, data.roomCode, data.playerId)) {
-        return cb({ ok: false, error: 'Unauthorized' });
+      const instrumentation = startSocketHandlerInstrumentation(
+        namespace,
+        'skipDescriptionTurn',
+        GAME_ID
+      );
+      const respond = instrumentation.wrapCallback(cb);
+      try {
+        if (!verifyPlayer(socket, data.roomCode, data.playerId)) {
+          return respond({ ok: false, error: 'Unauthorized' });
+        }
+        const room = getRoom(data.roomCode);
+        if (!room) return respond({ ok: false, error: 'Room not found' });
+        if (room.hostId !== data.playerId) {
+          return respond({ ok: false, error: 'Only host can skip clue turns' });
+        }
+
+        const err = skipCurrentDescription(room);
+        if (err) return respond({ ok: false, error: err });
+
+        if (room.phase === 'discussion') {
+          room.discussionEndsAt = Date.now() + room.discussionDurationMs;
+          clearDiscussionTimer(room.code);
+
+          const timer = setTimeout(() => {
+            if (room.phase === 'discussion') {
+              startVoting(room);
+              broadcastRoom(nsp, room);
+            }
+            discussionTimers.delete(room.code);
+          }, room.discussionDurationMs);
+
+          discussionTimers.set(room.code, timer);
+        }
+
+        broadcastRoom(nsp, room);
+        respond({ ok: true });
+      } catch (err) {
+        instrumentation.finishError();
+        socketLogger.error(
+          { err: toLoggableError(err) },
+          'skipDescriptionTurn failed unexpectedly'
+        );
+        respond({ ok: false, error: 'Internal error' });
       }
-      const room = getRoom(data.roomCode);
-      if (!room) return cb({ ok: false, error: 'Room not found' });
-      if (room.hostId !== data.playerId) {
-        return cb({ ok: false, error: 'Only host can skip clue turns' });
-      }
-
-      const err = skipCurrentDescription(room);
-      if (err) return cb({ ok: false, error: err });
-
-      if (room.phase === 'discussion') {
-        room.discussionEndsAt = Date.now() + room.discussionDurationMs;
-        clearDiscussionTimer(room.code);
-
-        const timer = setTimeout(() => {
-          if (room.phase === 'discussion') {
-            startVoting(room);
-            broadcastRoom(nsp, room);
-          }
-          discussionTimers.delete(room.code);
-        }, room.discussionDurationMs);
-
-        discussionTimers.set(room.code, timer);
-      }
-
-      broadcastRoom(nsp, room);
-      cb({ ok: true });
     });
 
     socket.on('submitVote', (data, cb) => {
-      if (!verifyPlayer(socket, data.roomCode, data.playerId)) {
-        return cb({ ok: false, error: 'Unauthorized' });
-      }
-      const room = getRoom(data.roomCode);
-      if (!room) return cb({ ok: false, error: 'Room not found' });
-
-      const err = gameSubmitVote(room, data.playerId, data.targetId);
-      if (err) return cb({ ok: false, error: err });
-
-      if (allVotesSubmitted(room)) {
-        resolveVotes(room);
-
-        if (room.waitingForGuess) {
-          clearGuessTimer(room.code);
-          const timer = setTimeout(() => {
-            if (room.waitingForGuess) {
-              doSkipGuess(room);
-              broadcastRoom(nsp, room);
-            }
-            guessTimers.delete(room.code);
-          }, GUESS_TIMEOUT_MS);
-          guessTimers.set(room.code, timer);
+      const instrumentation = startSocketHandlerInstrumentation(namespace, 'submitVote', GAME_ID);
+      const respond = instrumentation.wrapCallback(cb);
+      try {
+        if (!gameplayRateLimit.check(socket.id)) {
+          return respond({ ok: false, error: 'Too many requests — slow down' });
         }
-      }
+        if (!verifyPlayer(socket, data.roomCode, data.playerId)) {
+          return respond({ ok: false, error: 'Unauthorized' });
+        }
+        const room = getRoom(data.roomCode);
+        if (!room) return respond({ ok: false, error: 'Room not found' });
 
-      broadcastRoom(nsp, room);
-      cb({ ok: true });
+        const targetId = readString(data.targetId);
+        if (targetId === undefined) {
+          return respond({ ok: false, error: 'Invalid request' });
+        }
+
+        const err = gameSubmitVote(room, data.playerId, targetId);
+        if (err) return respond({ ok: false, error: err });
+
+        if (allVotesSubmitted(room)) {
+          resolveVotes(room);
+
+          if (room.waitingForGuess) {
+            clearGuessTimer(room.code);
+            const timer = setTimeout(() => {
+              if (room.waitingForGuess) {
+                doSkipGuess(room);
+                broadcastRoom(nsp, room);
+              }
+              guessTimers.delete(room.code);
+            }, GUESS_TIMEOUT_MS);
+            guessTimers.set(room.code, timer);
+          }
+        }
+
+        broadcastRoom(nsp, room);
+        respond({ ok: true });
+      } catch (err) {
+        instrumentation.finishError();
+        socketLogger.error({ err: toLoggableError(err) }, 'submitVote failed unexpectedly');
+        respond({ ok: false, error: 'Internal error' });
+      }
     });
 
     socket.on('guessWord', (data, cb) => {
-      if (!verifyPlayer(socket, data.roomCode, data.playerId)) {
-        return cb({ ok: false, error: 'Unauthorized' });
+      const instrumentation = startSocketHandlerInstrumentation(namespace, 'guessWord', GAME_ID);
+      const respond = instrumentation.wrapCallback(cb);
+      try {
+        if (!verifyPlayer(socket, data.roomCode, data.playerId)) {
+          return respond({ ok: false, error: 'Unauthorized' });
+        }
+        const room = getRoom(data.roomCode);
+        if (!room) return respond({ ok: false, error: 'Room not found' });
+
+        if (!room.revealedInfiltrators.includes(data.playerId)) {
+          return respond({ ok: false, error: 'Only caught infiltrators can guess' });
+        }
+
+        const guess = readString(data.guess);
+        if (guess === undefined) {
+          return respond({ ok: false, error: 'Guess must be text' });
+        }
+
+        const err = handleInfiltratorGuess(room, guess);
+        if (err) return respond({ ok: false, error: err });
+
+        clearGuessTimer(room.code);
+        broadcastRoom(nsp, room);
+        respond({ ok: true });
+      } catch (err) {
+        instrumentation.finishError();
+        socketLogger.error({ err: toLoggableError(err) }, 'guessWord failed unexpectedly');
+        respond({ ok: false, error: 'Internal error' });
       }
-      const room = getRoom(data.roomCode);
-      if (!room) return cb({ ok: false, error: 'Room not found' });
-
-      if (!room.revealedInfiltrators.includes(data.playerId)) {
-        return cb({ ok: false, error: 'Only caught infiltrators can guess' });
-      }
-
-      const err = handleInfiltratorGuess(room, data.guess);
-      if (err) return cb({ ok: false, error: err });
-
-      clearGuessTimer(room.code);
-      broadcastRoom(nsp, room);
-      cb({ ok: true });
     });
 
     socket.on('skipGuess', (data, cb) => {
-      if (!verifyPlayer(socket, data.roomCode, data.playerId)) {
-        return cb({ ok: false, error: 'Unauthorized' });
-      }
-      const room = getRoom(data.roomCode);
-      if (!room) return cb({ ok: false, error: 'Room not found' });
-      if (room.hostId !== data.playerId) {
-        return cb({ ok: false, error: 'Only host can skip the guess' });
-      }
-      if (room.phase !== 'reveal') return cb({ ok: false, error: 'Can only skip in reveal phase' });
-      if (!room.waitingForGuess) return cb({ ok: false, error: 'Not waiting for a guess' });
+      const instrumentation = startSocketHandlerInstrumentation(namespace, 'skipGuess', GAME_ID);
+      const respond = instrumentation.wrapCallback(cb);
+      try {
+        if (!verifyPlayer(socket, data.roomCode, data.playerId)) {
+          return respond({ ok: false, error: 'Unauthorized' });
+        }
+        const room = getRoom(data.roomCode);
+        if (!room) return respond({ ok: false, error: 'Room not found' });
+        if (room.hostId !== data.playerId) {
+          return respond({ ok: false, error: 'Only host can skip the guess' });
+        }
+        if (room.phase !== 'reveal')
+          return respond({ ok: false, error: 'Can only skip in reveal phase' });
+        if (!room.waitingForGuess) return respond({ ok: false, error: 'Not waiting for a guess' });
 
-      clearGuessTimer(room.code);
-      doSkipGuess(room);
-      broadcastRoom(nsp, room);
-      cb({ ok: true });
+        clearGuessTimer(room.code);
+        doSkipGuess(room);
+        broadcastRoom(nsp, room);
+        respond({ ok: true });
+      } catch (err) {
+        instrumentation.finishError();
+        socketLogger.error({ err: toLoggableError(err) }, 'skipGuess failed unexpectedly');
+        respond({ ok: false, error: 'Internal error' });
+      }
     });
 
     socket.on('nextRound', (data, cb) => {
-      if (!verifyPlayer(socket, data.roomCode, data.playerId)) {
-        return cb({ ok: false, error: 'Unauthorized' });
-      }
-      const room = getRoom(data.roomCode);
-      if (!room) return cb({ ok: false, error: 'Room not found' });
-      if (room.hostId !== data.playerId) {
-        return cb({ ok: false, error: 'Only host can start next round' });
-      }
-      if (room.phase !== 'reveal') return cb({ ok: false, error: 'Can only advance from reveal' });
+      const instrumentation = startSocketHandlerInstrumentation(namespace, 'nextRound', GAME_ID);
+      const respond = instrumentation.wrapCallback(cb);
+      try {
+        if (!verifyPlayer(socket, data.roomCode, data.playerId)) {
+          return respond({ ok: false, error: 'Unauthorized' });
+        }
+        const room = getRoom(data.roomCode);
+        if (!room) return respond({ ok: false, error: 'Room not found' });
+        if (room.hostId !== data.playerId) {
+          return respond({ ok: false, error: 'Only host can start next round' });
+        }
+        if (room.phase !== 'reveal')
+          return respond({ ok: false, error: 'Can only advance from reveal' });
 
-      clearGuessTimer(room.code);
-      resetForNewRound(room);
-      startRound(room);
-      broadcastRoom(nsp, room);
-      cb({ ok: true });
+        clearGuessTimer(room.code);
+        resetForNewRound(room);
+        startRound(room);
+        broadcastRoom(nsp, room);
+        respond({ ok: true });
+      } catch (err) {
+        instrumentation.finishError();
+        socketLogger.error({ err: toLoggableError(err) }, 'nextRound failed unexpectedly');
+        respond({ ok: false, error: 'Internal error' });
+      }
     });
 
     socket.on('endGame', (data, cb) => {
-      if (!verifyPlayer(socket, data.roomCode, data.playerId)) {
-        return cb({ ok: false, error: 'Unauthorized' });
-      }
-      const room = getRoom(data.roomCode);
-      if (!room) return cb({ ok: false, error: 'Room not found' });
-      if (room.hostId !== data.playerId) return cb({ ok: false, error: 'Only host can end game' });
-      if (room.phase !== 'reveal') return cb({ ok: false, error: 'Can only end game from reveal' });
+      const instrumentation = startSocketHandlerInstrumentation(namespace, 'endGame', GAME_ID);
+      const respond = instrumentation.wrapCallback(cb);
+      try {
+        if (!verifyPlayer(socket, data.roomCode, data.playerId)) {
+          return respond({ ok: false, error: 'Unauthorized' });
+        }
+        const room = getRoom(data.roomCode);
+        if (!room) return respond({ ok: false, error: 'Room not found' });
+        if (room.hostId !== data.playerId)
+          return respond({ ok: false, error: 'Only host can end game' });
+        if (room.phase !== 'reveal')
+          return respond({ ok: false, error: 'Can only end game from reveal' });
 
-      clearGuessTimer(room.code);
-      room.phase = 'ended';
-      broadcastRoom(nsp, room);
-      cb({ ok: true });
+        clearGuessTimer(room.code);
+        room.phase = 'ended';
+        broadcastRoom(nsp, room);
+        respond({ ok: true });
+      } catch (err) {
+        instrumentation.finishError();
+        socketLogger.error({ err: toLoggableError(err) }, 'endGame failed unexpectedly');
+        respond({ ok: false, error: 'Internal error' });
+      }
     });
 
     socket.on('restartGame', (data, cb) => {
-      if (!verifyPlayer(socket, data.roomCode, data.playerId)) {
-        socketLogger.warn(
-          { roomCode: data.roomCode, playerId: data.playerId },
-          'restartGame rejected: unauthorized imposter player'
-        );
-        return cb({ ok: false, error: 'Unauthorized' });
-      }
-      const room = getRoom(data.roomCode);
-      if (!room) return cb({ ok: false, error: 'Room not found' });
-      if (room.hostId !== data.playerId) {
-        socketLogger.warn(
-          { roomCode: room.code, playerId: data.playerId },
-          'restartGame rejected: actor is not imposter host'
-        );
-        return cb({ ok: false, error: 'Only host can restart' });
-      }
+      const instrumentation = startSocketHandlerInstrumentation(namespace, 'restartGame', GAME_ID);
+      const respond = instrumentation.wrapCallback(cb);
+      try {
+        if (!verifyPlayer(socket, data.roomCode, data.playerId)) {
+          socketLogger.warn(
+            { roomCode: data.roomCode, playerId: data.playerId },
+            'restartGame rejected: unauthorized imposter player'
+          );
+          return respond({ ok: false, error: 'Unauthorized' });
+        }
+        const room = getRoom(data.roomCode);
+        if (!room) return respond({ ok: false, error: 'Room not found' });
+        if (room.hostId !== data.playerId) {
+          socketLogger.warn(
+            { roomCode: room.code, playerId: data.playerId },
+            'restartGame rejected: actor is not imposter host'
+          );
+          return respond({ ok: false, error: 'Only host can restart' });
+        }
 
-      clearDiscussionTimer(room.code);
-      clearGuessTimer(room.code);
-      resetForLobby(room);
-      broadcastRoom(nsp, room);
-      socketLogger.info(
-        {
-          roomCode: room.code,
-          hostPlayerId: room.hostId,
-        },
-        'restarted imposter game'
-      );
-      cb({ ok: true });
+        clearDiscussionTimer(room.code);
+        clearGuessTimer(room.code);
+        resetForLobby(room);
+        broadcastRoom(nsp, room);
+        socketLogger.info(
+          {
+            roomCode: room.code,
+            hostPlayerId: room.hostId,
+          },
+          'restarted imposter game'
+        );
+        respond({ ok: true });
+      } catch (err) {
+        instrumentation.finishError();
+        socketLogger.error({ err: toLoggableError(err) }, 'restartGame failed unexpectedly');
+        respond({ ok: false, error: 'Internal error' });
+      }
     });
 
     socket.on('disconnect', (reason) => {
@@ -818,7 +995,7 @@ export function registerGame(io: Server, namespace = `/g/${GAME_ID}`): void {
         instrumentation.finishSuccess();
       } catch (err) {
         instrumentation.finishError();
-        throw err;
+        socketLogger.error({ err: toLoggableError(err) }, 'imposter disconnect handling failed');
       }
     });
   });

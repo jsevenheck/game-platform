@@ -6,6 +6,17 @@ import { createComponentLogger } from '../../../../../apps/platform/server/loggi
 const wordLogger = createComponentLogger('imposter-word-library');
 const WORDS_FILE = path.resolve(process.cwd(), 'server', 'data', 'words.txt');
 
+/**
+ * Hard cap on the shared, process-global word library. Without this,
+ * `persistWord` (called from every room's `submitWord` handler) grows the
+ * in-memory cache — and, when persistence is enabled, the on-disk file —
+ * without bound for the lifetime of the server, since custom words are
+ * never removed. 2,000 unique words is far more than any single game needs
+ * and keeps the resource footprint (memory and file size) definitively
+ * bounded rather than unbounded.
+ */
+export const WORD_LIBRARY_MAX_SIZE = 2000;
+
 /** When false, submitted words are kept in-memory only (for multi-instance deployments
  * where a local file would diverge across processes). Defaults to true. */
 const PERSIST_ENABLED = (() => {
@@ -43,6 +54,13 @@ export function persistWord(word: string): void {
   if (!cache) cache = loadFromFile();
   const lower = word.toLowerCase();
   if (cache.some((w) => w.toLowerCase() === lower)) return;
+  if (cache.length >= WORD_LIBRARY_MAX_SIZE) {
+    wordLogger.warn(
+      { size: cache.length, limit: WORD_LIBRARY_MAX_SIZE },
+      'word library at capacity — dropping new submitted word'
+    );
+    return;
+  }
   cache.push(word);
   if (!PERSIST_ENABLED) return;
   try {

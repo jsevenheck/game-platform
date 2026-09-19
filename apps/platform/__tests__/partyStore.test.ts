@@ -101,6 +101,16 @@ describe('partyStore', () => {
     expect(view.members[0].name).toBe('Host');
   });
 
+  // F13 regression: socketId — an internal server detail no client ever
+  // reads — was previously broadcast to every party member alongside every
+  // other player's public info.
+  it('partyToView strips socketId from members', () => {
+    const { party } = createTestParty();
+    const view = partyToView(party);
+
+    expect(view.members[0]).not.toHaveProperty('socketId');
+  });
+
   describe('schedulePartyCleanup', () => {
     it('deletes party after timeout when all disconnected', () => {
       vi.useFakeTimers();
@@ -153,6 +163,53 @@ describe('partyStore', () => {
 
       vi.advanceTimersByTime(30 * 60 * 1000 + 1);
 
+      expect(getParty(partyId)).toBeDefined();
+    });
+
+    // F7 regression: idle-party expiry previously deleted the party (and,
+    // via deleteParty's clearMatchTimeout call, cancelled the 2-hour
+    // match-timeout backstop too) without ever giving the caller a chance
+    // to end the party's active match — unlike every other teardown path
+    // (triggerMatchTimeout, returnToLobby, replayGame, admin kick/cleanup),
+    // which all call the game module's cleanupMatch.
+    it('invokes onExpire with the party before deleting it', () => {
+      vi.useFakeTimers();
+      const { party } = createTestParty('Host', 'sock-gc4');
+      const partyId = party.partyId;
+      party.activeMatch = {
+        gameId: 'test-game',
+        matchKey: 'match-key-1',
+        namespace: '/g/test-game',
+        startedAt: Date.now(),
+      };
+
+      party.members.get('player-1')!.connected = false;
+      unregisterSocket('sock-gc4');
+
+      const onExpire = vi.fn();
+      schedulePartyCleanup(partyId, onExpire);
+
+      vi.advanceTimersByTime(30 * 60 * 1000 + 1);
+
+      expect(onExpire).toHaveBeenCalledTimes(1);
+      expect(onExpire).toHaveBeenCalledWith(expect.objectContaining({ partyId }));
+      expect(getParty(partyId)).toBeUndefined();
+      createdPartyIds.pop();
+    });
+
+    it('does not call onExpire when a member reconnects before the timeout', () => {
+      vi.useFakeTimers();
+      const { party } = createTestParty('Host', 'sock-gc5');
+      const partyId = party.partyId;
+
+      party.members.get('player-1')!.connected = false;
+      const onExpire = vi.fn();
+      schedulePartyCleanup(partyId, onExpire);
+
+      party.members.get('player-1')!.connected = true;
+      vi.advanceTimersByTime(30 * 60 * 1000 + 1);
+
+      expect(onExpire).not.toHaveBeenCalled();
       expect(getParty(partyId)).toBeDefined();
     });
   });

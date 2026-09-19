@@ -102,6 +102,7 @@ function handleJoinRoom(payload: { inviteCode: string }): void {
 }
 
 .public-lobbies__refresh {
+  min-height: 44px;
   font-size: 0.78rem;
   padding: 0.35rem 0.75rem;
 }
