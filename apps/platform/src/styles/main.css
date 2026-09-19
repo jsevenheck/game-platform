@@ -18,8 +18,9 @@
 
   /* Text */
   --color-foreground: #f0f0f5;
-  --color-muted: #7878a0;
-  --color-muted-foreground: #50506a;
+  /* Secondary text stays readable on every dark surface (WCAG AA). */
+  --color-muted: #9a9abb;
+  --color-muted-foreground: #8f8fae;
 
   /* Borders / rings */
   --color-border: #1e1e2e;
@@ -347,11 +348,11 @@
     letter-spacing: 0.08em;
   }
 
-  /* ─── Small stepper button ─── */
+  /* ─── Stepper button ─── */
   .ui-stepper-btn {
     @apply flex items-center justify-center cursor-pointer;
-    width: 2.25rem;
-    height: 2.25rem;
+    width: 2.75rem;
+    height: 2.75rem;
     border: 1px solid var(--color-border-strong);
     border-radius: var(--radius-sm);
     background: rgba(255, 255, 255, 0.04);

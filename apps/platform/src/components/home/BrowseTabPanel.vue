@@ -108,6 +108,8 @@ const emit = defineEmits<{
 }
 
 .browse-cta-dismiss {
+  min-width: 44px;
+  min-height: 44px;
   padding: 0.3rem 0.55rem;
   font-size: 0.8rem;
   line-height: 1;

@@ -193,7 +193,7 @@ onBeforeUnmount(() => {
       </div>
     </header>
 
-    <main class="mx-auto flex max-w-140 flex-col gap-8 p-4 pt-6">
+    <main class="mx-auto flex max-w-5xl flex-col gap-8 p-4 pt-6">
       <!-- Rejoin banner when a game is running -->
       <section v-if="gameInProgress" class="party-game-banner">
         <div class="party-game-banner-content">

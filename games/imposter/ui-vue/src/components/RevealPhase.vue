@@ -154,7 +154,9 @@ const voteTally = computed(() => {
         You were caught! Guess the secret word to steal the win!
       </p>
       <div class="flex gap-2 flex-wrap">
+        <label for="imposter-guess" class="sr-only">Secret word guess</label>
         <input
+          id="imposter-guess"
           v-model="guess"
           type="text"
           placeholder="Your guess..."
@@ -170,7 +172,7 @@ const voteTally = computed(() => {
           Guess!
         </button>
       </div>
-      <p v-if="guessError" class="text-danger text-xs mt-1">{{ guessError }}</p>
+      <p v-if="guessError" role="alert" class="text-danger text-xs mt-1">{{ guessError }}</p>
     </div>
 
     <div

@@ -167,6 +167,11 @@ function onKeydown(event: KeyboardEvent, index: number): void {
   transition: all 200ms ease;
 }
 
+.home-tabbar-tab:focus-visible {
+  outline: 2px solid var(--color-accent);
+  outline-offset: 2px;
+}
+
 .home-tabbar-tab:hover:not(.home-tabbar-tab--active) {
   color: var(--color-muted);
   background: rgba(255, 255, 255, 0.04);

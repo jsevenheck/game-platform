@@ -77,7 +77,7 @@ onBeforeUnmount(() => {
 </script>
 
 <template>
-  <div class="home-root">
+  <main class="home-root">
     <div class="home-card" :class="activeTab === 'browse' ? 'home-card-wide' : 'home-card-compact'">
       <!-- Top accent line -->
       <div class="home-top-line" />
@@ -165,7 +165,7 @@ onBeforeUnmount(() => {
         </div>
       </Transition>
     </div>
-  </div>
+  </main>
 </template>
 
 <style scoped>

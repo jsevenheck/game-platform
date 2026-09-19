@@ -196,9 +196,12 @@ function handleSubmitWord() {
         </p>
 
         <div class="mt-2">
-          <label class="text-muted text-sm font-medium block mb-2">Add a Custom Word</label>
+          <label for="imposter-custom-word" class="text-muted text-sm font-medium block mb-2"
+            >Add a Custom Word</label
+          >
           <div class="flex gap-2">
             <input
+              id="imposter-custom-word"
               v-model="newWord"
               type="text"
               placeholder="Enter a word..."
@@ -235,9 +238,12 @@ function handleSubmitWord() {
     <!-- Non-host: also allow word submission -->
     <div v-else class="w-full max-w-85 flex flex-col gap-4">
       <div>
-        <label class="text-muted text-sm font-medium block mb-2">Suggest a Word</label>
+        <label for="imposter-custom-word" class="text-muted text-sm font-medium block mb-2"
+          >Suggest a Word</label
+        >
         <div class="flex gap-2">
           <input
+            id="imposter-custom-word"
             v-model="newWord"
             type="text"
             placeholder="Enter a word..."

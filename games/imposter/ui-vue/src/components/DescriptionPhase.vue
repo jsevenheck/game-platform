@@ -123,11 +123,12 @@ function handleSubmit() {
 
     <!-- Description input -->
     <div v-if="isMyTurn" class="w-full max-w-90">
-      <label class="text-muted text-sm block mb-2">
+      <label for="imposter-description" class="text-muted text-sm block mb-2">
         {{ store.myWord ? 'Describe the word (be subtle!)' : 'Write a convincing description' }}
       </label>
       <div class="flex gap-2">
         <input
+          id="imposter-description"
           v-model="description"
           type="text"
           :placeholder="store.myWord ? 'Your clue...' : 'Blend in...'"
@@ -149,7 +150,7 @@ function handleSubmit() {
       >
         {{ description.length }}/30
       </p>
-      <p v-if="error" class="text-danger text-xs mt-1">{{ error }}</p>
+      <p v-if="error" role="alert" class="text-danger text-xs mt-1">{{ error }}</p>
     </div>
 
     <!-- Submitted notice -->
