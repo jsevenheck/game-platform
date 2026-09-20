@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import { useI18n } from 'vue-i18n';
 import type { PrivateAssignment, RoomView } from '@shared/types';
 import DrawingCanvas from './DrawingCanvas.vue';
 
@@ -8,6 +9,7 @@ const props = defineProps<{
   canDraw: boolean;
   pending: boolean;
 }>();
+const { t } = useI18n();
 const emit = defineEmits<{ stroke: [points: { x: number; y: number }[]] }>();
 
 function submitStroke(points: { x: number; y: number }[]) {
@@ -25,32 +27,44 @@ function submitStroke(points: { x: number; y: number }[]) {
     <div class="kritzelagent-round__header">
       <div>
         <p class="text-sm text-muted-foreground">
-          Runde {{ room.currentRound }} von {{ room.totalRounds }}
+          {{
+            t('kritzelagent.drawing.round', { round: room.currentRound, total: room.totalRounds })
+          }}
         </p>
-        <h2 id="drawing-title" data-phase-focus tabindex="-1">Gemeinsame Skizze</h2>
+        <h2 id="drawing-title" data-phase-focus tabindex="-1">
+          {{ t('kritzelagent.drawing.title') }}
+        </h2>
       </div>
       <p class="kritzelagent-badge" aria-live="polite">
-        {{ room.drawingTurn }} / {{ room.totalDrawingTurns }} Striche
+        {{
+          t('kritzelagent.drawing.strokes', {
+            turn: room.drawingTurn,
+            total: room.totalDrawingTurns,
+          })
+        }}
       </p>
     </div>
     <div class="kritzelagent-assignment" role="status">
-      <strong>Kategorie: {{ assignment?.category ?? room.category ?? 'wird geladen…' }}</strong>
-      <span v-if="assignment?.isAgent"
-        >Du bist der Kritzelagent. Finde heraus, was gezeichnet wird.</span
-      >
+      <strong>{{
+        t('kritzelagent.drawing.category', {
+          category: assignment?.category ?? room.category ?? t('kritzelagent.drawing.loading'),
+        })
+      }}</strong>
+      <span v-if="assignment?.isAgent">{{ t('kritzelagent.drawing.youAreAgent') }}</span>
       <span v-else-if="assignment?.topic"
-        >Motiv: <strong>{{ assignment.topic }}</strong></span
+        >{{ t('kritzelagent.drawing.motif') }} <strong>{{ assignment.topic }}</strong></span
       >
     </div>
     <DrawingCanvas :strokes="room.strokes" :disabled="!canDraw || pending" @stroke="submitStroke" />
     <p class="mt-3 text-sm text-muted-foreground" aria-live="polite">
-      <template v-if="canDraw">Du bist dran: Zeichne genau einen Strich.</template>
-      <template v-else
-        >Am Zug:
-        {{
-          room.players.find((player) => player.id === room.activePlayerId)?.name ?? 'niemand'
-        }}</template
-      >
+      <template v-if="canDraw">{{ t('kritzelagent.drawing.yourTurn') }}</template>
+      <template v-else>{{
+        t('kritzelagent.drawing.activeTurn', {
+          name:
+            room.players.find((player) => player.id === room.activePlayerId)?.name ??
+            t('kritzelagent.drawing.nobody'),
+        })
+      }}</template>
     </p>
   </section>
 </template>

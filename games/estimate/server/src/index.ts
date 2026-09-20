@@ -23,7 +23,8 @@ const gameLogger = createComponentLogger('game-server', { gameId: definition.id 
 
 export function register(io: Server, namespace = `/g/${definition.id}`): void {
   // Eagerly validate and cache the production question asset during server startup.
-  getQuestionLibrary();
+  getQuestionLibrary('en');
+  getQuestionLibrary('de');
   return registerEstimate(io, namespace, gameLogger);
 }
 

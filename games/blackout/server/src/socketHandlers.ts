@@ -295,7 +295,12 @@ export function registerBlackout(io: Server, namespace = '/g/blackout'): void {
         }
 
         // Create a new room for this session
-        const { room, hostId, resumeToken } = createRoom(name, socket.id, authorizedPlayerId);
+        const { room, hostId, resumeToken } = createRoom(
+          name,
+          socket.id,
+          authorizedPlayerId,
+          authorization.locale
+        );
         setSessionToRoom(sessionId, room.code);
         clearRoomCleanup(room.code);
         socket.join(room.code);

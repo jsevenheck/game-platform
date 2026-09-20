@@ -1,7 +1,9 @@
 <script setup lang="ts">
 import { computed } from 'vue';
+import { useI18n } from 'vue-i18n';
 import { useGameStore } from '../stores/game';
 
+const { t } = useI18n();
 const store = useGameStore();
 
 defineEmits<{
@@ -40,14 +42,12 @@ const selectablePlayers = computed(() => {
     <!-- Pre-reveal: Host sees category, others wait -->
     <template v-if="!round?.revealed">
       <div v-if="isReader" class="flex flex-col items-center gap-6">
-        <p class="uppercase tracking-wide text-muted">You are the Host!</p>
-        <div
-          class="rounded-[--radius-lg] border-2 border-blackout bg-elevated px-12 py-8 text-center"
-        >
+        <p class="uppercase tracking-wide text-muted">{{ t('blackout.round.youAreHost') }}</p>
+        <div class="rounded-lg border-2 border-blackout bg-elevated px-12 py-8 text-center">
           <span
             v-if="isCategoryReused"
             class="mb-2 inline-block rounded-pill bg-danger-muted px-3 py-0.5 text-[0.7rem] font-bold uppercase tracking-wide text-danger"
-            >Already played</span
+            >{{ t('blackout.round.alreadyPlayed') }}</span
           >
           <p class="mb-2 text-2xl text-foreground">{{ round?.category?.name }}</p>
           <p class="mb-1 text-blackout">{{ taskText }}</p>
@@ -57,21 +57,27 @@ const selectablePlayers = computed(() => {
           class="ui-btn-primary btn-blackout px-12 py-4 text-2xl btn-blackout-hover"
           @click="$emit('reveal')"
         >
-          Reveal!
+          {{ t('blackout.round.reveal') }}
         </button>
-        <button class="ui-btn-secondary" @click="$emit('reroll')">New Task + Category</button>
+        <button class="ui-btn-secondary" @click="$emit('reroll')">
+          {{ t('blackout.round.reroll') }}
+        </button>
         <button v-if="canSkip" class="btn-skip ui-btn-ghost mt-4" @click="$emit('skip')">
-          Skip Round
+          {{ t('blackout.round.skip') }}
         </button>
-        <p class="text-sm text-muted-foreground">Click to reveal the prompt to all players</p>
+        <p class="text-sm text-muted-foreground">{{ t('blackout.round.revealHint') }}</p>
       </div>
       <div v-else class="flex flex-col items-center gap-6">
-        <p class="uppercase tracking-wide text-muted">Waiting for the host to reveal...</p>
+        <p class="uppercase tracking-wide text-muted">{{ t('blackout.round.waitingForReveal') }}</p>
         <p class="text-xl font-semibold text-blackout">
-          Host: {{ store.room?.players.find((p) => p.id === round?.readerId)?.name }}
+          {{
+            t('blackout.round.hostName', {
+              name: store.room?.players.find((p) => p.id === round?.readerId)?.name,
+            })
+          }}
         </p>
         <button v-if="canSkip" class="btn-skip ui-btn-ghost" @click="$emit('skip')">
-          Skip Round
+          {{ t('blackout.round.skip') }}
         </button>
       </div>
     </template>
@@ -83,7 +89,7 @@ const selectablePlayers = computed(() => {
           <span
             v-if="isCategoryReused"
             class="mb-2 inline-block rounded-pill bg-danger-muted px-3 py-0.5 text-[0.7rem] font-bold uppercase tracking-wide text-danger"
-            >Already played</span
+            >{{ t('blackout.round.alreadyPlayed') }}</span
           >
           <p class="mb-2 text-2xl text-foreground">{{ round?.category?.name }}</p>
           <p class="mb-1 text-blackout">{{ taskText }}</p>
@@ -97,34 +103,34 @@ const selectablePlayers = computed(() => {
         </div>
 
         <div v-if="isReader" class="w-full max-w-[min(92vw,560px)]">
-          <h3 class="mb-2 text-center text-muted">Who was correct?</h3>
+          <h3 class="mb-2 text-center text-muted">{{ t('blackout.round.whoCorrect') }}</h3>
           <div
             v-for="player in selectablePlayers"
             :key="player.id"
-            class="mb-2 flex items-center gap-3 rounded-[--radius-md] bg-elevated p-4"
+            class="mb-2 flex items-center gap-3 rounded-md bg-elevated p-4"
           >
             <span class="min-w-0 flex-1 truncate text-2xl text-foreground sm:text-xl">{{
               player.name
             }}</span>
             <button
-              class="inline-flex items-center justify-center gap-2 rounded-[--radius-lg] bg-success px-4 py-2.5 font-semibold text-white transition-all hover:opacity-90 cursor-pointer select-none"
+              class="inline-flex items-center justify-center gap-2 rounded-lg bg-success px-4 py-2.5 font-semibold text-white transition-all hover:opacity-90 cursor-pointer select-none"
               @click="$emit('selectWinner', player.id)"
             >
-              Correct!
+              {{ t('blackout.round.correct') }}
             </button>
           </div>
         </div>
         <p v-else class="text-sm text-muted-foreground">
-          Speak your answer out loud. Host will select the correct player.
+          {{ t('blackout.round.speakUp') }}
         </p>
 
         <!-- Host controls -->
         <div v-if="isReader || canSkip" class="mt-4 flex flex-col items-center gap-3">
           <button v-if="isReader" class="ui-btn-secondary" @click="$emit('reroll')">
-            New Task + Category
+            {{ t('blackout.round.reroll') }}
           </button>
           <button v-if="canSkip" class="btn-skip ui-btn-ghost" @click="$emit('skip')">
-            Skip Round
+            {{ t('blackout.round.skip') }}
           </button>
         </div>
       </div>

@@ -11,7 +11,9 @@ someone empties their hand or every other player has scouted the table set; play
 cards they've collected minus the cards still in their hand.
 
 Scout runs only through the platform party flow. The platform launches the match and the game
-uses `autoJoinRoom` plus resume tokens for join and reconnect behavior.
+uses `autoJoinRoom` plus resume tokens for join and reconnect behavior. The 2-player mode is
+currently a platform variant and does not yet match the official Scout 2-player rules; use
+three or more players for the closest official rule set.
 
 ## Quick reference
 

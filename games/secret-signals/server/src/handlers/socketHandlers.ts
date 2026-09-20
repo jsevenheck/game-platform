@@ -131,7 +131,12 @@ export function registerGame(io: Server, namespace = `/g/${GAME_ID}`): void {
         const mappedRoom = mappedRoomCode ? getRoom(mappedRoomCode) : undefined;
 
         if (!mappedRoom) {
-          const { room, hostId, resumeToken } = createRoom(name, socket.id, authorizedPlayerId);
+          const { room, hostId, resumeToken } = createRoom(
+            name,
+            socket.id,
+            authorizedPlayerId,
+            authorization.locale
+          );
           setSessionToRoom(sessionId, room.code);
           socket.join(room.code);
           syncRoomHostAfterJoin(room, authorization.hostPlayerId, !authorization.hostConnected);

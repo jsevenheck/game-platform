@@ -1,11 +1,13 @@
 <script setup lang="ts">
+import { useI18n } from 'vue-i18n';
 import type { RoomView } from '@shared/types';
 
 const props = defineProps<{ room: RoomView; isHost: boolean; pending: boolean }>();
+const { t } = useI18n();
 defineEmits<{ next: [] }>();
 const agentName = () =>
   props.room.players.find((player) => player.id === props.room.roundResult?.agentId)?.name ??
-  'Unbekannt';
+  t('kritzelagent.reveal.unknown');
 
 function scoreDelta(playerId: string): number {
   return props.room.roundResult?.scoreDeltas[playerId] ?? 0;
@@ -14,31 +16,35 @@ function scoreDelta(playerId: string): number {
 
 <template>
   <section class="ui-panel" data-testid="kritzelagent-reveal" aria-labelledby="reveal-title">
-    <p class="text-sm text-muted-foreground">Runde {{ room.currentRound }} aufgelöst</p>
-    <h2 id="reveal-title" data-phase-focus tabindex="-1">Die Auflösung</h2>
+    <p class="text-sm text-muted-foreground">
+      {{ t('kritzelagent.reveal.resolved', { round: room.currentRound }) }}
+    </p>
+    <h2 id="reveal-title" data-phase-focus tabindex="-1">
+      {{ t('kritzelagent.reveal.title') }}
+    </h2>
     <div v-if="room.roundResult" class="kritzelagent-result" aria-live="polite">
       <p>
-        <strong>{{ agentName() }}</strong> war der Kritzelagent.
+        {{ t('kritzelagent.reveal.wasAgent', { name: agentName() }) }}
       </p>
       <p>
-        Motiv: <strong>{{ room.roundResult.topic }}</strong>
+        {{ t('kritzelagent.reveal.motif') }} <strong>{{ room.roundResult.topic }}</strong>
       </p>
       <p v-if="room.roundResult.agentCaught && room.roundResult.agentGuessed === false">
-        Die Gruppe hat den Agenten enttarnt.
+        {{ t('kritzelagent.reveal.caught') }}
       </p>
       <p v-else-if="room.roundResult.agentGuessed === true">
-        Der Agent wurde ertappt, hat das Motiv aber erraten.
+        {{ t('kritzelagent.reveal.guessed') }}
       </p>
-      <p v-else>Der Agent konnte unentdeckt bleiben.</p>
+      <p v-else>{{ t('kritzelagent.reveal.escaped') }}</p>
     </div>
-    <h3 class="mt-5 text-lg font-semibold">Stimmen</h3>
+    <h3 class="mt-5 text-lg font-semibold">{{ t('kritzelagent.reveal.votes') }}</h3>
     <ul class="kritzelagent-vote-results">
       <li v-for="entry in room.voteCounts" :key="entry.playerId">
         <span>{{ entry.name }}</span
         ><strong>{{ entry.votes }}</strong>
       </li>
     </ul>
-    <h3 class="mt-5 text-lg font-semibold">Punkte in dieser Runde</h3>
+    <h3 class="mt-5 text-lg font-semibold">{{ t('kritzelagent.reveal.roundPoints') }}</h3>
     <ul v-if="room.roundResult" class="kritzelagent-vote-results">
       <li v-for="player in room.players" :key="player.id">
         <span>{{ player.name }}</span
@@ -52,9 +58,15 @@ function scoreDelta(playerId: string): number {
       :disabled="pending"
       @click="$emit('next')"
     >
-      {{ room.currentRound >= room.totalRounds ? 'Ergebnis anzeigen' : 'Nächste Runde' }}
+      {{
+        room.currentRound >= room.totalRounds
+          ? t('kritzelagent.reveal.showResult')
+          : t('kritzelagent.reveal.next')
+      }}
     </button>
-    <p v-else class="mt-4 text-sm text-muted-foreground" role="status">Warte auf den Host…</p>
+    <p v-else class="mt-4 text-sm text-muted-foreground" role="status">
+      {{ t('kritzelagent.reveal.waitingForHost') }}
+    </p>
   </section>
 </template>
 

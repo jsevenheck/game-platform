@@ -187,7 +187,7 @@ test.describe('Estimate game', () => {
       await expect(session.guestPage.getByTestId('estimate-reveal-button')).toHaveCount(0);
       // Host can reveal, and equal guesses share the round win.
       await hostReveals(session.hostPage);
-      const winners = session.hostPage.getByText(/Gewinner:/);
+      const winners = session.hostPage.getByText(/Winners:/);
       await expect(winners).toContainText('Carol');
       await expect(winners).toContainText('Dave');
     } finally {
@@ -219,16 +219,14 @@ test.describe('Estimate game', () => {
 
       expect(questionTexts.size).toBe(5);
       await expect(session.hostPage.getByTestId('estimate-gameover')).toBeVisible();
-      await expect(session.hostPage.getByRole('dialog', { name: 'Spiel beendet' })).toBeVisible();
+      await expect(session.hostPage.getByRole('dialog', { name: 'Game over' })).toBeVisible();
       await expect(session.hostPage.getByTestId('platform-replay')).toBeFocused();
       await session.hostPage.keyboard.press('Shift+Tab');
       await expect(session.hostPage.getByTestId('platform-return')).toBeFocused();
       await session.hostPage.keyboard.press('Tab');
       await expect(session.hostPage.getByTestId('platform-replay')).toBeFocused();
       await expect(session.hostPage.getByTestId('platform-return')).toBeVisible();
-      await expect(
-        session.guestPage.getByText('Warte auf die Entscheidung des Hosts…')
-      ).toBeVisible();
+      await expect(session.guestPage.getByText('Waiting for the host to decide…')).toBeVisible();
 
       await session.hostPage.getByTestId('platform-replay').click();
       await expect(session.hostPage.getByTestId('estimate-lobby')).toBeVisible({ timeout: 15_000 });

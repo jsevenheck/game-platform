@@ -24,7 +24,7 @@ export function startGame(room: ServerRoom): void {
     throw new HerdMentalityError(`Need at least ${MIN_PLAYERS} connected players to start`);
   if (room.players.length > MAX_PLAYERS)
     throw new HerdMentalityError(`Too many players (max ${MAX_PLAYERS})`);
-  room.promptDeck = pickRandomPrompts(room.totalRounds);
+  room.promptDeck = pickRandomPrompts(room.totalRounds, room.locale);
   if (room.promptDeck.length < room.totalRounds)
     throw new HerdMentalityError('Not enough unique prompts');
   for (const player of room.players) room.cows.set(player.id, 0);

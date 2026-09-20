@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { ref } from 'vue';
+import { useI18n } from 'vue-i18n';
 
 const props = defineProps<{
   question: string;
@@ -8,6 +9,7 @@ const props = defineProps<{
   pending: boolean;
 }>();
 
+const { t } = useI18n();
 const emit = defineEmits<{ submit: [guess: number] }>();
 const input = ref('');
 const validationError = ref('');
@@ -17,13 +19,12 @@ function parseAndSubmit() {
   validationError.value = '';
   const trimmed = String(input.value).trim().replace(',', '.');
   if (trimmed === '') {
-    validationError.value = 'Bitte eine Zahl eingeben.';
+    validationError.value = t('estimate.question.errorEmpty');
     return;
   }
   const num = Number(trimmed);
   if (!Number.isFinite(num) || Math.abs(num) > 1e9) {
-    validationError.value =
-      'Bitte eine endliche Zahl zwischen −1.000.000.000 und 1.000.000.000 eingeben.';
+    validationError.value = t('estimate.question.errorRange');
     return;
   }
   emit('submit', num);
@@ -36,7 +37,9 @@ function parseAndSubmit() {
     data-testid="estimate-question"
     aria-labelledby="estimate-question-title"
   >
-    <p class="text-sm text-muted-foreground">Runde {{ round }} von {{ totalRounds }}</p>
+    <p class="text-sm text-muted-foreground">
+      {{ t('estimate.question.round', { round, total: totalRounds }) }}
+    </p>
     <h2
       id="estimate-question-title"
       class="mt-2 text-xl font-semibold"
@@ -46,7 +49,9 @@ function parseAndSubmit() {
       {{ question }}
     </h2>
     <form class="mt-4" novalidate @submit.prevent="parseAndSubmit">
-      <label class="ui-section-label" for="estimate-guess">Deine Schätzung</label>
+      <label class="ui-section-label" for="estimate-guess">
+        {{ t('estimate.question.yourGuess') }}
+      </label>
       <input
         id="estimate-guess"
         v-model="input"
@@ -59,10 +64,10 @@ function parseAndSubmit() {
         :aria-invalid="validationError ? 'true' : 'false'"
         aria-describedby="estimate-guess-help estimate-guess-error"
         data-testid="estimate-guess-input"
-        placeholder="z. B. 1989"
+        :placeholder="t('estimate.question.placeholder')"
       />
       <p id="estimate-guess-help" class="text-sm text-muted-foreground mt-1">
-        Ganze Zahlen, Dezimalzahlen und negative Werte sind erlaubt.
+        {{ t('estimate.question.help') }}
       </p>
       <p
         v-if="validationError"
@@ -78,7 +83,7 @@ function parseAndSubmit() {
         :disabled="pending"
         data-testid="estimate-guess-submit"
       >
-        {{ pending ? 'Wird gesendet…' : 'Schätzung abgeben' }}
+        {{ pending ? t('estimate.question.submitting') : t('estimate.question.submit') }}
       </button>
     </form>
   </section>

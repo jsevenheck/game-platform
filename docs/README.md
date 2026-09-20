@@ -27,16 +27,16 @@ Then open <http://localhost:5173>.
 
 ## Available games
 
-| Game           | Players | Round count  | Description                                       |
-| -------------- | ------- | ------------ | ------------------------------------------------- |
-| Blackout       | 4–10    | 1            | Cooperative dice-grid memory reveal               |
-| Imposter       | 3–10    | until reveal | Social deduction: secret word + clues + vote      |
-| Secret Signals | 4–8     | 3–6          | Cooperative code-breaking with asymmetric roles   |
-| Flip 7         | 2–8     | until bust   | Press-your-luck card-collection                   |
-| Scout          | 2–5     | = players    | Trick-taking with scout / flip actions            |
-| Estimate       | 2–12    | 5 (default)  | Number-estimation; closest guess wins             |
-| Kritzelagent   | 5–12    | 5 (default)  | Shared drawing, hidden topic, and agent deduction |
-| Herd Mentality | 4–20    | 8 (default)  | Secret majority answers, cows, and Pink Cow       |
+| Game           | Players | Round count    | Description                                                   |
+| -------------- | ------- | -------------- | ------------------------------------------------------------- |
+| Blackout       | 3–20    | configurable   | Category-based trivia with host-selected winners              |
+| Imposter       | 3–16    | until target   | Social deduction with secret word, clues, and voting          |
+| Secret Signals | 4–24    | until game end | Team word association with Directors and Agents               |
+| Flip 7         | 3–18    | until target   | Push-your-luck card game with busts and action cards          |
+| Scout          | 2–5     | one per player | Ladder-climbing card game with Scout and Scout & Show actions |
+| Estimate       | 2–12    | 5 (default)    | Numeric trivia; the closest guess wins                        |
+| Kritzelagent   | 5–12    | 5 (default)    | Shared drawing, hidden topic, and agent deduction             |
+| Herd Mentality | 4–20    | 8 (default)    | Secret majority answers, cows, and Pink Cow                   |
 
 See `docs/games.md` for the full per-game reference.
 
@@ -52,7 +52,8 @@ pnpm test:e2e         # playwright (starts server automatically)
 pnpm lint             # eslint across all source
 pnpm format           # prettier --write across all source
 pnpm format:check     # prettier --check
-pnpm typecheck        # vue-tsc + tsc via apps/platform
+pnpm typecheck        # platform vue-tsc + server tsc
+pnpm typecheck:games  # vue-tsc for every game UI
 ```
 
 ## Documentation
@@ -61,6 +62,7 @@ pnpm typecheck        # vue-tsc + tsc via apps/platform
 - `docs/games.md` — full game catalogue with per-game links
 - `docs/deployment.md` — Docker, environment, hosting
 - `docs/observability-metrics.md` — Prometheus metrics emitted by the platform
-- `docs/known-issues.md` — known quirks and caveats
+- `docs/known-issues.md` — current known quirks and caveats
+- `docs/rules-audit.md` — current rule-compatibility status and deliberate variants
 - `games/kritzelagent/README.md` — Kritzelagent rules and development
 - `games/herd-mentality/README.md` — Herd Mentality rules and development

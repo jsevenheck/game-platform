@@ -1,5 +1,8 @@
 <script setup lang="ts">
 import { onMounted, onBeforeUnmount, ref } from 'vue';
+import { useI18n } from 'vue-i18n';
+import { localizeError } from '@platform/i18n/serverError';
+import './i18n';
 import { useGameStore } from './stores/game';
 import { useSocket, type Flip7Socket } from './composables/useSocket';
 import type { HubIntegrationProps } from './types/config';
@@ -23,6 +26,7 @@ const props = withDefaults(defineProps<HubIntegrationProps>(), {
 
 const emit = defineEmits<{ 'phase-change': [phase: string] }>();
 
+const { t } = useI18n();
 const store = useGameStore();
 const embeddedError = ref('');
 let socket: Flip7Socket;
@@ -334,14 +338,16 @@ onBeforeUnmount(() => {
     <template v-if="!store.room">
       <div class="flex min-h-dvh items-center justify-center">
         <div class="text-center">
-          <p class="text-muted">{{ embeddedError || 'Connecting…' }}</p>
+          <p class="text-muted">
+            {{ embeddedError ? localizeError(embeddedError, 'flip7') : t('flip7.connecting') }}
+          </p>
           <button
             v-if="embeddedError"
             class="ui-btn-secondary mt-4"
             type="button"
             @click="retryJoin"
           >
-            Retry
+            {{ t('flip7.retry') }}
           </button>
         </div>
       </div>
@@ -367,9 +373,9 @@ onBeforeUnmount(() => {
     <!-- Inline error toast -->
     <p
       v-if="embeddedError && store.room"
-      class="fixed bottom-4 left-1/2 -translate-x-1/2 rounded-[--radius-md] bg-danger-muted px-6 py-3 text-sm text-danger"
+      class="fixed bottom-4 left-1/2 -translate-x-1/2 rounded-md bg-danger-muted px-6 py-3 text-sm text-danger"
     >
-      {{ embeddedError }}
+      {{ localizeError(embeddedError, 'flip7') }}
     </p>
   </div>
 </template>

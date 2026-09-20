@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { ref } from 'vue';
+import { useI18n } from 'vue-i18n';
 import { MAX_ANSWER_LENGTH } from '@shared/constants';
 const props = defineProps<{
   prompt: string;
@@ -7,6 +8,7 @@ const props = defineProps<{
   totalRounds: number;
   pending: boolean;
 }>();
+const { t } = useI18n();
 const emit = defineEmits<{ submit: [answer: string] }>();
 const answer = ref('');
 const validationError = ref('');
@@ -15,9 +17,9 @@ function submit() {
   const value = answer.value.normalize('NFKC').trim().replace(/\s+/gu, ' ');
   validationError.value =
     value.length === 0
-      ? 'Bitte eine Antwort eingeben.'
+      ? t('herd-mentality.question.errorEmpty')
       : value.length > MAX_ANSWER_LENGTH
-        ? `Bitte höchstens ${MAX_ANSWER_LENGTH} Zeichen verwenden.`
+        ? t('herd-mentality.question.errorLength', { max: MAX_ANSWER_LENGTH })
         : '';
   if (!validationError.value) emit('submit', value);
 }
@@ -28,7 +30,9 @@ function submit() {
     data-testid="herd-mentality-question"
     aria-labelledby="herd-mentality-question-title"
   >
-    <p class="text-sm text-muted-foreground">Frage {{ round }} von {{ totalRounds }}</p>
+    <p class="text-sm text-muted-foreground">
+      {{ t('herd-mentality.question.progress', { round, total: totalRounds }) }}
+    </p>
     <h2
       id="herd-mentality-question-title"
       class="mt-2 text-2xl font-semibold"
@@ -38,7 +42,9 @@ function submit() {
       {{ prompt }}
     </h2>
     <form class="mt-5" novalidate @submit.prevent="submit">
-      <label class="ui-section-label" for="herd-mentality-answer">Deine Antwort</label>
+      <label class="ui-section-label" for="herd-mentality-answer">
+        {{ t('herd-mentality.question.answerLabel') }}
+      </label>
       <input
         id="herd-mentality-answer"
         v-model="answer"
@@ -49,11 +55,11 @@ function submit() {
         :disabled="pending"
         :aria-invalid="validationError ? 'true' : 'false'"
         aria-describedby="herd-mentality-answer-help herd-mentality-answer-error"
-        placeholder="Was würde die Herde sagen?"
+        :placeholder="t('herd-mentality.question.placeholder')"
         data-testid="herd-mentality-answer-input"
       />
       <p id="herd-mentality-answer-help" class="mt-1 text-sm text-muted-foreground">
-        Kurz und spontan antworten. Die Antworten bleiben bis zur Auflösung geheim.
+        {{ t('herd-mentality.question.help') }}
       </p>
       <p
         v-if="validationError"
@@ -69,7 +75,7 @@ function submit() {
         :disabled="pending"
         data-testid="herd-mentality-answer-submit"
       >
-        {{ pending ? 'Wird gespeichert…' : 'Antwort abgeben' }}
+        {{ pending ? t('herd-mentality.question.saving') : t('herd-mentality.question.submit') }}
       </button>
     </form>
   </section>

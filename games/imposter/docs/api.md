@@ -69,7 +69,7 @@ Success:
 Notes:
 
 - Names must be 20 characters or fewer.
-- When `isHost: true`, the server transfers host to this player.
+- `isHost` is an optional UI hint only; the server derives host status from the platform party.
 - On first join for a given `playerId`, `resumeToken` is not required.
 - When reclaiming an existing slot, `resumeToken` must be present and valid.
 
@@ -147,7 +147,7 @@ Any player can add a word to the shared global library.
 submitWord(data: { roomCode: string; playerId: string; word: string }, cb)
 ```
 
-New words are appended to `server/data/words.txt` when the file is writable.
+New words are appended to `server/data/words.<en|de>.txt` when the file is writable.
 
 #### `kickPlayer`
 

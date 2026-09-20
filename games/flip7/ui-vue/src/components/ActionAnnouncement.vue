@@ -1,48 +1,51 @@
 <script setup lang="ts">
 import { computed } from 'vue';
+import { useI18n } from 'vue-i18n';
 import type { ActionAnnouncement } from '../stores/game';
 
 const props = defineProps<{ announcement: ActionAnnouncement }>();
+const { t } = useI18n();
 
 const meta = computed(() => {
   switch (props.announcement.action) {
     case 'freeze':
       return {
         emoji: '🧊',
-        label: 'Freeze',
-        verb: 'froze',
-        verbSelf: 'froze themselves',
+        label: t('flip7.actions.freeze'),
+        key: 'freeze',
         colorClasses:
           'bg-signals-muted text-signals ring-2 ring-signals shadow-[0_0_28px_rgba(6,182,212,0.30)]',
       };
     case 'flipThree':
       return {
         emoji: '🔄',
-        label: 'Flip Three',
-        verb: "Flip Three'd",
-        verbSelf: "Flip Three'd themselves",
+        label: t('flip7.actions.flipThree'),
+        key: 'flipThree',
         colorClasses:
           'bg-warning-muted text-warning ring-2 ring-warning shadow-[0_0_28px_rgba(234,179,8,0.30)]',
       };
     case 'secondChance':
       return {
         emoji: '🛡️',
-        label: '2nd Chance',
-        verb: 'gave 2nd Chance to',
-        verbSelf: 'gave themselves 2nd Chance',
+        label: t('flip7.actions.secondChanceShort'),
+        key: 'secondChance',
         colorClasses:
           'bg-success-muted text-success ring-2 ring-success shadow-[0_0_28px_rgba(34,197,94,0.30)]',
       };
     default:
-      return { emoji: '', label: '', verb: '', verbSelf: '', colorClasses: '' };
+      return { emoji: '', label: '', key: '', colorClasses: '' };
   }
 });
 
 /** Human-readable single-line sentence. */
 const sentence = computed(() => {
   const { drawerName, targetName, isSelf } = props.announcement;
-  const { verb, verbSelf } = meta.value;
-  return isSelf ? `${drawerName} ${verbSelf}!` : `${drawerName} ${verb} ${targetName}!`;
+  const { key } = meta.value;
+  if (!key) return '';
+  return t(isSelf ? `flip7.announcement.${key}Self` : `flip7.announcement.${key}`, {
+    drawer: drawerName,
+    target: targetName,
+  });
 });
 </script>
 

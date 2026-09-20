@@ -432,10 +432,7 @@ describe('socketHandlers autoJoinRoom', () => {
     deleteRoom(roomCode);
   });
 
-  // F1 regression: submitWord's word.trim() previously crashed the entire
-  // server process when `word` was a non-string payload value — reproduced
-  // live against a running server during the codebase review. It must now
-  // reject cleanly instead.
+  // Client payloads are untrusted at runtime; invalid words must be rejected safely.
   it('submitWord rejects a non-string word instead of throwing', () => {
     const namespace = createNamespace();
     const io = { of: vi.fn(() => namespace) } as unknown as Server;

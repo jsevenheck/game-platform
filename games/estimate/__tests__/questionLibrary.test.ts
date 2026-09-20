@@ -62,22 +62,37 @@ describe('questionLibrary', () => {
     });
 
     it('includes the Berlin Wall 1989 question as a known-good baseline', () => {
-      const lib = getQuestionLibrary();
+      const lib = getQuestionLibrary('de');
       const berlin = lib.find((q) => q.text.includes('Berliner Mauer'));
       expect(berlin?.answer).toBe(1989);
     });
 
+    it('ships the same questions and answers in English and German', () => {
+      const de = getQuestionLibrary('de');
+      const en = getQuestionLibrary('en');
+      expect(en.length).toBe(de.length);
+      expect(en.map((q) => q.answer)).toEqual(de.map((q) => q.answer));
+      expect(en.find((q) => q.text.includes('Berlin Wall'))?.answer).toBe(1989);
+    });
+
+    it('picks questions in the requested locale', () => {
+      const picked = pickRandomQuestions(5, 'en');
+      expect(picked).toHaveLength(5);
+      const english = new Set(getQuestionLibrary('en').map((q) => q.text));
+      for (const q of picked) expect(english.has(q.text)).toBe(true);
+    });
+
     it('handles negative decimal answers (e.g. dry ice temperature)', () => {
-      const lib = getQuestionLibrary();
-      const dryIce = lib.find((q) => q.text.includes('trockeneis'));
+      const lib = getQuestionLibrary('de');
+      const dryIce = lib.find((q) => q.text.includes('Trockeneis'));
       expect(dryIce).toBeDefined();
       expect(dryIce?.answer).toBeLessThan(0);
       expect(dryIce?.answer).toBeCloseTo(-78, 5);
     });
 
     it('handles very large answers (speed of light)', () => {
-      const lib = getQuestionLibrary();
-      const light = lib.find((q) => q.text.includes('Lichtgeschwindigkeit'));
+      const lib = getQuestionLibrary('de');
+      const light = lib.find((q) => q.text.includes('Licht im Vakuum'));
       expect(light).toBeDefined();
       expect(light!.answer).toBeGreaterThan(1e5);
     });

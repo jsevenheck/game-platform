@@ -59,7 +59,7 @@ async function launchGame(session: Session): Promise<void> {
 }
 
 async function drawStroke(page: Page): Promise<void> {
-  const canvas = page.getByRole('img', { name: 'Gemeinsame Kritzel-Leinwand' });
+  const canvas = page.getByRole('img', { name: 'Shared doodle canvas' });
   const bounds = await canvas.boundingBox();
   expect(bounds).not.toBeNull();
   const box = bounds!;
@@ -75,16 +75,14 @@ async function completeDrawing(session: Session): Promise<void> {
   for (let turn = 0; turn < 10; turn += 1) {
     let activePage: Page | undefined;
     for (const page of session.pages) {
-      if (await page.getByText('Du bist dran: Zeichne genau einen Strich.').isVisible()) {
+      if (await page.getByText('Your turn: draw exactly one stroke.').isVisible()) {
         activePage = page;
         break;
       }
     }
     expect(activePage, `active page for turn ${turn + 1}`).toBeDefined();
     await drawStroke(activePage!);
-    await expect(
-      activePage!.getByText('Du bist dran: Zeichne genau einen Strich.')
-    ).not.toBeVisible();
+    await expect(activePage!.getByText('Your turn: draw exactly one stroke.')).not.toBeVisible();
   }
   await Promise.all(
     session.pages.map((page) => expect(page.getByTestId('kritzelagent-voting')).toBeVisible())
@@ -98,7 +96,7 @@ test.describe('Kritzelagent game', () => {
     const session = await createSession(browser);
     try {
       await launchGame(session);
-      await session.pages[0]!.getByRole('button', { name: 'Spiel starten' }).click();
+      await session.pages[0]!.getByRole('button', { name: 'Start game' }).click();
       await Promise.all(
         session.pages.map((page) => expect(page.getByTestId('kritzelagent-drawing')).toBeVisible())
       );
@@ -107,7 +105,7 @@ test.describe('Kritzelagent game', () => {
       for (let index = 0; index < session.pages.length; index += 1) {
         if (
           await session.pages[index]!.getByText(
-            'Du bist der Kritzelagent. Finde heraus, was gezeichnet wird.'
+            'You are the Kritzelagent. Find out what is being drawn.'
           ).isVisible()
         ) {
           agentIndex = index;
@@ -117,7 +115,7 @@ test.describe('Kritzelagent game', () => {
       expect(agentIndex).toBeGreaterThanOrEqual(0);
       const artistPage = session.pages.findIndex((_, index) => index !== agentIndex);
       const artistBody = await session.pages[artistPage]!.locator('body').innerText();
-      const topic = artistBody.match(/Motiv: ([^\n]+)/)?.[1];
+      const topic = artistBody.match(/Motif: ([^\n]+)/)?.[1];
       expect(topic).toBeTruthy();
       await expect(session.pages[agentIndex]!.locator('body')).not.toContainText(topic!);
 
@@ -128,7 +126,7 @@ test.describe('Kritzelagent game', () => {
         session.pages.map(async (page, index) => {
           const targetName = index === agentIndex ? fallbackTarget : agentName;
           await page.getByRole('radio', { name: targetName }).check();
-          await page.getByRole('button', { name: 'Stimme abgeben' }).click();
+          await page.getByRole('button', { name: 'Cast vote' }).click();
         })
       );
 
@@ -136,19 +134,19 @@ test.describe('Kritzelagent game', () => {
         session.pages[agentIndex]!.getByTestId('kritzelagent-agent-guess')
       ).toBeVisible();
       await expect(
-        session.pages[(agentIndex + 1) % 5]!.getByText('Warte auf die Auflösung…')
+        session.pages[(agentIndex + 1) % 5]!.getByText('Waiting for the reveal…')
       ).toBeVisible();
-      await session.pages[agentIndex]!.getByLabel('Dein Motiv-Tipp').fill('Unbekanntes Motiv');
-      await session.pages[agentIndex]!.getByRole('button', { name: 'Motiv raten' }).click();
+      await session.pages[agentIndex]!.getByLabel('Your motif guess').fill('Unbekanntes Motiv');
+      await session.pages[agentIndex]!.getByRole('button', { name: 'Guess motif' }).click();
 
       await Promise.all(
         session.pages.map((page) => expect(page.getByTestId('kritzelagent-reveal')).toBeVisible())
       );
-      await expect(session.pages[0]!.getByText('Die Auflösung')).toBeVisible();
+      await expect(session.pages[0]!.getByText('The reveal')).toBeVisible();
 
       const playerNames = ['Jona', 'Spieler 2', 'Spieler 3', 'Spieler 4', 'Spieler 5'];
       for (let round = 2; round <= 5; round += 1) {
-        await session.pages[0]!.getByRole('button', { name: 'Nächste Runde' }).click();
+        await session.pages[0]!.getByRole('button', { name: 'Next round' }).click();
         await Promise.all(
           session.pages.map((page) =>
             expect(page.getByTestId('kritzelagent-drawing')).toBeVisible()
@@ -159,7 +157,7 @@ test.describe('Kritzelagent game', () => {
         for (let index = 0; index < session.pages.length; index += 1) {
           if (
             await session.pages[index]!.getByText(
-              'Du bist der Kritzelagent. Finde heraus, was gezeichnet wird.'
+              'You are the Kritzelagent. Find out what is being drawn.'
             ).isVisible()
           ) {
             nextAgentIndex = index;
@@ -175,22 +173,22 @@ test.describe('Kritzelagent game', () => {
           session.pages.map(async (page, index) => {
             const targetName = index === nextAgentIndex ? nextFallbackTarget : nextAgentName;
             await page.getByRole('radio', { name: targetName }).check();
-            await page.getByRole('button', { name: 'Stimme abgeben' }).click();
+            await page.getByRole('button', { name: 'Cast vote' }).click();
           })
         );
         await expect(
           session.pages[nextAgentIndex]!.getByTestId('kritzelagent-agent-guess')
         ).toBeVisible();
-        await session.pages[nextAgentIndex]!.getByLabel('Dein Motiv-Tipp').fill(
+        await session.pages[nextAgentIndex]!.getByLabel('Your motif guess').fill(
           'Unbekanntes Motiv'
         );
-        await session.pages[nextAgentIndex]!.getByRole('button', { name: 'Motiv raten' }).click();
+        await session.pages[nextAgentIndex]!.getByRole('button', { name: 'Guess motif' }).click();
         await Promise.all(
           session.pages.map((page) => expect(page.getByTestId('kritzelagent-reveal')).toBeVisible())
         );
       }
 
-      await session.pages[0]!.getByRole('button', { name: 'Ergebnis anzeigen' }).click();
+      await session.pages[0]!.getByRole('button', { name: 'Show result' }).click();
       await Promise.all(
         session.pages.map((page) =>
           expect(page.getByTestId('kritzelagent-game-over')).toBeVisible()

@@ -9,11 +9,20 @@ export interface PartyMember {
   resumeToken: string;
 }
 
+/** UI languages the platform ships; also the language of a match's content (questions, words). */
+export type MatchLocale = 'en' | 'de';
+
+export function normalizeMatchLocale(value: unknown): MatchLocale {
+  return value === 'de' ? 'de' : 'en';
+}
+
 export interface PartyMatch {
   gameId: string;
   matchKey: string;
   namespace: string;
   startedAt: number;
+  /** Content language, taken from the host's UI language when the match starts. */
+  locale?: MatchLocale;
 }
 
 export interface PartySession {

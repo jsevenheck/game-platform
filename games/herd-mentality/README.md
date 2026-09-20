@@ -34,11 +34,11 @@ Party-Ablauf gestartet. Es gibt keinen separaten Server oder Client.
 
 - Core: `core/src/`
 - Server: `server/src/`
-- Fragen: `server/data/prompts.csv`
+- Fragen: `server/data/prompts.<en|de>.csv`
 - Vue-Client: `ui-vue/src/`
 - API: `docs/api.md`
 - Architektur: `docs/architecture.md`
 
-Nach Änderungen an `prompts.csv` muss der Server bzw. der Produktions-Build neu
+Nach Änderungen an `prompts.<locale>.csv` muss der Server bzw. der Produktions-Build neu
 gestartet werden. Der Server nutzt bei fehlender oder ungültiger Datei eine
 geprüfte eingebaute Fallback-Liste.

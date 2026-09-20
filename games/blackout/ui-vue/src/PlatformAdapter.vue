@@ -7,6 +7,7 @@
  * event emitted by the game component.
  */
 import { ref, computed } from 'vue';
+import { useI18n } from 'vue-i18n';
 import GameApp from './App.vue';
 
 defineProps<{
@@ -21,6 +22,7 @@ defineProps<{
   actionError?: string;
 }>();
 
+const { t } = useI18n();
 const gamePhase = ref<string | null>(null);
 const gameEnded = computed(() => gamePhase.value === 'ended');
 
@@ -46,18 +48,20 @@ function onPhaseChange(phase: string) {
     <Transition name="fade">
       <div v-if="gameEnded" class="platform-overlay ui-overlay">
         <div class="ui-dialog">
-          <h2 class="mb-2 text-2xl font-extrabold">Match Over</h2>
+          <h2 class="mb-2 text-2xl font-extrabold">{{ t('replay.title') }}</h2>
           <template v-if="isHost">
-            <p class="mb-6 text-sm text-muted-foreground">What would you like to do?</p>
+            <p class="mb-6 text-sm text-muted-foreground">{{ t('replay.prompt') }}</p>
             <div class="flex flex-col gap-3">
-              <button class="btn-replay" @click="onReplayGame?.()">Play Again</button>
+              <button class="btn-replay" @click="onReplayGame?.()">
+                {{ t('replay.playAgain') }}
+              </button>
               <button class="btn-lobby ui-btn-secondary" @click="onReturnToLobby?.()">
-                Back to Party
+                {{ t('replay.returnToLobby') }}
               </button>
             </div>
             <p v-if="actionError" class="mt-3 text-center text-sm text-danger">{{ actionError }}</p>
           </template>
-          <p v-else class="mt-4 text-sm text-muted-foreground">Waiting for host to decide...</p>
+          <p v-else class="mt-4 text-sm text-muted-foreground">{{ t('replay.waiting') }}</p>
         </div>
       </div>
     </Transition>

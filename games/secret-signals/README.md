@@ -5,7 +5,7 @@ Secret Signals is a real-time multiplayer word-deduction party game. Players spl
 Current game rules:
 
 - 5x5 board with unique words
-- 800 curated German board words in `server/src/data/words.ts`
+- Locale-specific board words: 800 German words in `server/src/data/words.de.ts` and 537 English words in `server/src/data/words.en.ts`
 - 2 to 4 teams
 - 4 to 24 players
 - one assassin card and a neutral pool on every board

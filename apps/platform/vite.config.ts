@@ -62,18 +62,18 @@ export default defineConfig({
       { find: '@herd-mentality-ui', replacement: resolve(GAMES_ROOT, 'herd-mentality/ui-vue/src') },
     ],
     // Force a single copy of shared framework deps across platform + game code
-    dedupe: ['vue', 'pinia', 'vue-router'],
+    dedupe: ['vue', 'pinia', 'vue-router', 'vue-i18n'],
   },
   server: {
     port: 5173,
     proxy: {
       '/socket.io': {
-        target: 'http://localhost:3000',
+        target: `http://localhost:${process.env.API_PORT ?? 3000}`,
         ws: true,
         changeOrigin: true,
       },
       '/api': {
-        target: 'http://localhost:3000',
+        target: `http://localhost:${process.env.API_PORT ?? 3000}`,
         changeOrigin: true,
       },
     },

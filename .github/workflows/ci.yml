@@ -32,14 +32,24 @@ jobs:
       - name: Typecheck
         run: pnpm typecheck
 
+      - name: Typecheck game UIs
+        run: pnpm typecheck:games
+
       - name: Unit tests
         run: pnpm test
 
       - name: Production build
         run: pnpm build
 
-      - name: Verify Estimate question asset
-        run: test -s apps/platform/dist/server/games/estimate/server/data/questions.csv
+      - name: Verify per-locale content assets
+        run: |
+          base=apps/platform/dist/server/games
+          for l in en de; do
+            test -s "$base/estimate/server/data/questions.$l.csv"
+            test -s "$base/herd-mentality/server/data/prompts.$l.csv"
+            test -s "$base/kritzelagent/server/data/topics.$l.csv"
+            test -s "$base/imposter/server/data/words.$l.txt"
+          done
 
       - name: Install Playwright browsers
         run: pnpm exec playwright install --with-deps chromium

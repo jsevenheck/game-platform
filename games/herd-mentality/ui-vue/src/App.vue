@@ -1,6 +1,9 @@
 <script setup lang="ts">
 import { computed, nextTick, onBeforeUnmount, onMounted, ref, watch } from 'vue';
+import { useI18n } from 'vue-i18n';
+import { localizeError } from '@platform/i18n/serverError';
 import type { RoomView } from '@shared/types';
+import './i18n';
 import { useGameStore } from './stores/game';
 import { useSocket } from './composables/useSocket';
 import Lobby from './components/Lobby.vue';
@@ -30,6 +33,7 @@ const props = withDefaults(
   }
 );
 const emit = defineEmits<{ 'phase-change': [phase: string] }>();
+const { t } = useI18n();
 const store = useGameStore();
 const { socket, connected } = useSocket({
   apiBaseUrl: props.apiBaseUrl,
@@ -66,7 +70,7 @@ function joinRoom() {
   const saved = store.loadSession();
   if (joinTimeout) clearTimeout(joinTimeout);
   joinTimeout = setTimeout(() => {
-    if (attempt === joinAttempt) fail('Der Spielraum konnte nicht geladen werden.');
+    if (attempt === joinAttempt) fail(t('herd-mentality.joinTimeout'));
   }, 8000);
   socket.emit(
     'autoJoinRoom',
@@ -96,7 +100,7 @@ function joinRoom() {
   );
 }
 function action(
-  name: NonNullable<typeof pending>,
+  name: NonNullable<typeof pending.value>,
   run: (done: (response: { ok: true } | { ok: false; error: string }) => void) => void
 ) {
   if (pending.value) return;
@@ -167,7 +171,9 @@ onMounted(() => {
     roomSnapshot.value = false;
     joinState.value = 'connecting';
   });
-  socket.on('connect_error', (error) => fail(error.message || 'Verbindung fehlgeschlagen.'));
+  socket.on('connect_error', (error) =>
+    fail(error.message || t('herd-mentality.connectionFailed'))
+  );
   socket.connect();
 });
 onBeforeUnmount(() => {
@@ -189,8 +195,10 @@ onBeforeUnmount(() => {
     tabindex="-1"
   >
     <div v-if="store.errorMessage" class="ui-panel herd-error" role="alert" aria-live="assertive">
-      <span>{{ store.errorMessage }}</span
-      ><button class="ui-btn-secondary" type="button" @click="store.clearError">Schließen</button>
+      <span>{{ localizeError(store.errorMessage, 'herd-mentality') }}</span
+      ><button class="ui-btn-secondary" type="button" @click="store.clearError">
+        {{ t('herd-mentality.dismiss') }}
+      </button>
     </div>
     <section
       v-if="joinState !== 'ready'"
@@ -200,11 +208,13 @@ onBeforeUnmount(() => {
     >
       <p>
         {{
-          joinState === 'error' ? 'Die Verbindung ist fehlgeschlagen.' : 'Spielraum wird geladen…'
+          joinState === 'error'
+            ? t('herd-mentality.connectionFailed')
+            : t('herd-mentality.connecting')
         }}
       </p>
       <button v-if="joinState === 'error'" class="ui-btn-primary mt-3" type="button" @click="retry">
-        Erneut verbinden
+        {{ t('herd-mentality.reconnect') }}
       </button>
     </section>
     <Lobby

@@ -55,7 +55,7 @@ games/{game}/                <- internal source modules (not standalone)
 ### Prerequisites
 
 - **Node.js** >= 24.0
-- **pnpm** >= 11
+- **pnpm** >= 12
 
 ### Install and Run
 
@@ -128,7 +128,8 @@ pnpm lint                 # ESLint across all source (zero warnings)
 pnpm lint:fix             # auto-fix lint issues
 pnpm format               # Prettier across all source
 pnpm format:check         # check formatting without writing
-pnpm typecheck            # TypeScript check (vue-tsc + tsc)
+pnpm typecheck            # platform vue-tsc + server tsc
+pnpm typecheck:games      # vue-tsc for every game UI
 ```
 
 ## Architecture
@@ -161,6 +162,8 @@ See [docs/adding-a-new-game.md](docs/adding-a-new-game.md) for the full integrat
 - [docs/deployment.md](docs/deployment.md) - CI → GHCR → VPS image pipeline, runtime env vars, and required GitHub secrets
 - [docs/adding-a-new-game.md](docs/adding-a-new-game.md) - how to add a new game to the platform
 - [docs/observability-metrics.md](docs/observability-metrics.md) - metrics contract, scrape config, and alert/dashboard seeds
+- [docs/rules-audit.md](docs/rules-audit.md) - current rule compatibility and deliberate variants
+- [docs/known-issues.md](docs/known-issues.md) - current limitations and workarounds
 - [games/blackout/docs/](games/blackout/docs/) - Blackout API and architecture
 - [games/imposter/docs/](games/imposter/docs/) - Imposter API and architecture
 - [games/secret-signals/docs/](games/secret-signals/docs/) - Secret Signals API and architecture

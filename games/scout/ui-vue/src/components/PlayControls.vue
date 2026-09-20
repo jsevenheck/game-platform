@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { computed, ref, watch } from 'vue';
+import { useI18n } from 'vue-i18n';
 import { analyzePlay, comparePlayAnalyses } from '@shared/analyzePlay';
 import type { ScoutCard } from '@shared/deck';
 import type { PlayedSetView } from '@shared/types';
@@ -15,6 +16,7 @@ const emit = defineEmits<{
   scout: [];
 }>();
 
+const { t } = useI18n();
 const store = useGameStore();
 const selectedIndexes = ref<number[]>([]);
 
@@ -88,12 +90,18 @@ watch(
   <section class="ui-panel">
     <div class="mb-4 flex flex-wrap items-center justify-between gap-3">
       <div>
-        <h2 class="text-lg font-bold">Your row</h2>
-        <p class="text-sm text-muted">Select adjacent cards to show.</p>
+        <h2 class="text-lg font-bold">{{ t('scout.controls.yourRow') }}</h2>
+        <p class="text-sm text-muted">{{ t('scout.controls.selectAdjacent') }}</p>
       </div>
       <div v-if="selectedSummary" class="text-sm text-muted">
-        {{ selectedSummary.kind }} · {{ selectedSummary.count }} card(s) · Low
-        {{ selectedSummary.lowCard }} · High {{ selectedSummary.highCard }}
+        {{
+          t('scout.controls.summary', {
+            kind: t(`scout.kinds.${selectedSummary.kind}`),
+            count: t('scout.cards', { count: selectedSummary.count }, selectedSummary.count),
+            low: selectedSummary.lowCard,
+            high: selectedSummary.highCard,
+          })
+        }}
       </div>
     </div>
 
@@ -123,7 +131,7 @@ watch(
         :disabled="!canPlay"
         @click="playSelected"
       >
-        Show selected
+        {{ t('scout.controls.show') }}
       </button>
       <button
         class="ui-btn-secondary"
@@ -131,25 +139,25 @@ watch(
         :disabled="!store.isMyTurn || !currentPlay"
         @click="emit('scout')"
       >
-        Scout
+        {{ t('scout.controls.scout') }}
       </button>
       <p
         v-if="store.isMyTurn && selectedCards.length && !isContiguous"
         class="self-center text-sm text-danger"
       >
-        Selection must be contiguous.
+        {{ t('scout.controls.notContiguous') }}
       </p>
       <p
         v-else-if="store.isMyTurn && selectedCards.length && !selectedSummary"
         class="self-center text-sm text-danger"
       >
-        Selection must be matching numbers or an ordered consecutive run.
+        {{ t('scout.controls.invalidSet') }}
       </p>
       <p
         v-else-if="store.isMyTurn && selectedCards.length && !beatsPlay"
         class="self-center text-sm text-danger"
       >
-        Selection does not beat the prior set.
+        {{ t('scout.controls.doesNotBeat') }}
       </p>
     </div>
   </section>

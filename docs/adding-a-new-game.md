@@ -68,7 +68,6 @@ games/quiz-rush/
     "jsx": "preserve",
     "resolveJsonModule": true,
     "isolatedModules": true,
-    "baseUrl": ".",
     "paths": {
       "@shared/*": ["../core/src/*"],
       "@/*": ["./src/*"]
@@ -380,6 +379,20 @@ onBeforeUnmount(() => {
 > If you extract socket creation into a `useSocket()` composable, keep ownership explicit: the composable owns the socket and disconnects it in `onUnmounted()`. The owning `App.vue` remains responsible for unregistering its event listeners; do not duplicate socket ownership across both layers.
 >
 > **Required:** The `useSocket` composable must accept and forward `joinToken` in the socket `auth` object. Without it, `authorizePartyJoin` will reject the join. Every game's `useSocket` must also call `socket.disconnect()` in `onUnmounted()` to prevent socket leaks.
+
+### `ui-vue/src/i18n/` (required)
+
+Every game UI must be bilingual. Add `en.ts` (source of truth), `de.ts` (typed `: <Game>Messages` so missing keys fail typecheck) and `index.ts`:
+
+```ts
+import { registerGameMessages } from '@platform/i18n/gameMessages';
+import { de } from './de';
+import { en } from './en';
+
+registerGameMessages('my-game', { en, de });
+```
+
+Import `./i18n` from `App.vue`, use `const { t } = useI18n()` and keys under your game id. Add `"@platform/*": ["../../../apps/platform/src/*"]` to `ui-vue/tsconfig.json`. Show server errors through `localizeError(message, 'my-game')` and add matching `my-game.errors.<slug>` keys. Word/question content must be per-locale: read `authorization.locale` from `authorizePartyJoin`, store it on the room, and load `<name>.<locale>.<ext>` files (copy both in the game's `scripts/copy-assets.mjs` for production builds). Run `pnpm typecheck:games` and the i18n parity test.
 
 ### `ui-vue/src/PlatformAdapter.vue`
 

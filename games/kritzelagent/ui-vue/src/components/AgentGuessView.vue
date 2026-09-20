@@ -1,7 +1,9 @@
 <script setup lang="ts">
 import { ref } from 'vue';
+import { useI18n } from 'vue-i18n';
 
 const props = defineProps<{ topicCategory: string; pending: boolean }>();
+const { t } = useI18n();
 const emit = defineEmits<{ guess: [value: string] }>();
 const value = ref('');
 const error = ref('');
@@ -10,7 +12,7 @@ function submit() {
   if (props.pending) return;
   const guess = value.value.trim();
   if (!guess) {
-    error.value = 'Bitte nenne ein Motiv.';
+    error.value = t('kritzelagent.agentGuess.errorEmpty');
     return;
   }
   error.value = '';
@@ -24,16 +26,17 @@ function submit() {
     data-testid="kritzelagent-agent-guess"
     aria-labelledby="agent-guess-title"
   >
-    <p class="text-sm text-muted-foreground">Die Abstimmung ist entschieden.</p>
+    <p class="text-sm text-muted-foreground">{{ t('kritzelagent.agentGuess.done') }}</p>
     <h2 id="agent-guess-title" data-phase-focus tabindex="-1">
-      Letzte Chance für den Kritzelagenten
+      {{ t('kritzelagent.agentGuess.title') }}
     </h2>
     <p class="mt-2">
-      Du kennst die Kategorie <strong>{{ topicCategory }}</strong
-      >. Wie lautet das Motiv?
+      {{ t('kritzelagent.agentGuess.intro', { category: topicCategory }) }}
     </p>
     <form class="mt-4" @submit.prevent="submit">
-      <label class="ui-section-label" for="kritzelagent-guess">Dein Motiv-Tipp</label>
+      <label class="ui-section-label" for="kritzelagent-guess">
+        {{ t('kritzelagent.agentGuess.label') }}
+      </label>
       <input
         id="kritzelagent-guess"
         v-model="value"
@@ -46,7 +49,7 @@ function submit() {
         {{ error }}
       </p>
       <button class="ui-btn-primary mt-3" type="submit" :disabled="pending">
-        {{ pending ? 'Wird geprüft…' : 'Motiv raten' }}
+        {{ pending ? t('kritzelagent.agentGuess.checking') : t('kritzelagent.agentGuess.submit') }}
       </button>
     </form>
   </section>

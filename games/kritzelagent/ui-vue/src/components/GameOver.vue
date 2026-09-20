@@ -1,21 +1,29 @@
 <script setup lang="ts">
+import { useI18n } from 'vue-i18n';
 import type { ScoreEntry } from '@shared/types';
 
 defineProps<{ scores: ScoreEntry[] }>();
+const { t } = useI18n();
 </script>
 
 <template>
   <section class="ui-panel" data-testid="kritzelagent-game-over" aria-labelledby="game-over-title">
-    <p class="text-sm text-muted-foreground">Alle Runden gespielt</p>
-    <h2 id="game-over-title" data-phase-focus tabindex="-1">Kritzelagent beendet</h2>
-    <ol class="kritzelagent-leaderboard" aria-label="Endstand">
+    <p class="text-sm text-muted-foreground">{{ t('kritzelagent.gameOver.subtitle') }}</p>
+    <h2 id="game-over-title" data-phase-focus tabindex="-1">
+      {{ t('kritzelagent.gameOver.title') }}
+    </h2>
+    <ol class="kritzelagent-leaderboard" :aria-label="t('kritzelagent.gameOver.ranking')">
       <li
         v-for="(score, index) in scores.slice().sort((a, b) => b.points - a.points)"
         :key="score.playerId"
       >
         <span
           ><strong>{{ index + 1 }}.</strong> {{ score.name }}</span
-        ><strong>{{ score.points }} Punkte</strong>
+        ><strong>{{
+          t(score.points === 1 ? 'kritzelagent.gameOver.point' : 'kritzelagent.gameOver.points', {
+            count: score.points,
+          })
+        }}</strong>
       </li>
     </ol>
   </section>

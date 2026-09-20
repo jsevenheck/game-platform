@@ -54,7 +54,7 @@ Response:
 Notes:
 
 - Names must be 20 characters or fewer.
-- When `isHost: true`, the server transfers the host role to this player.
+- `isHost` is an optional UI hint only; the server derives host status from the platform party.
 - On first join for a given `playerId`, `resumeToken` is not required.
 - When reclaiming an existing slot, `resumeToken` must be present and valid.
 
@@ -267,7 +267,7 @@ Broadcast after every state change. The payload is sanitized per player:
 - Directors can see hidden card types during play
 - Agents only see types for revealed cards
 - everyone sees full card types after the game ends
-- board words are drawn from the shared German `WORD_LIST` in `server/src/data/words.ts`
+- board words are drawn from the match-locale list selected by `getWordList` in `server/src/data/words.ts` (`words.de.ts` or `words.en.ts`).
 
 Important `RoomView` fields:
 

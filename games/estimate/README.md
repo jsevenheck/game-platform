@@ -19,7 +19,7 @@ game uses `autoJoinRoom` plus resume tokens for join and reconnect behaviour.
 - **Min / max players:** 2 – 12
 - **Default rounds:** 5
 - **Scoring:** +1 per round for the closest guesser; ties share the +1
-- **Question source:** `games/estimate/server/data/questions.csv` (copied into the production server build)
+- **Question source:** `games/estimate/server/data/questions.<locale>.csv` (copied into the production server build)
 - **Socket namespace:** `/g/estimate`
 
 ## Development
@@ -37,7 +37,7 @@ pnpm lint       # ESLint
 
 ## Adding your own questions
 
-Edit `games/estimate/server/data/questions.csv`:
+Edit `games/estimate/server/data/questions.<locale>.csv`:
 
 ```csv
 question,answer

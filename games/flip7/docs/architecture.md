@@ -26,7 +26,7 @@
 
 ## Round lifecycle
 
-1. `startRound` builds a fresh 94-card deck (shuffle via Fisher–Yates), resets all `RoundPlayer` states to `active`, and sets the turn order starting from the dealer position (rotates each round; host acts first in round 1).
+1. `startRound` uses a freshly shuffled 94-card deck for the first round, then carries the remaining draw pile and discard bookkeeping into later rounds. It resets all `RoundPlayer` states to `active` and sets the turn order starting from the dealer position (rotates each round; host acts first in round 1).
 2. Turn loop: active player emits `hit` or `stay`.
    - **hit** → `playerHit` draws the top card:
      - `number` → `applyNumberCard` (duplicate = bust / second-chance save; 7th unique = Flip 7)
@@ -62,7 +62,7 @@ score = (sum of numberCards × (hasX2 ? 2 : 1)) + sum(modifierAdds) + (isFlip7Tr
 ## Deck management
 
 - `buildDeck()` produces 94 cards (79 numbers, 5 flat modifiers, 1 ×2, 9 action cards).
-- `draw(round)` pops from the back of `deck[]`. If empty, calls `reshuffleFromDiscard` which moves all `discard` cards back into `deck` and shuffles them. Cards currently in front of players are **never** reshuffled.
+- `draw(round)` pops from the back of `deck[]`. If empty, `reshuffleFromDiscard` shuffles only eligible discarded cards back into `deck`; cards currently in front of players, including busted players' cards, remain outside the draw pile. Deferred action cards are settled into discard on bust or Flip 7.
 
 ## Broadcasting / privacy
 

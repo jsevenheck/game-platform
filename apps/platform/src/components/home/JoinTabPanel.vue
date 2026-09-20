@@ -1,4 +1,9 @@
 <script setup lang="ts">
+import { useI18n } from 'vue-i18n';
+import { localizeError } from '../../i18n/serverError';
+
+const { t } = useI18n();
+
 defineProps<{
   playerName: string;
   inviteCode: string;
@@ -24,12 +29,12 @@ function onCodeInput(event: Event): void {
 <template>
   <form class="home-form-panel flex flex-col gap-4" @submit.prevent="emit('submit')">
     <div class="flex flex-col gap-1.5">
-      <label for="name" class="home-label">Your Name</label>
+      <label for="name" class="home-label">{{ t('home.host.name') }}</label>
       <input
         id="name"
         class="ui-input"
         type="text"
-        placeholder="Enter your name"
+        :placeholder="t('home.host.namePlaceholder')"
         maxlength="20"
         autocomplete="off"
         :value="playerName"
@@ -39,7 +44,7 @@ function onCodeInput(event: Event): void {
     </div>
 
     <div class="flex flex-col gap-1.5">
-      <label for="code" class="home-label">Invite Code</label>
+      <label for="code" class="home-label">{{ t('home.join.inviteCode') }}</label>
       <input
         id="code"
         class="ui-input home-code-input uppercase"
@@ -54,7 +59,9 @@ function onCodeInput(event: Event): void {
     </div>
 
     <Transition name="fade">
-      <p v-if="error" class="home-error" role="alert" aria-live="polite">{{ error }}</p>
+      <p v-if="error" class="home-error" role="alert" aria-live="polite">
+        {{ localizeError(error) }}
+      </p>
     </Transition>
 
     <button
@@ -62,7 +69,7 @@ function onCodeInput(event: Event): void {
       class="ui-btn-primary home-submit"
       :disabled="submitting || !playerName.trim() || !inviteCode.trim()"
     >
-      {{ submitting ? 'Joining…' : 'Join Party' }}
+      {{ submitting ? t('home.join.joining') : t('home.join.join') }}
     </button>
   </form>
 </template>

@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { computed } from 'vue';
+import { useI18n } from 'vue-i18n';
 import { useGameStore } from '../stores/game';
 import PlayerBoard from './PlayerBoard.vue';
 import HitStayControls from './HitStayControls.vue';
@@ -13,6 +14,7 @@ const emit = defineEmits<{
   'choose-target': [targetPlayerId: string];
 }>();
 
+const { t } = useI18n();
 const store = useGameStore();
 
 const round = computed(() => store.currentRound);
@@ -58,29 +60,29 @@ const currentTurnPlayerName = computed(() => {
 </script>
 
 <template>
-  <div class="flex min-h-dvh flex-col gap-4 p-4">
+  <div class="mx-auto flex min-h-dvh w-full max-w-5xl flex-col gap-4 p-4 sm:pt-14">
     <!-- Header bar -->
     <div class="flex items-center justify-between">
       <h1 class="text-xl font-bold text-flip7">Flip 7</h1>
       <div class="flex items-center gap-3 text-sm text-muted-foreground">
-        <span>🃏 Deck: {{ round?.deckSize ?? 0 }}</span>
-        <span>🗑️ Discard: {{ round?.discardSize ?? 0 }}</span>
-        <span>🎯 Target: {{ store.room?.targetScore }}</span>
+        <span>🃏 {{ t('flip7.table.deck', { count: round?.deckSize ?? 0 }) }}</span>
+        <span>🗑️ {{ t('flip7.table.discard', { count: round?.discardSize ?? 0 }) }}</span>
+        <span>🎯 {{ t('flip7.table.target', { score: store.room?.targetScore }) }}</span>
       </div>
     </div>
 
     <!-- Turn indicator -->
     <div
       v-if="round && !round.roundEndReason"
-      class="rounded-[--radius-md] px-3 py-2 text-center text-sm"
+      class="rounded-md px-3 py-2 text-center text-sm"
       :class="
         store.isMyTurn
           ? 'bg-flip7-muted text-flip7 font-semibold'
           : 'bg-elevated text-muted-foreground'
       "
     >
-      <template v-if="store.isMyTurn">Your turn!</template>
-      <template v-else>{{ currentTurnPlayerName }}'s turn</template>
+      <template v-if="store.isMyTurn">{{ t('flip7.table.yourTurn') }}</template>
+      <template v-else>{{ t('flip7.table.turnOf', { name: currentTurnPlayerName }) }}</template>
     </div>
 
     <!-- Player boards grid -->
@@ -105,7 +107,7 @@ const currentTurnPlayerName = computed(() => {
 
     <!-- Running scores -->
     <div class="ui-panel">
-      <p class="ui-section-label mb-2">Scores</p>
+      <p class="ui-section-label mb-2">{{ t('flip7.table.scores') }}</p>
       <div class="flex flex-wrap gap-4">
         <div
           v-for="player in store.room?.players"
@@ -119,24 +121,26 @@ const currentTurnPlayerName = computed(() => {
     </div>
 
     <!-- Hit / Stay controls (your turn, normal) -->
-    <div v-if="showHitStay" class="mt-auto">
+    <div v-if="showHitStay" class="mt-auto pt-4">
       <HitStayControls :can-stay="canStay" @hit="emit('hit')" @stay="emit('stay')" />
     </div>
 
     <!-- Flip Three forced-draw notice -->
     <div
       v-else-if="showFlipThreePrompt"
-      class="mt-auto rounded-[--radius-md] bg-warning-muted p-4 text-center"
+      class="mt-auto rounded-md bg-warning-muted p-4 text-center"
     >
       <p class="font-semibold text-warning">
-        Flip Three! Draw {{ store.myRoundPlayer?.flipThreeRemaining }} more card(s).
+        {{
+          t(
+            'flip7.table.flipThreePrompt',
+            { count: store.myRoundPlayer?.flipThreeRemaining ?? 0 },
+            store.myRoundPlayer?.flipThreeRemaining ?? 0
+          )
+        }}
       </p>
-      <button
-        class="ui-btn-primary mt-3 bg-warning! hover:bg-warning! text-canvas!"
-        type="button"
-        @click="emit('hit')"
-      >
-        Draw card
+      <button class="ui-btn-primary btn-warning mt-3" type="button" @click="emit('hit')">
+        {{ t('flip7.table.drawCard') }}
       </button>
     </div>
 
@@ -161,3 +165,14 @@ const currentTurnPlayerName = computed(() => {
     <ActionAnnouncement v-if="store.actionAnnouncement" :announcement="store.actionAnnouncement" />
   </div>
 </template>
+
+<style scoped>
+.btn-warning {
+  background: var(--color-warning);
+  color: var(--color-canvas);
+}
+
+.btn-warning:hover:not(:disabled) {
+  background: var(--color-warning);
+}
+</style>

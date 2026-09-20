@@ -30,6 +30,8 @@ export interface CreateRoomOptions {
   matchKey: string;
   totalRounds?: number;
   hostPlayerId?: string;
+  /** Content language for the topic deck (defaults to English). */
+  locale?: 'en' | 'de';
 }
 
 export function createRoom(hostName: string, options: CreateRoomOptions): ServerRoom {
@@ -47,6 +49,7 @@ export function createRoom(hostName: string, options: CreateRoomOptions): Server
     totalRounds: options.totalRounds ?? DEFAULT_TOTAL_ROUNDS,
     topic: null,
     topicDeck: [],
+    locale: options.locale ?? 'en',
     agentId: null,
     players: [host],
     strokes: [],

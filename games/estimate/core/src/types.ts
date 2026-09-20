@@ -67,6 +67,8 @@ export interface ServerRoom {
   totalRounds: number;
   question: Question | null;
   questionDeck: Question[];
+  /** Content language of the match (question texts). */
+  locale: 'en' | 'de';
   players: ServerPlayer[];
   guesses: Map<string, number>;
   scores: Map<string, number>;

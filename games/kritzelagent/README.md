@@ -19,7 +19,7 @@ runtime.
 
 ## Round flow
 
-1. The server selects a topic from `server/data/topics.csv` and assigns one
+1. The server selects a topic from `server/data/topics.<en|de>.csv` and assigns one
    player as the Kritzelagent.
 2. Artists receive category plus topic through a private assignment. The agent
    receives the category only.
@@ -47,7 +47,7 @@ pnpm lint
 pnpm build
 ```
 
-The production build copies `server/data/topics.csv` into the compiled server
+The production build copies `server/data/topics.<en|de>.csv` into the compiled server
 asset directory. Restart the server after changing the CSV.
 
 ## Topic data

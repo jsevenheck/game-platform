@@ -1,5 +1,7 @@
 <script setup lang="ts">
 import { computed } from 'vue';
+import { useI18n } from 'vue-i18n';
+import { localizeError } from '../../i18n/serverError';
 import { usePublicLobbies } from '../../composables/usePublicLobbies';
 import { usePartyStore } from '../../stores/party';
 import PublicLobbiesList from './PublicLobbiesList.vue';
@@ -14,6 +16,7 @@ const emit = defineEmits<{
   'join-room': [{ inviteCode: string }];
 }>();
 
+const { t } = useI18n();
 const { store, refresh } = usePublicLobbies();
 const partyStore = usePartyStore();
 
@@ -32,7 +35,7 @@ function handleJoinRoom(payload: { inviteCode: string }): void {
 <template>
   <section class="public-lobbies" aria-labelledby="public-lobbies-heading">
     <div class="public-lobbies__header">
-      <h2 id="public-lobbies-heading" class="ui-section-label">Live Rooms</h2>
+      <h2 id="public-lobbies-heading" class="ui-section-label">{{ t('home.liveRooms') }}</h2>
       <button
         type="button"
         class="ui-btn-ghost public-lobbies__refresh"
@@ -40,7 +43,7 @@ function handleJoinRoom(payload: { inviteCode: string }): void {
         data-testid="public-lobbies-refresh"
         @click="refresh"
       >
-        Refresh
+        {{ t('common.refresh') }}
       </button>
     </div>
 
@@ -50,7 +53,7 @@ function handleJoinRoom(payload: { inviteCode: string }): void {
       class="public-lobbies-skeleton"
       data-testid="public-lobbies-skeleton"
       aria-busy="true"
-      aria-label="Loading live rooms"
+      :aria-label="t('home.lobbies.loading')"
     >
       <li v-for="i in 2" :key="i" class="public-lobbies-skeleton__item" />
     </ul>
@@ -61,12 +64,12 @@ function handleJoinRoom(payload: { inviteCode: string }): void {
       class="public-lobbies__msg public-lobbies__msg--error"
       role="alert"
     >
-      {{ store.error ?? 'Could not load live rooms.' }}
+      {{ localizeError(store.error ?? 'Could not load live rooms.') }}
     </p>
 
     <!-- Empty -->
     <p v-else-if="store.isEmpty" class="public-lobbies__msg" data-testid="public-lobbies-empty">
-      No public rooms right now. Create a party and list it publicly to let others find it.
+      {{ t('home.lobbies.empty') }}
     </p>
 
     <!-- Ready -->
@@ -83,7 +86,7 @@ function handleJoinRoom(payload: { inviteCode: string }): void {
       class="public-lobbies__banner"
       role="status"
     >
-      {{ store.error }}
+      {{ localizeError(store.error) }}
     </p>
   </section>
 </template>

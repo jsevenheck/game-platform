@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { computed } from 'vue';
+import { useI18n } from 'vue-i18n';
 import type { PlatformGameModule } from '../../games';
 
 /**
@@ -23,6 +24,8 @@ const emit = defineEmits<{
   select: [gameId: string];
 }>();
 
+const { t, te } = useI18n();
+
 interface CardView {
   id: string;
   name: string;
@@ -44,9 +47,13 @@ const cards = computed<CardView[]>(() =>
       icon: meta?.icon ?? '🎮',
       gradFrom: meta?.gradFrom ?? '#1a1a2e',
       gradTo: meta?.gradTo ?? '#0a0a14',
-      playerRange: `${minPlayers}\u2013${maxPlayers} players`,
-      category: meta?.category,
-      description: meta?.description,
+      playerRange: t('common.playersRange', { min: minPlayers, max: maxPlayers }),
+      category: te(`games.${game.definition.id}.category`)
+        ? t(`games.${game.definition.id}.category`)
+        : meta?.category,
+      description: te(`games.${game.definition.id}.description`)
+        ? t(`games.${game.definition.id}.description`)
+        : meta?.description,
     };
   })
 );

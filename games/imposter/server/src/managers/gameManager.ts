@@ -26,7 +26,7 @@ export function initGameState(room: Room): void {
   room.currentDescriberId = null;
   room.votes = {};
   room.roundNumber = 0;
-  room.wordLibrary = getGlobalWordLibrary();
+  room.wordLibrary = getGlobalWordLibrary(room.locale);
   room.discussionEndsAt = null;
   room.revealedInfiltrators = [];
   room.infiltratorGuess = null;

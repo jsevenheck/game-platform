@@ -44,7 +44,8 @@ export function clearRoomCleanup(code: string): void {
 export function createRoom(
   hostName: string,
   socketId: string,
-  hostPlayerId?: string
+  hostPlayerId?: string,
+  locale: 'en' | 'de' = 'en'
 ): { room: Room; hostId: string; resumeToken: string } {
   const code = generateRoomCode();
   const host = createPlayer(hostName, true, hostPlayerId);
@@ -68,6 +69,7 @@ export function createRoom(
     votes: {},
     roundNumber: 0,
     wordLibrary: [],
+    locale,
     discussionEndsAt: null,
     revealedInfiltrators: [],
     infiltratorGuess: null,

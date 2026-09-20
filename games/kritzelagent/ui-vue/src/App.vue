@@ -1,6 +1,9 @@
 <script setup lang="ts">
 import { computed, nextTick, onBeforeUnmount, onMounted, ref, watch } from 'vue';
+import { useI18n } from 'vue-i18n';
+import { localizeError } from '@platform/i18n/serverError';
 import type { StrokePoint } from '@shared/types';
+import './i18n';
 import { useGameStore } from './stores/game';
 import { useSocket } from './composables/useSocket';
 import Lobby from './components/Lobby.vue';
@@ -31,6 +34,7 @@ const props = withDefaults(
   }
 );
 const emit = defineEmits<{ 'phase-change': [phase: string] }>();
+const { t } = useI18n();
 const store = useGameStore();
 const { socket, connected } = useSocket(props);
 const joinState = ref<'connecting' | 'joining' | 'ready' | 'error'>('connecting');
@@ -55,10 +59,7 @@ function joinRoom() {
   joinState.value = 'joining';
   hasJoinAck.value = false;
   const saved = store.loadSession();
-  joinTimer = setTimeout(
-    () => failJoin('Die Spieldaten konnten nicht geladen werden. Bitte erneut versuchen.'),
-    8000
-  );
+  joinTimer = setTimeout(() => failJoin(t('kritzelagent.joinTimeout')), 8000);
   socket.emit(
     'autoJoinRoom',
     {
@@ -102,7 +103,7 @@ function runAction(action: (done: (response: { ok: boolean; error?: string }) =>
   action((response) => {
     pending.value = false;
     if (response.ok) store.clearError();
-    else store.setError(response.error ?? 'Die Aktion ist fehlgeschlagen.');
+    else store.setError(response.error ?? t('kritzelagent.actionFailed'));
   });
 }
 
@@ -169,7 +170,7 @@ onMounted(() => {
     pending.value = false;
   });
   socket.on('connect_error', (error) =>
-    failJoin(error.message || 'Verbindung zum Spielserver fehlgeschlagen.')
+    failJoin(error.message || t('kritzelagent.connectionFailed'))
   );
   socket.connect();
 });
@@ -200,8 +201,10 @@ onBeforeUnmount(() => {
       role="alert"
       aria-live="assertive"
     >
-      <span>{{ store.errorMessage }}</span>
-      <button class="ui-btn-secondary" type="button" @click="store.clearError()">Schließen</button>
+      <span>{{ localizeError(store.errorMessage, 'kritzelagent') }}</span>
+      <button class="ui-btn-secondary" type="button" @click="store.clearError()">
+        {{ t('kritzelagent.dismiss') }}
+      </button>
     </div>
     <section
       v-if="joinState !== 'ready'"
@@ -209,16 +212,16 @@ onBeforeUnmount(() => {
       :role="joinState === 'error' ? 'alert' : 'status'"
       aria-live="polite"
     >
-      <p v-if="joinState === 'connecting'">Verbindung zum Spielserver wird hergestellt…</p>
-      <p v-else-if="joinState === 'joining'">Spielraum wird geladen…</p>
-      <p v-else>Der Spielraum konnte nicht geladen werden.</p>
+      <p v-if="joinState === 'connecting'">{{ t('kritzelagent.connecting') }}</p>
+      <p v-else-if="joinState === 'joining'">{{ t('kritzelagent.joining') }}</p>
+      <p v-else>{{ t('kritzelagent.joinFailed') }}</p>
       <button
         v-if="joinState === 'error'"
         class="ui-btn-primary"
         type="button"
         @click="retryConnection"
       >
-        Erneut verbinden
+        {{ t('kritzelagent.reconnect') }}
       </button>
     </section>
     <Lobby
@@ -251,8 +254,8 @@ onBeforeUnmount(() => {
       @guess="submitAgentGuess"
     />
     <section v-else-if="view === 'waiting'" class="ui-panel" aria-live="polite">
-      <h2 data-phase-focus tabindex="-1">Warte auf die Auflösung…</h2>
-      <p class="mt-2 text-muted-foreground">Der Kritzelagent gibt seinen letzten Tipp ab.</p>
+      <h2 data-phase-focus tabindex="-1">{{ t('kritzelagent.waiting.title') }}</h2>
+      <p class="mt-2 text-muted-foreground">{{ t('kritzelagent.waiting.hint') }}</p>
     </section>
     <RevealView
       v-else-if="view === 'reveal' && store.room"

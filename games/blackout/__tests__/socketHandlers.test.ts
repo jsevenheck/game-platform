@@ -109,7 +109,10 @@ function makeSocket(id: string, auth?: Record<string, string>) {
 }
 
 describe('socketHandlers embedded autoJoinRoom', () => {
-  function setupParty(matchKey = 'session-1'): {
+  function setupParty(
+    matchKey = 'session-1',
+    locale?: 'en' | 'de'
+  ): {
     party: PartySession;
     tokens: Record<string, string>;
   } {
@@ -120,6 +123,7 @@ describe('socketHandlers embedded autoJoinRoom', () => {
       matchKey,
       namespace: '/g/blackout',
       startedAt: Date.now(),
+      locale,
     };
     return { party, tokens: { host: hostResumeToken } };
   }
@@ -157,7 +161,7 @@ describe('socketHandlers embedded autoJoinRoom', () => {
       cb
     );
 
-    expect(createRoom).toHaveBeenCalledWith('Host', 'socket-host', 'hub-1');
+    expect(createRoom).toHaveBeenCalledWith('Host', 'socket-host', 'hub-1', 'en');
     expect(setSessionToRoom).toHaveBeenCalledWith('session-1', 'ABCD');
     expect(clearRoomCleanup).toHaveBeenCalledWith('ABCD');
     expect(cb).toHaveBeenCalledWith({
@@ -166,6 +170,31 @@ describe('socketHandlers embedded autoJoinRoom', () => {
       playerId: 'hub-1',
       resumeToken: room.players['hub-1'].resumeToken,
     });
+  });
+
+  test('a German match creates the room with German task content', () => {
+    const room = makeRoom('ABCD', 'hub-1', 'socket-host');
+    setupParty('session-1', 'de');
+    vi.mocked(getSessionRoom).mockReturnValue(undefined);
+    vi.mocked(createRoom).mockImplementation(
+      (_name: string, _socketId: string, hostPlayerId?: string) => ({
+        room,
+        hostId: hostPlayerId,
+        resumeToken: room.players['hub-1'].resumeToken,
+      })
+    );
+
+    const namespace = makeNamespace();
+    registerBlackout({ of: () => namespace.nsp } as never, '/g/blackout');
+    const socket = makeSocket('socket-host', { playerId: 'hub-1' });
+    namespace.connect(socket);
+
+    socket.handlers.autoJoinRoom(
+      { sessionId: 'session-1', playerId: 'hub-1', name: 'Host', joinToken: 'mock-id' },
+      vi.fn()
+    );
+
+    expect(createRoom).toHaveBeenCalledWith('Host', 'socket-host', 'hub-1', 'de');
   });
 
   test('second autoJoinRoom with same session and hub player reconnects to the same slot', () => {

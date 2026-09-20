@@ -22,7 +22,8 @@ export const definition: GameDefinition = {
 const gameLogger = createComponentLogger('game-server', { gameId: definition.id });
 
 export function register(io: Server, namespace = `/g/${definition.id}`): void {
-  getTopicLibrary();
+  getTopicLibrary('en');
+  getTopicLibrary('de');
   registerKritzelagent(io, namespace, gameLogger);
 }
 

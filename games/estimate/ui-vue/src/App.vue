@@ -1,5 +1,8 @@
 <script setup lang="ts">
 import { computed, nextTick, onBeforeUnmount, onMounted, ref, watch } from 'vue';
+import { useI18n } from 'vue-i18n';
+import { localizeError } from '@platform/i18n/serverError';
+import './i18n';
 import { useGameStore } from './stores/game';
 import { useSocket } from './composables/useSocket';
 import type { RoomView } from '@shared/types';
@@ -34,6 +37,7 @@ const emit = defineEmits<{
   'phase-change': [phase: string];
 }>();
 
+const { t } = useI18n();
 const store = useGameStore();
 const { socket, connected } = useSocket({
   apiBaseUrl: props.apiBaseUrl,
@@ -77,7 +81,7 @@ function joinRoom() {
   joinTimer = setTimeout(() => {
     if (generation !== joinGeneration) return;
     joinGeneration += 1;
-    failJoin('Die Spieldaten konnten nicht geladen werden. Bitte erneut versuchen.');
+    failJoin(t('estimate.joinTimeout'));
   }, 8_000);
   const saved = store.loadSession();
   socket.emit(
@@ -134,7 +138,7 @@ function handleDisconnect() {
 
 function handleConnectError(error: Error) {
   joinGeneration += 1;
-  failJoin(error.message || 'Verbindung zum Spielserver fehlgeschlagen.');
+  failJoin(error.message || t('estimate.connectionFailed'));
 }
 
 function clearPendingAction(clearError = false) {
@@ -171,7 +175,7 @@ function runAction(
     actionGeneration += 1;
     pendingAction.value = null;
     actionTimer = undefined;
-    store.setError('Der Spielserver hat nicht rechtzeitig geantwortet. Bitte erneut versuchen.');
+    store.setError(t('estimate.actionTimeout'));
   }, 8_000);
   emitAction((res) => {
     if (generation !== actionGeneration) return;
@@ -179,7 +183,7 @@ function runAction(
     actionTimer = undefined;
     pendingAction.value = null;
     if (res.ok) store.clearError();
-    else store.setError(res.error ?? 'Die Aktion ist fehlgeschlagen.');
+    else store.setError(res.error ?? t('estimate.actionFailed'));
   });
 }
 
@@ -233,8 +237,8 @@ const view = computed(() => {
 });
 
 const connectionMessage = computed(() => {
-  if (joinState.value === 'connecting') return 'Verbindung zum Spielserver wird hergestellt…';
-  if (joinState.value === 'joining') return 'Spielraum wird geladen…';
+  if (joinState.value === 'connecting') return t('estimate.connecting');
+  if (joinState.value === 'joining') return t('estimate.joining');
   return '';
 });
 
@@ -312,8 +316,10 @@ onBeforeUnmount(() => {
       role="alert"
       aria-live="assertive"
     >
-      <span>{{ store.errorMessage }}</span>
-      <button class="ui-btn-secondary" type="button" @click="store.clearError()">Schließen</button>
+      <span>{{ localizeError(store.errorMessage, 'estimate') }}</span>
+      <button class="ui-btn-secondary" type="button" @click="store.clearError()">
+        {{ t('estimate.dismiss') }}
+      </button>
     </div>
 
     <section
@@ -329,7 +335,7 @@ onBeforeUnmount(() => {
         type="button"
         @click="retryConnection"
       >
-        Erneut verbinden
+        {{ t('estimate.reconnect') }}
       </button>
     </section>
 

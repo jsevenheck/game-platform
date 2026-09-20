@@ -5,7 +5,8 @@ import { fileURLToPath } from 'node:url';
 const scriptDir = path.dirname(fileURLToPath(import.meta.url));
 const gameDir = path.resolve(scriptDir, '..');
 const workspaceRoot = path.resolve(gameDir, '..', '..');
-const sourceFile = path.join(gameDir, 'server', 'data', 'questions.csv');
+const sourceDir = path.join(gameDir, 'server', 'data');
+const files = ['questions.en.csv', 'questions.de.csv'];
 const targetDir = path.join(
   workspaceRoot,
   'apps',
@@ -18,11 +19,13 @@ const targetDir = path.join(
   'data'
 );
 
-if (!existsSync(sourceFile)) {
-  console.error(`[copy-estimate-assets] Source file not found: ${sourceFile}`);
-  process.exit(1);
-}
-
 mkdirSync(targetDir, { recursive: true });
-cpSync(sourceFile, path.join(targetDir, 'questions.csv'));
-console.log(`[copy-estimate-assets] Copied questions.csv to ${targetDir}`);
+for (const file of files) {
+  const sourceFile = path.join(sourceDir, file);
+  if (!existsSync(sourceFile)) {
+    console.error(`[copy-estimate-assets] Source file not found: ${sourceFile}`);
+    process.exit(1);
+  }
+  cpSync(sourceFile, path.join(targetDir, file));
+}
+console.log(`[copy-estimate-assets] Copied ${files.join(', ')} to ${targetDir}`);

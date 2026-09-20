@@ -12,7 +12,7 @@ import { getMinimumPlayersForTeamCount } from '@shared/constants';
 
 const SESSION_KEY = 'secret-signals.session';
 
-export const useGameStore = defineStore('game', () => {
+export const useGameStore = defineStore('secret-signals-game', () => {
   // ─── Session ───────────────────────────────────────────────────────────────
   const playerId = ref<string | null>(null);
   const roomCode = ref<string | null>(null);

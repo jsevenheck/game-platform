@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { computed, onBeforeUnmount, onMounted, ref } from 'vue';
 import type { RoomView } from '@shared/types';
+import { useI18n } from 'vue-i18n';
 import { assignMarkerLanes, projectMarkerValue } from '../utils/markerLayout';
 
 const props = defineProps<{
@@ -22,9 +23,10 @@ const container = ref<HTMLElement | null>(null);
 const containerWidth = ref(640);
 let resizeObserver: ResizeObserver | undefined;
 
-const numberFormatter = new Intl.NumberFormat('de-DE', {
-  maximumFractionDigits: 6,
-});
+const { t, locale } = useI18n();
+const numberFormatter = computed(
+  () => new Intl.NumberFormat(locale.value, { maximumFractionDigits: 6 })
+);
 
 const range = computed(() => props.room.displayRange ?? { lo: 0, hi: 2 });
 
@@ -93,7 +95,7 @@ onBeforeUnmount(() => resizeObserver?.disconnect());
     aria-labelledby="estimate-number-line-title"
   >
     <figcaption id="estimate-number-line-title" class="number-line-title">
-      Vergleich der Schätzungen
+      {{ t('estimate.numberLine.title') }}
     </figcaption>
 
     <div class="visual-chart" aria-hidden="true">
@@ -122,7 +124,7 @@ onBeforeUnmount(() => resizeObserver?.disconnect());
           transform: 'translate(-50%, 10px)',
         }"
       >
-        <span class="solution-label">Lösung</span>
+        <span class="solution-label">{{ t('estimate.numberLine.solution') }}</span>
         <span class="marker-value">{{ numberFormatter.format(solutionMarker.value) }}</span>
       </div>
 
@@ -134,21 +136,25 @@ onBeforeUnmount(() => resizeObserver?.disconnect());
     <div class="sr-table-wrapper">
       <table>
         <caption>
-          Schätzungen und Lösung als Tabelle
+          {{
+            t('estimate.numberLine.tableCaption')
+          }}
         </caption>
         <thead>
           <tr>
-            <th scope="col">Spieler</th>
-            <th scope="col">Schätzung</th>
+            <th scope="col">{{ t('estimate.numberLine.player') }}</th>
+            <th scope="col">{{ t('estimate.numberLine.guess') }}</th>
           </tr>
         </thead>
         <tbody>
           <tr v-for="marker in playerMarkers" :key="`table-${marker.playerId}`">
-            <th scope="row">{{ marker.name }}{{ marker.isMine ? ' (du)' : '' }}</th>
+            <th scope="row">
+              {{ marker.name }}{{ marker.isMine ? ` ${t('estimate.numberLine.you')}` : '' }}
+            </th>
             <td>{{ numberFormatter.format(marker.guess) }}</td>
           </tr>
           <tr v-if="solutionMarker">
-            <th scope="row">Lösung</th>
+            <th scope="row">{{ t('estimate.numberLine.solution') }}</th>
             <td>{{ numberFormatter.format(solutionMarker.value) }}</td>
           </tr>
         </tbody>

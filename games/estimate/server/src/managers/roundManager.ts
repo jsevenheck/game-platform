@@ -22,7 +22,7 @@ export function allConnectedPlayersSubmitted(room: ServerRoom): boolean {
 }
 
 function prepareQuestionDeck(room: ServerRoom): void {
-  const deck = pickRandomQuestions(room.totalRounds);
+  const deck = pickRandomQuestions(room.totalRounds, room.locale);
   if (deck.length < room.totalRounds) {
     throw new EstimateError(
       `Need ${room.totalRounds} unique questions, library has ${deck.length}`

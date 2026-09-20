@@ -83,7 +83,6 @@
       "Edit(**/.env*)",
       "Write(**/.env*)",
       "Read(**/.env*)",
-      "Read(**/graphify-out/**)",
       "Edit(**/pnpm-lock.yaml)",
       "Write(**/pnpm-lock.yaml)",
       "Write(**/package.json)",

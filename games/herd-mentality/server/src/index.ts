@@ -23,7 +23,8 @@ const gameLogger = createComponentLogger('game-server', { gameId: definition.id 
 
 export function register(io: Server, namespace = `/g/${definition.id}`): void {
   // Eagerly validate and cache the production prompt asset during server startup.
-  getPromptLibrary();
+  getPromptLibrary('en');
+  getPromptLibrary('de');
   return registerHerdMentality(io, namespace, gameLogger);
 }
 

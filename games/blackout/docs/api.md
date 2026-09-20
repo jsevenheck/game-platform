@@ -46,7 +46,7 @@ Response:
 Notes:
 
 - `sessionId` is the platform match key.
-- When `isHost: true`, the server transfers the host role to this player.
+- `isHost` is an optional UI hint only; the server derives host status from the platform party.
 - On first join for a given `playerId`, `resumeToken` is optional.
 - When reclaiming an existing slot for that `playerId`, `resumeToken` must be present and valid.
 - `sessionId -> roomCode` mappings are in-memory and are cleaned up when a room is deleted.

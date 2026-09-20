@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { computed, nextTick, ref, watch } from 'vue';
+import { useI18n } from 'vue-i18n';
 import GameApp from './App.vue';
 
 interface Props {
@@ -20,6 +21,7 @@ const props = withDefaults(defineProps<Props>(), {
   onReturnToLobby: undefined,
   actionError: '',
 });
+const { t } = useI18n();
 const gamePhase = ref('');
 const dialog = ref<HTMLElement | null>(null);
 const replayButton = ref<HTMLButtonElement | null>(null);
@@ -39,7 +41,7 @@ function trapDialogFocus(event: KeyboardEvent) {
   );
   if (controls.length === 0) return;
   const first = controls[0]!;
-  const last = controls.at(-1)!;
+  const last = controls[controls.length - 1]!;
   if (event.shiftKey && document.activeElement === first) {
     event.preventDefault();
     last.focus();
@@ -75,8 +77,10 @@ function onPhaseChange(phase: string) {
       aria-labelledby="kritzelagent-postgame-title"
       @keydown="trapDialogFocus"
     >
-      <h2 id="kritzelagent-postgame-title" class="text-xl font-semibold">Spiel beendet</h2>
-      <p class="text-sm text-muted-foreground">Wie soll es für die Party weitergehen?</p>
+      <h2 id="kritzelagent-postgame-title" class="text-xl font-semibold">
+        {{ t('replay.title') }}
+      </h2>
+      <p class="text-sm text-muted-foreground">{{ t('replay.prompt') }}</p>
       <button
         ref="replayButton"
         class="ui-btn-primary"
@@ -84,7 +88,7 @@ function onPhaseChange(phase: string) {
         data-testid="platform-replay"
         @click="onReplayGame?.()"
       >
-        Nochmal spielen
+        {{ t('replay.playAgain') }}
       </button>
       <button
         class="ui-btn-secondary"
@@ -92,14 +96,14 @@ function onPhaseChange(phase: string) {
         data-testid="platform-return"
         @click="onReturnToLobby?.()"
       >
-        Zurück zur Party
+        {{ t('replay.returnToLobby') }}
       </button>
       <p v-if="actionError" class="text-center text-sm text-danger" role="alert">
         {{ actionError }}
       </p>
     </section>
     <section v-else-if="gameEnded" class="platform-overlay" role="status">
-      <p class="text-sm text-muted-foreground">Warte auf die Entscheidung des Hosts…</p>
+      <p class="text-sm text-muted-foreground">{{ t('replay.waiting') }}</p>
     </section>
   </div>
 </template>

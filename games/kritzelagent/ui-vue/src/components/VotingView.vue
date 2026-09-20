@@ -1,8 +1,10 @@
 <script setup lang="ts">
 import { ref } from 'vue';
+import { useI18n } from 'vue-i18n';
 import type { RoomView } from '@shared/types';
 
 const props = defineProps<{ room: RoomView; myId: string; pending: boolean }>();
+const { t } = useI18n();
 const emit = defineEmits<{ vote: [targetPlayerId: string] }>();
 const selectedId = ref('');
 
@@ -14,16 +16,18 @@ function submit() {
 
 <template>
   <section class="ui-panel" data-testid="kritzelagent-voting" aria-labelledby="voting-title">
-    <p class="text-sm text-muted-foreground">Die Skizze ist fertig.</p>
-    <h2 id="voting-title" data-phase-focus tabindex="-1">Wer ist der Kritzelagent?</h2>
+    <p class="text-sm text-muted-foreground">{{ t('kritzelagent.voting.done') }}</p>
+    <h2 id="voting-title" data-phase-focus tabindex="-1">
+      {{ t('kritzelagent.voting.title') }}
+    </h2>
     <p class="mt-2 text-sm text-muted-foreground">
-      Wähle eine andere Person. Deine Stimme bleibt bis zur Auflösung geheim.
+      {{ t('kritzelagent.voting.hint') }}
     </p>
     <form class="kritzelagent-voting" @submit.prevent="submit">
       <fieldset
         :disabled="pending || room.votes.find((vote) => vote.playerId === myId)?.hasVoted === true"
       >
-        <legend class="sr-only">Verdächtige auswählen</legend>
+        <legend class="sr-only">{{ t('kritzelagent.voting.legend') }}</legend>
         <div class="kritzelagent-voting__grid">
           <label
             v-for="player in room.players.filter(
@@ -52,12 +56,16 @@ function submit() {
           room.votes.find((vote) => vote.playerId === myId)?.hasVoted === true
         "
       >
-        {{ pending ? 'Wird gesendet…' : 'Stimme abgeben' }}
+        {{ pending ? t('kritzelagent.voting.sending') : t('kritzelagent.voting.submit') }}
       </button>
     </form>
     <p class="mt-3 text-sm text-muted-foreground" aria-live="polite">
-      {{ room.votes.filter((vote) => vote.hasVoted).length }} von
-      {{ room.players.filter((player) => player.connected).length }} Stimmen abgegeben
+      {{
+        t('kritzelagent.voting.progress', {
+          voted: room.votes.filter((vote) => vote.hasVoted).length,
+          total: room.players.filter((player) => player.connected).length,
+        })
+      }}
     </p>
   </section>
 </template>

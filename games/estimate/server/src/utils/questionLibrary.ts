@@ -6,14 +6,18 @@ import type { Question } from '../../../core/src/types';
 
 const questionLogger = createComponentLogger('estimate-question-library');
 
+type QuestionLocale = 'en' | 'de';
+
 /** Resolve beside the source/compiled game module so dev, dist and Docker use the same asset. */
-const QUESTIONS_FILE = path.resolve(__dirname, '../../data/questions.csv');
+function questionsFile(locale: QuestionLocale): string {
+  return path.resolve(__dirname, `../../data/questions.${locale}.csv`);
+}
 
 /** File reader function — overridable in tests via __setQuestionFileReaderForTests. */
 let fileReader: (filePath: string, encoding: 'utf8') => string = (p, enc) =>
   fs.readFileSync(p, enc);
 
-let cache: Question[] | null = null;
+const cache = new Map<QuestionLocale, Question[]>();
 
 /** Parses a single CSV line into a {text, answer} pair, or null if the line should be skipped.
  *  Handles:
@@ -40,14 +44,15 @@ function parseCsvLine(line: string): { text: string; answer: number } | null {
   return null;
 }
 
-function loadFromFile(): Question[] {
+function loadFromFile(locale: QuestionLocale): Question[] {
+  const file = questionsFile(locale);
   let raw: string;
   try {
-    raw = fileReader(QUESTIONS_FILE, 'utf8');
+    raw = fileReader(file, 'utf8');
   } catch (err) {
     questionLogger.warn(
-      { err, path: QUESTIONS_FILE },
-      'questions.csv missing or unreadable — using DEFAULT_QUESTIONS'
+      { err, path: file },
+      'questions csv missing or unreadable — using DEFAULT_QUESTIONS'
     );
     return [...DEFAULT_QUESTIONS];
   }
@@ -92,8 +97,8 @@ function loadFromFile(): Question[] {
 
   if (result.length === 0) {
     questionLogger.warn(
-      { path: QUESTIONS_FILE },
-      'questions.csv produced no valid rows — using DEFAULT_QUESTIONS'
+      { path: file },
+      'questions csv produced no valid rows — using DEFAULT_QUESTIONS'
     );
     return [...DEFAULT_QUESTIONS];
   }
@@ -101,18 +106,22 @@ function loadFromFile(): Question[] {
   return result;
 }
 
-/** Returns a copy of the question library, loading from disk on first call.
+/** Returns a copy of the question library for a locale, loading from disk on first call.
  *  Subsequent calls return a shallow copy so callers can't mutate the cache. */
-export function getQuestionLibrary(): Question[] {
-  if (!cache) cache = loadFromFile();
-  return cache.map((q) => ({ ...q }));
+export function getQuestionLibrary(locale: QuestionLocale = 'en'): Question[] {
+  let questions = cache.get(locale);
+  if (!questions) {
+    questions = loadFromFile(locale);
+    cache.set(locale, questions);
+  }
+  return questions.map((q) => ({ ...q }));
 }
 
 /** Returns a random subset of `count` questions. If `count` exceeds the
  *  library size, all questions are returned. The returned array is a copy;
  *  callers may freely mutate it. */
-export function pickRandomQuestions(count: number): Question[] {
-  const lib = getQuestionLibrary();
+export function pickRandomQuestions(count: number, locale: QuestionLocale = 'en'): Question[] {
+  const lib = getQuestionLibrary(locale);
   if (count <= 0 || lib.length === 0) return [];
   if (count >= lib.length) return lib.map((q) => ({ ...q }));
 
@@ -128,7 +137,7 @@ export function pickRandomQuestions(count: number): Question[] {
 /** Test-only: clear the in-memory cache so the next getQuestionLibrary()
  *  call re-reads the file. */
 export function __resetQuestionLibraryCacheForTests(): void {
-  cache = null;
+  cache.clear();
 }
 
 /** Test-only: override the file reader so tests can supply in-memory CSV
@@ -137,11 +146,11 @@ export function __setQuestionFileReaderForTests(
   reader: (filePath: string, encoding: 'utf8') => string
 ): void {
   fileReader = reader;
-  cache = null;
+  cache.clear();
 }
 
 /** Test-only: restore the default file reader (real fs.readFileSync). */
 export function __resetQuestionFileReaderForTests(): void {
   fileReader = (p, enc) => fs.readFileSync(p, enc);
-  cache = null;
+  cache.clear();
 }

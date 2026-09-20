@@ -6,6 +6,7 @@ import {
   finalizeRound,
   computeWinners,
 } from '../server/src/managers/roundManager';
+import { discardPileSize } from '../server/src/managers/deckManager';
 import type { Room } from '../core/src/types';
 import type { Card } from '../core/src/deck';
 
@@ -93,6 +94,28 @@ describe('startRound', () => {
       0
     );
     expect(round.deck.length + round.discard.length + deferredCount).toBe(94);
+  });
+
+  it('does not count cards lying in front of players as discard pile', () => {
+    const room = makeRoom(['p1', 'p2']);
+    startRound(room);
+    const round = room.currentRound!;
+    // Fixed table: p1 holds a 5 and a +2, p2 holds a 7; one 9 has been discarded.
+    round.players.p1.numberCards = [5];
+    round.players.p1.modifierAdds = [2];
+    round.players.p1.hasX2 = false;
+    round.players.p1.hasSecondChance = false;
+    round.players.p2.numberCards = [7];
+    round.players.p2.modifierAdds = [];
+    round.players.p2.hasX2 = false;
+    round.players.p2.hasSecondChance = false;
+    round.discard = [
+      { kind: 'number', value: 5 },
+      { kind: 'modifierAdd', bonus: 2 },
+      { kind: 'number', value: 7 },
+      { kind: 'number', value: 9 },
+    ];
+    expect(discardPileSize(round)).toBe(1);
   });
 });
 
@@ -235,7 +258,7 @@ describe('Action cards', () => {
     expect(turnPlayerId).not.toBe('p1');
   });
 
-  it('secondChance gives target the token', () => {
+  it('secondChance is kept by the drawer without choosing a target', () => {
     const room = makeRoom(['p1', 'p2', 'p3']);
     startRoundReady(room);
     injectDeck(room, [{ kind: 'action', action: 'secondChance' }]);
@@ -243,8 +266,77 @@ describe('Action cards', () => {
     room.currentRound!.currentTurnIndex = room.currentRound!.turnOrder.indexOf('p1');
     playerHit(room, 'p1');
 
-    chooseActionTarget(room, 'p1', 'p2');
+    expect(room.currentRound!.pendingAction).toBeNull();
+    expect(room.currentRound!.players['p1'].hasSecondChance).toBe(true);
+    expect(room.currentRound!.players['p2'].hasSecondChance).toBe(false);
+  });
+
+  it('a second secondChance must be given to another active player without one', () => {
+    const room = makeRoom(['p1', 'p2', 'p3']);
+    startRoundReady(room);
+    room.currentRound!.players['p1'].hasSecondChance = true;
+    room.currentRound!.players['p3'].hasSecondChance = true;
+    injectDeck(room, [{ kind: 'action', action: 'secondChance' }]);
+
+    room.currentRound!.currentTurnIndex = room.currentRound!.turnOrder.indexOf('p1');
+    playerHit(room, 'p1');
+
+    // Only p2 can receive it → auto-resolved
+    expect(room.currentRound!.pendingAction).toBeNull();
     expect(room.currentRound!.players['p2'].hasSecondChance).toBe(true);
+  });
+
+  it('lets the drawer pick among several valid recipients, never themselves', () => {
+    const room = makeRoom(['p1', 'p2', 'p3', 'p4']);
+    startRoundReady(room);
+    room.currentRound!.players['p1'].hasSecondChance = true;
+    injectDeck(room, [{ kind: 'action', action: 'secondChance' }]);
+
+    room.currentRound!.currentTurnIndex = room.currentRound!.turnOrder.indexOf('p1');
+    playerHit(room, 'p1');
+
+    const pa = room.currentRound!.pendingAction;
+    expect(pa).not.toBeNull();
+    expect(pa!.eligibleTargets.sort()).toEqual(['p2', 'p3', 'p4']);
+    chooseActionTarget(room, 'p1', 'p3');
+    expect(room.currentRound!.players['p3'].hasSecondChance).toBe(true);
+  });
+
+  it('discards a duplicate secondChance when nobody else can take it', () => {
+    const room = makeRoom(['p1', 'p2', 'p3']);
+    startRoundReady(room);
+    room.currentRound!.players['p1'].hasSecondChance = true;
+    room.currentRound!.players['p2'].hasSecondChance = true;
+    room.currentRound!.players['p3'].hasSecondChance = true;
+    injectDeck(room, [{ kind: 'action', action: 'secondChance' }]);
+
+    room.currentRound!.currentTurnIndex = room.currentRound!.turnOrder.indexOf('p1');
+    playerHit(room, 'p1');
+
+    expect(room.currentRound!.pendingAction).toBeNull();
+    expect(room.currentRound!.discard).toHaveLength(1);
+  });
+
+  it('a secondChance drawn during Flip Three protects against a later duplicate', () => {
+    const room = makeRoom(['p1', 'p2', 'p3']);
+    startRoundReady(room);
+    room.currentRound!.players['p1'].numberCards = [5];
+    room.currentRound!.players['p1'].flipThreeRemaining = 3;
+    injectDeck(room, [
+      { kind: 'action', action: 'secondChance' },
+      { kind: 'number', value: 5 },
+      { kind: 'number', value: 6 },
+    ]);
+
+    room.currentRound!.currentTurnIndex = room.currentRound!.turnOrder.indexOf('p1');
+    playerHit(room, 'p1');
+    playerHit(room, 'p1');
+    playerHit(room, 'p1');
+
+    const p1 = room.currentRound!.players['p1'];
+    expect(p1.status).toBe('active');
+    expect(p1.hasSecondChance).toBe(false); // consumed by the duplicate 5
+    expect(p1.numberCards).toEqual([5, 6]);
   });
 
   it('flipThree sets 3 remaining draws on target', () => {
@@ -303,25 +395,6 @@ describe('Action cards', () => {
     // Official rules: self-targeting allowed → auto-resolves on self
     expect(room.currentRound!.pendingAction).toBeNull();
     expect(room.currentRound!.players['p1'].flipThreeRemaining).toBe(3);
-  });
-
-  it('secondChance eligible targets include the drawer (self-target allowed)', () => {
-    const room = makeRoom(['p1', 'p2', 'p3']);
-    startRoundReady(room);
-    injectDeck(room, [{ kind: 'action', action: 'secondChance' }]);
-
-    room.currentRound!.currentTurnIndex = room.currentRound!.turnOrder.indexOf('p1');
-    playerHit(room, 'p1');
-
-    // pendingAction should list p1 as eligible
-    const pa = room.currentRound!.pendingAction;
-    expect(pa).not.toBeNull();
-    expect(pa!.eligibleTargets).toContain('p1');
-
-    // p1 chooses themselves
-    chooseActionTarget(room, 'p1', 'p1');
-    expect(room.currentRound!.players['p1'].hasSecondChance).toBe(true);
-    expect(room.currentRound!.pendingAction).toBeNull();
   });
 
   it('flipThree eligible targets include the drawer (self-target allowed)', () => {
@@ -398,5 +471,114 @@ describe('Deck reshuffle', () => {
     room.currentRound!.currentTurnIndex = room.currentRound!.turnOrder.indexOf('p1');
     // This should trigger reshuffle and draw successfully without throwing
     expect(() => playerHit(room, 'p1')).not.toThrow();
+  });
+
+  it('keeps cards lying in front of players out of the reshuffled deck', () => {
+    const room = makeRoom(['p1', 'p2', 'p3']);
+    startRoundReady(room);
+    room.currentRound!.players['p2'].numberCards = [9];
+    room.currentRound!.deck = [];
+    room.currentRound!.discard = [
+      { kind: 'number', value: 9 }, // p2 still holds this one
+      { kind: 'number', value: 4 },
+    ];
+
+    room.currentRound!.currentTurnIndex = room.currentRound!.turnOrder.indexOf('p1');
+    playerHit(room, 'p1');
+
+    // Only the 4 could have been drawn; the held 9 stays out of the deck.
+    expect(room.currentRound!.players['p1'].numberCards).toEqual([4]);
+    expect(room.currentRound!.deck).toHaveLength(0);
+  });
+});
+
+describe('Deck reshuffle with busted players', () => {
+  it('also keeps busted players’ cards out of the reshuffled deck', () => {
+    const room = makeRoom(['p1', 'p2', 'p3']);
+    startRoundReady(room);
+    room.currentRound!.players['p2'].status = 'busted';
+    room.currentRound!.players['p2'].numberCards = [9];
+    room.currentRound!.deck = [];
+    room.currentRound!.discard = [
+      { kind: 'number', value: 9 }, // still lying in front of busted p2
+      { kind: 'number', value: 4 },
+    ];
+
+    room.currentRound!.currentTurnIndex = room.currentRound!.turnOrder.indexOf('p1');
+    playerHit(room, 'p1');
+
+    expect(room.currentRound!.players['p1'].numberCards).toEqual([4]);
+    expect(room.currentRound!.deck).toHaveLength(0);
+  });
+});
+
+describe('Cards carry over between rounds', () => {
+  it('keeps the remaining draw pile and discard pile for the next round', () => {
+    const room = makeRoom(['p1', 'p2', 'p3']);
+    startRound(room);
+    const previous = room.currentRound!;
+    const remaining = previous.deck.length;
+    const used = previous.discard.length;
+    expect(remaining + used).toBe(94);
+
+    startRound(room);
+    const next = room.currentRound!;
+    // The new initial deal draws more cards, but nothing is rebuilt to a full deck.
+    expect(next.deck.length + next.discard.length).toBe(94);
+    expect(next.deck.length).toBeLessThan(remaining);
+    expect(next.discard.length).toBeGreaterThanOrEqual(used);
+  });
+
+  it('starts a new match (no previous round) with a full fresh deck', () => {
+    const room = makeRoom(['p1', 'p2']);
+    startRound(room);
+    room.currentRound = null; // what transitionToLobby does on replay
+    startRound(room);
+    const round = room.currentRound!;
+    expect(round.deck.length + round.discard.length).toBe(94);
+  });
+});
+
+describe('Deferred Flip Three cards', () => {
+  it('moves deferred action cards to the discard pile when the player busts', () => {
+    const room = makeRoom(['p1', 'p2']);
+    startRoundReady(room);
+    const round = room.currentRound!;
+    round.discard = [];
+    const player = round.players['p1'];
+    player.numberCards = [5];
+    player.flipThreeRemaining = 2;
+    player.deferredActions = [{ action: 'freeze', card: { kind: 'action', action: 'freeze' } }];
+    round.currentTurnIndex = round.turnOrder.indexOf('p1');
+    round.deck = [{ kind: 'number', value: 5 }];
+
+    playerHit(room, 'p1');
+
+    expect(player.status).toBe('busted');
+    expect(player.deferredActions).toHaveLength(0);
+    expect(round.discard).toContainEqual({ kind: 'action', action: 'freeze' });
+    expect(round.discard).toContainEqual({ kind: 'number', value: 5 });
+  });
+});
+
+describe('Initial deal where everybody is frozen', () => {
+  it('ends the round instead of leaving it stuck in the playing phase', () => {
+    const room = makeRoom(['p1', 'p2']);
+    startRound(room);
+    // The next startRound carries this deck over, so it scripts the deal.
+    room.currentRound!.deck = [
+      { kind: 'action', action: 'freeze' },
+      { kind: 'action', action: 'freeze' },
+    ];
+    room.currentRound!.discard = [];
+
+    startRound(room);
+    const round = room.currentRound!;
+    expect(round.pendingAction).not.toBeNull();
+    chooseActionTarget(room, round.pendingAction!.drawerId, round.pendingAction!.drawerId);
+
+    expect(Object.values(round.players).every((rp) => rp.status === 'stayed')).toBe(true);
+    expect(round.roundEndReason).toBe('allDone');
+    expect(room.roundHistory.length).toBeGreaterThan(0);
   });
 });

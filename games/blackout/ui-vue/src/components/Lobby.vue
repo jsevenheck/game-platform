@@ -1,9 +1,11 @@
 <script setup lang="ts">
 import { ref, watch } from 'vue';
+import { useI18n } from 'vue-i18n';
 import { useGameStore } from '../stores/game';
 import { MIN_ROUNDS, MAX_ROUNDS, MIN_PLAYERS } from '@shared/constants';
 import type { Language } from '@shared/types';
 
+const { t } = useI18n();
 const store = useGameStore();
 const excludedLettersInput = ref('');
 
@@ -54,40 +56,54 @@ function saveExcludedLetters() {
 <template>
   <div class="lobby flex flex-col items-center gap-8 px-4 py-8">
     <div class="w-full max-w-xs">
-      <h3 class="mb-3 text-muted">Players ({{ connectedCount() }})</h3>
+      <h3 class="mb-3 text-muted">
+        {{ t('blackout.lobby.players', { count: connectedCount() }) }}
+      </h3>
       <div
         v-for="player in store.room?.players"
         :key="player.id"
-        class="mb-2 flex items-center gap-2 rounded-[--radius-sm] bg-elevated px-3 py-2"
+        class="mb-2 flex items-center gap-2 rounded-sm bg-elevated px-3 py-2"
         :class="{ 'opacity-50': !player.connected }"
       >
         <span class="flex-1 text-foreground">{{ player.name }}</span>
-        <span v-if="store.room?.ownerId === player.id" class="ui-badge bg-signals text-white"
-          >Owner</span
-        >
-        <span v-if="player.isHost" class="ui-badge bg-blackout text-white">Host</span>
-        <span v-if="!player.connected" class="ui-badge bg-elevated text-muted-foreground"
-          >Offline</span
-        >
+        <span v-if="store.room?.ownerId === player.id" class="ui-badge bg-signals text-white">{{
+          t('blackout.lobby.owner')
+        }}</span>
+        <span v-if="player.isHost" class="ui-badge bg-blackout text-white">{{
+          t('blackout.lobby.host')
+        }}</span>
+        <span v-if="!player.connected" class="ui-badge bg-elevated text-muted-foreground">{{
+          t('blackout.lobby.offline')
+        }}</span>
       </div>
     </div>
 
     <div v-if="store.isHost" class="flex flex-col items-center gap-4">
       <div class="rounds-config flex items-center gap-3 text-foreground">
-        <span>Rounds:</span>
-        <button class="ui-stepper-btn hover:border-blackout-active" @click="adjustRounds(-1)">
-          -
+        <span>{{ t('blackout.lobby.rounds') }}</span>
+        <button
+          class="ui-stepper-btn hover:border-blackout-active"
+          type="button"
+          :aria-label="t('blackout.lobby.fewerRounds')"
+          @click="adjustRounds(-1)"
+        >
+          −
         </button>
-        <span class="rounds-value min-w-8 text-center text-2xl font-bold">{{
+        <span class="rounds-value min-w-8 text-center text-2xl font-bold" aria-live="polite">{{
           store.room?.maxRounds
         }}</span>
-        <button class="ui-stepper-btn hover:border-blackout-active" @click="adjustRounds(1)">
+        <button
+          class="ui-stepper-btn hover:border-blackout-active"
+          type="button"
+          :aria-label="t('blackout.lobby.moreRounds')"
+          @click="adjustRounds(1)"
+        >
           +
         </button>
       </div>
 
       <div class="flex items-center gap-2 text-foreground">
-        <span>Language:</span>
+        <span>{{ t('blackout.lobby.language') }}</span>
         <button
           class="ui-stepper-btn text-sm hover:border-blackout-active"
           :class="store.room?.language === 'de' && 'border-blackout-active text-foreground'"
@@ -105,7 +121,9 @@ function saveExcludedLetters() {
       </div>
 
       <div class="flex w-full max-w-xs flex-col gap-1">
-        <label for="excluded-letters" class="text-sm text-muted">Excluded letters</label>
+        <label for="excluded-letters" class="text-sm text-muted">{{
+          t('blackout.lobby.excludedLetters')
+        }}</label>
         <div class="flex gap-2">
           <input
             id="excluded-letters"
@@ -120,25 +138,25 @@ function saveExcludedLetters() {
             class="ui-stepper-btn w-auto min-w-14 px-3 text-sm hover:border-blackout-active"
             @click="saveExcludedLetters"
           >
-            Save
+            {{ t('blackout.lobby.save') }}
           </button>
         </div>
       </div>
 
       <button
-        class="ui-btn-primary btn-blackout px-12 py-4 text-xl btn-blackout-hover"
+        class="ui-btn-primary ui-btn-lg btn-blackout btn-blackout-hover"
         :disabled="connectedCount() < MIN_PLAYERS"
         @click="$emit('startGame')"
       >
-        Start Game
+        {{ t('blackout.lobby.start') }}
       </button>
       <p v-if="connectedCount() < MIN_PLAYERS" class="text-sm text-muted-foreground">
-        Need at least {{ MIN_PLAYERS }} players to start
+        {{ t('blackout.lobby.needPlayers', { min: MIN_PLAYERS }) }}
       </p>
     </div>
 
     <div v-else class="text-muted-foreground">
-      <p>Waiting for host to start the game...</p>
+      <p>{{ t('blackout.lobby.waitingForHost') }}</p>
     </div>
   </div>
 </template>

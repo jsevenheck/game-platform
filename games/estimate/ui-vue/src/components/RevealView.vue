@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { computed } from 'vue';
+import { useI18n } from 'vue-i18n';
 import NumberLine from './NumberLine.vue';
 import type { RoomView } from '@shared/types';
 
@@ -11,14 +12,17 @@ const props = defineProps<{
 }>();
 
 const emit = defineEmits<{ reveal: []; next: [] }>();
-const numberFormatter = new Intl.NumberFormat('de-DE', { maximumFractionDigits: 6 });
+const { t, locale } = useI18n();
+const numberFormatter = computed(
+  () => new Intl.NumberFormat(locale.value, { maximumFractionDigits: 6 })
+);
 const isLastRound = computed(() => props.room.currentRound >= props.room.totalRounds);
 </script>
 
 <template>
   <section class="ui-panel" data-testid="estimate-reveal" aria-labelledby="estimate-reveal-title">
     <p class="text-sm text-muted-foreground">
-      Runde {{ room.currentRound }} von {{ room.totalRounds }}
+      {{ t('estimate.question.round', { round: room.currentRound, total: room.totalRounds }) }}
     </p>
     <h2
       id="estimate-reveal-title"
@@ -39,10 +43,12 @@ const isLastRound = computed(() => props.room.currentRound >= props.room.totalRo
       aria-live="polite"
     >
       <p class="text-lg">
-        Lösung: <strong>{{ numberFormatter.format(room.solution) }}</strong>
+        {{ t('estimate.reveal.solution') }}
+        <strong>{{ numberFormatter.format(room.solution) }}</strong>
       </p>
       <p v-if="room.winners.length > 0" class="text-success mt-1">
-        Gewinner: {{ room.winners.map((winner) => winner.name).join(', ') }}
+        {{ t('estimate.reveal.winners') }}
+        {{ room.winners.map((winner) => winner.name).join(', ') }}
       </p>
     </div>
 
@@ -55,7 +61,7 @@ const isLastRound = computed(() => props.room.currentRound >= props.room.totalRo
         data-testid="estimate-reveal-button"
         @click="emit('reveal')"
       >
-        {{ pending ? 'Wird aufgelöst…' : 'Auflösen' }}
+        {{ pending ? t('estimate.reveal.revealing') : t('estimate.reveal.reveal') }}
       </button>
       <button
         v-else
@@ -65,11 +71,17 @@ const isLastRound = computed(() => props.room.currentRound >= props.room.totalRo
         data-testid="estimate-next-button"
         @click="emit('next')"
       >
-        {{ pending ? 'Wird geladen…' : isLastRound ? 'Endergebnis anzeigen' : 'Nächste Frage' }}
+        {{
+          pending
+            ? t('estimate.reveal.loading')
+            : isLastRound
+              ? t('estimate.reveal.finalScore')
+              : t('estimate.reveal.next')
+        }}
       </button>
     </div>
     <p v-else-if="room.solution === null" class="text-muted-foreground mt-4" role="status">
-      Warte darauf, dass der Host auflöst.
+      {{ t('estimate.reveal.waitingForHost') }}
     </p>
   </section>
 </template>

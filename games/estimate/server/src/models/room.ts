@@ -37,6 +37,8 @@ export interface CreateRoomOptions {
    * reconnects and host-sync work without an extra rename.
    */
   hostPlayerId?: string;
+  /** Content language for the question deck (defaults to English). */
+  locale?: 'en' | 'de';
 }
 
 export function createRoom(hostName: string, opts: CreateRoomOptions): ServerRoom {
@@ -54,6 +56,7 @@ export function createRoom(hostName: string, opts: CreateRoomOptions): ServerRoo
     totalRounds: opts.totalRounds ?? DEFAULT_TOTAL_ROUNDS,
     question: null,
     questionDeck: [],
+    locale: opts.locale ?? 'en',
     players: [host],
     guesses: new Map(),
     scores: new Map(),

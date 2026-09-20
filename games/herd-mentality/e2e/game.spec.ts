@@ -55,12 +55,12 @@ test.describe('Herd Mentality', () => {
     try {
       await launch(session);
       const [host, ben, clara, david] = session.pages;
-      await host!.getByRole('button', { name: 'Spiel starten' }).click();
+      await host!.getByRole('button', { name: 'Start game' }).click();
       await expect(host!.getByTestId('herd-mentality-question')).toBeVisible();
       await expect(ben!.getByTestId('herd-mentality-question')).toBeVisible();
 
       await host!.getByTestId('herd-mentality-answer-submit').click();
-      await expect(host!.getByText('Bitte eine Antwort eingeben.')).toBeVisible();
+      await expect(host!.getByText('Please enter an answer.')).toBeVisible();
       await expect(host!.getByTestId('herd-mentality-question')).toBeVisible();
       await host!.getByTestId('herd-mentality-answer-input').fill('Pizza');
       await host!.getByTestId('herd-mentality-answer-submit').click();
@@ -128,7 +128,7 @@ test.describe('Herd Mentality', () => {
     try {
       await launch(session);
       const [host, ben, clara, david] = session.pages;
-      await host!.getByRole('button', { name: 'Spiel starten' }).click();
+      await host!.getByRole('button', { name: 'Start game' }).click();
       await expect(host!.getByTestId('herd-mentality-question')).toBeVisible();
 
       for (let round = 1; round <= 8; round += 1) {
@@ -146,16 +146,16 @@ test.describe('Herd Mentality', () => {
       }
 
       await expect(host!.getByTestId('herd-mentality-gameover')).toBeVisible();
-      await expect(host!.getByRole('dialog', { name: 'Spiel beendet' })).toBeVisible();
+      await expect(host!.getByRole('dialog', { name: 'Game over' })).toBeVisible();
       await expect(host!.getByTestId('platform-replay')).toBeFocused();
       await expect(host!.getByTestId('platform-return')).toBeVisible();
-      await expect(ben!.getByText('Warte auf die Entscheidung des Hosts…')).toBeVisible();
+      await expect(ben!.getByText('Waiting for the host to decide…')).toBeVisible();
 
       await host!.getByTestId('platform-replay').click();
       await expect(host!.getByTestId('herd-mentality-lobby')).toBeVisible({ timeout: 15_000 });
       await expect(ben!.getByTestId('herd-mentality-lobby')).toBeVisible({ timeout: 15_000 });
 
-      await host!.getByRole('button', { name: 'Spiel starten' }).click();
+      await host!.getByRole('button', { name: 'Start game' }).click();
       for (let round = 1; round <= 8; round += 1) {
         for (const page of [host!, ben!, clara!, david!]) {
           await page.getByTestId('herd-mentality-answer-input').fill('Gemeinsam');
@@ -168,7 +168,7 @@ test.describe('Herd Mentality', () => {
           await expect(host!.getByTestId('herd-mentality-question')).toBeVisible();
         }
       }
-      await expect(host!.getByRole('dialog', { name: 'Spiel beendet' })).toBeVisible();
+      await expect(host!.getByRole('dialog', { name: 'Game over' })).toBeVisible();
       await host!.getByTestId('platform-return').click();
       await expect(host!).toHaveURL(/\/party\/[A-Z0-9]+$/);
       await expect(ben!).toHaveURL(/\/party\/[A-Z0-9]+$/);

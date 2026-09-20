@@ -2,10 +2,7 @@ import { createRoom, deleteRoom, getRoom } from '../server/src/models/room';
 import { getSocketIndex } from '../server/src/models/player';
 
 describe('flip7 room model', () => {
-  // F1 regression: getRoom's `code.toUpperCase()` previously threw for any
-  // non-string `code` — reachable directly from every handler's unvalidated
-  // `data.roomCode`, and reproduced live (in a sibling game) as a full
-  // server-process crash during the codebase review.
+  // Client payloads are untrusted at runtime; invalid room codes must be rejected safely.
   describe('getRoom', () => {
     it('returns undefined instead of throwing for a non-string code', () => {
       expect(() => getRoom(12345 as unknown as string)).not.toThrow();
@@ -25,8 +22,7 @@ describe('flip7 room model', () => {
     });
   });
 
-  // F3 regression: deleteRoom previously left departed players' socket
-  // index entries in place forever.
+  // Deleting a room must also remove all socket-index entries for that room.
   describe('deleteRoom', () => {
     it('clears the socket index for every player in the room', () => {
       const { room, hostId } = createRoom('Host', 'socket-2', 'host-2');

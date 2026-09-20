@@ -34,6 +34,8 @@ export interface CreateRoomOptions {
   matchKey: string;
   totalRounds?: number;
   hostPlayerId?: string;
+  /** Content language for the prompt deck (defaults to English). */
+  locale?: 'en' | 'de';
 }
 
 export function createRoom(hostName: string, options: CreateRoomOptions): ServerRoom {
@@ -49,6 +51,7 @@ export function createRoom(hostName: string, options: CreateRoomOptions): Server
     targetCows: TARGET_COWS,
     prompt: null,
     promptDeck: [],
+    locale: options.locale ?? 'en',
     players: [host],
     answers: new Map(),
     cows: new Map([[host.id, 0]]),

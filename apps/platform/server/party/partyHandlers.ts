@@ -27,7 +27,7 @@ import {
   pruneExpiredRateLimitEntries,
   type RateLimitRecord,
 } from '../observability/rateLimit';
-import type { PartySession } from './types';
+import { normalizeMatchLocale, type PartySession } from './types';
 import { createComponentLogger, readLoggingConfig, toLoggableError } from '../logging/logger';
 import { attachSocketEventDebugLogging, createSocketLogger } from '../logging/socketLogger';
 import { startSocketHandlerInstrumentation } from '../observability/socketHandlerMetrics';
@@ -78,11 +78,11 @@ interface PartyClientToServerEvents {
     cb: (res: { ok: true } | { ok: false; error: string }) => void
   ) => void;
   launchGame: (
-    data: { playerId: string },
+    data: { playerId: string; locale?: string },
     cb: (res: { ok: true } | { ok: false; error: string }) => void
   ) => void;
   replayGame: (
-    data: { playerId: string },
+    data: { playerId: string; locale?: string },
     cb: (res: { ok: true } | { ok: false; error: string }) => void
   ) => void;
   returnToLobby: (
@@ -648,6 +648,7 @@ export function registerPartyHandlers(io: Server): void {
           matchKey,
           namespace,
           startedAt: Date.now(),
+          locale: normalizeMatchLocale(data.locale),
         };
         party.status = 'in-match';
         party.pendingCleanupMatchKey = null;
@@ -722,6 +723,7 @@ export function registerPartyHandlers(io: Server): void {
           matchKey: newMatchKey,
           namespace: party.activeMatch.namespace,
           startedAt: Date.now(),
+          locale: normalizeMatchLocale(data.locale ?? party.activeMatch.locale),
         };
         scheduleMatchTimeout(party.partyId, () => triggerMatchTimeout(party));
 

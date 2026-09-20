@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { computed } from 'vue';
+import { useI18n } from 'vue-i18n';
 import type { PlayerView } from '@shared/types';
 import { MIN_PLAYERS } from '@shared/constants';
 
@@ -10,6 +11,7 @@ const props = defineProps<{
   pending: boolean;
   totalRounds: number;
 }>();
+const { t } = useI18n();
 const emit = defineEmits<{ start: [] }>();
 const connected = computed(() => props.players.filter((player) => player.connected).length);
 </script>
@@ -19,42 +21,52 @@ const connected = computed(() => props.players.filter((player) => player.connect
     data-testid="herd-mentality-lobby"
     aria-labelledby="herd-mentality-lobby-title"
   >
-    <p class="text-sm text-muted-foreground">Mehrheitsrunde · {{ totalRounds }} Fragen</p>
+    <p class="text-sm text-muted-foreground">
+      {{ t('herd-mentality.lobby.subtitle', { rounds: totalRounds }) }}
+    </p>
     <h2
       id="herd-mentality-lobby-title"
       class="mt-2 text-xl font-semibold"
       data-phase-focus
       tabindex="-1"
     >
-      Die Herde sammelt sich
+      {{ t('herd-mentality.lobby.title') }}
     </h2>
-    <ul class="ui-player-list mt-4" aria-label="Mitspieler">
+    <ul class="ui-player-list mt-4" :aria-label="t('herd-mentality.lobby.players')">
       <li v-for="player in players" :key="player.id" class="ui-player-item">
         <span class="ui-avatar" aria-hidden="true">{{ player.name.charAt(0).toUpperCase() }}</span>
         <span>{{ player.name }}</span
-        ><span v-if="player.isHost" class="ui-badge">Host</span>
-        <span v-if="!player.connected" class="ui-badge">Getrennt</span>
+        ><span v-if="player.isHost" class="ui-badge">{{ t('herd-mentality.lobby.host') }}</span>
+        <span v-if="!player.connected" class="ui-badge">{{
+          t('herd-mentality.lobby.disconnected')
+        }}</span>
       </li>
     </ul>
     <p class="mt-3 text-muted-foreground" aria-live="polite">
-      {{ connected }} von {{ players.length }} verbunden · mindestens {{ MIN_PLAYERS }} benötigt
+      {{
+        t('herd-mentality.lobby.summary', {
+          connected,
+          total: players.length,
+          min: MIN_PLAYERS,
+        })
+      }}
     </p>
     <div v-if="isHost" class="mt-4">
       <button
-        class="ui-btn-primary"
+        class="ui-btn-primary ui-btn-lg"
         type="button"
         data-testid="herd-mentality-start"
         :disabled="!canStart || pending"
         @click="emit('start')"
       >
-        {{ pending ? 'Wird gestartet…' : 'Spiel starten' }}
+        {{ pending ? t('herd-mentality.lobby.starting') : t('herd-mentality.lobby.start') }}
       </button>
       <p v-if="!canStart" class="mt-2 text-sm text-muted-foreground">
-        Zum Starten müssen mindestens vier Spieler verbunden sein.
+        {{ t('herd-mentality.lobby.needPlayers') }}
       </p>
     </div>
     <p v-else class="mt-4 text-muted-foreground" role="status">
-      Warte darauf, dass der Host startet.
+      {{ t('herd-mentality.lobby.waitingForHost') }}
     </p>
   </section>
 </template>

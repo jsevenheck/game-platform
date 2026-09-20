@@ -1,4 +1,4 @@
-import type { Room } from '../../../core/src/types';
+import type { Language, Room } from '../../../core/src/types';
 import {
   DEFAULT_ROUNDS,
   DEFAULT_LANGUAGE,
@@ -27,7 +27,8 @@ function generateRoomCode(): string {
 export function createRoom(
   hostName: string,
   socketId: string,
-  hostPlayerId?: string
+  hostPlayerId?: string,
+  language: Language = DEFAULT_LANGUAGE
 ): { room: Room; hostId: string; resumeToken: string } {
   const code = generateRoomCode();
   const host = createPlayer(hostName, true, hostPlayerId);
@@ -39,7 +40,7 @@ export function createRoom(
     hostId: host.id,
     phase: 'lobby',
     players: { [host.id]: host },
-    language: DEFAULT_LANGUAGE,
+    language,
     excludedLetters: getDefaultExcludedLetters(),
     maxRounds: DEFAULT_ROUNDS,
     currentRound: null,

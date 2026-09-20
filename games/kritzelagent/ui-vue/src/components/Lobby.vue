@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { computed } from 'vue';
+import { useI18n } from 'vue-i18n';
 import { MAX_PLAYERS, MIN_PLAYERS } from '@shared/constants';
 import type { PlayerView } from '@shared/types';
 
@@ -10,6 +11,7 @@ const props = defineProps<{
   pending: boolean;
 }>();
 
+const { t } = useI18n();
 const playerCount = computed(() => props.players.filter((player) => player.connected).length);
 
 defineEmits<{ start: [] }>();
@@ -22,36 +24,43 @@ defineEmits<{ start: [] }>();
     aria-labelledby="lobby-title"
   >
     <p class="text-sm text-muted-foreground">
-      {{ MIN_PLAYERS }}–{{ MAX_PLAYERS }} Spieler · Zeichnen und Deduktion
+      {{ t('kritzelagent.lobby.subtitle', { min: MIN_PLAYERS, max: MAX_PLAYERS }) }}
     </p>
-    <h2 id="lobby-title" data-phase-focus tabindex="-1">Bereit für die nächste Skizze?</h2>
-    <p class="mt-2">Alle zeichnen gemeinsam. Eine Person kennt nur die Kategorie.</p>
-    <h3 class="mt-5 text-lg font-semibold">Spieler ({{ playerCount }}/{{ MAX_PLAYERS }})</h3>
-    <ul class="kritzelagent-player-list" aria-label="Spieler im Raum">
+    <h2 id="lobby-title" data-phase-focus tabindex="-1">
+      {{ t('kritzelagent.lobby.title') }}
+    </h2>
+    <p class="mt-2">{{ t('kritzelagent.lobby.intro') }}</p>
+    <h3 class="mt-5 text-lg font-semibold">
+      {{ t('kritzelagent.lobby.players', { count: playerCount, max: MAX_PLAYERS }) }}
+    </h3>
+    <ul class="kritzelagent-player-list" :aria-label="t('kritzelagent.lobby.playersLabel')">
       <li v-for="player in players" :key="player.id">
-        <span>{{ player.name }}<span v-if="player.isHost"> (Host)</span></span>
+        <span
+          >{{ player.name
+          }}<span v-if="player.isHost" class="ml-1">{{ t('kritzelagent.lobby.host') }}</span></span
+        >
         <span :class="player.connected ? 'text-success' : 'text-muted-foreground'">{{
-          player.connected ? 'bereit' : 'offline'
+          player.connected ? t('kritzelagent.lobby.ready') : t('kritzelagent.lobby.offline')
         }}</span>
       </li>
     </ul>
     <button
       v-if="isHost"
-      class="ui-btn-primary mt-5"
+      class="ui-btn-primary ui-btn-lg mt-5"
       type="button"
       :disabled="!canStart || pending"
       @click="$emit('start')"
     >
       {{
         pending
-          ? 'Wird gestartet…'
+          ? t('kritzelagent.lobby.starting')
           : canStart
-            ? 'Spiel starten'
-            : `Warte auf mindestens ${MIN_PLAYERS} Spieler`
+            ? t('kritzelagent.lobby.start')
+            : t('kritzelagent.lobby.needPlayers', { min: MIN_PLAYERS })
       }}
     </button>
     <p v-else class="mt-4 text-sm text-muted-foreground" role="status">
-      Warte, bis der Host das Spiel startet.
+      {{ t('kritzelagent.lobby.waitingForHost') }}
     </p>
   </section>
 </template>

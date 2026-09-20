@@ -249,6 +249,6 @@ via the ack callback).
 - The server emits `phaseChange` alongside every `roomUpdate`; the platform adapter uses
   the `ended` phase to show its replay / return-to-party overlay.
 - The CSV question library is loaded once at server start (cached). Restart the server to
-  pick up changes to `games/estimate/server/data/questions.csv`.
+  pick up changes to `games/estimate/server/data/questions.<locale>.csv`.
 - If every game socket disconnects, the room remains resumable for 30 minutes and is then
   removed automatically unless a player reconnects first.

@@ -2,8 +2,9 @@
 
 A real-time multiplayer social deduction party game built with Vue 3 + Socket.IO + TypeScript.
 
-Players take turns giving short clues about a secret word in a shared random order. One or more
-players are **Infiltrators** who do not know the word and must bluff their way through. After all
+Players take turns giving short clues about a secret word in a shared random order. Zero or one
+player is an **Infiltrator**; an Infiltrator does not know the word and must bluff their way through.
+Multiple infiltrators are intentionally not supported. After all
 clues are in, players discuss, vote for suspected Infiltrators, and caught Infiltrators get one
 last chance to guess the secret word and steal the round.
 

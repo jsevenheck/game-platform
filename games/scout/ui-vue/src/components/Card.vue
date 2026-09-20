@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { computed } from 'vue';
+import { useI18n } from 'vue-i18n';
 import type { ScoutCard } from '@shared/deck';
 
 const props = withDefaults(
@@ -19,6 +20,7 @@ const props = withDefaults(
   }
 );
 
+const { t } = useI18n();
 const cardClasses = computed(() => [
   props.compact ? 'h-[4.5rem] w-12' : 'h-28 w-20',
   props.selected
@@ -47,7 +49,7 @@ const cardClasses = computed(() => [
       <span
         class="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 text-[10px] text-muted"
       >
-        play
+        {{ t('scout.card.play') }}
       </span>
       <span
         data-testid="scout-card-scout-value"

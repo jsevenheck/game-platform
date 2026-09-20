@@ -9,7 +9,6 @@
     "useDefineForClassFields": true,
     "isolatedModules": true,
     "verbatimModuleSyntax": true,
-    "baseUrl": ".",
     "types": ["node", "vitest/globals"]
   },
   "include": ["src/**/*", "__tests__/**/*", "e2e/**/*", "env.d.ts", "vite.config.ts"]

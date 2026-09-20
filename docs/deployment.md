@@ -104,9 +104,10 @@ All HTTP responses include `X-Content-Type-Options: nosniff`, `X-Frame-Options: 
 
 ### Optional game flags
 
-| Variable                 | Default | Purpose                                                                                                                 |
-| ------------------------ | ------- | ----------------------------------------------------------------------------------------------------------------------- |
-| `IMPOSTER_PERSIST_WORDS` | `true`  | When `false`, submitted Imposter words are kept in-memory only (prevents file divergence in multi-instance deployments) |
+| Variable                 | Default   | Purpose                                                                                                                                                                                                                                                                   |
+| ------------------------ | --------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `IMPOSTER_PERSIST_WORDS` | `true`    | When `false`, submitted Imposter words are kept in-memory only (prevents file divergence in multi-instance deployments)                                                                                                                                                   |
+| `IMPOSTER_WORDS_DIR`     | _(unset)_ | Directory for `words.<locale>.txt` submitted by players. `docker-compose.yml` mounts the `imposter-words` volume at `/data/imposter` so custom words survive container replacement; unset, words are appended beside the bundled assets (lost when the image is replaced) |
 
 ### Required GitHub secrets
 

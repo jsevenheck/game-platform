@@ -5,11 +5,15 @@ import { DEFAULT_TOPICS } from '../../../core/src/constants';
 import type { Topic } from '../../../core/src/types';
 
 const topicLogger = createComponentLogger('kritzelagent-topic-library');
-const TOPICS_FILE = path.resolve(__dirname, '../../data/topics.csv');
+type TopicLocale = 'en' | 'de';
+
+function topicsFile(locale: TopicLocale): string {
+  return path.resolve(__dirname, `../../data/topics.${locale}.csv`);
+}
 
 type FileReader = (filePath: string, encoding: 'utf8') => string;
 let fileReader: FileReader = (filePath, encoding) => fs.readFileSync(filePath, encoding);
-let cache: Topic[] | null = null;
+const cache = new Map<TopicLocale, Topic[]>();
 
 function parseCsvFields(line: string): string[] | null {
   const fields: string[] = [];
@@ -38,12 +42,13 @@ function parseCsvFields(line: string): string[] | null {
   return fields;
 }
 
-function loadFromFile(): Topic[] {
+function loadFromFile(locale: TopicLocale): Topic[] {
+  const file = topicsFile(locale);
   let raw: string;
   try {
-    raw = fileReader(TOPICS_FILE, 'utf8');
+    raw = fileReader(file, 'utf8');
   } catch (error) {
-    topicLogger.warn({ err: error, path: TOPICS_FILE }, 'topics.csv unavailable — using defaults');
+    topicLogger.warn({ err: error, path: file }, 'topics csv unavailable — using defaults');
     return [...DEFAULT_TOPICS];
   }
 
@@ -67,19 +72,23 @@ function loadFromFile(): Topic[] {
   }
 
   if (result.length === 0) {
-    topicLogger.warn({ path: TOPICS_FILE }, 'topics.csv produced no valid rows — using defaults');
+    topicLogger.warn({ path: file }, 'topics csv produced no valid rows — using defaults');
     return [...DEFAULT_TOPICS];
   }
   return result;
 }
 
-export function getTopicLibrary(): Topic[] {
-  if (!cache) cache = loadFromFile();
-  return cache.map((topic) => ({ ...topic }));
+export function getTopicLibrary(locale: TopicLocale = 'en'): Topic[] {
+  let topics = cache.get(locale);
+  if (!topics) {
+    topics = loadFromFile(locale);
+    cache.set(locale, topics);
+  }
+  return topics.map((topic) => ({ ...topic }));
 }
 
-export function pickRandomTopics(count: number): Topic[] {
-  const pool = getTopicLibrary();
+export function pickRandomTopics(count: number, locale: TopicLocale = 'en'): Topic[] {
+  const pool = getTopicLibrary(locale);
   if (count <= 0) return [];
   for (let index = pool.length - 1; index > 0; index -= 1) {
     const swapIndex = Math.floor(Math.random() * (index + 1));
@@ -101,15 +110,15 @@ export function topicMatchesGuess(topic: string, guess: string): boolean {
 }
 
 export function __resetTopicLibraryCacheForTests(): void {
-  cache = null;
+  cache.clear();
 }
 
 export function __setTopicFileReaderForTests(reader: FileReader): void {
   fileReader = reader;
-  cache = null;
+  cache.clear();
 }
 
 export function __resetTopicFileReaderForTests(): void {
   fileReader = (filePath, encoding) => fs.readFileSync(filePath, encoding);
-  cache = null;
+  cache.clear();
 }

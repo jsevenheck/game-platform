@@ -56,7 +56,7 @@ Design goals:
 - `utils/helpers.ts`
   shared helpers, including crypto-backed random shuffling
 - `utils/wordLibrary.ts`
-  lazy-loads `server/data/words.txt` and appends custom words
+  lazy-loads `server/data/words.<en|de>.txt` and appends custom words
 
 ### Socket Handlers
 
@@ -196,7 +196,7 @@ At that point the game moves to `ended`.
 
 The global word list is stored at:
 
-- `server/data/words.txt`
+- `server/data/words.<en|de>.txt`
 
 Behavior:
 

@@ -269,7 +269,11 @@ export function registerKritzelagent(
         let room = getRoomBySession(sessionId);
 
         if (!room) {
-          room = createRoom(name, { matchKey: sessionId, hostPlayerId: authorizedPlayerId });
+          room = createRoom(name, {
+            matchKey: sessionId,
+            hostPlayerId: authorizedPlayerId,
+            locale: authorization.locale,
+          });
           bindPlayerToSocket(nsp, socket, room, authorizedPlayerId);
           syncHostAfterJoin(room, authorization.hostPlayerId, !authorization.hostConnected);
           broadcastGameRoom(nsp, room);

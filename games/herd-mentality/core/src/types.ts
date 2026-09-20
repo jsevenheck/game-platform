@@ -80,6 +80,8 @@ export interface ServerRoom {
   targetCows: number;
   prompt: Prompt | null;
   promptDeck: Prompt[];
+  /** Content language of the match (prompt texts). */
+  locale: 'en' | 'de';
   players: ServerPlayer[];
   answers: Map<string, string>;
   cows: Map<string, number>;

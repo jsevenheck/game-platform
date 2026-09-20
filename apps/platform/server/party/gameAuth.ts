@@ -12,7 +12,12 @@
  */
 
 import { getPartyByActiveMatch } from './partyStore';
-import type { PartyMember, PartySession } from './types';
+import {
+  normalizeMatchLocale,
+  type MatchLocale,
+  type PartyMember,
+  type PartySession,
+} from './types';
 
 /**
  * Minimal structural view of a game room that the host-sync helpers need.
@@ -43,6 +48,8 @@ export interface AuthorizePartyJoinSuccess {
   hostConnected: boolean;
   /** Whether the joining player IS the platform host. */
   isHost: boolean;
+  /** Content language of this match (the host's UI language at launch). */
+  locale: MatchLocale;
 }
 
 export interface AuthorizePartyJoinFailure {
@@ -96,6 +103,7 @@ export function authorizePartyJoin(
     hostPlayerId: party.hostPlayerId,
     hostConnected: hostMember?.connected ?? false,
     isHost: party.hostPlayerId === playerId,
+    locale: normalizeMatchLocale(party.activeMatch?.locale),
   };
 }
 

@@ -1,14 +1,14 @@
 <script setup lang="ts">
+import { useI18n } from 'vue-i18n';
 import { useGameStore } from '../stores/game';
 
+const { t } = useI18n();
 const store = useGameStore();
 </script>
 
 <template>
-  <aside
-    class="mx-auto mt-4 w-full max-w-xs rounded-[--radius-md] border border-border bg-shell p-3"
-  >
-    <h4 class="ui-section-label">Players</h4>
+  <aside class="mx-auto mt-4 w-full max-w-xs rounded-md border border-border bg-shell p-3">
+    <h4 class="ui-section-label">{{ t('blackout.players.title') }}</h4>
     <div
       v-for="player in store.room?.players"
       :key="player.id"

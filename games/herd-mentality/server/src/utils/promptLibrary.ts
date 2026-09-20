@@ -5,10 +5,14 @@ import { DEFAULT_PROMPTS } from '../../../core/src/constants';
 import type { Prompt } from '../../../core/src/types';
 
 const logger = createComponentLogger('herd-mentality-prompt-library');
-const PROMPTS_FILE = path.resolve(__dirname, '../../data/prompts.csv');
+type PromptLocale = 'en' | 'de';
+
+function promptsFile(locale: PromptLocale): string {
+  return path.resolve(__dirname, `../../data/prompts.${locale}.csv`);
+}
 let fileReader: (filePath: string, encoding: 'utf8') => string = (filePath, encoding) =>
   fs.readFileSync(filePath, encoding);
-let cache: Prompt[] | null = null;
+const cache = new Map<PromptLocale, Prompt[]>();
 
 function parseLine(line: string): string | null {
   const value = line.replace(/^\uFEFF/, '').trim();
@@ -17,12 +21,13 @@ function parseLine(line: string): string | null {
   return (match?.[1] ?? value).replace(/""/g, '"').trim() || null;
 }
 
-function loadPrompts(): Prompt[] {
+function loadPrompts(locale: PromptLocale): Prompt[] {
+  const file = promptsFile(locale);
   let raw: string;
   try {
-    raw = fileReader(PROMPTS_FILE, 'utf8');
+    raw = fileReader(file, 'utf8');
   } catch (error) {
-    logger.warn({ error, path: PROMPTS_FILE }, 'prompts.csv unavailable; using built-in prompts');
+    logger.warn({ error, path: file }, 'prompts csv unavailable; using built-in prompts');
     return [...DEFAULT_PROMPTS];
   }
   const prompts: Prompt[] = [];
@@ -36,19 +41,23 @@ function loadPrompts(): Prompt[] {
     prompts.push({ id: `p-${String(index).padStart(3, '0')}`, text });
   }
   if (prompts.length === 0) {
-    logger.warn({ path: PROMPTS_FILE }, 'prompts.csv had no valid rows; using built-in prompts');
+    logger.warn({ path: file }, 'prompts csv had no valid rows; using built-in prompts');
     return [...DEFAULT_PROMPTS];
   }
   return prompts;
 }
 
-export function getPromptLibrary(): Prompt[] {
-  if (!cache) cache = loadPrompts();
-  return cache.map((prompt) => ({ ...prompt }));
+export function getPromptLibrary(locale: PromptLocale = 'en'): Prompt[] {
+  let prompts = cache.get(locale);
+  if (!prompts) {
+    prompts = loadPrompts(locale);
+    cache.set(locale, prompts);
+  }
+  return prompts.map((prompt) => ({ ...prompt }));
 }
 
-export function pickRandomPrompts(count: number): Prompt[] {
-  const pool = getPromptLibrary();
+export function pickRandomPrompts(count: number, locale: PromptLocale = 'en'): Prompt[] {
+  const pool = getPromptLibrary(locale);
   for (let i = pool.length - 1; i > 0; i -= 1) {
     const j = Math.floor(Math.random() * (i + 1));
     [pool[i], pool[j]] = [pool[j]!, pool[i]!];
@@ -57,12 +66,12 @@ export function pickRandomPrompts(count: number): Prompt[] {
 }
 
 export function __resetPromptLibraryCacheForTests(): void {
-  cache = null;
+  cache.clear();
 }
 
 export function __setPromptFileReaderForTests(
   reader?: (filePath: string, encoding: 'utf8') => string
 ): void {
   fileReader = reader ?? ((filePath, encoding) => fs.readFileSync(filePath, encoding));
-  cache = null;
+  cache.clear();
 }

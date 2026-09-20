@@ -97,6 +97,8 @@ export interface ServerRoom {
   totalRounds: number;
   topic: Topic | null;
   topicDeck: Topic[];
+  /** Content language of the match (categories and motifs). */
+  locale: 'en' | 'de';
   agentId: string | null;
   players: ServerPlayer[];
   strokes: StrokeView[];

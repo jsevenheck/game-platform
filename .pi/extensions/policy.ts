@@ -30,7 +30,6 @@ const READ_DENY = [
   /\.crt$/,
   /\.cer$/,
   /\.log$/,
-  /(?:^|\/)graphify-out(?:\/|$)/,
 ];
 
 // Schreiben grundsätzlich verboten: kritische Konfigurationsdateien & Credentials
@@ -129,20 +128,6 @@ const BASH_DENY = [
 
   // .env-Inhalt via Shell-Tools lesen blockieren
   /\b(cat|less|more|grep|awk|sed)\b[^|]*\.env\b/,
-];
-
-// Sichere Bash-Compound-Commands.
-// Wichtig: NICHT pauschal /^if\b/ erlauben, sondern nur konkrete sichere Formen.
-const BASH_ALLOW_COMPOUND = [
-  // if [ -f graphify-out/graph.json ]; then echo yes; else echo no; fi
-  /^if\s+\[\s+-f\s+graphify-out\/graph\.json\s+\]\s*;\s*then\s+echo\s+(?:"yes"|'yes'|yes)\s*;\s*else\s+echo\s+(?:"no"|'no'|no)\s*;\s*fi$/,
-
-  // if [ -f graphify-out/graph.json ]; then graphify query "..."; else echo "NO_GRAPH"; fi
-  //
-  // Erlaubt einfache/sichere Query-Strings in '...' oder "...".
-  // Blockiert bewusst Shell-Expansionen wie $, Backticks und unquoted Queries.
-  /^if\s+\[\s+-f\s+graphify-out\/graph\.json\s+\]\s*;\s*then\s+graphify\s+query\s+(?:"[^"`$\\]*(?:\\.[^"`$\\]*)*"|'[^'`$\\]*(?:\\.[^'`$\\]*)*')\s*;\s*else\s+echo\s+(?:"NO_GRAPH"|'NO_GRAPH'|NO_GRAPH)\s*;\s*fi$/,
-  /^test\s+-f\s+graphify-out\/graph\.json\s*&&\s*echo\s+exists\s*\|\|\s*echo\s+missing\s*&&\s*pwd\s*&&\s*find\s+\.\s+-maxdepth\s+3\s+-type\s+f\s*\|\s*sed\s+'s#\^\.\/##'\s*\|\s*head\s+-80$/,
 ];
 
 // Erlaubt
@@ -264,7 +249,6 @@ const BASH_ALLOW = [
   /^touch\b/,
   /^diff\b/,
   /^patch\b/,
-  /^graphify\b/,
 
   // Linting & Formatierung
   /^eslint\b/,
@@ -272,10 +256,6 @@ const BASH_ALLOW = [
   /^tsc\b/,
   /^tslint\b/,
   /^biome\b/,
-
-  /^graphify\s+query\b/,
-  /^graphify\s+path\b/,
-  /^graphify\s+explain\b/,
 ];
 
 // ─── Extension ────────────────────────────────────────────────────────────────
@@ -341,12 +321,6 @@ export default function (pi: ExtensionAPI) {
       // Deny hat immer Vorrang
       if (matches(command, BASH_DENY)) {
         return { block: true, reason: `Bash blockiert (Denylist): ${command}` };
-      }
-
-      // Sichere Compound-Commands wie:
-      // if [ -f graphify-out/graph.json ]; then ...; else ...; fi
-      if (matches(command, BASH_ALLOW_COMPOUND)) {
-        return; // durchlassen
       }
 
       // Danach normale Allowlist prüfen

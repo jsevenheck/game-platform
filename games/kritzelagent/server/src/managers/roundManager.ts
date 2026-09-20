@@ -36,7 +36,7 @@ export function allConnectedPlayersVoted(room: ServerRoom): boolean {
 }
 
 function prepareTopicDeck(room: ServerRoom): void {
-  const deck = pickRandomTopics(room.totalRounds);
+  const deck = pickRandomTopics(room.totalRounds, room.locale);
   if (deck.length < room.totalRounds) {
     throw new KritzelagentError(
       `Need ${room.totalRounds} unique topics, library has ${deck.length}`

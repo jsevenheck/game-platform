@@ -188,6 +188,7 @@ export function registerFlip7(io: Server, namespace = '/g/flip7'): void {
       transitionToPlaying(r);
       startRound(r);
       broadcastRoom(nsp, r);
+      if (r.currentRound?.roundEndReason) advanceAfterRound(roomCode);
       gameLogger.info(
         { roomCode, roundNumber: r.currentRound?.roundNumber },
         'flip7 new round started'
@@ -347,6 +348,7 @@ export function registerFlip7(io: Server, namespace = '/g/flip7'): void {
         transitionToPlaying(room);
         startRound(room);
         broadcastRoom(nsp, room);
+        if (room.currentRound?.roundEndReason) advanceAfterRound(room.code);
         socketLogger.info(
           {
             roomCode: room.code,

@@ -89,6 +89,8 @@ export interface Room {
   winnerTeam: TeamColor | null;
   winningTeams: TeamColor[];
   teamCount: number;
+  /** Content language of the match (board words). */
+  locale: 'en' | 'de';
   assassinPenaltyMode: AssassinPenaltyMode;
   focusedCards: FocusMarker[];
   nextStartingTeamIndex: number;

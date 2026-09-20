@@ -1,28 +1,54 @@
-# Known Issues
+# Bekannte Einschränkungen
 
-## Mobile Leave Button Z-Index
+## Plattform-Controls und Game-Overlays
 
-**Affected:** All games when played on mobile browsers (Chrome on Android)
+**Betroffen:** integrierte Spiele, besonders Secret Signals auf Tablet/Desktop
 
-**Problem:** The platform's "Leave Game" button rendered in `GameView.vue` can be obscured by game-specific UI elements (e.g., `TeamRosterPanel` in Secret Signals) after scrolling. The button uses `<Teleport to="body">` with `z-[100]` but game components with high `z-index` values (e.g., for dialogs, overlays) or certain stacking contexts may render above it.
+**Aktuelles Verhalten:** Die Leave-/Language-Controls der Plattform liegen fest am oberen
+Viewport-Rand und werden absichtlich über normalen Game-Overlays gestapelt. Der
+Secret-Signals-Turn-Indikator beginnt bei größeren Breakpoints ebenfalls am oberen Rand;
+der zusätzliche Abstand im Game-Shell gilt derzeit nur für schmale Mobile-Breiten. Das
+Leave-Bestätigungsdialogfenster selbst hat jedoch einen niedrigeren z-Index als normale
+Game-Overlays und kann dadurch hinter einem Game-Overlay liegen.
 
-**Status:** Under investigation. Potential fixes to explore:
+**Auswirkung:** Der aktuelle Turn-/Team-Status kann teilweise von den festen Controls
+überdeckt werden. Ein bereits geöffnetes Leave-Bestätigungsdialogfenster kann in einem
+Game-Overlay verschwinden.
 
-- Ensure all game components avoid creating unexpected stacking contexts
-- Move the leave button logic into a shared overlay component that all games inherit
-- Use a higher z-index value on the leave button (e.g., `z-[1000]`)
-- Investigate if game-specific UI components need `isolation: isolate` applied
+**Status:** Bekannte UI-Einschränkung; noch nicht durch eine einheitliche Overlay- und
+Header-Schichtung behoben.
 
-**Workaround:** Scroll back to the top of the page after entering a game to reveal the leave button. On desktop, the button is reliably visible.
+**Empfohlene Lösung:** Einen gemeinsamen Plattform-Headerbereich an allen Breakpoints
+reservieren und eine zentrale Overlay-Schichtung definieren, in der der Leave-Dialog über
+Game-Overlays liegt. Danach Leave-Dialog, Game-Overlays und Secret-Signals-Status gemeinsam
+per Browser-Smoke-Test prüfen.
 
-## Admin Kick During Active Matches
+## Scout: 2-Spieler-Regeln
 
-**Affected:** Admin Console party management, all integrated games
+**Betroffen:** Scout bei genau zwei Spielern
 
-**Current behavior:** If an admin kicks a player while the party is in an active match, the platform ends and cleans up the active match, returns the remaining party members to the lobby, and then removes the kicked player from the party.
+**Aktuelles Verhalten:** Die Implementierung verwendet in diesem Modus drei
+Scout-&-Show-Chips und kann eine Runde beenden, sobald der Gegner den aktuellen Satz
+scoutet. Der offizielle 2-Spieler-Modus sieht drei Scout-Chips, keinen Scout-&-Show-Vorrat,
+einen Reservestapel und eine eigene Zugfolge vor.
 
-**Reason:** The current game server contract exposes `cleanupMatch(matchKey)` but does not expose a safe cross-game `removePlayerFromMatch(matchKey, playerId)` operation. Each game owns internal turn order, cards, scores, hidden state, host assignment, and reconnect behavior, so removing one player mid-match generically could leave game state inconsistent.
+**Status:** Bekannte Regelabweichung. Siehe auch [Regel-Audit](rules-audit.md).
 
-**Future improvement:** Consider adding an optional game module contract such as `removePlayerFromMatch(matchKey, playerId)` with a result indicating whether the match can continue. This would need per-game implementations and tests for Scout, Flip 7, Blackout, Imposter, and Secret Signals.
+**Workaround:** Scout derzeit mit mindestens drei Spielern spielen, wenn die offizielle
+2-Spieler-Regel nicht bewusst als Variante akzeptiert werden soll.
 
-**Workaround:** Treat admin kick during an active match as "kick and end match". If the remaining players should continue, they can launch a new match from the lobby.
+## Admin-Kick während eines aktiven Matches
+
+**Betroffen:** Admin-Konsole und alle integrierten Spiele
+
+**Aktuelles Verhalten:** Wenn ein Admin einen Spieler während eines aktiven Matches kickt,
+beendet und bereinigt die Plattform das Match, bringt die übrigen Party-Mitglieder zurück in
+die Lobby und entfernt anschließend den gekickten Spieler aus der Party.
+
+**Grund:** Der Game-Server-Vertrag bietet `cleanupMatch(matchKey)`, aber keine generische,
+sichere Operation zum Entfernen eines einzelnen Spielers aus einem laufenden Match. Jedes
+Spiel besitzt eigene Zugreihenfolge, Karten, Scores, Hidden State, Host-Zuordnung und
+Reconnect-Logik.
+
+**Workaround:** Den Admin-Kick in einem aktiven Match als „Kick und Match beenden“ behandeln.
+Wenn die übrigen Spieler weiterspielen sollen, starten sie aus der Lobby ein neues Match.

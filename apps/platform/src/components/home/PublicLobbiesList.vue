@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import { useI18n } from 'vue-i18n';
 import type { JoinablePartyView } from '../../stores/publicLobbies';
 
 /**
@@ -17,14 +18,15 @@ const emit = defineEmits<{
   'join-room': [{ inviteCode: string }];
 }>();
 
+const { t } = useI18n();
+
 function playerLabel(p: JoinablePartyView): string {
-  const cap =
-    p.minPlayers && p.maxPlayers
-      ? ` / ${p.minPlayers}\u2013${p.maxPlayers}`
-      : p.maxPlayers
-        ? ` / up to ${p.maxPlayers}`
-        : '';
-  return `${p.connectedPlayers}${cap} online`;
+  const connected = p.connectedPlayers;
+  if (p.minPlayers && p.maxPlayers) {
+    return t('home.lobbies.capacityRange', { connected, min: p.minPlayers, max: p.maxPlayers });
+  }
+  if (p.maxPlayers) return t('home.lobbies.capacityUpTo', { connected, max: p.maxPlayers });
+  return t('home.lobbies.capacityPlain', { connected });
 }
 
 function isCurrent(p: JoinablePartyView): boolean {
@@ -44,15 +46,17 @@ function handleJoin(p: JoinablePartyView): void {
         class="public-lobby-card"
         :class="{ 'public-lobby-card--current': isCurrent(party) }"
         data-testid="public-lobby-card"
-        :aria-label="`Join room ${party.inviteCode}`"
+        :aria-label="t('home.lobbies.joinRoom', { code: party.inviteCode })"
         @click="handleJoin(party)"
       >
         <div class="public-lobby-card__head">
           <span class="public-lobby-card__code">{{ party.inviteCode }}</span>
-          <span v-if="isCurrent(party)" class="ui-badge public-lobby-card__resume">Resume</span>
+          <span v-if="isCurrent(party)" class="ui-badge public-lobby-card__resume">{{
+            t('home.lobbies.resume')
+          }}</span>
         </div>
         <p class="public-lobby-card__game">
-          {{ party.gameName ?? 'Game not selected yet' }}
+          {{ party.gameName ?? t('home.lobbies.noGame') }}
         </p>
         <p class="public-lobby-card__meta">{{ playerLabel(party) }}</p>
       </button>

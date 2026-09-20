@@ -313,6 +313,7 @@ function registerGameHandlers(
             room = createRoom(name, {
               matchKey: sessionId,
               hostPlayerId: authorizedPlayerId,
+              locale: authorization.locale,
             });
           } catch (err) {
             instrumentation.finishError();

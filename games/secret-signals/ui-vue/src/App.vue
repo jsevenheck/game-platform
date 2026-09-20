@@ -1,5 +1,8 @@
 <script setup lang="ts">
 import { onBeforeUnmount, onMounted, ref } from 'vue';
+import { useI18n } from 'vue-i18n';
+import { localizeError } from '@platform/i18n/serverError';
+import './i18n';
 import type { AssassinPenaltyMode, PlayerRole, TeamColor } from '@shared/types';
 import type { HubIntegrationProps } from './types/config';
 import { useGameStore } from './stores/game';
@@ -20,6 +23,7 @@ const props = withDefaults(defineProps<HubIntegrationProps>(), {
 
 const emit = defineEmits<{ 'phase-change': [phase: string] }>();
 
+const { t } = useI18n();
 const store = useGameStore();
 const { socket } = useSocket({
   apiBaseUrl: props.apiBaseUrl,
@@ -213,7 +217,13 @@ onBeforeUnmount(() => {
 <template>
   <div class="min-h-dvh">
     <template v-if="!store.room">
-      <p class="py-8 px-4 text-center text-muted">{{ embeddedError || 'Connecting...' }}</p>
+      <p class="py-8 px-4 text-center text-muted">
+        {{
+          embeddedError
+            ? localizeError(embeddedError, 'secret-signals')
+            : t('secret-signals.connecting')
+        }}
+      </p>
     </template>
     <Lobby
       v-else-if="store.phase === 'lobby'"

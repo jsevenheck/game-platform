@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { computed } from 'vue';
+import { useI18n } from 'vue-i18n';
 import type { DrawnCardInfo } from '../stores/game';
 
 const props = defineProps<{
@@ -8,7 +9,10 @@ const props = defineProps<{
   drawerName: string | null;
 }>();
 
-const label = computed(() => (props.drawerName ? `${props.drawerName} drew` : 'You drew'));
+const { t } = useI18n();
+const label = computed(() =>
+  props.drawerName ? t('flip7.toast.other', { name: props.drawerName }) : t('flip7.toast.you')
+);
 
 /** Main display text – short bold text that inherits the accent colour. */
 const cardText = computed(() => {
@@ -30,15 +34,15 @@ const cardText = computed(() => {
 const cardSubtext = computed(() => {
   switch (props.card.kind) {
     case 'number':
-      return 'Number Card';
+      return t('flip7.toast.number');
     case 'modifierAdd':
-      return 'Bonus';
+      return t('flip7.toast.bonus');
     case 'modifierX2':
-      return 'Double Up!';
+      return t('flip7.toast.double');
     case 'action':
-      return { freeze: 'Freeze', flipThree: 'Flip Three', secondChance: '2nd Chance' }[
-        props.card.action
-      ];
+      return t(
+        `flip7.actions.${{ freeze: 'freeze', flipThree: 'flipThree', secondChance: 'secondChanceShort' }[props.card.action]}`
+      );
     default:
       return '';
   }

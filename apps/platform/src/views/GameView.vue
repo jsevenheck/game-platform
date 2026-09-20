@@ -1,12 +1,16 @@
 <script setup lang="ts">
 import { ref, computed, onMounted, onBeforeUnmount, shallowRef } from 'vue';
+import { useI18n } from 'vue-i18n';
 import { useRouter } from 'vue-router';
 import { usePartyStore } from '../stores/party';
 import { usePartySocket } from '../composables/usePartySocket';
 import { getClientGame } from '../games/index';
+import LanguageSwitcher from '../components/LanguageSwitcher.vue';
+import { localizeError } from '../i18n/serverError';
 import type { Component } from 'vue';
 
 const props = defineProps<{ inviteCode: string; gameId: string }>();
+const { t } = useI18n();
 const router = useRouter();
 const store = usePartyStore();
 const socket = usePartySocket();
@@ -68,7 +72,7 @@ function handlePartyKicked(): void {
 async function loadGameComponent(retries = 2): Promise<void> {
   const game = getClientGame(props.gameId);
   if (!game) {
-    loadError.value = `Unknown game: ${props.gameId}`;
+    loadError.value = t('gameView.unknownGame', { id: props.gameId });
     return;
   }
 
@@ -88,7 +92,7 @@ async function loadGameComponent(retries = 2): Promise<void> {
     }
   }
 
-  loadError.value = `Failed to load game: ${String(lastError)}`;
+  loadError.value = t('gameView.loadFailed', { reason: String(lastError) });
 }
 
 // Lightweight re-bind used on every reconnect after the component is mounted.
@@ -189,26 +193,33 @@ onBeforeUnmount(() => {
 </script>
 
 <template>
-  <div class="min-h-dvh">
-    <!-- Leave button via Teleport to body so it's always above everything -->
+  <div class="game-shell min-h-dvh">
+    <!-- Platform controls are teleported to body and stacked above game overlays (ui-overlay, z 9999) so leaving/switching language stays possible in every state -->
     <Teleport to="body">
-      <div class="fixed top-3 left-3 z-[100]">
+      <div class="game-controls game-controls-start">
         <button class="game-leave-btn" @click="showLeaveConfirm = true">
-          <span class="game-leave-arrow">←</span> Leave
+          <span class="game-leave-arrow">←</span> {{ t('gameView.leave') }}
         </button>
+      </div>
+      <div class="game-controls game-controls-end">
+        <LanguageSwitcher />
       </div>
     </Teleport>
 
     <!-- Leave confirmation dialog -->
     <Transition name="fade">
-      <div v-if="showLeaveConfirm" class="ui-overlay !z-[200]">
+      <div v-if="showLeaveConfirm" class="ui-overlay game-leave-overlay">
         <div class="ui-dialog">
           <div class="game-dialog-icon">🚪</div>
-          <h2 class="game-dialog-title">Leave Game?</h2>
-          <p class="game-dialog-desc">You can rejoin from the party lobby at any time.</p>
+          <h2 class="game-dialog-title">{{ t('gameView.leaveTitle') }}</h2>
+          <p class="game-dialog-desc">{{ t('gameView.leaveDescription') }}</p>
           <div class="flex flex-col gap-3">
-            <button class="ui-btn-danger" @click="onLeaveGame">Leave Game</button>
-            <button class="ui-btn-secondary" @click="showLeaveConfirm = false">Stay</button>
+            <button class="ui-btn-danger" @click="onLeaveGame">
+              {{ t('gameView.leaveConfirm') }}
+            </button>
+            <button class="ui-btn-secondary" @click="showLeaveConfirm = false">
+              {{ t('gameView.stay') }}
+            </button>
           </div>
         </div>
       </div>
@@ -216,14 +227,14 @@ onBeforeUnmount(() => {
 
     <div v-if="loadError" class="game-state-screen">
       <span class="game-state-icon">⚠️</span>
-      <p class="game-state-title">Failed to Load</p>
+      <p class="game-state-title">{{ t('gameView.loadFailedTitle') }}</p>
       <p class="game-state-msg">{{ loadError }}</p>
     </div>
 
     <div v-else-if="!gameComponent || !matchKey" class="game-state-screen">
       <span class="game-state-icon game-state-spinner" aria-hidden="true" />
-      <p class="game-state-title">Loading game…</p>
-      <p class="game-state-msg">Please wait a moment</p>
+      <p class="game-state-title">{{ t('gameView.loading') }}</p>
+      <p class="game-state-msg">{{ t('gameView.loadingHint') }}</p>
     </div>
 
     <!-- key on matchKey forces full re-mount when the match changes (replay) -->
@@ -239,12 +250,40 @@ onBeforeUnmount(() => {
       :is-host="store.isHost"
       :on-replay-game="onReplayGame"
       :on-return-to-lobby="onReturnToLobby"
-      :action-error="actionError"
+      :action-error="localizeError(actionError)"
     />
   </div>
 </template>
 
 <style scoped>
+/* Stacking: game overlays (.ui-overlay) sit at z 9999. The teleported Leave/language
+   controls stay above them, and the leave confirmation above both. */
+.game-controls {
+  position: fixed;
+  top: 0.5rem;
+  z-index: 10000;
+}
+
+.game-controls-start {
+  left: 0.75rem;
+}
+
+.game-controls-end {
+  right: 0.75rem;
+}
+
+.game-leave-overlay {
+  z-index: 10001;
+}
+
+/* The fixed Leave button sits in the top-left corner; on phones game content
+   is full-width and would start underneath it, so reserve its height. */
+@media (max-width: 640px), (pointer: coarse) {
+  .game-shell {
+    padding-top: 3.5rem;
+  }
+}
+
 .game-leave-btn {
   display: inline-flex;
   align-items: center;
@@ -261,6 +300,12 @@ onBeforeUnmount(() => {
   backdrop-filter: blur(12px);
   -webkit-backdrop-filter: blur(12px);
   transition: all 200ms ease;
+}
+
+@media (pointer: coarse) {
+  .game-leave-btn {
+    min-height: 2.75rem;
+  }
 }
 
 .game-leave-btn:hover {

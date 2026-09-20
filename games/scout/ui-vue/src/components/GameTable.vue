@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { computed, shallowRef } from 'vue';
+import { useI18n } from 'vue-i18n';
 import { useGameStore } from '../stores/game';
 import Card from './Card.vue';
 import PlayControls from './PlayControls.vue';
@@ -18,6 +19,7 @@ const emit = defineEmits<{
   ];
 }>();
 
+const { t } = useI18n();
 const store = useGameStore();
 const scoutDialogOpen = shallowRef(false);
 
@@ -29,7 +31,9 @@ const currentTurnName = computed(() => {
 const currentPlay = computed(() => room.value?.trick?.currentPlay ?? null);
 
 function playerName(playerId: string): string {
-  return room.value?.players.find((player) => player.id === playerId)?.name ?? 'Player';
+  return (
+    room.value?.players.find((player) => player.id === playerId)?.name ?? t('scout.playerFallback')
+  );
 }
 
 function handleScout(payload: {
@@ -44,22 +48,40 @@ function handleScout(payload: {
 </script>
 
 <template>
-  <main v-if="room" class="mx-auto grid max-w-7xl gap-4 p-3 lg:grid-cols-[1fr_280px] lg:p-4">
+  <main
+    v-if="room"
+    class="mx-auto grid max-w-7xl gap-4 p-3 sm:pt-14 lg:grid-cols-[1fr_280px] lg:p-4 lg:pt-14"
+  >
     <section class="space-y-5">
       <header class="ui-panel flex flex-wrap items-center justify-between gap-3">
         <div>
           <p class="text-sm font-semibold uppercase tracking-[0.3em] text-scout">
-            Round {{ room.roundNumber }} / {{ room.totalRounds }} · Turn
-            {{ room.trick?.trickNumber ?? 1 }}
+            {{
+              t('scout.table.roundTurn', {
+                round: room.roundNumber,
+                total: room.totalRounds,
+                turn: room.trick?.trickNumber ?? 1,
+              })
+            }}
           </p>
           <h1 class="text-2xl font-black text-foreground">
-            {{ store.isMyTurn ? 'Your turn' : `${currentTurnName}'s turn` }}
+            {{
+              store.isMyTurn
+                ? t('scout.table.yourTurn')
+                : t('scout.table.turnOf', { name: currentTurnName })
+            }}
           </h1>
         </div>
         <div class="flex flex-wrap gap-2 text-sm text-muted">
-          <span class="ui-badge">Taken: {{ store.self?.takenCount ?? 0 }}</span>
-          <span class="ui-badge">Scout tokens: {{ store.self?.scoutTokens ?? 0 }}</span>
-          <span class="ui-badge">Scout & Show: {{ store.self?.scoutAndShowTokens ?? 0 }}</span>
+          <span class="ui-badge">{{
+            t('scout.table.taken', { count: store.self?.takenCount ?? 0 })
+          }}</span>
+          <span class="ui-badge">{{
+            t('scout.table.scoutTokens', { count: store.self?.scoutTokens ?? 0 })
+          }}</span>
+          <span class="ui-badge">{{
+            t('scout.table.scoutAndShow', { count: store.self?.scoutAndShowTokens ?? 0 })
+          }}</span>
         </div>
       </header>
 
@@ -72,9 +94,12 @@ function handleScout(payload: {
         >
           <div class="mb-3 flex items-center justify-between">
             <h2 class="font-bold text-foreground">
-              {{ player.name }}<span v-if="player.id === store.playerId"> (you)</span>
+              {{ player.name
+              }}<span v-if="player.id === store.playerId" class="ml-1">{{ t('scout.you') }}</span>
             </h2>
-            <span class="text-xs text-muted">{{ player.rowCount }} in row</span>
+            <span class="text-xs text-muted">{{
+              t('scout.table.inRow', { count: player.rowCount })
+            }}</span>
           </div>
           <div class="flex -space-x-8 overflow-hidden py-2">
             <Card
@@ -86,18 +111,29 @@ function handleScout(payload: {
             />
           </div>
           <p class="mt-2 text-xs text-muted">
-            {{ player.takenCount }} cards · {{ player.scoutTokens }} scout token(s) · total
-            {{ player.score }}
+            {{
+              t('scout.table.playerStats', {
+                taken: player.takenCount,
+                tokens: player.scoutTokens,
+                score: player.score,
+              })
+            }}
           </p>
         </article>
       </section>
 
       <section class="ui-panel min-h-28">
         <div class="mb-4 flex items-center justify-between">
-          <h2 class="text-lg font-bold">Prior set</h2>
+          <h2 class="text-lg font-bold">{{ t('scout.table.priorSet') }}</h2>
           <p v-if="currentPlay" class="text-sm text-muted">
-            Beat {{ currentPlay.kind }} · {{ currentPlay.count }} card(s) · low
-            {{ currentPlay.lowCard }} · high {{ currentPlay.highCard }}
+            {{
+              t('scout.table.beat', {
+                kind: t(`scout.kinds.${currentPlay.kind}`),
+                count: t('scout.cards', { count: currentPlay.count }, currentPlay.count),
+                low: currentPlay.lowCard,
+                high: currentPlay.highCard,
+              })
+            }}
           </p>
         </div>
         <div>
@@ -107,14 +143,20 @@ function handleScout(payload: {
                 playerName(currentPlay.playerId)
               }}</span>
               <span class="text-muted">
-                {{ currentPlay.kind }} / {{ currentPlay.count }} / low {{ currentPlay.lowCard }}
+                {{
+                  t('scout.table.priorSetSummary', {
+                    kind: t(`scout.kinds.${currentPlay.kind}`),
+                    count: currentPlay.count,
+                    low: currentPlay.lowCard,
+                  })
+                }}
               </span>
             </div>
             <div class="flex gap-2 overflow-x-auto">
               <Card v-for="card in currentPlay.cards" :key="card.id" :card="card" compact />
             </div>
           </article>
-          <p v-else class="text-muted">Leader chooses the opening show.</p>
+          <p v-else class="text-muted">{{ t('scout.table.leaderOpens') }}</p>
         </div>
       </section>
 
@@ -127,10 +169,9 @@ function handleScout(payload: {
 
     <aside class="space-y-5">
       <section class="ui-panel">
-        <h2 class="mb-3 text-lg font-bold">Round scoring</h2>
+        <h2 class="mb-3 text-lg font-bold">{{ t('scout.table.roundScoring') }}</h2>
         <p class="text-sm text-muted">
-          +1 per taken card, +1 per scout token, -1 per card left in hand. If everyone else only
-          scouts, the prior-set owner takes no hand penalty.
+          {{ t('scout.table.scoringRules') }}
         </p>
       </section>
       <TrickHistory :room="room" />

@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { computed, ref, watch } from 'vue';
+import { useI18n } from 'vue-i18n';
 import { useGameStore } from '../stores/game';
 import TurnIndicator from './TurnIndicator.vue';
 import GameBoard from './GameBoard.vue';
@@ -7,6 +8,7 @@ import SignalInput from './SignalInput.vue';
 import GameLog from './GameLog.vue';
 import TeamRosterPanel from './TeamRosterPanel.vue';
 
+const { t } = useI18n();
 const store = useGameStore();
 const confirmCardIndex = ref<number | null>(null);
 
@@ -99,13 +101,13 @@ watch(
               v-if="store.isDirector && store.isMyTurn && store.room?.turnPhase === 'guessing'"
               class="text-muted-foreground text-sm italic"
             >
-              Your agents are guessing...
+              {{ t('secret-signals.play.agentsGuessingYours') }}
             </div>
             <div
               v-if="store.isDirector && !store.isMyTurn"
               class="text-muted-foreground text-sm italic"
             >
-              Waiting for other team...
+              {{ t('secret-signals.play.waitingOther') }}
             </div>
 
             <GameBoard @card-press="handleCardPress" />
@@ -123,7 +125,7 @@ watch(
                 class="ui-btn-secondary hover:!border-signals hover:!text-signals"
                 @click="emit('end-turn')"
               >
-                End Turn
+                {{ t('secret-signals.play.endTurn') }}
               </button>
             </div>
 
@@ -132,7 +134,7 @@ watch(
                 class="ui-btn-ghost !text-xs !rounded-full !border !border-border-strong hover:!border-signals !text-muted hover:!text-foreground"
                 @click="emit('skip-guess-round')"
               >
-                Skip Turn
+                {{ t('secret-signals.play.skipTurn') }}
               </button>
             </div>
 
@@ -140,14 +142,14 @@ watch(
               v-if="store.isAgent && store.isMyTurn && store.room?.turnPhase === 'giving-signal'"
               class="text-muted-foreground text-sm italic"
             >
-              Waiting for your Director's signal...
+              {{ t('secret-signals.play.waitingDirector') }}
             </div>
 
             <div
               v-if="!store.isMyTurn && store.isAgent"
               class="text-muted-foreground text-sm italic"
             >
-              Waiting for other team...
+              {{ t('secret-signals.play.waitingOther') }}
             </div>
           </div>
 
@@ -170,7 +172,11 @@ watch(
     </div>
 
     <Teleport to="body">
-      <div v-if="confirmCard" class="ui-overlay !z-90" @click.self="confirmCardIndex = null">
+      <div
+        v-if="confirmCard"
+        class="ui-overlay confirm-overlay"
+        @click.self="confirmCardIndex = null"
+      >
         <div
           class="ui-dialog !max-w-[440px] !p-5"
           role="dialog"
@@ -178,7 +184,7 @@ watch(
           aria-labelledby="confirm-title"
         >
           <p class="text-signals text-xs font-extrabold uppercase tracking-[0.1em]">
-            Confirm Reveal
+            {{ t('secret-signals.play.confirmReveal') }}
           </p>
           <h3
             id="confirm-title"
@@ -187,20 +193,20 @@ watch(
             {{ confirmCard.word }}
           </h3>
           <p class="mt-3 text-muted text-base leading-relaxed">
-            This card is only marked so far. Reveal it for the whole room?
+            {{ t('secret-signals.play.confirmText') }}
           </p>
           <div class="flex justify-center flex-wrap gap-2.5 mt-5">
             <button
               class="ui-btn-secondary min-w-40 !py-3 !font-extrabold"
               @click="confirmCardIndex = null"
             >
-              Keep Marked
+              {{ t('secret-signals.play.keepMarked') }}
             </button>
             <button
               class="ui-btn-danger min-w-40 !py-3 !font-extrabold"
               @click="handleConfirmReveal"
             >
-              Reveal Card
+              {{ t('secret-signals.play.revealCard') }}
             </button>
           </div>
         </div>
@@ -210,6 +216,10 @@ watch(
 </template>
 
 <style scoped>
+.confirm-overlay {
+  z-index: 90;
+}
+
 .gameplay-content {
   display: flex;
   flex: 1;

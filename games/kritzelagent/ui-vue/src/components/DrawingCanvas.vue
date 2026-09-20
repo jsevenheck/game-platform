@@ -1,8 +1,10 @@
 <script setup lang="ts">
 import { onBeforeUnmount, onMounted, ref, watch } from 'vue';
+import { useI18n } from 'vue-i18n';
 import type { StrokePoint, StrokeView } from '@shared/types';
 
 const props = defineProps<{ strokes: StrokeView[]; disabled: boolean }>();
+const { t } = useI18n();
 const emit = defineEmits<{ stroke: [points: StrokePoint[]] }>();
 const canvas = ref<HTMLCanvasElement | null>(null);
 const drawing = ref<StrokePoint[]>([]);
@@ -92,7 +94,7 @@ onBeforeUnmount(() => resizeObserver?.disconnect());
     class="kritzelagent-canvas"
     :class="{ 'kritzelagent-canvas--disabled': disabled }"
     role="img"
-    aria-label="Gemeinsame Kritzel-Leinwand"
+    :aria-label="t('kritzelagent.drawing.canvas')"
     @pointerdown="start"
     @pointermove="move"
     @pointerup="finish"
@@ -103,8 +105,10 @@ onBeforeUnmount(() => resizeObserver?.disconnect());
 <style scoped>
 .kritzelagent-canvas {
   display: block;
-  width: 100%;
-  min-height: 18rem;
+  /* Fit the viewport: never taller than the space left below the header. */
+  width: min(100%, calc((100dvh - 20rem) * 4 / 3));
+  min-width: 16rem;
+  margin-inline: auto;
   aspect-ratio: 4 / 3;
   touch-action: none;
   border: 2px solid var(--color-kritzelagent, #f97316);

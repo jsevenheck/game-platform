@@ -1,7 +1,9 @@
 <script setup lang="ts">
 import { computed } from 'vue';
+import { useI18n } from 'vue-i18n';
 import type { RoomView } from '@shared/types';
 const props = defineProps<{ room: RoomView; isHost: boolean; pending: boolean }>();
+const { t } = useI18n();
 const emit = defineEmits<{ reveal: []; next: [] }>();
 const isLast = computed(() => props.room.currentRound >= props.room.totalRounds);
 const groupText = (group: { playerNames: string[]; count: number }) =>
@@ -14,7 +16,13 @@ const groupText = (group: { playerNames: string[]; count: number }) =>
     aria-labelledby="herd-mentality-reveal-title"
   >
     <p class="text-sm text-muted-foreground">
-      Frage {{ room.currentRound }} von {{ room.totalRounds }} · Ziel: {{ room.targetCows }} Kühe
+      {{
+        t('herd-mentality.reveal.progress', {
+          round: room.currentRound,
+          total: room.totalRounds,
+          cows: room.targetCows,
+        })
+      }}
     </p>
     <h2
       id="herd-mentality-reveal-title"
@@ -25,24 +33,28 @@ const groupText = (group: { playerNames: string[]; count: number }) =>
       {{ room.prompt?.text }}
     </h2>
     <div v-if="room.result" class="mt-5" data-testid="herd-mentality-groups" aria-live="polite">
-      <h3 class="font-semibold">Die Antworten der Herde</h3>
-      <ul class="mt-3 space-y-2" aria-label="Antwortgruppen">
+      <h3 class="font-semibold">{{ t('herd-mentality.reveal.herdAnswers') }}</h3>
+      <ul class="mt-3 space-y-2" :aria-label="t('herd-mentality.reveal.groups')">
         <li v-for="group in room.result.groups" :key="group.answer" class="ui-panel">
           <strong>{{ group.answer }}</strong> · {{ groupText(group) }}
-          <span v-if="room.result.majorityAnswer === group.answer" class="ml-2 text-success"
-            >+1 Kuh pro Person</span
-          >
+          <span v-if="room.result.majorityAnswer === group.answer" class="ml-2 text-success">{{
+            t('herd-mentality.reveal.cowPerPerson')
+          }}</span>
         </li>
       </ul>
       <p v-if="room.result.pinkCowPlayerId" class="mt-3 text-warning">
-        Eine einzelne Antwort bekommt die Pink Cow.
+        {{ t('herd-mentality.reveal.pinkCow') }}
       </p>
       <p v-if="room.winners.length" class="mt-3 text-success">
-        Gewonnen: {{ room.winners.map((winner) => winner.name).join(', ') }}
+        {{
+          t('herd-mentality.reveal.winners', {
+            names: room.winners.map((winner) => winner.name).join(', '),
+          })
+        }}
       </p>
     </div>
     <p v-else class="mt-5 text-muted-foreground" role="status">
-      Alle Antworten sind da. Der Host kann jetzt auflösen.
+      {{ t('herd-mentality.reveal.allIn') }}
     </p>
     <div v-if="isHost && room.phase === 'allSubmitted'" class="mt-5">
       <button
@@ -52,7 +64,7 @@ const groupText = (group: { playerNames: string[]; count: number }) =>
         :disabled="pending"
         @click="emit('reveal')"
       >
-        {{ pending ? 'Wird aufgelöst…' : 'Antworten auflösen' }}
+        {{ pending ? t('herd-mentality.reveal.revealing') : t('herd-mentality.reveal.reveal') }}
       </button>
     </div>
     <div v-else-if="isHost && room.phase === 'reveal'" class="mt-5">
@@ -63,11 +75,17 @@ const groupText = (group: { playerNames: string[]; count: number }) =>
         :disabled="pending"
         @click="emit('next')"
       >
-        {{ pending ? 'Wird geladen…' : isLast ? 'Endergebnis anzeigen' : 'Nächste Frage' }}
+        {{
+          pending
+            ? t('herd-mentality.reveal.loading')
+            : isLast
+              ? t('herd-mentality.reveal.finalScore')
+              : t('herd-mentality.reveal.next')
+        }}
       </button>
     </div>
     <p v-else-if="room.phase === 'allSubmitted'" class="mt-5 text-muted-foreground" role="status">
-      Warte darauf, dass der Host die Antworten auflöst.
+      {{ t('herd-mentality.reveal.waitingForHost') }}
     </p>
   </section>
 </template>

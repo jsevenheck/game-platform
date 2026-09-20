@@ -1,9 +1,11 @@
 <script setup lang="ts">
 import { computed } from 'vue';
+import { useI18n } from 'vue-i18n';
 import { MIN_PLAYERS } from '@shared/constants';
 import { useGameStore } from '../stores/game';
 
 const emit = defineEmits<{ startGame: [] }>();
+const { t } = useI18n();
 const store = useGameStore();
 
 const playerCount = computed(() => store.room?.players.length ?? 0);
@@ -14,18 +16,20 @@ const canStart = computed(() => store.isHost && playerCount.value >= MIN_PLAYERS
   <main class="mx-auto flex min-h-dvh max-w-3xl flex-col justify-center gap-6 p-6">
     <section class="ui-panel text-center">
       <p class="text-sm font-semibold uppercase tracking-[0.3em] text-scout">Scout</p>
-      <h1 class="mt-2 text-4xl font-black text-foreground">Ready your row</h1>
+      <h1 class="mt-2 text-4xl font-black text-foreground">{{ t('scout.lobby.title') }}</h1>
       <p class="mt-3 text-muted">
-        Play contiguous card runs, scout from the table, and collect the richest tricks.
+        {{ t('scout.lobby.intro') }}
       </p>
     </section>
 
     <section class="ui-panel">
       <div class="mb-4 flex items-center justify-between">
-        <h2 class="text-xl font-bold text-foreground">Players ({{ playerCount }})</h2>
-        <span class="ui-badge border-scout/40 bg-scout-muted text-scout"
-          >{{ MIN_PLAYERS }}–5 players</span
-        >
+        <h2 class="text-xl font-bold text-foreground">
+          {{ t('scout.lobby.players', { count: playerCount }) }}
+        </h2>
+        <span class="ui-badge border-scout/40 bg-scout-muted text-scout">{{
+          t('scout.lobby.range', { min: MIN_PLAYERS, max: 5 })
+        }}</span>
       </div>
       <ul class="space-y-2">
         <li
@@ -34,10 +38,15 @@ const canStart = computed(() => store.isHost && playerCount.value >= MIN_PLAYERS
           class="flex items-center justify-between rounded-lg border border-border bg-card px-4 py-3"
         >
           <span class="font-semibold text-foreground">
-            {{ player.name }}<span v-if="player.id === store.playerId"> (you)</span>
+            {{ player.name
+            }}<span v-if="player.id === store.playerId" class="ml-1">{{ t('scout.you') }}</span>
           </span>
           <span class="text-sm text-muted">{{
-            player.isHost ? 'Host' : player.connected ? 'Ready' : 'Offline'
+            player.isHost
+              ? t('scout.lobby.host')
+              : player.connected
+                ? t('scout.lobby.ready')
+                : t('scout.lobby.offline')
           }}</span>
         </li>
       </ul>
@@ -45,14 +54,14 @@ const canStart = computed(() => store.isHost && playerCount.value >= MIN_PLAYERS
 
     <button
       v-if="store.isHost"
-      class="ui-btn-primary btn-scout w-full"
+      class="ui-btn-primary ui-btn-lg btn-scout w-full"
       type="button"
       :disabled="!canStart"
       @click="emit('startGame')"
     >
-      Start Game
+      {{ t('scout.lobby.start') }}
     </button>
-    <p v-else class="text-center text-muted">Waiting for host to start…</p>
+    <p v-else class="text-center text-muted">{{ t('scout.lobby.waitingForHost') }}</p>
   </main>
 </template>
 
