@@ -1,9 +1,11 @@
 <script setup lang="ts">
 import { computed, ref, onMounted, onBeforeUnmount } from 'vue';
+import { useI18n } from 'vue-i18n';
 import { useGameStore } from '../stores/game';
 
 const emit = defineEmits<{ 'play-again': [] }>();
 
+const { t } = useI18n();
 const store = useGameStore();
 
 // Delay action controls so players can absorb the final scoreboard first.
@@ -45,23 +47,29 @@ const sortedPlayers = computed(() =>
     <div class="text-center">
       <div class="text-5xl">🏆</div>
       <h1 class="mt-3 text-3xl font-bold text-flip7">
-        {{ winners.length === 1 ? winners[0]?.name + ' Wins!' : 'Game Over!' }}
+        {{
+          winners.length === 1
+            ? t('flip7.gameOver.winner', { name: winners[0]?.name })
+            : t('flip7.gameOver.title')
+        }}
       </h1>
       <p class="mt-2 text-sm text-muted-foreground">
         {{
-          winners.length === 1 ? `Reached ${store.room?.targetScore} points!` : 'Multiple winners'
+          winners.length === 1
+            ? t('flip7.gameOver.reached', { score: store.room?.targetScore })
+            : t('flip7.gameOver.multiple')
         }}
       </p>
     </div>
 
     <!-- Final scoreboard -->
     <div class="ui-panel w-full max-w-md">
-      <p class="ui-section-label mb-3">Final Scores</p>
+      <p class="ui-section-label mb-3">{{ t('flip7.gameOver.finalScores') }}</p>
       <ol class="space-y-2">
         <li
           v-for="(player, i) in sortedPlayers"
           :key="player.id"
-          class="flex items-center gap-3 rounded-[--radius-sm] px-3 py-2"
+          class="flex items-center gap-3 rounded-sm px-3 py-2"
           :class="{
             'bg-flip7-muted ring-1 ring-flip7': store.room?.winnerIds.includes(player.id),
             'bg-elevated': !store.room?.winnerIds.includes(player.id),
@@ -80,10 +88,14 @@ const sortedPlayers = computed(() =>
          we also show a local button for reconnect scenarios or direct usage -->
     <template v-if="showControls">
       <button v-if="store.isHost" class="ui-btn-ghost" type="button" @click="emit('play-again')">
-        Play Again
+        {{ t('flip7.gameOver.playAgain') }}
       </button>
-      <p v-else class="text-sm text-muted-foreground">Waiting for host…</p>
+      <p v-else class="text-sm text-muted-foreground">
+        {{ t('flip7.gameOver.waiting') }}
+      </p>
     </template>
-    <p v-else class="animate-pulse text-sm text-muted-foreground">Reviewing scores…</p>
+    <p v-else class="animate-pulse text-sm text-muted-foreground">
+      {{ t('flip7.gameOver.reviewing') }}
+    </p>
   </div>
 </template>

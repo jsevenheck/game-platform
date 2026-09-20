@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { computed, nextTick, onMounted, onBeforeUnmount, ref, watch } from 'vue';
+import { useI18n } from 'vue-i18n';
 import { usePartyStore } from '../stores/party';
 import { usePartySocket } from '../composables/usePartySocket';
 import { useHomeTabs, HOME_TABS } from '../composables/useHomeTabs';
@@ -9,7 +10,9 @@ import HomeTabBar from '../components/home/HomeTabBar.vue';
 import BrowseTabPanel from '../components/home/BrowseTabPanel.vue';
 import HostTabPanel from '../components/home/HostTabPanel.vue';
 import JoinTabPanel from '../components/home/JoinTabPanel.vue';
+import LanguageSwitcher from '../components/LanguageSwitcher.vue';
 
+const { t } = useI18n();
 const store = usePartyStore();
 const socket = usePartySocket();
 const { activeTab, setTab } = useHomeTabs();
@@ -77,8 +80,12 @@ onBeforeUnmount(() => {
 </script>
 
 <template>
-  <div class="home-root">
+  <main class="home-root">
     <div class="home-card" :class="activeTab === 'browse' ? 'home-card-wide' : 'home-card-compact'">
+      <div class="home-language">
+        <LanguageSwitcher />
+      </div>
+
       <!-- Top accent line -->
       <div class="home-top-line" />
 
@@ -100,8 +107,8 @@ onBeforeUnmount(() => {
 
       <!-- Hero -->
       <div class="home-hero">
-        <h1 class="home-title">Game Platform</h1>
-        <p class="home-sub">Browse games, host a party, or join your friends</p>
+        <h1 class="home-title">{{ t('home.title') }}</h1>
+        <p class="home-sub">{{ t('home.subtitle') }}</p>
       </div>
 
       <!-- Tab bar -->
@@ -165,7 +172,7 @@ onBeforeUnmount(() => {
         </div>
       </Transition>
     </div>
-  </div>
+  </main>
 </template>
 
 <style scoped>
@@ -231,6 +238,24 @@ onBeforeUnmount(() => {
   right: 1.1rem;
 }
 
+.home-language {
+  position: absolute;
+  top: 0.9rem;
+  right: 3.1rem;
+  z-index: 1;
+}
+
+/* On phones the absolutely placed switcher would sit on top of the wrapped title;
+   put it in the flow above the hero instead. */
+@media (max-width: 640px), (pointer: coarse) {
+  .home-language {
+    position: static;
+    display: flex;
+    justify-content: center;
+    margin-bottom: 0.75rem;
+  }
+}
+
 .home-hero {
   text-align: center;
   margin-bottom: 1.25rem;
@@ -240,10 +265,7 @@ onBeforeUnmount(() => {
   font-size: 1.625rem;
   font-weight: 800;
   letter-spacing: -0.02em;
-  background: linear-gradient(135deg, #f0f0f5 0%, #7878a0 100%);
-  -webkit-background-clip: text;
-  -webkit-text-fill-color: transparent;
-  background-clip: text;
+  color: var(--color-foreground);
   margin-bottom: 0.25rem;
   line-height: 1.2;
 }

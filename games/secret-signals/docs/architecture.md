@@ -42,7 +42,7 @@ Core design rules:
   and win checks
 - `managers/phaseManager.ts`: transitions between `lobby`, `playing`, and `ended`
 - `managers/broadcastManager.ts`: room projection and per-player sanitization
-- `data/words.ts`: shared bank of 800 curated German board words
+- `data/words.de.ts` and `data/words.en.ts`: locale-specific board word banks (800 German, 537 English words); `data/words.ts` selects the list for the match content language
 
 ### Socket handlers
 

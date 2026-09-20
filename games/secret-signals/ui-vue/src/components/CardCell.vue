@@ -68,7 +68,7 @@ function borderColor(): string {
     <span v-if="isFocused && focusedByName" class="focus-chip">
       {{ focusedByName }}
     </span>
-    <span class="relative z-[1]">{{ card.word }}</span>
+    <span class="relative z-1">{{ card.word }}</span>
     <span
       v-if="isDirectorView && !card.revealed && card.type === 'assassin'"
       class="absolute top-1 right-1.5 text-xs opacity-70"

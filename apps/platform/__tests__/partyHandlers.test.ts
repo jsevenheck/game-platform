@@ -18,13 +18,18 @@ vi.mock('nanoid', () => {
   };
 });
 
+// Hoisted so the same mock fn instance is visible both inside the
+// vi.mock factory below and in tests that assert on it (e.g. F7's
+// cleanupMatch-on-idle-expiry regression test).
+const { cleanupMatchMock } = vi.hoisted(() => ({ cleanupMatchMock: vi.fn() }));
+
 vi.mock('../server/registry/index', () => ({
   getGame: (gameId: string) => {
     if (gameId === 'test-game') {
       return {
         definition: { id: 'test-game', name: 'Test', minPlayers: 2, maxPlayers: 10 },
         registerServer: vi.fn(),
-        cleanupMatch: vi.fn(),
+        cleanupMatch: cleanupMatchMock,
       };
     }
     return undefined;
@@ -88,6 +93,7 @@ describe('partyHandlers', () => {
   afterEach(() => {
     vi.useRealTimers();
     resetPartyActionRateLimit();
+    cleanupMatchMock.mockClear();
     for (const id of partyIds) {
       clearPartyCleanup(id);
       deleteParty(id);
@@ -365,6 +371,36 @@ describe('partyHandlers', () => {
     partyIds.pop();
   });
 
+  // F7 regression: a party that goes idle (everyone disconnects) while it
+  // still has an active match previously vanished with no path left to
+  // ever call that game's cleanupMatch — orphaning the game module's own
+  // room state for that match. It must now be cleaned up exactly like
+  // every other end-of-match path (host timeout, return-to-lobby, replay,
+  // admin kick/cleanup) does.
+  it('calls the active match game.cleanupMatch when an idle party with a live match expires', () => {
+    vi.useFakeTimers();
+    const ctx = setup();
+    const { socket, res } = createPartyViaSocket(ctx, 'sock-1');
+    const party = getParty(res.partyView.partyId)!;
+    party.status = 'in-match';
+    party.activeMatch = {
+      gameId: 'test-game',
+      matchKey: 'abandoned-match-key',
+      namespace: '/g/test-game',
+      startedAt: Date.now(),
+    };
+
+    socket.handlers.disconnect();
+    expect(getParty(party.partyId)).toBeDefined();
+    expect(cleanupMatchMock).not.toHaveBeenCalled();
+
+    vi.advanceTimersByTime(31 * 60 * 1000);
+
+    expect(cleanupMatchMock).toHaveBeenCalledWith('abandoned-match-key');
+    expect(getParty(party.partyId)).toBeUndefined();
+    partyIds.pop();
+  });
+
   // ────────────────────────────────────────────────────────────────
   // selectGame + launchGame
   // ────────────────────────────────────────────────────────────────
@@ -631,6 +667,72 @@ describe('partyHandlers', () => {
       expect(snap.find((p) => p.inviteCode === hostRes.partyView.inviteCode)).toBeUndefined();
       // Party is scheduled for cleanup, not deleted; clear it in afterEach via partyIds.
       clearPartyCleanup(hostRes.partyView.partyId);
+    });
+  });
+
+  // ────────────────────────────────────────────────────────────────
+  // Malformed-payload safety (F1 regression coverage)
+  //
+  // Every field read from a client payload must be type-checked before a
+  // string method is called on it. A client can send any JSON value for
+  // any field regardless of the compile-time event types, and a socket
+  // handler that throws synchronously crashes the whole server process
+  // (see apps/platform/server/logging/logger.ts's uncaughtException
+  // handler) — so these must reject cleanly, never throw.
+  // ────────────────────────────────────────────────────────────────
+
+  describe('malformed payload safety', () => {
+    it('createParty rejects a non-string playerName instead of throwing', () => {
+      const ctx = setup();
+      const socket = connectSocket(ctx, 'sock-1');
+      const cb = vi.fn();
+      expect(() => socket.handlers.createParty({ playerName: 12345 }, cb)).not.toThrow();
+      expect(cb.mock.calls[0][0]).toEqual({ ok: false, error: 'Invalid player name' });
+    });
+
+    it('joinParty rejects non-string playerName/inviteCode instead of throwing', () => {
+      const ctx = setup();
+      const socket = connectSocket(ctx, 'sock-1');
+      const cb = vi.fn();
+      expect(() =>
+        socket.handlers.joinParty({ playerName: { nested: true }, inviteCode: 999 }, cb)
+      ).not.toThrow();
+      expect(cb.mock.calls[0][0].ok).toBe(false);
+    });
+
+    it('resumeParty rejects non-string fields instead of throwing', () => {
+      const ctx = setup();
+      const socket = connectSocket(ctx, 'sock-1');
+      const cb = vi.fn();
+      expect(() =>
+        socket.handlers.resumeParty({ inviteCode: [], playerId: null, resumeToken: 42 }, cb)
+      ).not.toThrow();
+      expect(cb.mock.calls[0][0]).toEqual({ ok: false, error: 'Party not found' });
+    });
+
+    it('a handler throwing internally responds with a sanitized error instead of crashing', () => {
+      const ctx = setup();
+      const { res: hostRes } = createPartyViaSocket(ctx, 'sock-1');
+      const joiner = connectSocket(ctx, 'sock-2');
+      const cb = vi.fn();
+      // getPartyByInviteCode is real here; force an internal throw downstream
+      // by corrupting a party's members Map so party.members.set throws.
+      const party = getParty(hostRes.partyView.partyId)!;
+      const originalSet = party.members.set.bind(party.members);
+      party.members.set = () => {
+        throw new Error('simulated internal failure');
+      };
+      try {
+        expect(() =>
+          joiner.handlers.joinParty(
+            { playerName: 'P2', inviteCode: hostRes.partyView.inviteCode },
+            cb
+          )
+        ).not.toThrow();
+      } finally {
+        party.members.set = originalSet;
+      }
+      expect(cb.mock.calls[0][0]).toEqual({ ok: false, error: 'Internal error' });
     });
   });
 });

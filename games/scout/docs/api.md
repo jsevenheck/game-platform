@@ -7,8 +7,8 @@ All client events use Socket.IO acknowledgements. Successful acknowledgement pay
 ## Client → server events
 
 ### `autoJoinRoom`
-> **Authorization:** The server validates `joinToken` against the active platform party member via `authorizePartyJoin` from `apps/platform/server/party/gameAuth.ts`. Host identity is derived from `party.hostPlayerId`, not from the client-supplied `isHost` flag.
 
+> **Authorization:** The server validates `joinToken` against the active platform party member via `authorizePartyJoin` from `apps/platform/server/party/gameAuth.ts`. Host identity is derived from `party.hostPlayerId`, not from the client-supplied `isHost` flag.
 
 Creates, joins, or resumes the room associated with the platform `sessionId`.
 
@@ -248,7 +248,13 @@ interface RoomView {
 }
 ```
 
-## Official Scout rules implemented
+## Rule coverage
+
+The implementation follows the official rules for the deck setup and core 3–5-player flow.
+The 2-player mode is currently a platform variant: it starts with three Scout & Show tokens
+rather than three Scout tokens and can end when the opponent scouts the current set. Do not
+interpret the following shared mechanics as a complete implementation of the official
+2-player rule sheet.
 
 - Player counts use the official deck setup: 3p removes all cards containing 10, 2p/4p remove 9/10, 5p uses the full 45-card deck.
 - Players may flip their whole dealt row once before the round starts; row order cannot otherwise be rearranged.

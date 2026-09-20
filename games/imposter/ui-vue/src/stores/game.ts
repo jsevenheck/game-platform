@@ -4,7 +4,7 @@ import type { RoomView, Phase, PlayerView, StoredSession } from '@shared/types';
 
 const SESSION_KEY = 'imposter.session';
 
-export const useGameStore = defineStore('game', () => {
+export const useGameStore = defineStore('imposter-game', () => {
   // ─── Session ───────────────────────────────────────────────────────────────
   const playerId = ref<string | null>(null);
   const roomCode = ref<string | null>(null);

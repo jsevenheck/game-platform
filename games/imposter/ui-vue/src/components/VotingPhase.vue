@@ -1,8 +1,10 @@
 <script setup lang="ts">
 import { ref, computed, onMounted, onUnmounted } from 'vue';
+import { useI18n } from 'vue-i18n';
 import type { PlayerView } from '@shared/types';
 import { useGameStore } from '../stores/game';
 
+const { t } = useI18n();
 const store = useGameStore();
 
 const emit = defineEmits<{
@@ -64,7 +66,7 @@ function handleVote() {
 function getDescriptionText(playerId: string): string {
   const description = store.room?.descriptions?.[playerId];
   if (description === '') {
-    return 'Skipped by host';
+    return t('imposter.description.skippedByHost');
   }
   return description ?? '...';
 }
@@ -78,16 +80,18 @@ function getDescriptionText(playerId: string): string {
     <div
       class="round-badge bg-imposter-muted text-imposter px-4 py-1.5 rounded-full text-sm font-bold tracking-wide uppercase border border-imposter/30"
     >
-      Round {{ store.room?.roundNumber }}
+      {{ t('imposter.common.round', { round: store.room?.roundNumber }) }}
     </div>
 
     <div class="w-full max-w-100">
-      <h2 class="text-foreground text-lg mb-4 text-center">Descriptions</h2>
+      <h2 class="text-foreground text-lg mb-4 text-center">
+        {{ t('imposter.voting.descriptions') }}
+      </h2>
       <div class="flex flex-col gap-2">
         <div
           v-for="player in orderedPlayers"
           :key="player.id"
-          class="px-4 py-3 bg-white/4 border border-white/8 rounded-[--radius-lg] transition-all"
+          class="px-4 py-3 bg-white/4 border border-white/8 rounded-lg transition-all"
           :class="{ 'border-imposter/30! bg-imposter/5!': player.id === store.playerId }"
         >
           <div class="flex items-center gap-2 mb-1">
@@ -95,7 +99,7 @@ function getDescriptionText(playerId: string): string {
             <span
               v-if="player.id === store.playerId"
               class="ui-badge bg-imposter-muted text-imposter"
-              >You</span
+              >{{ t('imposter.common.you') }}</span
             >
           </div>
           <p class="text-foreground text-base font-medium">
@@ -106,7 +110,9 @@ function getDescriptionText(playerId: string): string {
     </div>
 
     <div v-if="isDiscussion" class="w-full max-w-100">
-      <h2 class="text-foreground text-lg mb-4 text-center">Discussion Time</h2>
+      <h2 class="text-foreground text-lg mb-4 text-center">
+        {{ t('imposter.voting.discussion') }}
+      </h2>
       <div class="flex flex-col items-center gap-4">
         <div class="relative w-30 h-30">
           <svg viewBox="0 0 100 100" class="w-full h-full -rotate-90">
@@ -139,18 +145,18 @@ function getDescriptionText(playerId: string): string {
             {{ timeRemaining }}
           </span>
         </div>
-        <p class="text-muted-foreground text-sm italic">Discuss who might be the Imposter!</p>
+        <p class="text-muted-foreground text-sm italic">{{ t('imposter.voting.discuss') }}</p>
       </div>
     </div>
 
     <div v-if="isVoting" class="w-full max-w-100">
-      <h2 class="text-foreground text-lg mb-4 text-center">Cast Your Vote</h2>
+      <h2 class="text-foreground text-lg mb-4 text-center">{{ t('imposter.voting.castVote') }}</h2>
 
       <div v-if="!store.hasVoted" class="flex flex-col gap-2">
         <button
           v-for="player in otherPlayers"
           :key="player.id"
-          class="vote-btn flex items-center justify-between px-4 py-3.5 bg-white/4 border-2 border-white/10 rounded-[--radius-lg] cursor-pointer text-foreground text-base transition-all hover:border-imposter/40 hover:bg-imposter/5"
+          class="vote-btn flex items-center justify-between px-4 py-3.5 bg-white/4 border-2 border-white/10 rounded-lg cursor-pointer text-foreground text-base transition-all hover:border-imposter/40 hover:bg-imposter/5"
           :class="{ 'signals-active': selectedTarget === player.id }"
           @click="selectedTarget = player.id"
         >
@@ -165,26 +171,28 @@ function getDescriptionText(playerId: string): string {
           :disabled="!selectedTarget"
           @click="handleVote"
         >
-          Confirm Vote
+          {{ t('imposter.voting.confirm') }}
         </button>
       </div>
 
-      <div
-        v-else
-        class="text-center p-4 bg-success-muted border border-success/20 rounded-[--radius-lg]"
-      >
-        <p class="text-success font-semibold">Vote submitted!</p>
+      <div v-else class="text-center p-4 bg-success-muted border border-success/20 rounded-lg">
+        <p class="text-success font-semibold">{{ t('imposter.voting.voted') }}</p>
       </div>
 
       <div class="mt-4 text-center">
         <p class="text-muted-foreground text-xs mb-2">
-          {{ store.room?.submittedVoteIds.length ?? 0 }} / {{ store.connectedPlayers.length }} voted
+          {{
+            t('imposter.voting.votedCount', {
+              count: store.room?.submittedVoteIds.length ?? 0,
+              total: store.connectedPlayers.length,
+            })
+          }}
         </p>
         <div class="ui-progress-track">
           <div
             class="ui-progress-fill btn-imposter"
             :style="{
-              width: `${((store.room?.submittedVoteIds.length ?? 0) / (store.connectedPlayers.length || 1)) * 100}%`,
+              transform: `scaleX(${(store.room?.submittedVoteIds.length ?? 0) / (store.connectedPlayers.length || 1)})`,
             }"
           ></div>
         </div>

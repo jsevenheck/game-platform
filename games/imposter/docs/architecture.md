@@ -56,7 +56,7 @@ Design goals:
 - `utils/helpers.ts`
   shared helpers, including crypto-backed random shuffling
 - `utils/wordLibrary.ts`
-  lazy-loads `server/data/words.txt` and appends custom words
+  lazy-loads `server/data/words.<en|de>.txt` and appends custom words
 
 ### Socket Handlers
 
@@ -196,7 +196,7 @@ At that point the game moves to `ended`.
 
 The global word list is stored at:
 
-- `server/data/words.txt`
+- `server/data/words.<en|de>.txt`
 
 Behavior:
 
@@ -204,6 +204,7 @@ Behavior:
 - copied into each room as `room.wordLibrary`
 - custom lobby words are appended to the global file when writable
 - if the file cannot be read, the fallback `DEFAULT_WORD_LIBRARY` is used
+- capped at `WORD_LIBRARY_MAX_SIZE` (2000) entries — once at capacity, new submissions are dropped rather than appended, so the library (and the file behind it) can't grow unbounded
 
 ## Per-player Sanitization
 
@@ -222,7 +223,9 @@ Rules:
 
 Host-only lobby controls currently include:
 
-- configure infiltrator count
+- configure infiltrator count (`0`–`MAX_INFILTRATOR_COUNT`, currently `0` or `1` —
+  see the `configureLobby` notes in `docs/api.md` for why more than one
+  infiltrator isn't currently winnable for the civilian team)
 - configure discussion timer
 - configure target score
 - start game

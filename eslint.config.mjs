@@ -47,7 +47,7 @@ export default tseslint.config(
   // Server files — Node.js environment
   {
     files: [
-      'apps/platform/vite.config.ts',
+      'apps/platform/vite.config.mts',
       'vitest.config.ts',
       'vitest.projects.ts',
       'playwright.config.ts',

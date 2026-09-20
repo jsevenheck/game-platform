@@ -235,7 +235,7 @@ test.describe('Scout via Platform', () => {
       const scoutValuesBefore = await cardScoutValues(setupRow);
 
       await hostPage.getByRole('button', { name: 'Flip Row' }).click();
-      await expect(hostPage.getByText(/Choice locked\. Waiting for \d+ player\(s\)…/)).toBeVisible({
+      await expect(hostPage.getByText(/Choice locked\. Waiting for \d+ players?…/)).toBeVisible({
         timeout: 10_000,
       });
 
@@ -285,7 +285,7 @@ test.describe('Scout via Platform', () => {
       expect(openingValues.slice(0, 2)).toEqual(['1', '2']);
 
       await playSelectedRowCards(hostPage, [0, 1]);
-      await expect(hostPage.getByText('Beat run · 2 card(s) · low 1')).toBeVisible();
+      await expect(hostPage.getByText(/Beat run · 2 cards · low 1/)).toBeVisible();
       await expect(guestPage.getByRole('heading', { name: 'Your turn' })).toBeVisible({
         timeout: 10_000,
       });
@@ -304,8 +304,8 @@ test.describe('Scout via Platform', () => {
       await expect(aliceScoreRow).toContainText('0');
       await expect(hostPage.getByRole('button', { name: 'Play Again' }).first()).toBeVisible();
 
-      await expect(hostPage.getByText('Game Over!')).toBeVisible({ timeout: 5_000 });
-      await expect(hostPage.getByRole('button', { name: 'Back to Party' })).toBeVisible();
+      await expect(hostPage.locator('.ui-dialog')).toBeVisible({ timeout: 5_000 });
+      await expect(hostPage.getByRole('button', { name: 'Return to lobby' })).toBeVisible();
     } finally {
       await closeSession(session);
     }

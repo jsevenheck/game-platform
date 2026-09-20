@@ -81,7 +81,13 @@ export function startRound(room: Room): void {
     };
   }
 
-  const deck = process.env.E2E_TESTS === '1' ? buildE2EDeck() : shuffle(buildDeck());
+  // Official rules: the finished round's cards are set aside and the remaining draw pile
+  // carries over to the next round (the discard pile is only reshuffled once the deck runs
+  // out). A fresh deck is dealt for the first round of a match and in deterministic E2E runs.
+  const previous = room.currentRound;
+  const e2e = process.env.E2E_TESTS === '1';
+  const carryOver = previous !== null && !e2e;
+  const deck = carryOver ? previous.deck : e2e ? buildE2EDeck() : shuffle(buildDeck());
 
   room.currentRound = {
     roundNumber,
@@ -90,7 +96,7 @@ export function startRound(room: Room): void {
     turnOrder,
     currentTurnIndex: 0,
     deck,
-    discard: [],
+    discard: carryOver ? previous.discard : [],
     players: roundPlayers,
     pendingAction: null,
     roundEndReason: null,
@@ -159,6 +165,11 @@ export function continueInitialDeal(room: Room): void {
     const allDealt = round.turnOrder.every((id) => !playerNeedsInitialCard(round.players[id]));
     if (allDealt) {
       round.phase = 'playing';
+      // Every player was frozen during the deal — nobody can act, so the round ends here.
+      if (getActivePlayers(round).length === 0) {
+        finalizeRound(room);
+        return;
+      }
       // Set turn to first active player in turn order
       round.currentTurnIndex = 0;
       if (round.players[round.turnOrder[0]]?.status !== 'active') {
@@ -280,6 +291,12 @@ function advanceTurnOrFinalize(room: Room): boolean {
 
 // ─── Core game actions ────────────────────────────────────────────────────────
 
+/** Move action cards set aside during a Flip Three to the discard pile (keeps all 94 cards accounted for). */
+function settleDeferredActions(round: RoundState, rp: RoundPlayer): void {
+  for (const deferred of rp.deferredActions) round.discard.push(deferred.card);
+  rp.deferredActions = [];
+}
+
 /**
  * Apply a drawn number card to the current player's state.
  * Handles: bust, second-chance save, Flip 7 trigger.
@@ -309,7 +326,7 @@ function applyNumberCard(room: Room, playerId: string, card: NumberCard): void {
       rp.status = 'busted';
       round.discard.push(card);
       rp.flipThreeRemaining = 0;
-      rp.deferredActions = []; // Clear deferred actions on bust
+      settleDeferredActions(round, rp); // Deferred cards go to the discard pile on bust
       advanceTurnOrFinalize(room);
     }
   } else {
@@ -325,7 +342,7 @@ function applyNumberCard(room: Room, playerId: string, card: NumberCard): void {
       // Flip 7 triggered — round ends immediately
       round.roundEndReason = 'flip7';
       round.flip7PlayerId = playerId;
-      rp.deferredActions = []; // Clear deferred actions on Flip 7
+      settleDeferredActions(round, rp); // Deferred cards go to the discard pile on Flip 7
       finalizeRound(room);
     } else {
       advanceTurnOrFinalize(room);
@@ -334,9 +351,42 @@ function applyNumberCard(room: Room, playerId: string, card: NumberCard): void {
 }
 
 /**
- * Open a pending action state.
+ * Handle a drawn Second Chance card (official rules):
+ *  - the drawer keeps it if they hold none yet;
+ *  - a drawer who already holds one must give it to another active player without one;
+ *  - if nobody can take it, it is discarded.
+ */
+function receiveSecondChance(room: Room, drawerId: string, card: Card): void {
+  const round = room.currentRound!;
+  const drawer = round.players[drawerId];
+  round.discard.push(card);
+  if (!drawer) return;
+
+  if (!drawer.hasSecondChance) {
+    drawer.hasSecondChance = true;
+    enqueueResolvedAction(room.code, { drawerId, action: 'secondChance', targetId: drawerId });
+    advanceTurnOrFinalize(room);
+    return;
+  }
+
+  const recipients = getActivePlayers(round).filter(
+    (id) => id !== drawerId && !round.players[id].hasSecondChance
+  );
+  if (recipients.length === 0) {
+    advanceTurnOrFinalize(room);
+    return;
+  }
+  if (recipients.length === 1) {
+    resolveAction(room, drawerId, recipients[0], 'secondChance');
+    return;
+  }
+  round.pendingAction = { drawerId, action: 'secondChance', eligibleTargets: recipients };
+}
+
+/**
+ * Open a pending action state (Freeze / Flip Three).
  *
- * All implemented action types allow self-targeting per the official rules.
+ * Both allow self-targeting per the official rules.
  * If only one active player exists, the action auto-resolves on that player.
  */
 function openPendingAction(
@@ -346,10 +396,17 @@ function openPendingAction(
   drawnCard: Card
 ): void {
   const round = room.currentRound!;
+
+  // Second Chance is kept by whoever draws it — it is never "played" on a target.
+  if (action === 'secondChance') {
+    receiveSecondChance(room, drawerId, drawnCard);
+    return;
+  }
+
   round.discard.push(drawnCard);
 
-  // All action types allow self-targeting per official rules — eligible list is
-  // every currently active player (which always includes the drawer).
+  // Freeze and Flip Three allow self-targeting per official rules — eligible list
+  // is every currently active player (which always includes the drawer).
   const eligible = getActivePlayers(round);
 
   // No valid targets → discard without effect (safety guard; should not occur
@@ -402,20 +459,8 @@ function resolveAction(
     // This does not auto-draw cards by itself; the forced draws are only
     // consumed when subsequent hit() handling processes flipThreeRemaining.
   } else if (action === 'secondChance') {
-    // Fix 3: If the target already holds a Second Chance, pass it to another
-    // active player who doesn't have one. Only discard if no recipient exists.
-    if (!rp.hasSecondChance) {
-      rp.hasSecondChance = true;
-    } else {
-      // Target already has one — find another active player without one
-      const recipient = getActivePlayers(round).find(
-        (id) => id !== targetId && !round.players[id].hasSecondChance
-      );
-      if (recipient) {
-        round.players[recipient].hasSecondChance = true;
-      }
-      // else: no eligible recipient — card is simply discarded
-    }
+    // Only reached when a drawer who already holds one passes it on to `targetId`.
+    rp.hasSecondChance = true;
     advanceTurnOrFinalize(room);
   }
 }
@@ -455,10 +500,18 @@ function processFlipThreeDraw(room: Room, playerId: string, card: Card): boolean
   }
 
   if (card.kind === 'action') {
-    // Fix 4: Defer action cards drawn during Flip Three — resolve after all 3
-    // draws complete (unless the player busted or triggered Flip 7 first).
     rp.lastDrawnCard = card;
     rp.flipThreeRemaining--;
+
+    // Second Chance is added to the player's cards immediately, so it can already
+    // save them from a bust later in the same Flip Three.
+    if (card.action === 'secondChance') {
+      receiveSecondChance(room, playerId, card);
+      return false;
+    }
+
+    // Freeze / Flip Three drawn during Flip Three are set aside and resolved
+    // after all 3 draws complete (unless the player busted or hit Flip 7 first).
     rp.deferredActions.push({ action: card.action, card });
     // Card is NOT discarded yet — openPendingAction will discard it when the
     // deferred action is eventually processed.

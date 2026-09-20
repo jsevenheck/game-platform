@@ -15,8 +15,8 @@ All callback responses follow:
 ### Session and Room Lifecycle
 
 #### `autoJoinRoom`
-> **Authorization:** The server validates `joinToken` against the active platform party member via `authorizePartyJoin` from `apps/platform/server/party/gameAuth.ts`. Host identity is derived from `party.hostPlayerId`, not from the client-supplied `isHost` flag.
 
+> **Authorization:** The server validates `joinToken` against the active platform party member via `authorizePartyJoin` from `apps/platform/server/party/gameAuth.ts`. Host identity is derived from `party.hostPlayerId`, not from the client-supplied `isHost` flag.
 
 ```ts
 autoJoinRoom(
@@ -46,7 +46,7 @@ Response:
 Notes:
 
 - `sessionId` is the platform match key.
-- When `isHost: true`, the server transfers the host role to this player.
+- `isHost` is an optional UI hint only; the server derives host status from the platform party.
 - On first join for a given `playerId`, `resumeToken` is optional.
 - When reclaiming an existing slot for that `playerId`, `resumeToken` must be present and valid.
 - `sessionId -> roomCode` mappings are in-memory and are cleaned up when a room is deleted.

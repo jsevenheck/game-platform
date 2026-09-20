@@ -11,7 +11,7 @@ export function transitionToPlaying(room: Room): void {
     ...activeColors.slice(0, startingTeamIndex),
   ];
 
-  const { board, teams } = generateBoard(room.teamCount, turnOrder);
+  const { board, teams } = generateBoard(room.teamCount, turnOrder, room.locale);
   room.board = board;
   room.teams = teams;
   room.turnOrder = turnOrder;

@@ -1,0 +1,53 @@
+import type { BlackoutMessages } from './en';
+
+export const de: BlackoutMessages = {
+  connecting: 'Verbinde...',
+  retry: 'Erneut versuchen',
+  lobby: {
+    players: 'Spieler ({count})',
+    owner: 'Besitzer',
+    host: 'Host',
+    offline: 'Offline',
+    rounds: 'Runden:',
+    fewerRounds: 'Weniger Runden',
+    moreRounds: 'Mehr Runden',
+    language: 'Aufgabensprache:',
+    excludedLetters: 'Ausgeschlossene Buchstaben',
+    save: 'Speichern',
+    start: 'Spiel starten',
+    needPlayers: 'Zum Start braucht es mindestens {min} Spieler',
+    waitingForHost: 'Warte darauf, dass der Host das Spiel startet...',
+  },
+  round: {
+    youAreHost: 'Du bist der Host!',
+    alreadyPlayed: 'Schon gespielt',
+    reveal: 'Aufdecken!',
+    reroll: 'Neue Aufgabe + Kategorie',
+    skip: 'Runde überspringen',
+    revealHint: 'Klicke, um die Aufgabe für alle aufzudecken',
+    waitingForReveal: 'Warte darauf, dass der Host aufdeckt...',
+    hostName: 'Host: {name}',
+    whoCorrect: 'Wer hatte recht?',
+    correct: 'Richtig!',
+    speakUp: 'Sag deine Antwort laut. Der Host wählt den richtigen Spieler aus.',
+  },
+  scoreboard: {
+    complete: 'Runde {round} beendet!',
+    gotItRight: '{name} hatte recht!',
+    skipped: 'Runde übersprungen – keine richtige Antwort',
+    next: 'Die nächste Runde beginnt...',
+  },
+  gameOver: {
+    title: 'Spiel vorbei!',
+    winner: 'Gewinner',
+    tie: 'Unentschieden!',
+    points: '{count} Punkte',
+    finalScores: 'Endstand',
+    playAgain: 'Nochmal spielen',
+    waiting: 'Warte darauf, dass der Host neu startet...',
+  },
+  players: { title: 'Spieler' },
+  errors: {
+    player_not_found: 'Spieler nicht gefunden.',
+  },
+};

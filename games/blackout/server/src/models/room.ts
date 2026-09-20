@@ -1,4 +1,4 @@
-import type { Room } from '../../../core/src/types';
+import type { Language, Room } from '../../../core/src/types';
 import {
   DEFAULT_ROUNDS,
   DEFAULT_LANGUAGE,
@@ -6,7 +6,7 @@ import {
   ROOM_ENDED_CLEANUP_MS,
   CLEANUP_INTERVAL_MS,
 } from '../../../core/src/constants';
-import { createPlayer, setSocketIndex } from './player';
+import { createPlayer, setSocketIndex, deleteSocketIndexesForRoom } from './player';
 import { getDefaultExcludedLetters } from '../managers/categoryManager';
 
 const rooms = new Map<string, Room>();
@@ -27,7 +27,8 @@ function generateRoomCode(): string {
 export function createRoom(
   hostName: string,
   socketId: string,
-  hostPlayerId?: string
+  hostPlayerId?: string,
+  language: Language = DEFAULT_LANGUAGE
 ): { room: Room; hostId: string; resumeToken: string } {
   const code = generateRoomCode();
   const host = createPlayer(hostName, true, hostPlayerId);
@@ -39,7 +40,7 @@ export function createRoom(
     hostId: host.id,
     phase: 'lobby',
     players: { [host.id]: host },
-    language: DEFAULT_LANGUAGE,
+    language,
     excludedLetters: getDefaultExcludedLetters(),
     maxRounds: DEFAULT_ROUNDS,
     currentRound: null,
@@ -54,6 +55,12 @@ export function createRoom(
 }
 
 export function getRoom(code: string): Room | undefined {
+  // Defensive even though `code` is typed as `string`: every handler calls
+  // this with a client-supplied `data.roomCode` that Socket.IO does not
+  // validate against the compile-time event types at runtime, and
+  // `.toUpperCase()` on a non-string throws (crashing the whole process —
+  // see gameAuth.ts's payload-shape-helpers comment for why that matters).
+  if (typeof code !== 'string') return undefined;
   return rooms.get(code.toUpperCase());
 }
 
@@ -65,6 +72,7 @@ export function deleteRoom(code: string): void {
       sessionToRoom.delete(sessionId);
     }
   }
+  deleteSocketIndexesForRoom(code);
 }
 
 export function getAllRooms(): Map<string, Room> {

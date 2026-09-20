@@ -1,6 +1,9 @@
 <script setup lang="ts">
 import { ref, watch } from 'vue';
+import { useI18n } from 'vue-i18n';
 import type { HomeTab, HomeTabId } from '../../composables/useHomeTabs';
+
+const { t } = useI18n();
 
 const props = defineProps<{
   modelValue: HomeTabId;
@@ -98,7 +101,7 @@ function onKeydown(event: KeyboardEvent, index: number): void {
   <div
     class="home-tabbar-desktop"
     role="tablist"
-    aria-label="Home navigation"
+    :aria-label="t('home.navigation')"
     data-testid="home-tabbar"
   >
     <button
@@ -117,13 +120,13 @@ function onKeydown(event: KeyboardEvent, index: number): void {
       @keydown="onKeydown($event, index)"
     >
       <span class="home-tabbar-icon" aria-hidden="true">{{ tab.icon }}</span>
-      <span>{{ tab.label }}</span>
+      <span>{{ t(tab.labelKey) }}</span>
     </button>
   </div>
 
   <!-- Mobile native select -->
   <div class="home-tabbar-mobile">
-    <label for="home-tabbar-select" class="home-label">View</label>
+    <label for="home-tabbar-select" class="home-label">{{ t('home.view') }}</label>
     <select
       id="home-tabbar-select"
       class="ui-input"
@@ -132,7 +135,7 @@ function onKeydown(event: KeyboardEvent, index: number): void {
       @change="activate(($event.target as HTMLSelectElement).value as HomeTabId)"
     >
       <option v-for="tab in tabs" :key="tab.id" :value="tab.id">
-        {{ tab.icon }} {{ tab.label }}
+        {{ tab.icon }} {{ t(tab.labelKey) }}
       </option>
     </select>
   </div>
@@ -165,6 +168,11 @@ function onKeydown(event: KeyboardEvent, index: number): void {
   font-size: 0.85rem;
   cursor: pointer;
   transition: all 200ms ease;
+}
+
+.home-tabbar-tab:focus-visible {
+  outline: 2px solid var(--color-accent);
+  outline-offset: 2px;
 }
 
 .home-tabbar-tab:hover:not(.home-tabbar-tab--active) {

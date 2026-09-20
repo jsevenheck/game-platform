@@ -47,6 +47,8 @@ export interface Room {
   votes: Record<string, string>;
   roundNumber: number;
   wordLibrary: string[];
+  /** Content language of the match (secret words). */
+  locale: 'en' | 'de';
   discussionEndsAt: number | null;
 
   revealedInfiltrators: string[];

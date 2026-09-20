@@ -1,11 +1,16 @@
 <script setup lang="ts">
 import { ref, computed, onMounted, onBeforeUnmount } from 'vue';
+import { useI18n } from 'vue-i18n';
 import { useRouter } from 'vue-router';
 import { usePartyStore } from '../stores/party';
 import { usePartySocket } from '../composables/usePartySocket';
 import { clientGameRegistry, getClientGame, type PlatformGameMeta } from '../games/index';
+import { getCurrentLocale, SUPPORTED_LOCALES, type SupportedLocale } from '../i18n';
+import { localizeError } from '../i18n/serverError';
+import LanguageSwitcher from '../components/LanguageSwitcher.vue';
 
 const props = defineProps<{ inviteCode: string }>();
+const { t, te, locale } = useI18n();
 const router = useRouter();
 const store = usePartyStore();
 const socket = usePartySocket();
@@ -13,6 +18,19 @@ const socket = usePartySocket();
 const error = ref('');
 const launching = ref(false);
 const publicTogglePending = ref(false);
+
+// Content language (questions, words, topics) is shared by the whole match, so
+// the host picks it. The UI language stays a per-player choice.
+const contentLocaleChoice = ref<SupportedLocale | null>(null);
+const contentLocale = computed<SupportedLocale>({
+  get: () => {
+    void locale.value; // follow the host's UI language until they pick explicitly
+    return contentLocaleChoice.value ?? getCurrentLocale();
+  },
+  set: (value) => {
+    contentLocaleChoice.value = value;
+  },
+});
 
 const gameInProgress = computed(
   () => store.party?.status === 'in-match' && !!store.party?.activeMatch
@@ -32,6 +50,12 @@ const defaultGameConfig: PlatformGameMeta = {
 
 function getGameConfig(id: string): PlatformGameMeta {
   return getClientGame(id)?.platformMeta ?? defaultGameConfig;
+}
+
+function gameDescription(id: string): string {
+  return te(`games.${id}.description`)
+    ? t(`games.${id}.description`)
+    : getGameConfig(id).description;
 }
 
 function avatarBg(name: string): string {
@@ -57,7 +81,7 @@ function handleSelectGame(gameId: string) {
 function handleLaunch() {
   if (!store.isHost || !store.playerId) return;
   launching.value = true;
-  socket.emit('launchGame', { playerId: store.playerId }, (res) => {
+  socket.emit('launchGame', { playerId: store.playerId, locale: contentLocale.value }, (res) => {
     launching.value = false;
     if (!res.ok) error.value = res.error;
   });
@@ -116,7 +140,7 @@ function handlePartyUpdate(view: Parameters<typeof store.applyPartyUpdate>[0]) {
 
 function handlePartyKicked(data: { reason: string }): void {
   store.clearSession();
-  error.value = data.reason || 'You were removed from the party.';
+  error.value = data.reason || t('party.removed');
   router.push('/');
 }
 
@@ -181,24 +205,27 @@ onBeforeUnmount(() => {
     <!-- Header -->
     <header class="ui-shell-header">
       <div class="party-code-block">
-        <span class="party-code-eyebrow">Party Code</span>
+        <span class="party-code-eyebrow">{{ t('party.code') }}</span>
         <span class="party-code-value">{{ store.party?.inviteCode ?? inviteCode }}</span>
       </div>
       <div class="flex items-center gap-3">
         <span class="party-player-count">
           {{ store.connectedMembers.length }}
-          <span class="party-player-count-label"> online</span>
+          <span class="party-player-count-label"> {{ t('common.online') }}</span>
         </span>
-        <button class="ui-btn-ghost party-leave-btn" @click="handleLeave">Leave</button>
+        <LanguageSwitcher />
+        <button class="ui-btn-ghost party-leave-btn" @click="handleLeave">
+          {{ t('party.leave') }}
+        </button>
       </div>
     </header>
 
-    <main class="mx-auto flex max-w-140 flex-col gap-8 p-4 pt-6">
+    <main class="mx-auto flex max-w-5xl flex-col gap-8 p-4 pt-6">
       <!-- Rejoin banner when a game is running -->
       <section v-if="gameInProgress" class="party-game-banner">
         <div class="party-game-banner-content">
           <div>
-            <p class="party-game-banner-label">Game in progress</p>
+            <p class="party-game-banner-label">{{ t('party.gameInProgress') }}</p>
             <p class="party-game-banner-title">{{ activeGameName }}</p>
           </div>
           <div class="flex flex-col gap-2 items-end">
@@ -208,10 +235,10 @@ onBeforeUnmount(() => {
                 router.push(`/party/${props.inviteCode}/game/${store.party!.activeMatch!.gameId}`)
               "
             >
-              Rejoin Game
+              {{ t('party.rejoin') }}
             </button>
             <button v-if="store.isHost" class="ui-btn-danger party-end-btn" @click="handleEndGame">
-              End Game
+              {{ t('party.endGame') }}
             </button>
           </div>
         </div>
@@ -219,7 +246,9 @@ onBeforeUnmount(() => {
 
       <!-- Players section -->
       <section>
-        <h2 class="ui-section-label">Players ({{ store.connectedMembers.length }})</h2>
+        <h2 class="ui-section-label">
+          {{ t('party.players', { count: store.connectedMembers.length }) }}
+        </h2>
         <ul class="flex flex-col gap-1.5">
           <li
             v-for="member in store.party?.members ?? []"
@@ -240,9 +269,9 @@ onBeforeUnmount(() => {
             <span
               v-if="member.playerId === store.party?.hostPlayerId"
               class="ui-badge bg-accent text-white"
-              >HOST</span
+              >{{ t('party.host') }}</span
             >
-            <span v-if="!member.connected" class="party-away-badge">away</span>
+            <span v-if="!member.connected" class="party-away-badge">{{ t('party.away') }}</span>
             <span v-else class="party-online-dot" />
           </li>
         </ul>
@@ -250,7 +279,7 @@ onBeforeUnmount(() => {
 
       <!-- Game selection (host) -->
       <section v-if="store.isHost && !gameInProgress">
-        <h2 class="ui-section-label">Select a Game</h2>
+        <h2 class="ui-section-label">{{ t('party.selectGame') }}</h2>
         <div class="grid grid-cols-2 gap-3 sm:grid-cols-4">
           <button
             v-for="game in clientGameRegistry"
@@ -272,10 +301,15 @@ onBeforeUnmount(() => {
             <div class="ui-game-card-body">
               <p class="game-card-name">{{ game.definition.name }}</p>
               <p class="game-card-meta">
-                {{ game.definition.minPlayers }}–{{ game.definition.maxPlayers }} players
+                {{
+                  t('common.playersRange', {
+                    min: game.definition.minPlayers,
+                    max: game.definition.maxPlayers,
+                  })
+                }}
               </p>
-              <p v-if="getGameConfig(game.definition.id).description" class="game-card-desc">
-                {{ getGameConfig(game.definition.id).description }}
+              <p v-if="gameDescription(game.definition.id)" class="game-card-desc">
+                {{ gameDescription(game.definition.id) }}
               </p>
             </div>
           </button>
@@ -290,11 +324,13 @@ onBeforeUnmount(() => {
               ?.definition.name
           }}
         </p>
-        <p class="party-waiting-label">Waiting for host to launch...</p>
+        <p class="party-waiting-label">{{ t('party.waitingForHost') }}</p>
       </section>
 
       <Transition name="fade">
-        <p v-if="error" class="party-error" role="alert" aria-live="polite">{{ error }}</p>
+        <p v-if="error" class="party-error" role="alert" aria-live="polite">
+          {{ localizeError(error) }}
+        </p>
       </Transition>
 
       <!-- Host public-listing toggle -->
@@ -307,11 +343,24 @@ onBeforeUnmount(() => {
             data-testid="party-public-toggle"
             @change="handlePublicToggle"
           />
-          <span>List this room publicly</span>
+          <span>{{ t('party.listPublicly') }}</span>
         </span>
-        <span class="party-public-toggle-hint"
-          >Anyone on the home page can see and join this code.</span
+        <span class="party-public-toggle-hint">{{ t('party.listPubliclyHint') }}</span>
+      </label>
+
+      <!-- Content language (host) -->
+      <label v-if="store.isHost && !gameInProgress" class="party-content-locale">
+        <span class="party-content-locale-label">{{ t('party.contentLanguage') }}</span>
+        <select
+          v-model="contentLocale"
+          class="ui-input party-content-locale-select"
+          data-testid="party-content-locale"
         >
+          <option v-for="code in SUPPORTED_LOCALES" :key="code" :value="code">
+            {{ t(code === 'en' ? 'language.english' : 'language.german') }}
+          </option>
+        </select>
+        <span class="party-public-toggle-hint">{{ t('party.contentLanguageHint') }}</span>
       </label>
 
       <!-- Launch button (host) -->
@@ -322,7 +371,7 @@ onBeforeUnmount(() => {
         @click="handleLaunch"
       >
         <span v-if="launching" class="party-launching-dot" />
-        {{ launching ? 'Launching…' : 'Launch Game' }}
+        {{ launching ? t('party.launching') : t('party.launch') }}
       </button>
     </main>
   </div>
@@ -533,6 +582,21 @@ onBeforeUnmount(() => {
 }
 
 /* ── Launch button ── */
+.party-content-locale {
+  display: flex;
+  flex-direction: column;
+  gap: 0.375rem;
+}
+
+.party-content-locale-label {
+  font-size: 0.85rem;
+  font-weight: 600;
+}
+
+.party-content-locale-select {
+  max-width: 14rem;
+}
+
 .party-launch-btn {
   width: 100%;
   font-size: 1.0625rem;

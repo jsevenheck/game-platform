@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { computed, ref } from 'vue';
+import { useI18n } from 'vue-i18n';
 import GameApp from './App.vue';
 
 defineProps<{
@@ -14,6 +15,7 @@ defineProps<{
   actionError?: string;
 }>();
 
+const { t } = useI18n();
 const gamePhase = ref('');
 const gameEnded = computed(() => gamePhase.value === 'ended');
 
@@ -38,16 +40,20 @@ function onPhaseChange(phase: string) {
       <div v-if="gameEnded" class="ui-overlay flex items-center justify-center">
         <div class="ui-dialog flex flex-col gap-3 text-center">
           <template v-if="isHost">
-            <p class="text-lg font-semibold text-foreground">Game Over!</p>
+            <p class="text-lg font-semibold text-foreground">
+              {{ t('replay.title') }}
+            </p>
             <button class="ui-btn-primary btn-scout" type="button" @click="onReplayGame?.()">
-              Play Again
+              {{ t('replay.playAgain') }}
             </button>
             <button class="ui-btn-secondary" type="button" @click="onReturnToLobby?.()">
-              Back to Party
+              {{ t('replay.returnToLobby') }}
             </button>
             <p v-if="actionError" class="mt-2 text-sm text-danger">{{ actionError }}</p>
           </template>
-          <p v-else class="text-sm text-muted-foreground">Waiting for host to continue…</p>
+          <p v-else class="text-sm text-muted-foreground">
+            {{ t('replay.waiting') }}
+          </p>
         </div>
       </div>
     </Transition>

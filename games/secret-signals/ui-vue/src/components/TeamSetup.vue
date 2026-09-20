@@ -1,16 +1,15 @@
 <script setup lang="ts">
 import { computed } from 'vue';
-import {
-  ASSASSIN_PENALTY_MODES,
-  MAX_TEAMS,
-  MIN_TEAMS,
-  TEAM_HEX_BY_COLOR,
-  TEAM_NAME_BY_COLOR,
-} from '@shared/constants';
+import { useI18n } from 'vue-i18n';
+import { ASSASSIN_PENALTY_MODES, MAX_TEAMS, MIN_TEAMS, TEAM_HEX_BY_COLOR } from '@shared/constants';
 import type { AssassinPenaltyMode, PlayerRole, PlayerView, TeamColor } from '@shared/types';
 import { useGameStore } from '../stores/game';
 
+const { t } = useI18n();
 const store = useGameStore();
+
+const teamName = (color: TeamColor) => t(`secret-signals.teams.${color}`);
+const teamLabel = (color: TeamColor) => t('secret-signals.teamOf', { color: teamName(color) });
 
 const emit = defineEmits<{
   'assign-team': [team: TeamColor];
@@ -65,11 +64,11 @@ defineExpose({ isSetupValid });
 <template>
   <div class="w-full max-w-150">
     <div v-if="store.isHost" class="flex items-center flex-wrap gap-2 mb-4 justify-center">
-      <span class="text-muted text-sm font-semibold">Teams:</span>
+      <span class="text-muted text-sm font-semibold">{{ t('secret-signals.setup.teams') }}</span>
       <button
         v-for="n in teamCountOptions"
         :key="n"
-        class="w-9 h-9 border-2 border-border-strong rounded-[--radius-sm] bg-panel text-foreground/80 font-bold cursor-pointer transition-all"
+        class="w-9 h-9 border-2 border-border-strong rounded-sm bg-panel text-foreground/80 font-bold cursor-pointer transition-all"
         :class="{ 'signals-active': store.room?.teamCount === n }"
         @click="$emit('set-team-count', n)"
       >
@@ -78,7 +77,7 @@ defineExpose({ isSetupValid });
     </div>
 
     <div class="flex items-center justify-center flex-wrap gap-2 mb-1">
-      <span class="text-muted text-sm font-semibold">Assassin:</span>
+      <span class="text-muted text-sm font-semibold">{{ t('secret-signals.setup.assassin') }}</span>
       <button
         v-for="mode in ASSASSIN_PENALTY_MODES"
         :key="mode"
@@ -91,24 +90,25 @@ defineExpose({ isSetupValid });
         :disabled="!store.isHost"
         @click="$emit('set-assassin-penalty-mode', mode)"
       >
-        {{ mode === 'instant-loss' ? 'End Match' : 'Eliminate Team' }}
+        {{
+          mode === 'instant-loss'
+            ? t('secret-signals.setup.endMatch')
+            : t('secret-signals.setup.eliminateTeam')
+        }}
       </button>
     </div>
     <p class="mode-hint mb-4 text-center text-muted-foreground text-xs">
       {{
         store.room?.assassinPenaltyMode === 'instant-loss'
-          ? 'An assassin hit ends the match immediately.'
-          : 'An assassin hit removes that team and the match continues.'
+          ? t('secret-signals.setup.instantLossHint')
+          : t('secret-signals.setup.eliminateHint')
       }}
     </p>
 
-    <div
-      v-if="currentPlayer"
-      class="mb-5 p-3.5 border border-border rounded-[--radius-lg] bg-shell"
-    >
-      <h4 class="ui-section-label">Your Seat</h4>
+    <div v-if="currentPlayer" class="mb-5 p-3.5 border border-border rounded-lg bg-shell">
+      <h4 class="ui-section-label">{{ t('secret-signals.setup.yourSeat') }}</h4>
       <p class="mb-3 text-center text-muted text-sm">
-        Pick your own team and role. The host only controls match settings and start.
+        {{ t('secret-signals.setup.seatHint') }}
       </p>
 
       <div class="flex flex-wrap justify-center gap-2 mb-3">
@@ -124,7 +124,7 @@ defineExpose({ isSetupValid });
           }"
           @click="pickTeam(color)"
         >
-          {{ TEAM_NAME_BY_COLOR[color] }}
+          {{ teamName(color) }}
         </button>
       </div>
 
@@ -136,7 +136,7 @@ defineExpose({ isSetupValid });
           :disabled="isDirectorUnavailable(currentPlayerTeam)"
           @click="pickRole('director')"
         >
-          Director
+          {{ t('secret-signals.roles.director') }}
         </button>
         <button
           data-self-role="agent"
@@ -144,7 +144,7 @@ defineExpose({ isSetupValid });
           :class="{ 'signals-active': currentPlayer?.role === 'agent' }"
           @click="pickRole('agent')"
         >
-          Agent
+          {{ t('secret-signals.roles.agent') }}
         </button>
       </div>
 
@@ -152,12 +152,12 @@ defineExpose({ isSetupValid });
         v-if="currentPlayerTeam && isDirectorUnavailable(currentPlayerTeam)"
         class="mt-2.5 text-center text-muted text-xs"
       >
-        Director is already taken on {{ TEAM_NAME_BY_COLOR[currentPlayerTeam] }} Team.
+        {{ t('secret-signals.setup.directorTaken', { team: teamLabel(currentPlayerTeam) }) }}
       </p>
     </div>
 
     <div v-if="unassigned.length > 0" class="mb-4 text-center">
-      <h4 class="ui-section-label">Unassigned</h4>
+      <h4 class="ui-section-label">{{ t('secret-signals.setup.unassigned') }}</h4>
       <div
         v-for="player in unassigned"
         :key="player.id"
@@ -168,7 +168,7 @@ defineExpose({ isSetupValid });
         <span
           v-if="player.isHost"
           class="ui-badge bg-signals text-white text-[0.6rem]! px-1.5! py-0.5! rounded-sm!"
-          >H</span
+          >{{ t('secret-signals.setup.hostShort') }}</span
         >
       </div>
     </div>
@@ -178,16 +178,16 @@ defineExpose({ isSetupValid });
         v-for="color in activeTeams"
         :key="color"
         :data-team-color="color"
-        class="bg-shell rounded-[--radius-sm] p-3"
+        class="bg-shell rounded-sm p-3"
       >
         <h4
           class="text-foreground/90 text-sm font-bold uppercase tracking-wider pb-2 border-b-[3px] mb-2"
           :style="{ borderBottomColor: TEAM_HEX_BY_COLOR[color] }"
         >
-          {{ TEAM_NAME_BY_COLOR[color] }} Team
+          {{ teamLabel(color) }}
         </h4>
         <div v-if="teamPlayers(color).length === 0" class="text-muted-foreground/60 text-xs italic">
-          No players
+          {{ t('secret-signals.setup.noPlayers') }}
         </div>
         <div
           v-for="player in teamPlayers(color)"
@@ -204,7 +204,11 @@ defineExpose({ isSetupValid });
               'bg-border-strong text-foreground/85': player.role === 'agent',
             }"
           >
-            {{ player.role === 'director' ? 'DIR' : 'AGT' }}
+            {{
+              player.role === 'director'
+                ? t('secret-signals.roles.directorShort')
+                : t('secret-signals.roles.agentShort')
+            }}
           </button>
           <button
             v-else
@@ -217,7 +221,7 @@ defineExpose({ isSetupValid });
     </div>
 
     <div v-if="!isSetupValid" class="mt-3 text-center text-warning text-xs">
-      Each team needs 1 Director and at least 1 Agent. All players must be assigned.
+      {{ t('secret-signals.setup.rules') }}
     </div>
   </div>
 </template>

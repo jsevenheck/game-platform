@@ -67,16 +67,6 @@ export function comparePlays(
   return comparePlayAnalyses(candidateAnalysis, currentAnalysis);
 }
 
-export function beatsCurrentPlay(cards: ScoutCard[], current: PlayedSet | null): boolean {
-  try {
-    const candidate = summarizePlay('candidate', cards);
-    if (!current) return true;
-    return comparePlays(candidate, current) > 0;
-  } catch {
-    return false;
-  }
-}
-
 export function flipPlayerRow(player: Player): void {
   if (player.setupConfirmed) throw new Error('Setup choice already made');
   player.row = [...player.row].reverse().map(flipCard);

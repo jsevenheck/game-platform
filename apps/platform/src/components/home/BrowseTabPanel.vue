@@ -1,7 +1,10 @@
 <script setup lang="ts">
+import { useI18n } from 'vue-i18n';
 import { clientGameRegistry } from '../../games';
 import GameLibraryGrid from './GameLibraryGrid.vue';
 import PublicLobbiesSection from './PublicLobbiesSection.vue';
+
+const { t } = useI18n();
 
 defineProps<{
   ctaDismissed: boolean;
@@ -22,8 +25,8 @@ const emit = defineEmits<{
     <Transition name="fade">
       <div v-if="!ctaDismissed" class="browse-cta" data-testid="browse-cta">
         <div class="browse-cta-text">
-          <p class="browse-cta-title">Want to play with your friends?</p>
-          <p class="browse-cta-sub">Host a party and share the invite code.</p>
+          <p class="browse-cta-title">{{ t('home.cta.title') }}</p>
+          <p class="browse-cta-sub">{{ t('home.cta.subtitle') }}</p>
         </div>
         <div class="browse-cta-actions">
           <button
@@ -32,12 +35,12 @@ const emit = defineEmits<{
             data-testid="browse-cta-host"
             @click="emit('hostRequested')"
           >
-            Host a Party →
+            {{ t('home.cta.host') }}
           </button>
           <button
             type="button"
             class="ui-btn-ghost browse-cta-dismiss"
-            aria-label="Dismiss"
+            :aria-label="t('common.dismiss')"
             data-testid="browse-cta-dismiss"
             @click="emit('dismissCta')"
           >
@@ -48,12 +51,12 @@ const emit = defineEmits<{
     </Transition>
 
     <div class="browse-columns">
-      <section class="browse-lobbies" aria-label="Live Rooms">
+      <section class="browse-lobbies" :aria-label="t('home.liveRooms')">
         <PublicLobbiesSection @join-room="(p) => emit('joinRoom', p)" />
       </section>
 
       <section class="browse-library" aria-labelledby="home-library-heading">
-        <h2 id="home-library-heading" class="ui-section-label">Game Library</h2>
+        <h2 id="home-library-heading" class="ui-section-label">{{ t('home.library') }}</h2>
         <GameLibraryGrid
           :games="clientGameRegistry"
           interactive
@@ -108,6 +111,8 @@ const emit = defineEmits<{
 }
 
 .browse-cta-dismiss {
+  min-width: 44px;
+  min-height: 44px;
   padding: 0.3rem 0.55rem;
   font-size: 0.8rem;
   line-height: 1;

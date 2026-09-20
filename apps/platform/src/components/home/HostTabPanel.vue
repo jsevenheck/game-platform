@@ -1,4 +1,9 @@
 <script setup lang="ts">
+import { useI18n } from 'vue-i18n';
+import { localizeError } from '../../i18n/serverError';
+
+const { t } = useI18n();
+
 defineProps<{
   playerName: string;
   error: string;
@@ -20,12 +25,12 @@ function onInput(event: Event): void {
 <template>
   <form class="home-form-panel flex flex-col gap-4" @submit.prevent="emit('submit')">
     <div class="flex flex-col gap-1.5">
-      <label for="name" class="home-label">Your Name</label>
+      <label for="name" class="home-label">{{ t('home.host.name') }}</label>
       <input
         id="name"
         class="ui-input"
         type="text"
-        placeholder="Enter your name"
+        :placeholder="t('home.host.namePlaceholder')"
         maxlength="20"
         autocomplete="off"
         :value="playerName"
@@ -35,12 +40,12 @@ function onInput(event: Event): void {
     </div>
 
     <div v-if="selectedGameName" class="home-preselect" data-testid="host-preselect">
-      <span class="home-preselect-label">Selected game</span>
+      <span class="home-preselect-label">{{ t('home.host.selectedGame') }}</span>
       <span class="home-preselect-name">{{ selectedGameName }}</span>
       <button
         type="button"
         class="ui-btn-ghost home-preselect-clear"
-        aria-label="Clear selected game"
+        :aria-label="t('home.host.clearSelectedGame')"
         data-testid="host-preselect-clear"
         @click="emit('clearSelectedGame')"
       >
@@ -49,7 +54,9 @@ function onInput(event: Event): void {
     </div>
 
     <Transition name="fade">
-      <p v-if="error" class="home-error" role="alert" aria-live="polite">{{ error }}</p>
+      <p v-if="error" class="home-error" role="alert" aria-live="polite">
+        {{ localizeError(error) }}
+      </p>
     </Transition>
 
     <button
@@ -57,7 +64,7 @@ function onInput(event: Event): void {
       class="ui-btn-primary home-submit"
       :disabled="submitting || !playerName.trim()"
     >
-      {{ submitting ? 'Creating…' : 'Create Party' }}
+      {{ submitting ? t('home.host.creating') : t('home.host.create') }}
     </button>
   </form>
 </template>
@@ -118,6 +125,8 @@ function onInput(event: Event): void {
 }
 
 .home-preselect-clear {
+  min-width: 44px;
+  min-height: 44px;
   padding: 0.15rem 0.5rem;
   font-size: 0.8rem;
   line-height: 1;

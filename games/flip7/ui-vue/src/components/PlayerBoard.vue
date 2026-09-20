@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { computed } from 'vue';
+import { useI18n } from 'vue-i18n';
 import type { RoundPlayerView, PlayerView } from '@shared/types';
 
 const props = defineProps<{
@@ -8,6 +9,8 @@ const props = defineProps<{
   isCurrentTurn: boolean;
   isMe: boolean;
 }>();
+
+const { t } = useI18n();
 
 /** Returns colour classes for a number card chip based on risk/value. */
 function numberCardClasses(n: number): string {
@@ -45,7 +48,9 @@ const liveScore = computed(() => {
         />
         <span class="text-sm font-semibold" :class="props.isMe ? 'text-flip7' : 'text-foreground'">
           {{ props.player.name }}
-          <span v-if="props.isMe" class="ml-1 text-xs text-muted-foreground">(you)</span>
+          <span v-if="props.isMe" class="ml-1 text-xs text-muted-foreground">{{
+            t('flip7.board.you')
+          }}</span>
         </span>
       </div>
       <div class="flex items-center gap-2">
@@ -53,28 +58,33 @@ const liveScore = computed(() => {
         <span
           v-if="props.roundPlayer.numberCards.length > 0 && props.roundPlayer.status === 'active'"
           class="text-xs font-bold text-muted-foreground"
-          title="Live round score"
+          :title="t('flip7.board.liveScore')"
         >
-          {{ liveScore }} pts
+          {{ t('flip7.board.pts', { score: liveScore }) }}
         </span>
         <!-- Status badge -->
         <span v-if="props.roundPlayer.status === 'stayed'" class="ui-badge text-xs text-success">
-          Stayed
+          {{ t('flip7.board.stayed') }}
         </span>
         <span
           v-else-if="props.roundPlayer.status === 'busted'"
           class="ui-badge text-xs text-danger"
         >
-          Bust
+          {{ t('flip7.board.bust') }}
         </span>
-        <span v-else-if="props.isCurrentTurn" class="ui-badge text-xs text-flip7"> ▶ Turn </span>
+        <span v-else-if="props.isCurrentTurn" class="ui-badge text-xs text-flip7">
+          {{ t('flip7.board.turn') }}
+        </span>
         <!-- Second Chance token -->
-        <span v-if="props.roundPlayer.hasSecondChance" title="Second Chance" class="text-base"
+        <span
+          v-if="props.roundPlayer.hasSecondChance"
+          :title="t('flip7.board.secondChance')"
+          class="text-base"
           >🛡️</span
         >
         <!-- Flip Three indicator -->
         <span v-if="props.roundPlayer.flipThreeRemaining > 0" class="ui-badge text-xs text-warning">
-          Flip {{ props.roundPlayer.flipThreeRemaining }}
+          {{ t('flip7.board.flip', { count: props.roundPlayer.flipThreeRemaining }) }}
         </span>
       </div>
     </div>
@@ -84,13 +94,13 @@ const liveScore = computed(() => {
       <div
         v-for="n in props.roundPlayer.numberCards"
         :key="n"
-        class="flex size-9 items-center justify-center rounded-[--radius-sm] text-sm font-bold transition-colors"
+        class="flex h-14 w-11 items-center justify-center rounded-sm text-lg font-bold transition-colors sm:h-16 sm:w-12 sm:text-xl"
         :class="numberCardClasses(n)"
       >
         {{ n }}
       </div>
     </div>
-    <p v-else class="text-xs text-muted-foreground">No cards yet</p>
+    <p v-else class="text-xs text-muted-foreground">{{ t('flip7.board.noCards') }}</p>
 
     <!-- Modifier row -->
     <div
@@ -99,14 +109,14 @@ const liveScore = computed(() => {
     >
       <div
         v-if="props.roundPlayer.hasX2"
-        class="flex h-7 items-center rounded-[--radius-sm] bg-flip7-muted px-2 text-xs font-bold text-flip7 ring-1 ring-flip7"
+        class="flex h-8 items-center rounded-sm bg-flip7-muted px-2.5 text-sm font-bold text-flip7 ring-1 ring-flip7"
       >
         ×2
       </div>
       <div
         v-for="(bonus, i) in props.roundPlayer.modifierAdds"
         :key="'add-' + i"
-        class="flex h-7 items-center rounded-[--radius-sm] bg-success-muted px-2 text-xs font-bold text-success ring-1 ring-success"
+        class="flex h-8 items-center rounded-sm bg-success-muted px-2.5 text-sm font-bold text-success ring-1 ring-success"
       >
         +{{ bonus }}
       </div>

@@ -12,6 +12,8 @@ import type {
   ActionResolvedEvent,
 } from '../../../core/src/events';
 
+import { discardPileSize } from './deckManager';
+
 type Flip7Namespace = Namespace<ClientToServerEvents, ServerToClientEvents>;
 
 function toPlayerViews(room: Room): PlayerView[] {
@@ -52,7 +54,7 @@ function toRoundView(room: Room): RoundView | null {
     phase: round.phase,
     currentTurnPlayerId,
     deckSize: round.deck.length,
-    discardSize: round.discard.length,
+    discardSize: discardPileSize(round),
     players: playerViews,
     pendingAction: round.pendingAction
       ? {

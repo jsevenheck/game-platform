@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { ref, computed } from 'vue';
+import { useI18n } from 'vue-i18n';
 import type { PlayerView } from '@shared/types';
 import {
   MIN_DISCUSSION_DURATION_MS,
@@ -7,6 +8,7 @@ import {
   DISCUSSION_DURATION_STEP_MS,
   MIN_TARGET_SCORE,
   MAX_TARGET_SCORE,
+  MAX_INFILTRATOR_COUNT,
 } from '@shared/constants';
 import { useGameStore } from '../stores/game';
 
@@ -19,6 +21,7 @@ withDefaults(
   }
 );
 
+const { t } = useI18n();
 const store = useGameStore();
 
 const emit = defineEmits<{
@@ -74,43 +77,48 @@ function handleSubmitWord() {
     class="lobby flex flex-col items-center gap-6 px-4 py-8 min-h-dvh bg-linear-to-br from-imposter-gradient-1 via-imposter-gradient-2 to-imposter-gradient-3"
   >
     <div class="text-center">
-      <h2 class="text-3xl font-black text-imposter">Imposter</h2>
+      <h2 class="text-3xl font-black text-imposter">{{ t('imposter.lobby.title') }}</h2>
     </div>
 
     <div class="w-full max-w-85">
-      <h3 class="text-muted text-sm mb-3">Players ({{ connectedCount }})</h3>
+      <h3 class="text-muted text-sm mb-3">
+        {{ t('imposter.lobby.players', { count: connectedCount }) }}
+      </h3>
       <div
         v-for="player in store.room?.players"
         :key="player.id"
-        class="flex items-center gap-2 px-3.5 py-2.5 bg-white/5 border border-white/8 rounded-[--radius-md] mb-2 transition-all"
+        class="flex items-center gap-2 px-3.5 py-2.5 bg-white/5 border border-white/8 rounded-md mb-2 transition-all"
         :class="{ 'opacity-40': !player.connected }"
       >
         <span class="flex-1 text-foreground font-medium">{{ player.name }}</span>
         <button
           v-if="isHost && player.id !== store.playerId"
-          class="ui-badge bg-danger-muted text-danger cursor-pointer border-none hover:bg-danger/30"
+          class="ui-badge min-h-9 min-w-14 justify-center bg-danger-muted text-danger cursor-pointer border-none hover:bg-danger/30"
           type="button"
+          :aria-label="t('imposter.lobby.kickPlayer', { name: player.name })"
           @click="$emit('kickPlayer', player.id)"
         >
-          Kick
+          {{ t('imposter.lobby.kick') }}
         </button>
-        <span v-if="player.isHost" class="ui-badge bg-imposter text-white">Host</span>
-        <span v-if="!player.connected" class="ui-badge bg-white/10 text-muted-foreground"
-          >Offline</span
-        >
+        <span v-if="player.isHost" class="ui-badge bg-imposter text-white">{{
+          t('imposter.common.host')
+        }}</span>
+        <span v-if="!player.connected" class="ui-badge bg-white/10 text-muted-foreground">{{
+          t('imposter.common.offline')
+        }}</span>
       </div>
     </div>
 
     <!-- Host controls -->
     <div v-if="isHost" class="flex flex-col items-center gap-6 w-full max-w-85">
-      <div class="w-full p-5 bg-white/4 border border-white/8 rounded-[--radius-lg]">
-        <h3 class="text-foreground text-base mb-4">Game Settings</h3>
+      <div class="w-full p-5 bg-white/4 border border-white/8 rounded-lg">
+        <h3 class="text-foreground text-base mb-4">{{ t('imposter.lobby.settings') }}</h3>
 
         <div class="flex items-center justify-between mb-4">
           <label class="text-muted text-sm font-medium">
-            Infiltrators
+            {{ t('imposter.lobby.infiltrators') }}
             <span class="text-muted-foreground text-xs">
-              {{ infiltratorCount === 0 ? '(Paranoia Mode!)' : '' }}
+              {{ infiltratorCount === 0 ? t('imposter.lobby.paranoia') : '' }}
             </span>
           </label>
           <div class="flex items-center gap-3">
@@ -126,7 +134,9 @@ function handleSubmitWord() {
             }}</span>
             <button
               class="stepper-btn ui-stepper-btn hover-border-imposter"
-              :disabled="infiltratorCount >= Math.max(connectedCount - 1, 1)"
+              :disabled="
+                infiltratorCount >= Math.min(MAX_INFILTRATOR_COUNT, Math.max(connectedCount - 1, 1))
+              "
               @click="handleConfigChange({ infiltratorCount: infiltratorCount + 1 })"
             >
               +
@@ -135,7 +145,7 @@ function handleSubmitWord() {
         </div>
 
         <div class="flex items-center justify-between mb-4">
-          <label class="text-muted text-sm font-medium">Discussion Timer</label>
+          <label class="text-muted text-sm font-medium">{{ t('imposter.lobby.timer') }}</label>
           <div class="flex items-center gap-3">
             <button
               class="stepper-btn ui-stepper-btn hover-border-imposter"
@@ -166,7 +176,9 @@ function handleSubmitWord() {
         </div>
 
         <div class="flex items-center justify-between mb-4">
-          <label class="text-muted text-sm font-medium">Target Score</label>
+          <label class="text-muted text-sm font-medium">{{
+            t('imposter.lobby.targetScore')
+          }}</label>
           <div class="flex items-center gap-3">
             <button
               class="stepper-btn ui-stepper-btn hover-border-imposter"
@@ -189,16 +201,19 @@ function handleSubmitWord() {
         </div>
         <p v-if="errorMessage" class="text-danger text-xs mb-3">{{ errorMessage }}</p>
         <p class="text-muted-foreground text-xs mt-1">
-          First player to {{ targetScore }} points wins the match.
+          {{ t('imposter.lobby.targetHint', { score: targetScore }) }}
         </p>
 
         <div class="mt-2">
-          <label class="text-muted text-sm font-medium block mb-2">Add a Custom Word</label>
+          <label for="imposter-custom-word" class="text-muted text-sm font-medium block mb-2">{{
+            t('imposter.lobby.addWord')
+          }}</label>
           <div class="flex gap-2">
             <input
+              id="imposter-custom-word"
               v-model="newWord"
               type="text"
-              placeholder="Enter a word..."
+              :placeholder="t('imposter.lobby.wordPlaceholder')"
               maxlength="40"
               class="ui-input bg-white-5 border-white-10 focus-border-imposter flex-1 text-sm"
               @keyup.enter="handleSubmitWord"
@@ -207,37 +222,40 @@ function handleSubmitWord() {
               class="ui-btn-primary btn-imposter btn-imposter-hover px-4 py-2.5 text-sm"
               @click="handleSubmitWord"
             >
-              Add
+              {{ t('imposter.lobby.add') }}
             </button>
           </div>
           <p class="text-muted-foreground text-xs mt-1">
-            {{ store.room?.wordLibraryCount ?? 0 }} words in library
+            {{ t('imposter.lobby.wordCount', { count: store.room?.wordLibraryCount ?? 0 }) }}
           </p>
         </div>
       </div>
 
       <button
         id="btn-start-game"
-        class="ui-btn-primary btn-imposter btn-imposter-hover w-full py-4 text-lg"
+        class="ui-btn-primary ui-btn-lg btn-imposter btn-imposter-hover w-full"
         :disabled="connectedCount < MIN_PLAYERS"
         @click="$emit('startGame')"
       >
-        Start Game
+        {{ t('imposter.lobby.start') }}
       </button>
       <p v-if="connectedCount < MIN_PLAYERS" class="text-muted-foreground text-sm">
-        Need at least {{ MIN_PLAYERS }} players to start
+        {{ t('imposter.lobby.needPlayers', { min: MIN_PLAYERS }) }}
       </p>
     </div>
 
     <!-- Non-host: also allow word submission -->
     <div v-else class="w-full max-w-85 flex flex-col gap-4">
       <div>
-        <label class="text-muted text-sm font-medium block mb-2">Suggest a Word</label>
+        <label for="imposter-custom-word" class="text-muted text-sm font-medium block mb-2">{{
+          t('imposter.lobby.suggestWord')
+        }}</label>
         <div class="flex gap-2">
           <input
+            id="imposter-custom-word"
             v-model="newWord"
             type="text"
-            placeholder="Enter a word..."
+            :placeholder="t('imposter.lobby.wordPlaceholder')"
             maxlength="40"
             class="ui-input bg-white-5 border-white-10 focus-border-imposter flex-1 text-sm"
             @keyup.enter="handleSubmitWord"
@@ -246,15 +264,15 @@ function handleSubmitWord() {
             class="ui-btn-primary btn-imposter btn-imposter-hover px-4 py-2.5 text-sm"
             @click="handleSubmitWord"
           >
-            Add
+            {{ t('imposter.lobby.add') }}
           </button>
         </div>
         <p class="text-muted-foreground text-xs mt-1">
-          {{ store.room?.wordLibraryCount ?? 0 }} words in library
+          {{ t('imposter.lobby.wordCount', { count: store.room?.wordLibraryCount ?? 0 }) }}
         </p>
       </div>
       <div class="text-center text-muted-foreground italic">
-        <p>Waiting for host to start the game...</p>
+        <p>{{ t('imposter.lobby.waitingForHost') }}</p>
       </div>
     </div>
   </div>

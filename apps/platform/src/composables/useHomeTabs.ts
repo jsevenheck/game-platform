@@ -6,13 +6,15 @@ export type HomeTabId = 'browse' | 'host' | 'join';
 export interface HomeTab {
   id: HomeTabId;
   label: string;
+  /** i18n key for the visible label; `label` is the English fallback. */
+  labelKey: string;
   icon: string;
 }
 
 export const HOME_TABS: readonly HomeTab[] = [
-  { id: 'browse', label: 'Browse Games', icon: '🎮' },
-  { id: 'host', label: 'Host a Party', icon: '⚡' },
-  { id: 'join', label: 'Join with Code', icon: '🔗' },
+  { id: 'browse', label: 'Browse Games', labelKey: 'home.tabs.browse', icon: '🎮' },
+  { id: 'host', label: 'Host a Party', labelKey: 'home.tabs.host', icon: '⚡' },
+  { id: 'join', label: 'Join with Code', labelKey: 'home.tabs.join', icon: '🔗' },
 ];
 
 const VALID_TABS: ReadonlySet<HomeTabId> = new Set(['browse', 'host', 'join']);

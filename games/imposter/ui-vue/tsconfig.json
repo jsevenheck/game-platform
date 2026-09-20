@@ -12,9 +12,9 @@
     "jsx": "preserve",
     "resolveJsonModule": true,
     "isolatedModules": true,
-    "baseUrl": ".",
     "paths": {
       "@shared/*": ["../core/src/*"],
+      "@platform/*": ["../../../apps/platform/src/*"],
       "@/*": ["./src/*"]
     }
   },

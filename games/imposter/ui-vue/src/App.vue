@@ -1,5 +1,8 @@
 <script setup lang="ts">
 import { onBeforeUnmount, onMounted, ref } from 'vue';
+import { useI18n } from 'vue-i18n';
+import { localizeError } from '@platform/i18n/serverError';
+import './i18n';
 import { useGameStore } from './stores/game';
 import { useSocket } from './composables/useSocket';
 import type { HubIntegrationProps } from './types/config';
@@ -21,6 +24,7 @@ const props = withDefaults(defineProps<HubIntegrationProps>(), {
 
 const emit = defineEmits<{ 'phase-change': [phase: string] }>();
 
+const { t } = useI18n();
 const store = useGameStore();
 const { socket } = useSocket({
   apiBaseUrl: props.apiBaseUrl,
@@ -245,11 +249,11 @@ onBeforeUnmount(() => {
 <template>
   <div class="min-h-dvh">
     <p v-if="store.phase === null" class="py-8 px-4 text-center text-muted-foreground">
-      {{ embeddedError || 'Connecting...' }}
+      {{ embeddedError ? localizeError(embeddedError, 'imposter') : t('imposter.connecting') }}
     </p>
     <Lobby
       v-else-if="store.phase === 'lobby'"
-      :error-message="lobbyError"
+      :error-message="localizeError(lobbyError, 'imposter')"
       @start-game="handleStartGame"
       @configure-lobby="handleConfigureLobby"
       @submit-word="handleSubmitWord"

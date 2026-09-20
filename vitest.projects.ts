@@ -77,6 +77,45 @@ export const scoutProject = {
   },
 };
 
+export const estimateProject = {
+  resolve: {
+    alias: [{ find: '@shared', replacement: resolve(GAMES_ROOT, 'estimate/core/src') }],
+  },
+  test: {
+    name: 'estimate',
+    include: ['games/estimate/__tests__/**/*.test.ts'],
+    environment: 'node',
+    globals: true,
+    clearMocks: true,
+  },
+};
+
+export const kritzelagentProject = {
+  resolve: {
+    alias: [{ find: '@shared', replacement: resolve(GAMES_ROOT, 'kritzelagent/core/src') }],
+  },
+  test: {
+    name: 'kritzelagent',
+    include: ['games/kritzelagent/__tests__/**/*.test.ts'],
+    environment: 'node',
+    globals: true,
+    clearMocks: true,
+  },
+};
+
+export const herdMentalityProject = {
+  resolve: {
+    alias: [{ find: '@shared', replacement: resolve(GAMES_ROOT, 'herd-mentality/core/src') }],
+  },
+  test: {
+    name: 'herd-mentality',
+    include: ['games/herd-mentality/__tests__/**/*.test.ts'],
+    environment: 'node',
+    globals: true,
+    clearMocks: true,
+  },
+};
+
 export const allProjects = [
   platformProject,
   blackoutProject,
@@ -84,4 +123,7 @@ export const allProjects = [
   secretSignalsProject,
   flip7Project,
   scoutProject,
+  estimateProject,
+  kritzelagentProject,
+  herdMentalityProject,
 ];

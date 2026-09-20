@@ -34,11 +34,11 @@ interface PartyClientToServerEvents {
     cb: (res: { ok: true } | { ok: false; error: string }) => void
   ) => void;
   launchGame: (
-    data: { playerId: string },
+    data: { playerId: string; locale?: string },
     cb: (res: { ok: true } | { ok: false; error: string }) => void
   ) => void;
   replayGame: (
-    data: { playerId: string },
+    data: { playerId: string; locale?: string },
     cb: (res: { ok: true } | { ok: false; error: string }) => void
   ) => void;
   returnToLobby: (

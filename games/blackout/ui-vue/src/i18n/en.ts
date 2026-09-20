@@ -1,0 +1,53 @@
+export const en = {
+  connecting: 'Connecting...',
+  retry: 'Retry',
+  lobby: {
+    players: 'Players ({count})',
+    owner: 'Owner',
+    host: 'Host',
+    offline: 'Offline',
+    rounds: 'Rounds:',
+    fewerRounds: 'Fewer rounds',
+    moreRounds: 'More rounds',
+    language: 'Task language:',
+    excludedLetters: 'Excluded letters',
+    save: 'Save',
+    start: 'Start Game',
+    needPlayers: 'Need at least {min} players to start',
+    waitingForHost: 'Waiting for host to start the game...',
+  },
+  round: {
+    youAreHost: 'You are the Host!',
+    alreadyPlayed: 'Already played',
+    reveal: 'Reveal!',
+    reroll: 'New Task + Category',
+    skip: 'Skip Round',
+    revealHint: 'Click to reveal the prompt to all players',
+    waitingForReveal: 'Waiting for the host to reveal...',
+    hostName: 'Host: {name}',
+    whoCorrect: 'Who was correct?',
+    correct: 'Correct!',
+    speakUp: 'Speak your answer out loud. Host will select the correct player.',
+  },
+  scoreboard: {
+    complete: 'Round {round} Complete!',
+    gotItRight: '{name} got it right!',
+    skipped: 'Round skipped - no correct answer',
+    next: 'Next round starting...',
+  },
+  gameOver: {
+    title: 'Game Over!',
+    winner: 'Winner',
+    tie: 'Tie!',
+    points: '{count} points',
+    finalScores: 'Final Scores',
+    playAgain: 'Play Again',
+    waiting: 'Waiting for host to restart...',
+  },
+  players: { title: 'Players' },
+  errors: {
+    player_not_found: 'Player not found.',
+  },
+};
+
+export type BlackoutMessages = typeof en;

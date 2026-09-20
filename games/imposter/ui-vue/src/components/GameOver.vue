@@ -1,8 +1,10 @@
 <script setup lang="ts">
 import { computed } from 'vue';
+import { useI18n } from 'vue-i18n';
 import type { PlayerView } from '@shared/types';
 import { useGameStore } from '../stores/game';
 
+const { t } = useI18n();
 const store = useGameStore();
 
 defineEmits<{
@@ -36,32 +38,36 @@ const singleWinner = computed(() =>
     <h1
       class="text-4xl font-black bg-linear-to-br from-imposter via-danger to-pink-500 bg-clip-text text-transparent"
     >
-      Game Over!
+      {{ t('imposter.gameOver.title') }}
     </h1>
 
     <div class="text-center">
       <template v-if="singleWinner">
-        <p class="text-muted-foreground uppercase text-sm tracking-[0.15em]">Champion</p>
+        <p class="text-muted-foreground uppercase text-sm tracking-[0.15em]">
+          {{ t('imposter.gameOver.champion') }}
+        </p>
         <h2 class="text-3xl text-imposter font-extrabold my-1">{{ singleWinner.name }}</h2>
       </template>
       <template v-else>
-        <p class="text-muted-foreground uppercase text-sm tracking-[0.15em]">Tied!</p>
+        <p class="text-muted-foreground uppercase text-sm tracking-[0.15em]">
+          {{ t('imposter.gameOver.tied') }}
+        </p>
         <h2 class="text-3xl text-imposter font-extrabold my-1">
           {{ winners.map((w) => w.name).join(' & ') }}
         </h2>
       </template>
-      <p class="text-muted text-lg">{{ topScore }} points</p>
+      <p class="text-muted text-lg">{{ t('imposter.gameOver.points', { count: topScore }) }}</p>
       <p class="text-muted-foreground text-sm mt-1">
-        Target score: {{ store.room?.targetScore ?? 0 }}
+        {{ t('imposter.gameOver.target', { score: store.room?.targetScore ?? 0 }) }}
       </p>
     </div>
 
     <div class="final-scores w-full max-w-85">
-      <h3 class="text-muted text-center text-sm mb-3">Final Scores</h3>
+      <h3 class="text-muted text-center text-sm mb-3">{{ t('imposter.gameOver.finalScores') }}</h3>
       <div
         v-for="(player, index) in sortedPlayers"
         :key="player.id"
-        class="flex items-center gap-3 px-3.5 py-2.5 bg-white/4 border border-white/8 rounded-[--radius-md] mb-2"
+        class="flex items-center gap-3 px-3.5 py-2.5 bg-white/4 border border-white/8 rounded-md mb-2"
         :class="{
           'border-imposter/40! bg-imposter/8!': player.score === topScore,
         }"
@@ -74,14 +80,14 @@ const singleWinner = computed(() =>
 
     <!-- Round history -->
     <div v-if="store.room?.roundHistory.length" class="w-full max-w-85">
-      <h3 class="text-muted text-center text-sm mb-3">Round History</h3>
+      <h3 class="text-muted text-center text-sm mb-3">{{ t('imposter.gameOver.history') }}</h3>
       <div
         v-for="(round, index) in store.room.roundHistory"
         :key="index"
-        class="flex items-center gap-3 px-3 py-2 bg-white/3 border border-white/6 rounded-[--radius-sm] mb-1.5"
+        class="flex items-center gap-3 px-3 py-2 bg-white/3 border border-white/6 rounded-sm mb-1.5"
         :class="{
-          'border-l-[3px] border-l-success!': round.winner === 'civilians',
-          'border-l-[3px] border-l-danger!': round.winner !== 'civilians',
+          'round-row-civilians': round.winner === 'civilians',
+          'round-row-imposter': round.winner !== 'civilians',
         }"
       >
         <span class="text-muted-foreground text-xs font-bold min-w-8">R{{ index + 1 }}</span>
@@ -90,7 +96,11 @@ const singleWinner = computed(() =>
           class="text-xs font-semibold"
           :class="round.winner === 'civilians' ? 'text-success' : 'text-danger'"
         >
-          {{ round.winner === 'civilians' ? 'CIV' : 'IMP' }}
+          {{
+            round.winner === 'civilians'
+              ? t('imposter.gameOver.civilians')
+              : t('imposter.gameOver.imposters')
+          }}
         </span>
       </div>
     </div>
@@ -100,13 +110,26 @@ const singleWinner = computed(() =>
       class="ui-btn-primary btn-imposter btn-imposter-hover py-4 px-10 text-lg"
       @click="$emit('restart')"
     >
-      Play Again
+      {{ t('imposter.gameOver.playAgain') }}
     </button>
-    <p v-else class="text-muted-foreground italic">Waiting for host to restart...</p>
+    <p v-else class="text-muted-foreground italic">{{ t('imposter.gameOver.waiting') }}</p>
   </div>
 </template>
 
 <style scoped>
+.round-row-civilians,
+.round-row-imposter {
+  border-left-width: 3px;
+}
+
+.round-row-civilians {
+  border-left-color: var(--color-success);
+}
+
+.round-row-imposter {
+  border-left-color: var(--color-danger);
+}
+
 .btn-imposter {
   background: var(--color-imposter);
 }

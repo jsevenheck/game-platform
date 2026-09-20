@@ -1,7 +1,7 @@
 import { nanoid } from 'nanoid';
 import { DEFAULT_ASSASSIN_PENALTY_MODE, getActiveTeamColors } from '../../../core/src/constants';
 import type { Room } from '../../../core/src/types';
-import { createPlayer, setSocketIndex } from './player';
+import { createPlayer, setSocketIndex, deleteSocketIndexesForRoom } from './player';
 
 const rooms = new Map<string, Room>();
 const sessionToRoom = new Map<string, string>();
@@ -37,7 +37,8 @@ export function clearRoomCleanup(code: string): void {
 export function createRoom(
   hostName: string,
   socketId: string,
-  hostPlayerId?: string
+  hostPlayerId?: string,
+  locale: 'en' | 'de' = 'en'
 ): { room: Room; hostId: string; resumeToken: string } {
   const code = generateRoomCode();
   const host = createPlayer(hostName, true, hostPlayerId);
@@ -59,6 +60,7 @@ export function createRoom(
     winnerTeam: null,
     winningTeams: [],
     teamCount: 2,
+    locale,
     assassinPenaltyMode: DEFAULT_ASSASSIN_PENALTY_MODE,
     focusedCards: [],
     nextStartingTeamIndex:
@@ -83,6 +85,7 @@ export function deleteRoom(code: string): void {
       sessionToRoom.delete(sessionId);
     }
   }
+  deleteSocketIndexesForRoom(code);
 }
 
 export interface RoomStoreSnapshot {

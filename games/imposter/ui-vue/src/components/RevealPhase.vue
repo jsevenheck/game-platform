@@ -1,8 +1,10 @@
 <script setup lang="ts">
 import { ref, computed } from 'vue';
+import { useI18n } from 'vue-i18n';
 import type { PlayerView } from '@shared/types';
 import { useGameStore } from '../stores/game';
 
+const { t } = useI18n();
 const store = useGameStore();
 
 const emit = defineEmits<{
@@ -23,13 +25,15 @@ const isHost = computed(
 const result = computed(() => store.room?.lastRoundResult ?? null);
 
 function getPlayerName(id: string): string {
-  return store.room?.players.find((p: PlayerView) => p.id === id)?.name ?? 'Unknown';
+  return (
+    store.room?.players.find((p: PlayerView) => p.id === id)?.name ?? t('imposter.common.unknown')
+  );
 }
 
 function handleGuess() {
   const trimmed = guess.value.trim();
   if (!trimmed) {
-    guessError.value = 'Enter a guess';
+    guessError.value = t('imposter.reveal.guessEmpty');
     return;
   }
   guessError.value = '';
@@ -60,16 +64,16 @@ const voteTally = computed(() => {
     <div
       class="round-badge bg-imposter-muted text-imposter px-4 py-1.5 rounded-full text-sm font-bold tracking-wide uppercase border border-imposter/30"
     >
-      Round {{ store.room?.roundNumber }}
+      {{ t('imposter.common.round', { round: store.room?.roundNumber }) }}
     </div>
 
     <div class="w-full max-w-100">
-      <h2 class="text-foreground text-lg mb-4 text-center">Vote Results</h2>
+      <h2 class="text-foreground text-lg mb-4 text-center">{{ t('imposter.reveal.results') }}</h2>
       <div class="flex flex-col gap-2">
         <div
           v-for="(entry, index) in voteTally"
           :key="entry.playerId"
-          class="flex items-center gap-3 px-3.5 py-2.5 bg-white/4 border border-white/8 rounded-[--radius-md] transition-all"
+          class="flex items-center gap-3 px-3.5 py-2.5 bg-white/4 border border-white/8 rounded-md transition-all"
           :class="{
             'border-imposter/40! bg-imposter/8!': index === 0,
             'border-danger/40! bg-danger/8!': entry.isInfiltrator && store.room?.infiltratorIds,
@@ -80,7 +84,7 @@ const voteTally = computed(() => {
             <span
               v-if="entry.isInfiltrator && store.room?.infiltratorIds"
               class="ui-badge bg-danger-muted text-danger"
-              >Imposter!</span
+              >{{ t('imposter.reveal.imposterBadge') }}</span
             >
           </div>
           <div class="flex-1 h-1.5 bg-white/8 rounded-sm overflow-hidden">
@@ -98,48 +102,59 @@ const voteTally = computed(() => {
 
     <div
       v-if="store.room?.secretWord"
-      class="text-center px-8 py-6 bg-success-muted border border-success/20 rounded-[--radius-xl]"
+      class="text-center px-8 py-6 bg-success-muted border border-success/20 rounded-xl"
     >
       <p class="text-muted-foreground text-sm uppercase tracking-[0.15em] mb-1">
-        The Secret Word Was
+        {{ t('imposter.reveal.wordWas') }}
       </p>
       <h1 class="text-4xl font-black text-success">{{ store.room?.secretWord }}</h1>
     </div>
     <div
       v-else-if="store.room?.waitingForGuess"
-      class="word-hidden text-center px-8 py-6 bg-imposter-muted border border-imposter/25 rounded-[--radius-xl]"
+      class="word-hidden text-center px-8 py-6 bg-imposter-muted border border-imposter/25 rounded-xl"
     >
-      <p class="text-muted-foreground text-sm uppercase tracking-[0.15em] mb-1">Secret Word</p>
-      <h1 class="text-4xl font-black text-imposter">Hidden Until Guess Ends</h1>
+      <p class="text-muted-foreground text-sm uppercase tracking-[0.15em] mb-1">
+        {{ t('imposter.reveal.secretWord') }}
+      </p>
+      <h1 class="text-4xl font-black text-imposter">{{ t('imposter.reveal.hidden') }}</h1>
     </div>
 
     <div v-if="store.room?.infiltratorIds" class="text-center w-full max-w-100">
       <template v-if="store.room.infiltratorIds.length === 0">
-        <div class="p-4 bg-blackout-muted border border-blackout/30 rounded-[--radius-lg]">
-          <h3 class="text-blackout mb-2">Paranoia Mode!</h3>
+        <div class="p-4 bg-blackout-muted border border-blackout/30 rounded-lg">
+          <h3 class="text-blackout mb-2">{{ t('imposter.reveal.paranoia') }}</h3>
           <p class="text-muted text-sm">
-            There were <strong class="text-foreground">no Imposters</strong> this round. Everyone
-            knew the word!
+            <i18n-t keypath="imposter.reveal.noImposters" scope="global">
+              <template #none>
+                <strong class="text-foreground">{{ t('imposter.reveal.noImpostersBold') }}</strong>
+              </template>
+            </i18n-t>
           </p>
         </div>
       </template>
       <template v-else>
         <h3 class="text-muted text-sm mb-3">
-          {{ store.room.infiltratorIds.length === 1 ? 'The Imposter Was' : 'The Imposters Were' }}
+          {{
+            store.room.infiltratorIds.length === 1
+              ? t('imposter.reveal.imposterWas')
+              : t('imposter.reveal.impostersWere')
+          }}
         </h3>
         <div class="flex flex-wrap gap-2 justify-center">
           <span
             v-for="id in store.room.infiltratorIds"
             :key="id"
-            class="inline-flex items-center gap-1.5 px-4 py-2 bg-danger/10 border border-danger/30 rounded-[--radius-md] text-danger font-bold text-lg"
+            class="inline-flex items-center gap-1.5 px-4 py-2 bg-danger/10 border border-danger/30 rounded-md text-danger font-bold text-lg"
           >
             {{ getPlayerName(id) }}
             <span
               v-if="store.room.revealedInfiltrators.includes(id)"
               class="ui-badge bg-success-muted text-success"
-              >Caught!</span
+              >{{ t('imposter.reveal.caught') }}</span
             >
-            <span v-else class="ui-badge bg-imposter-muted text-imposter">Escaped!</span>
+            <span v-else class="ui-badge bg-imposter-muted text-imposter">{{
+              t('imposter.reveal.escaped')
+            }}</span>
           </span>
         </div>
       </template>
@@ -147,19 +162,21 @@ const voteTally = computed(() => {
 
     <div
       v-if="store.room?.waitingForGuess && store.isCaughtInfiltrator"
-      class="guess-section w-full max-w-100 text-center p-5 bg-danger/5 border-2 border-danger/30 rounded-[--radius-xl]"
+      class="guess-section w-full max-w-100 text-center p-5 bg-danger/5 border-2 border-danger/30 rounded-xl"
     >
-      <h3 class="text-danger text-xl mb-1">Last Chance!</h3>
+      <h3 class="text-danger text-xl mb-1">{{ t('imposter.reveal.lastChance') }}</h3>
       <p class="text-muted text-sm mb-4">
-        You were caught! Guess the secret word to steal the win!
+        {{ t('imposter.reveal.caughtHint') }}
       </p>
       <div class="flex gap-2 flex-wrap">
+        <label for="imposter-guess" class="sr-only">{{ t('imposter.reveal.guessLabel') }}</label>
         <input
+          id="imposter-guess"
           v-model="guess"
           type="text"
-          placeholder="Your guess..."
+          :placeholder="t('imposter.reveal.guessPlaceholder')"
           maxlength="40"
-          class="ui-input bg-white-5 border-white-10 focus:border-danger! flex-1 min-w-0"
+          class="ui-input guess-input bg-white-5 border-white-10 flex-1 min-w-0"
           @keyup.enter="handleGuess"
         />
         <button
@@ -167,30 +184,30 @@ const voteTally = computed(() => {
           class="ui-btn-primary btn-imposter btn-imposter-hover"
           @click="handleGuess"
         >
-          Guess!
+          {{ t('imposter.reveal.guess') }}
         </button>
       </div>
-      <p v-if="guessError" class="text-danger text-xs mt-1">{{ guessError }}</p>
+      <p v-if="guessError" role="alert" class="text-danger text-xs mt-1">{{ guessError }}</p>
     </div>
 
     <div
       v-else-if="store.room?.waitingForGuess && !store.isCaughtInfiltrator"
       class="flex flex-col items-center gap-3 text-muted-foreground italic text-center"
     >
-      <p>Waiting for the Imposter to guess the word...</p>
+      <p>{{ t('imposter.reveal.waitingForGuess') }}</p>
       <button
         v-if="isHost"
         id="btn-skip-guess"
         class="ui-btn-secondary text-sm px-5 py-2 hover-border-imposter hover-text-imposter"
         @click="$emit('skipGuess')"
       >
-        Skip Guess
+        {{ t('imposter.reveal.skipGuess') }}
       </button>
     </div>
 
     <div v-if="result" class="round-result w-full max-w-100">
       <div
-        class="result-banner text-center p-6 rounded-[--radius-xl] animate-[slideIn_0.5s_ease]"
+        class="result-banner text-center p-6 rounded-xl animate-[slideIn_0.5s_ease]"
         :class="[
           {
             civilians: result.winner === 'civilians',
@@ -202,24 +219,18 @@ const voteTally = computed(() => {
         ]"
       >
         <template v-if="result.winner === 'civilians'">
-          <h2 class="text-success text-2xl font-bold">Civilians Win!</h2>
+          <h2 class="text-success text-2xl font-bold">{{ t('imposter.reveal.civiliansWin') }}</h2>
           <p v-if="result.infiltratorGuess" class="text-muted mt-2">
-            The imposter guessed "<strong class="text-foreground">{{
-              result.infiltratorGuess
-            }}</strong
-            >" &mdash; wrong!
+            {{ t('imposter.reveal.guessedWrong', { guess: result.infiltratorGuess }) }}
           </p>
         </template>
         <template v-else>
-          <h2 class="text-danger text-2xl font-bold">Imposters Win!</h2>
+          <h2 class="text-danger text-2xl font-bold">{{ t('imposter.reveal.impostersWin') }}</h2>
           <p v-if="result.infiltratorGuessCorrect" class="text-muted mt-2">
-            The imposter correctly guessed "<strong class="text-foreground">{{
-              result.infiltratorGuess
-            }}</strong
-            >"!
+            {{ t('imposter.reveal.guessedRight', { guess: result.infiltratorGuess }) }}
           </p>
           <p v-else-if="!result.infiltratorsCaught" class="text-muted mt-2">
-            The imposters went undetected!
+            {{ t('imposter.reveal.undetected') }}
           </p>
         </template>
       </div>
@@ -231,29 +242,33 @@ const voteTally = computed(() => {
         class="ui-btn-primary btn-imposter btn-imposter-hover flex-1"
         @click="$emit('nextRound')"
       >
-        Next Round
+        {{ t('imposter.reveal.nextRound') }}
       </button>
       <button
         id="btn-end-game"
         class="ui-btn-secondary hover-border-imposter hover-text-imposter flex-1"
         @click="$emit('endGame')"
       >
-        End Game
+        {{ t('imposter.reveal.endGame') }}
       </button>
       <button
         class="ui-btn-secondary hover-border-imposter hover-text-imposter flex-1"
         @click="$emit('restartGame')"
       >
-        Back to Lobby
+        {{ t('imposter.reveal.backToLobby') }}
       </button>
     </div>
     <p v-else-if="result && !isHost" class="text-muted-foreground italic">
-      Waiting for host to continue...
+      {{ t('imposter.reveal.waitingForHost') }}
     </p>
   </div>
 </template>
 
 <style scoped>
+.guess-input:focus {
+  border-color: var(--color-danger);
+}
+
 @keyframes slideIn {
   from {
     opacity: 0;

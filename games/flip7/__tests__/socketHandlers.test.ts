@@ -9,6 +9,10 @@ vi.mock('../server/src/models/room', () => ({
   getRoom: vi.fn(),
   setSessionToRoom: vi.fn(),
   getSessionRoom: vi.fn(),
+  // Returns undefined (no active party found) by default, so
+  // syncRoomHostFromActiveParty's resync is a no-op in these tests unless a
+  // test overrides it — matching "no live party" rather than crashing.
+  getRoomSession: vi.fn(),
   clearRoomCleanup: vi.fn(),
   deleteRoom: vi.fn(),
   scheduleRoomCleanup: vi.fn(),
@@ -25,7 +29,13 @@ vi.mock('nanoid', () => ({
 
 import type { Room } from '../core/src/types';
 import { registerFlip7 } from '../server/src/socketHandlers';
-import { createRoom, getRoom, setSessionToRoom, getSessionRoom } from '../server/src/models/room';
+import {
+  createRoom,
+  getRoom,
+  setSessionToRoom,
+  getSessionRoom,
+  getRoomSession,
+} from '../server/src/models/room';
 import { deleteSocketIndex, setSocketIndex } from '../server/src/models/player';
 
 type HandlerMap = Record<string, (...args: unknown[]) => void>;
@@ -257,6 +267,60 @@ describe('registerFlip7 — autoJoinRoom', () => {
 describe('registerFlip7 — startGame', () => {
   beforeEach(() => {
     vi.clearAllMocks();
+  });
+
+  // F6 regression: verifyIsHost previously trusted the room's own (possibly
+  // stale) hostId without re-checking the live platform party — so a host
+  // transfer at the party level wasn't reflected in the room until the next
+  // join/disconnect event.
+  it('resyncs host from the active party before authorizing startGame', () => {
+    const ns = makeNamespace();
+    const io = makeIo(ns.nsp);
+    registerFlip7(io as never, '/g/flip7');
+
+    const room = makeRoom('ABCD', 'player-host', 'socket-host');
+    room.players['p2'] = { ...room.players['player-host'], id: 'p2', name: 'B', socketId: null };
+    room.players['p3'] = {
+      ...room.players['player-host'],
+      id: 'p3',
+      name: 'New Host',
+      socketId: 'socket-newhost',
+      isHost: false,
+    };
+    (getRoom as Mock).mockReturnValue(room);
+
+    // The platform party's host is now 'p3', not the room's stale 'player-host'.
+    const { party } = createPartySession('p3', 'New Host', 'party-socket');
+    party.status = 'in-match';
+    party.activeMatch = {
+      gameId: 'flip7',
+      matchKey: 'session-resync',
+      namespace: '/g/flip7',
+      startedAt: Date.now(),
+    };
+    (getRoomSession as Mock).mockReturnValue('session-resync');
+
+    setSocketIndex('socket-host', 'ABCD', 'player-host');
+    setSocketIndex('socket-newhost', 'ABCD', 'p3');
+
+    const staleHostSocket = makeSocket('socket-host');
+    ns.connect(staleHostSocket);
+    const staleCb = vi.fn();
+    staleHostSocket.handlers['startGame']?.({ roomCode: 'ABCD' }, staleCb);
+    expect(staleCb).toHaveBeenCalledWith({ ok: false, error: 'Only host can start' });
+
+    const newHostSocket = makeSocket('socket-newhost');
+    ns.connect(newHostSocket);
+    const newHostCb = vi.fn();
+    newHostSocket.handlers['startGame']?.({ roomCode: 'ABCD' }, newHostCb);
+    expect(newHostCb).not.toHaveBeenCalledWith(
+      expect.objectContaining({ error: 'Only host can start' })
+    );
+    expect(room.hostId).toBe('p3');
+
+    clearAllParties();
+    deleteSocketIndex('socket-host');
+    deleteSocketIndex('socket-newhost');
   });
 
   it('rejects startGame if not host', () => {

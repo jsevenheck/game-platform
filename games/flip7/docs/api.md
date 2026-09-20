@@ -96,6 +96,10 @@ For Flip 7, the eligible target list may include the drawer because self-targeti
 
 ---
 
+`hit`, `stay`, and `chooseActionTarget` share a per-socket rate limit (20 requests/second) — a call beyond that is silently ignored, the same as any other rejected call for these events (no acknowledgement either way).
+
+---
+
 ### `playAgain(data)`
 
 Host only. Phase `ended` only. Resets the room to `lobby` with zeroed scores.

@@ -18,8 +18,9 @@
 
   /* Text */
   --color-foreground: #f0f0f5;
-  --color-muted: #7878a0;
-  --color-muted-foreground: #50506a;
+  /* Secondary text stays readable on every dark surface (WCAG AA). */
+  --color-muted: #9a9abb;
+  --color-muted-foreground: #8f8fae;
 
   /* Borders / rings */
   --color-border: #1e1e2e;
@@ -54,6 +55,18 @@
   --color-scout: #14b8a6;
   --color-scout-hover: #0d9488;
   --color-scout-muted: rgba(20, 184, 166, 0.12);
+
+  --color-estimate: #0ea5e9;
+  --color-estimate-hover: #0284c7;
+  --color-estimate-muted: rgba(14, 165, 233, 0.12);
+
+  --color-kritzelagent: #f97316;
+  --color-kritzelagent-hover: #ea580c;
+  --color-kritzelagent-muted: rgba(249, 115, 22, 0.12);
+
+  --color-herd-mentality: #d97706;
+  --color-herd-mentality-hover: #b45309;
+  --color-herd-mentality-muted: rgba(217, 119, 6, 0.12);
 
   /* Semantic */
   --color-danger: #ef4444;
@@ -102,6 +115,17 @@
   }
 }
 
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    scroll-behavior: auto !important;
+    transition-duration: 0.01ms !important;
+  }
+}
+
 /* ------------------------------------------------------------------ */
 /*  Shared UI Components                                               */
 /* ------------------------------------------------------------------ */
@@ -118,7 +142,7 @@
 
   /* ─── Panel (card-like sections) ─── */
   .ui-panel {
-    @apply rounded-[--radius-lg];
+    @apply rounded-lg;
     background: var(--color-panel);
     border: 1px solid var(--color-border);
     padding: 1.25rem;
@@ -134,7 +158,7 @@
   }
 
   .ui-dialog {
-    @apply rounded-[--radius-xl] text-center;
+    @apply rounded-xl text-center;
     background: var(--color-panel);
     border: 1px solid var(--color-border-strong);
     padding: 2.5rem 2rem;
@@ -167,6 +191,13 @@
     box-shadow: 0 2px 10px rgba(249, 115, 22, 0.3);
   }
 
+  /* Large primary action (e.g. "Start game" in every lobby). */
+  .ui-btn-lg {
+    padding: 0.875rem 2rem;
+    font-size: 1.125rem;
+    min-width: 12rem;
+  }
+
   .ui-btn-primary:disabled {
     @apply opacity-35 cursor-not-allowed;
     box-shadow: none;
@@ -194,7 +225,10 @@
   .ui-btn-primary[class*='bg-imposter'],
   .ui-btn-primary[class*='bg-signals'],
   .ui-btn-primary[class*='bg-flip7'],
-  .ui-btn-primary[class*='bg-scout'] {
+  .ui-btn-primary[class*='bg-scout'],
+  .ui-btn-primary[class*='bg-estimate'],
+  .ui-btn-primary[class*='bg-kritzelagent'],
+  .ui-btn-primary[class*='bg-herd-mentality'] {
     background-image: none !important;
   }
 
@@ -321,11 +355,11 @@
     letter-spacing: 0.08em;
   }
 
-  /* ─── Small stepper button ─── */
+  /* ─── Stepper button ─── */
   .ui-stepper-btn {
     @apply flex items-center justify-center cursor-pointer;
-    width: 2.25rem;
-    height: 2.25rem;
+    width: 2.75rem;
+    height: 2.75rem;
     border: 1px solid var(--color-border-strong);
     border-radius: var(--radius-sm);
     background: rgba(255, 255, 255, 0.04);
@@ -482,11 +516,15 @@
 
   /* ─── Slide-up transition ─── */
   .slide-up-enter-active {
-    transition: all 280ms cubic-bezier(0.34, 1.56, 0.64, 1);
+    transition:
+      opacity 280ms cubic-bezier(0.22, 1, 0.36, 1),
+      transform 280ms cubic-bezier(0.22, 1, 0.36, 1);
   }
 
   .slide-up-leave-active {
-    transition: all 180ms ease;
+    transition:
+      opacity 180ms ease-out,
+      transform 180ms ease-out;
   }
 
   .slide-up-enter-from {
@@ -508,11 +546,31 @@
   }
 
   .ui-progress-fill {
+    width: 100%;
     height: 100%;
     border-radius: 3px;
     background: linear-gradient(90deg, var(--color-accent), var(--color-accent-hover));
-    transition: width 500ms ease;
+    transform: scaleX(0);
+    transform-origin: left center;
+    transition: transform 500ms ease-out;
     box-shadow: 0 0 8px rgba(249, 115, 22, 0.5);
+  }
+
+  /* ─── Embedded game shell ─── */
+  /* Keep the three newest game UIs readable on wide screens while allowing
+     their content to reflow naturally on phones. */
+  .platform-game-surface {
+    width: 100%;
+    min-width: 0;
+    box-sizing: border-box;
+    justify-content: center;
+  }
+
+  /* Phase headings are programmatic focus targets (tabindex="-1") so screen
+     readers announce the new phase. They are not keyboard-reachable, so a
+     visible ring would only appear as a stray frame after each phase change. */
+  .platform-game-surface [data-phase-focus]:focus {
+    outline: none;
   }
 
   /* ─── Numeric rendering helper ─── */

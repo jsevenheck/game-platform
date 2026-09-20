@@ -1,6 +1,6 @@
 # CLAUDE.md
 
-Single pnpm workspace monorepo: one platform app + five integrated games.
+Single pnpm workspace monorepo: one platform app + eight integrated games.
 
 ```text
 apps/platform/       <- Express + Socket.IO server, Vue 3 client (the only production app)
@@ -9,6 +9,9 @@ games/imposter/      <- internal platform module
 games/secret-signals/ <- internal platform module
 games/flip7/         <- internal platform module
 games/scout/         <- internal platform module
+games/estimate/      <- internal platform module
+games/kritzelagent/  <- internal platform module
+games/herd-mentality/ <- internal platform module
 ```
 
 Games are **internal modules** and run only through the platform party flow. They have no own standalone runtime or toolchain. The platform owns the full lifecycle: create → join → launch game → replay / return to lobby.
@@ -20,23 +23,31 @@ pnpm install        # install all dependencies
 pnpm dev            # start platform (server + client)
 pnpm build          # build client + server for production
 pnpm start          # run production server from dist/
-pnpm test           # run all unit tests (vitest, all 5 games)
+pnpm test           # run all unit tests (vitest, all 8 games)
 pnpm test:blackout  # run Blackout unit tests
 pnpm test:imposter  # run Imposter unit tests
 pnpm test:secret-signals  # run Secret Signals unit tests
 pnpm test:flip7     # run Flip 7 unit tests
 pnpm test:scout     # run Scout unit tests
-pnpm lint           # eslint across all source
+pnpm test:estimate  # run Estimate unit tests
+pnpm test:kritzelagent  # run Kritzelagent unit tests
+pnpm test:herd-mentality  # run Herd Mentality unit tests
+pnpm lint           # eslint across all source (slow; prefer the scoped variants)
+pnpm lint:platform  # eslint apps/ only
+pnpm lint:<game>    # eslint one game, e.g. pnpm lint:flip7 (also lint:games)
 pnpm lint:fix       # eslint with auto-fix
 pnpm format         # prettier --write across all source
 pnpm format:check   # prettier --check
 pnpm typecheck      # tsc via apps/platform
+pnpm typecheck:games # vue-tsc for every games/*/ui-vue
 pnpm test:e2e       # playwright (starts server automatically)
 ```
 
 ## Tech Stack
 
+- TypeScript `~6.0.3` (pinned; typescript-eslint requires `<6.1`)
 - Vue 3 Composition API (`<script setup lang="ts">`)
+- vue-i18n 11 for the EN/DE UI
 - Pinia for state management
 - Tailwind CSS v4.3 with `@tailwindcss/vite` plugin
 - Socket.IO for real-time party and game communication
@@ -51,14 +62,14 @@ Game UI source is scanned via `@source` directives so Tailwind generates classes
 
 ### Design tokens (`@theme`)
 
-| Category        | Tokens                                                                                       |
-| --------------- | -------------------------------------------------------------------------------------------- |
-| Surfaces        | `canvas` (#050509), `shell`, `panel` (#111118), `card` (#15151f), `elevated`                 |
-| Text            | `foreground`, `muted`, `muted-foreground`                                                    |
-| Borders         | `border`, `border-strong`, `ring`                                                            |
-| Platform accent | `accent` (orange #f97316)                                                                    |
-| Game accents    | `blackout` (violet), `imposter` (crimson), `signals` (cyan), `flip7` (amber), `scout` (teal) |
-| Semantic        | `danger`, `success`, `warning` plus `-muted` variants                                        |
+| Category        | Tokens                                                                                                                                                            |
+| --------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Surfaces        | `canvas` (#050509), `shell`, `panel` (#111118), `card` (#15151f), `elevated`                                                                                      |
+| Text            | `foreground`, `muted`, `muted-foreground`                                                                                                                         |
+| Borders         | `border`, `border-strong`, `ring`                                                                                                                                 |
+| Platform accent | `accent` (orange #f97316)                                                                                                                                         |
+| Game accents    | `blackout` (violet), `imposter` (crimson), `signals` (cyan), `flip7` (amber), `scout` (teal), `estimate` (sky), `kritzelagent` (orange), `herd-mentality` (amber) |
+| Semantic        | `danger`, `success`, `warning` plus `-muted` variants                                                                                                             |
 
 ### Shared component classes (`@layer components`)
 
@@ -106,12 +117,27 @@ games/{game}/
 | `@secret-signals-ui` | `games/secret-signals/ui-vue/src/`                    |
 | `@flip7-ui`          | `games/flip7/ui-vue/src/`                             |
 | `@scout-ui`          | `games/scout/ui-vue/src/`                             |
+| `@estimate-ui`       | `games/estimate/ui-vue/src/`                          |
+| `@kritzelagent-ui`   | `games/kritzelagent/ui-vue/src/`                      |
+| `@herd-mentality-ui` | `games/herd-mentality/ui-vue/src/`                    |
 
 `vue`, `pinia`, and `vue-router` are force-deduplicated so game UIs share a single framework instance with the platform.
 
 ### Dev proxy
 
 `pnpm dev` starts the client dev server on port 5173 and the API server on port 3000. Vite proxies `/socket.io` and `/api` to `localhost:3000`.
+
+## Internationalisation
+
+The UI is bilingual (`en` / `de`), switched on the platform home screen (`apps/platform/src/i18n/`).
+
+- The **UI language is per player** (browser-local, `LanguageSwitcher` on home, party and in-game). The **content language** (questions, words, topics) is per match and chosen by the host in the party lobby before launch; replay keeps it.
+- Platform strings live in `apps/platform/src/i18n/messages/{en,de}.ts`; `de` is typed against `en`, so missing keys fail typecheck.
+- Each game ships `games/{game}/ui-vue/src/i18n/{en,de,index}.ts` and registers them with `registerGameMessages('<game-id>', { en, de })` (imported once from the game's `App.vue`). Use `t('<game-id>.…')`; shared strings such as the replay overlay are `replay.*` on the platform.
+- Server errors are stable English sentences. Show them with `localizeError(message, gameId)` (`apps/platform/src/i18n/serverError.ts`): it looks up `<gameId>.errors.<slug>` then `errors.<slug>`; numbers become `n` in the slug and are passed as `{0}`, `{1}`; unknown messages are shown raw.
+- Match content follows the host's chosen content language (defaults to their UI language). `authorizePartyJoin` returns `locale`; rooms store it and load per-locale content files (`questions.<locale>.csv`, `prompts.<locale>.csv`, `topics.<locale>.csv`, `words.<locale>.txt`, Secret Signals `words.<locale>.ts`). Never hardcode a single-language content file.
+- `apps/platform/__tests__/i18nParity.test.ts` checks key/placeholder parity for the platform and every game. `serverError.test.ts` covers `localizeError` ("Cannot … in phase X" messages share one `…_in_phase_x` key).
+- The admin view (`AdminView.vue`) and the brand title `Game Platform` are intentionally English-only (operator tool).
 
 ## Integration Contracts
 
@@ -125,6 +151,8 @@ Every game server module exposes:
 ### Shared game-auth helper
 
 `apps/platform/server/party/gameAuth.ts` exports `authorizePartyJoin`, `syncRoomHostAfterJoin`, and supporting helpers (`assignHost`, `clearHost`, `isConnectedPlayer`, `restoreHostToFirstConnectedPlayer`, `normalizeJoinToken`, `normalizeStablePlayerId`). Every game's `autoJoinRoom` handler MUST call `authorizePartyJoin(gameId, sessionId, playerId, joinToken)` at the top and use the returned `member.playerId` / `member.name` as the authoritative identity — never trust client-supplied `playerId` / `name` / `isHost`.
+
+The same module also exports the payload-shape helpers `readString`, `readFiniteNumber`, `readArrayIndex` — use these to read any client-supplied field before calling a string/number-only method on it (`.trim()`, `.toUpperCase()`, arithmetic, array indexing). Socket.IO does not validate a payload against the compile-time event types at runtime, and calling such a method directly on an unchecked field throws a `TypeError` that crashes the entire process (nothing in the Socket.IO dispatch path catches a synchronous throw from a handler, and the platform's `uncaughtException` handler exits on it) — not just the connection that sent the bad payload. Also exports `createSocketIndex()`, a factory for the socket→{roomCode, playerId} index every game maintains — call it once per game module rather than hand-rolling the map.
 
 ### Props passed to PlatformAdapter.vue
 
@@ -175,7 +203,7 @@ export interface PlatformGameModule {
 }
 ```
 
-Each entry maps a game ID to its `PlatformAdapter.vue` via lazy `import('@{game}-ui/PlatformAdapter.vue')`. Current IDs: `blackout`, `imposter`, `secret-signals`, `flip7`, and `scout`. When adding a new game, register it here with both `definition` and `platformMeta`.
+Each entry maps a game ID to its `PlatformAdapter.vue` via lazy `import('@{game}-ui/PlatformAdapter.vue')`. Current IDs: `blackout`, `imposter`, `secret-signals`, `flip7`, `scout`, `estimate`, `kritzelagent`, and `herd-mentality`. When adding a new game, register it here with both `definition` and `platformMeta`.
 
 ## Logging Rules
 
@@ -194,27 +222,17 @@ Each entry maps a game ID to its `PlatformAdapter.vue` via lazy `import('@{game}
 
 ## Security Rules
 
-- **Party action rate limiting**: `createParty` and `joinParty` are rate-limited per socket id (5 actions / 10 s). Uses `checkFixedWindowRateLimit` from `apps/platform/server/observability/rateLimit.ts`. Reset in tests via `resetPartyActionRateLimit()`.
-- **Connection rate limiting**: the Socket.IO engine limits new connections per IP (20 / 10 s), respecting `X-Forwarded-For` for reverse-proxy deployments. Exceeding sockets are destroyed.
-- **Security headers**: `X-Content-Type-Options: nosniff`, `X-Frame-Options: DENY`, `Referrer-Policy: strict-origin-when-cross-origin`, `X-XSS-Protection: 0` are set on all HTTP responses via middleware in `index.ts`.
+- **Party action rate limiting**: `createParty`, `joinParty`, and `resumeParty` are rate-limited per socket id (5 actions / 10 s). Uses `checkFixedWindowRateLimit` from `apps/platform/server/observability/rateLimit.ts`. Reset in tests via `resetPartyActionRateLimit()`.
+- **In-match gameplay rate limiting**: high-frequency or otherwise attacker-shaped gameplay events are rate-limited per socket via `createSocketRateLimiter` (also from `observability/rateLimit.ts`) — e.g. Kritzelagent's `submitStroke` (10/s), and the shared gameplay limiter used by Flip 7 (`hit`/`stay`/`chooseActionTarget`), Secret Signals (`focusCard`/`giveSignal`/`revealCard`), and Imposter (`submitDescription`/`submitVote`) at 20/s. See `docs/adding-a-new-game.md`'s "Rate Limiting" section for the pattern and when a new event needs one.
+- **Connection rate limiting**: the Socket.IO engine limits new connections per IP (20 / 10 s). Client IP is resolved via `resolveClientIp`/`getTrustedProxyHops` in `apps/platform/server/observability/clientIp.ts`, which trusts exactly `TRUST_PROXY_HOPS` (default `1`) reverse-proxy hops of `X-Forwarded-For` — reading the Nth-from-right entry, never the client-controlled leftmost one. `app.set('trust proxy', ...)` uses the same hop count so Express's own `req.ip` (used by the admin rate limiters) resolves consistently. Exceeding sockets are destroyed.
+- **Security headers**: `X-Content-Type-Options: nosniff`, `X-Frame-Options: DENY`, `Referrer-Policy: strict-origin-when-cross-origin`, `X-XSS-Protection: 0`, and `Content-Security-Policy` (same-origin scripts/connections, Google Fonts for styles/fonts, `object-src 'none'`, `frame-ancestors 'none'`) are set on all HTTP responses via middleware in `index.ts`.
 - **Admin CSRF**: double-submit cookie pattern (`admin_csrf` cookie + `X-CSRF-Token` header).
 - **Game join authorization**: every game validates the platform `joinToken` against the party member's `resumeToken` via `authorizePartyJoin`. Host identity is derived from `party.hostPlayerId`, never from client-supplied `isHost`.
-- **Word persistence** (Imposter): `IMPOSTER_PERSIST_WORDS` env flag (default `true`) controls whether submitted words are written to `words.txt`. Set to `false` in multi-instance deployments to avoid file divergence.
+- **Word persistence** (Imposter): `IMPOSTER_PERSIST_WORDS` env flag (default `true`) controls whether submitted words are written to `words.<locale>.txt` (per match language). Set to `false` in multi-instance deployments to avoid file divergence. `IMPOSTER_WORDS_DIR` moves the files to a mounted volume (`docker-compose.yml` mounts `imposter-words`) so words survive container replacement. The library is capped at `WORD_LIBRARY_MAX_SIZE` (2000) entries; new submissions are dropped once it's at capacity.
 
 ## Adding a New Game
 
 See [docs/adding-a-new-game.md](docs/adding-a-new-game.md) for the full guide: folder structure, server module contract, `PlatformAdapter.vue` pattern, platform registration points, design system usage, and the integration checklist.
-
-### Graphify
-
-Graphify is available for codebase architecture and relationship queries.
-
-- Use `graphify update .` to re-extract changed code files and update the existing graph without requiring an LLM API key.
-- Use `graphify query "..."` for architecture, file relationship, or call-graph questions before broad grep/read searches.
-- Use `graphify path "..."` to trace dependency / call paths between files or symbols.
-- Use `graphify explain "..."` to get an explanation of a specific subgraph or symbol relationships.
-- If `graphify-out/graph.json` exists, prefer a targeted Graphify query for high-level codebase context.
-- **Never read or directly access `graphify-out/`** (e.g. `graphify-out/graph.json`). Always go through the `graphify update .`, `graphify query`, `graphify path`, or `graphify explain` commands instead — the raw graph files are an internal artifact and must not be inspected directly.
 
 ## Skills
 

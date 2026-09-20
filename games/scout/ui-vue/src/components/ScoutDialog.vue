@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { computed, shallowRef } from 'vue';
+import { useI18n } from 'vue-i18n';
 import { analyzePlay, comparePlayAnalyses } from '@shared/analyzePlay';
 import { flipCard, type ScoutCard } from '@shared/deck';
 import type { RoomView } from '@shared/types';
@@ -22,6 +23,7 @@ const emit = defineEmits<{
   ];
 }>();
 
+const { t } = useI18n();
 const store = useGameStore();
 const selectedCardId = shallowRef<string | undefined>();
 const insertIndex = shallowRef(0);
@@ -32,7 +34,9 @@ const selectedPreviewIndexes = shallowRef<number[]>([]);
 const currentCards = computed(() => props.room.trick?.currentPlay?.cards ?? []);
 const currentOwnerName = computed(() => {
   const ownerId = props.room.trick?.priorSetOwnerId;
-  return props.room.players.find((player) => player.id === ownerId)?.name ?? 'Player';
+  return (
+    props.room.players.find((player) => player.id === ownerId)?.name ?? t('scout.playerFallback')
+  );
 });
 const edgeCards = computed(() => {
   const cards = currentCards.value;
@@ -134,18 +138,24 @@ function submit(scoutAndShow: boolean) {
     <section class="ui-dialog max-w-5xl text-left">
       <div class="mb-5 flex items-center justify-between gap-4">
         <div>
-          <h2 class="text-2xl font-black text-foreground">Scout a card</h2>
+          <h2 class="text-2xl font-black text-foreground">{{ t('scout.dialog.title') }}</h2>
           <p class="text-sm text-muted">
-            Take one end card from {{ currentOwnerName }}'s prior set, insert it anywhere, and
-            choose its orientation.
+            {{ t('scout.dialog.intro', { owner: currentOwnerName }) }}
           </p>
         </div>
-        <button class="ui-btn-ghost" type="button" @click="emit('close')">✕</button>
+        <button
+          class="ui-btn-ghost"
+          type="button"
+          :aria-label="t('scout.dialog.close')"
+          @click="emit('close')"
+        >
+          ✕
+        </button>
       </div>
 
       <div class="space-y-5">
         <section>
-          <h3 class="ui-section-label mb-2">Prior set edge cards</h3>
+          <h3 class="ui-section-label mb-2">{{ t('scout.dialog.edgeCards') }}</h3>
           <div class="flex gap-3 overflow-x-auto rounded-xl border border-border bg-card p-3">
             <button
               v-for="card in edgeCards"
@@ -160,7 +170,7 @@ function submit(scoutAndShow: boolean) {
         </section>
 
         <section>
-          <h3 class="ui-section-label mb-2">Insert position</h3>
+          <h3 class="ui-section-label mb-2">{{ t('scout.dialog.insertPosition') }}</h3>
           <div class="flex flex-wrap gap-2">
             <button
               v-for="index in store.myRow.length + 1"
@@ -171,14 +181,16 @@ function submit(scoutAndShow: boolean) {
               @click="setInsertIndex(index - 1)"
             >
               {{
-                index === 1 ? 'Before 1' : index > store.myRow.length ? 'End' : `Before ${index}`
+                index > store.myRow.length
+                  ? t('scout.dialog.end')
+                  : t('scout.dialog.beforeIndex', { index })
               }}
             </button>
           </div>
         </section>
 
         <section>
-          <h3 class="ui-section-label mb-2">Orientation</h3>
+          <h3 class="ui-section-label mb-2">{{ t('scout.dialog.orientation') }}</h3>
           <div class="flex flex-wrap items-center gap-3">
             <button
               class="ui-btn-secondary"
@@ -186,7 +198,7 @@ function submit(scoutAndShow: boolean) {
               type="button"
               @click="flipSelected = false"
             >
-              Keep orientation
+              {{ t('scout.dialog.keep') }}
             </button>
             <button
               class="ui-btn-secondary"
@@ -194,7 +206,7 @@ function submit(scoutAndShow: boolean) {
               type="button"
               @click="flipSelected = true"
             >
-              Flip card
+              {{ t('scout.dialog.flip') }}
             </button>
             <Card v-if="orientedScoutCard" :card="orientedScoutCard" compact />
           </div>
@@ -202,10 +214,10 @@ function submit(scoutAndShow: boolean) {
 
         <section v-if="hasScoutAndShowToken">
           <div class="mb-2 flex flex-wrap items-center justify-between gap-3">
-            <h3 class="ui-section-label">Scout & Show preview</h3>
+            <h3 class="ui-section-label">{{ t('scout.dialog.preview') }}</h3>
             <label class="flex items-center gap-2 text-sm text-muted">
               <input v-model="useScoutAndShow" type="checkbox" />
-              Use token ({{ store.self?.scoutAndShowTokens ?? 0 }} left)
+              {{ t('scout.dialog.useToken', { count: store.self?.scoutAndShowTokens ?? 0 }) }}
             </label>
           </div>
           <div class="flex gap-2 overflow-x-auto rounded-xl border border-border bg-card p-3">
@@ -229,7 +241,7 @@ function submit(scoutAndShow: boolean) {
             v-if="useScoutAndShow && selectedPreviewCards.length && !scoutAndShowValid"
             class="mt-2 text-sm text-danger"
           >
-            Scout & Show selection must be contiguous, valid, and beat the remaining prior set.
+            {{ t('scout.dialog.invalidShow') }}
           </p>
         </section>
 
@@ -240,7 +252,7 @@ function submit(scoutAndShow: boolean) {
             :disabled="!canScout"
             @click="submit(false)"
           >
-            Confirm Scout
+            {{ t('scout.dialog.confirmScout') }}
           </button>
           <button
             class="ui-btn-primary btn-scout"
@@ -248,7 +260,7 @@ function submit(scoutAndShow: boolean) {
             :disabled="!hasScoutAndShowToken || !scoutAndShowValid"
             @click="submit(true)"
           >
-            Confirm Scout & Show
+            {{ t('scout.dialog.confirmScoutAndShow') }}
           </button>
         </div>
       </div>

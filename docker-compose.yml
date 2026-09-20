@@ -15,6 +15,9 @@ services:
     environment:
       - NODE_ENV=production
       - PORT=3002
+      - IMPOSTER_WORDS_DIR=/data/imposter
+    volumes:
+      - imposter-words:/data/imposter
     labels:
       - traefik.enable=true
 
@@ -23,3 +26,6 @@ services:
       - traefik.http.routers.${COMPOSE_PROJECT_NAME}.tls.certresolver=letsencrypt
 
       - traefik.http.services.${COMPOSE_PROJECT_NAME}.loadbalancer.server.port=3002
+
+volumes:
+  imposter-words:

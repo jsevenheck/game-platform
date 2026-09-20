@@ -2,8 +2,16 @@ packages:
   - 'apps/*'
   - 'games/*'
 
+overrides:
+  diff: ^8.0.3
+  esbuild: '>=0.25.0'
+  shell-quote: 1.10.0
+  qs: 6.16.0
+  'nanoid@<5': 3.3.18
+
 allowBuilds:
-  better-sqlite3: true
+  # v13 ships prebuilt N-API binaries (incl. linuxmusl), so no node-gyp build is needed.
+  better-sqlite3: false
   esbuild: true
 
 minimumReleaseAgeExclude:

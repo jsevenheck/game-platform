@@ -109,7 +109,10 @@ function makeSocket(id: string, auth?: Record<string, string>) {
 }
 
 describe('socketHandlers embedded autoJoinRoom', () => {
-  function setupParty(matchKey = 'session-1'): {
+  function setupParty(
+    matchKey = 'session-1',
+    locale?: 'en' | 'de'
+  ): {
     party: PartySession;
     tokens: Record<string, string>;
   } {
@@ -120,6 +123,7 @@ describe('socketHandlers embedded autoJoinRoom', () => {
       matchKey,
       namespace: '/g/blackout',
       startedAt: Date.now(),
+      locale,
     };
     return { party, tokens: { host: hostResumeToken } };
   }
@@ -157,7 +161,7 @@ describe('socketHandlers embedded autoJoinRoom', () => {
       cb
     );
 
-    expect(createRoom).toHaveBeenCalledWith('Host', 'socket-host', 'hub-1');
+    expect(createRoom).toHaveBeenCalledWith('Host', 'socket-host', 'hub-1', 'en');
     expect(setSessionToRoom).toHaveBeenCalledWith('session-1', 'ABCD');
     expect(clearRoomCleanup).toHaveBeenCalledWith('ABCD');
     expect(cb).toHaveBeenCalledWith({
@@ -166,6 +170,31 @@ describe('socketHandlers embedded autoJoinRoom', () => {
       playerId: 'hub-1',
       resumeToken: room.players['hub-1'].resumeToken,
     });
+  });
+
+  test('a German match creates the room with German task content', () => {
+    const room = makeRoom('ABCD', 'hub-1', 'socket-host');
+    setupParty('session-1', 'de');
+    vi.mocked(getSessionRoom).mockReturnValue(undefined);
+    vi.mocked(createRoom).mockImplementation(
+      (_name: string, _socketId: string, hostPlayerId?: string) => ({
+        room,
+        hostId: hostPlayerId,
+        resumeToken: room.players['hub-1'].resumeToken,
+      })
+    );
+
+    const namespace = makeNamespace();
+    registerBlackout({ of: () => namespace.nsp } as never, '/g/blackout');
+    const socket = makeSocket('socket-host', { playerId: 'hub-1' });
+    namespace.connect(socket);
+
+    socket.handlers.autoJoinRoom(
+      { sessionId: 'session-1', playerId: 'hub-1', name: 'Host', joinToken: 'mock-id' },
+      vi.fn()
+    );
+
+    expect(createRoom).toHaveBeenCalledWith('Host', 'socket-host', 'hub-1', 'de');
   });
 
   test('second autoJoinRoom with same session and hub player reconnects to the same slot', () => {
@@ -213,5 +242,98 @@ describe('socketHandlers embedded autoJoinRoom', () => {
       playerId: 'hub-1',
       resumeToken: room.players['hub-1'].resumeToken,
     });
+  });
+
+  test('autoJoinRoom rejects a non-string sessionId instead of throwing (F1 regression)', () => {
+    setupParty('session-1');
+    const namespace = makeNamespace();
+    const io = { of: () => namespace.nsp } as never;
+    registerBlackout(io, '/g/blackout');
+
+    const socket = makeSocket('socket-host', { playerId: 'hub-1' });
+    namespace.connect(socket);
+
+    const cb = vi.fn();
+    expect(() =>
+      socket.handlers.autoJoinRoom({ sessionId: 12345, playerId: 'hub-1' }, cb)
+    ).not.toThrow();
+    expect(cb).toHaveBeenCalledWith({ ok: false, error: 'Missing session info' });
+  });
+});
+
+describe('selectWinner / skipRound duplicate-advance guard (F5 regression)', () => {
+  afterEach(() => {
+    vi.clearAllMocks();
+    deleteSocketIndex('socket-host');
+  });
+
+  function makePlayingRoom(): Room {
+    const room = makeRoom('ABCD', 'host-1', 'socket-host');
+    room.phase = 'playing';
+    room.players['reader-1'] = {
+      id: 'reader-1',
+      name: 'Reader',
+      resumeToken: 'r',
+      score: 0,
+      connected: true,
+      isHost: false,
+      socketId: 'socket-reader',
+    };
+    room.players['winner-1'] = {
+      id: 'winner-1',
+      name: 'Winner',
+      resumeToken: 'w',
+      score: 0,
+      connected: true,
+      isHost: false,
+      socketId: 'socket-winner',
+    };
+    room.currentRound = {
+      roundNumber: 1,
+      category: { id: 1, name: 'Cat' },
+      task: { id: 1, text: 'Task', requiresLetter: false },
+      letter: null,
+      readerId: 'reader-1',
+      winnerId: null,
+      revealed: true,
+    };
+    return room;
+  }
+
+  test('a duplicated selectWinner event only scores and advances the round once', () => {
+    const room = makePlayingRoom();
+    vi.mocked(getRoom).mockReturnValue(room);
+    setSocketIndex('socket-host', room.code, 'host-1');
+
+    const namespace = makeNamespace();
+    const io = { of: () => namespace.nsp } as never;
+    registerBlackout(io, '/g/blackout');
+    const socket = makeSocket('socket-host');
+    namespace.connect(socket);
+
+    const payload = { roomCode: 'ABCD', winnerId: 'winner-1' };
+    socket.handlers.selectWinner(payload);
+    socket.handlers.selectWinner(payload); // duplicated/double-fired event
+
+    expect(room.players['winner-1'].score).toBe(1);
+    expect(room.roundHistory).toHaveLength(1);
+  });
+
+  test('a duplicated skipRound event only advances the round once', () => {
+    const room = makePlayingRoom();
+    vi.mocked(getRoom).mockReturnValue(room);
+    setSocketIndex('socket-host', room.code, 'host-1');
+
+    const namespace = makeNamespace();
+    const io = { of: () => namespace.nsp } as never;
+    registerBlackout(io, '/g/blackout');
+    const socket = makeSocket('socket-host');
+    namespace.connect(socket);
+
+    const payload = { roomCode: 'ABCD' };
+    socket.handlers.skipRound(payload);
+    socket.handlers.skipRound(payload); // duplicated/double-fired event
+
+    expect(room.roundHistory).toHaveLength(1);
   });
 });

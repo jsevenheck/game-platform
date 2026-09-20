@@ -1,8 +1,10 @@
 <script setup lang="ts">
 import { computed, ref, watch } from 'vue';
+import { useI18n } from 'vue-i18n';
 import type { PlayerView } from '@shared/types';
 import { useGameStore } from '../stores/game';
 
+const { t } = useI18n();
 const store = useGameStore();
 
 const emit = defineEmits<{
@@ -48,11 +50,11 @@ watch(
 function handleSubmit() {
   const trimmed = description.value.trim();
   if (!trimmed) {
-    error.value = 'Enter a description';
+    error.value = t('imposter.description.errorEmpty');
     return;
   }
   if (trimmed.length > 30) {
-    error.value = 'Max 30 characters';
+    error.value = t('imposter.description.errorLength', { max: 30 });
     return;
   }
   error.value = '';
@@ -67,49 +69,51 @@ function handleSubmit() {
     <div
       class="round-badge bg-imposter-muted text-imposter px-4 py-1.5 rounded-full text-sm font-bold tracking-wide uppercase border border-imposter/30"
     >
-      Round {{ store.room?.roundNumber }}
+      {{ t('imposter.common.round', { round: store.room?.roundNumber }) }}
     </div>
 
     <!-- Word reveal -->
-    <div
-      class="w-full max-w-90 p-5 bg-white/4 border border-white/8 rounded-[--radius-xl] text-center"
-    >
+    <div class="w-full max-w-90 p-5 bg-white/4 border border-white/8 rounded-xl text-center">
       <template v-if="store.myWord">
         <p class="text-muted-foreground text-sm uppercase tracking-[0.15em] mb-2">
-          The Secret Word
+          {{ t('imposter.description.secretWord') }}
         </p>
         <h1 class="text-4xl font-black text-success mb-3">{{ store.myWord }}</h1>
         <p
           class="role-badge civilian inline-block px-3 py-1 rounded-lg text-sm font-semibold bg-success-muted text-success border border-success/30"
         >
-          You are a Civilian
+          {{ t('imposter.description.civilian') }}
         </p>
       </template>
       <template v-else>
-        <p class="text-muted-foreground text-sm uppercase tracking-[0.15em] mb-2">Your Role</p>
+        <p class="text-muted-foreground text-sm uppercase tracking-[0.15em] mb-2">
+          {{ t('imposter.description.yourRole') }}
+        </p>
         <h1 class="text-4xl font-black text-danger mb-3">???</h1>
         <p
           class="role-badge imposter inline-block px-3 py-1 rounded-lg text-sm font-semibold bg-danger-muted text-danger border border-danger/30"
         >
-          You are the Imposter
+          {{ t('imposter.description.imposter') }}
         </p>
-        <p class="text-muted text-sm mt-2">Listen to each clue as it appears and blend in.</p>
+        <p class="text-muted text-sm mt-2">{{ t('imposter.description.blendIn') }}</p>
       </template>
     </div>
 
     <!-- Turn card -->
-    <div class="w-full max-w-90 p-5 bg-white/4 border border-white/8 rounded-[--radius-xl]">
-      <p class="text-muted-foreground text-sm uppercase tracking-[0.15em] mb-2">Current Turn</p>
+    <div class="w-full max-w-90 p-5 bg-white/4 border border-white/8 rounded-xl">
+      <p class="text-muted-foreground text-sm uppercase tracking-[0.15em] mb-2">
+        {{ t('imposter.description.currentTurn') }}
+      </p>
       <h2 class="text-foreground text-xl font-bold mb-1">
-        {{ currentDescriber?.name ?? 'Waiting...' }}
+        {{ currentDescriber?.name ?? t('imposter.description.waiting') }}
       </h2>
       <p class="text-muted text-sm">
         {{
           isMyTurn
-            ? 'Enter your clue now.'
+            ? t('imposter.description.yourTurn')
             : currentDescriber
-              ? `Waiting for ${currentDescriber.name} to enter a clue.`
-              : 'Preparing the next clue.'
+              ? t('imposter.description.waitingFor', { name: currentDescriber.name })
+              : t('imposter.description.preparing')
         }}
       </p>
       <button
@@ -117,20 +121,29 @@ function handleSubmit() {
         class="ui-btn-secondary mt-3 hover-border-imposter hover-text-imposter"
         @click="$emit('skipDescriptionTurn')"
       >
-        Skip Turn
+        {{ t('imposter.description.skipTurn') }}
       </button>
     </div>
 
     <!-- Description input -->
     <div v-if="isMyTurn" class="w-full max-w-90">
-      <label class="text-muted text-sm block mb-2">
-        {{ store.myWord ? 'Describe the word (be subtle!)' : 'Write a convincing description' }}
+      <label for="imposter-description" class="text-muted text-sm block mb-2">
+        {{
+          store.myWord
+            ? t('imposter.description.labelCivilian')
+            : t('imposter.description.labelImposter')
+        }}
       </label>
       <div class="flex gap-2">
         <input
+          id="imposter-description"
           v-model="description"
           type="text"
-          :placeholder="store.myWord ? 'Your clue...' : 'Blend in...'"
+          :placeholder="
+            store.myWord
+              ? t('imposter.description.placeholderCivilian')
+              : t('imposter.description.placeholderImposter')
+          "
           maxlength="30"
           class="ui-input bg-white-5 border-white-10 focus-border-imposter flex-1"
           @keyup.enter="handleSubmit"
@@ -140,7 +153,7 @@ function handleSubmit() {
           class="ui-btn-primary btn-imposter btn-imposter-hover"
           @click="handleSubmit"
         >
-          Submit
+          {{ t('imposter.description.submit') }}
         </button>
       </div>
       <p
@@ -149,31 +162,27 @@ function handleSubmit() {
       >
         {{ description.length }}/30
       </p>
-      <p v-if="error" class="text-danger text-xs mt-1">{{ error }}</p>
+      <p v-if="error" role="alert" class="text-danger text-xs mt-1">{{ error }}</p>
     </div>
 
     <!-- Submitted notice -->
     <div
       v-else-if="store.hasSubmittedDescription"
-      class="w-full max-w-90 p-5 bg-white/4 border border-white/8 rounded-[--radius-xl] text-center"
+      class="w-full max-w-90 p-5 bg-white/4 border border-white/8 rounded-xl text-center"
     >
       <p class="text-success font-semibold">
-        {{
-          wasSkipped
-            ? 'Your turn was skipped by the host.'
-            : 'Clue submitted. Waiting for the next player.'
-        }}
+        {{ wasSkipped ? t('imposter.description.skipped') : t('imposter.description.submitted') }}
       </p>
     </div>
 
     <!-- Clue board -->
-    <div class="w-full max-w-90 p-5 bg-white/4 border border-white/8 rounded-[--radius-xl]">
-      <h3 class="text-foreground text-base mb-3">Clues in Order</h3>
+    <div class="w-full max-w-90 p-5 bg-white/4 border border-white/8 rounded-xl">
+      <h3 class="text-foreground text-base mb-3">{{ t('imposter.description.board') }}</h3>
       <div class="flex flex-col gap-2">
         <div
           v-for="player in orderedPlayers"
           :key="player.id"
-          class="flex flex-col gap-0.5 px-3.5 py-3 rounded-[--radius-lg] bg-white/3 border border-white/6"
+          class="flex flex-col gap-0.5 px-3.5 py-3 rounded-lg bg-white/3 border border-white/6"
           :class="{
             'border-imposter/35! bg-imposter/8!': player.id === store.room?.currentDescriberId,
           }"
@@ -182,7 +191,7 @@ function handleSubmit() {
           <span class="text-foreground text-base min-h-[1.2rem]">
             {{
               store.room?.descriptions?.[player.id] === ''
-                ? 'Skipped by host'
+                ? t('imposter.description.skippedByHost')
                 : (store.room?.descriptions?.[player.id] ?? '...')
             }}
           </span>
@@ -191,19 +200,23 @@ function handleSubmit() {
     </div>
 
     <!-- Progress -->
-    <div class="w-full max-w-90 p-5 bg-white/4 border border-white/8 rounded-[--radius-xl]">
-      <h3 class="text-foreground text-base mb-3">Clue Progress</h3>
+    <div class="w-full max-w-90 p-5 bg-white/4 border border-white/8 rounded-xl">
+      <h3 class="text-foreground text-base mb-3">{{ t('imposter.description.progress') }}</h3>
       <div class="ui-progress-track">
         <div
           class="ui-progress-fill btn-imposter"
           :style="{
-            width: `${((store.room?.submittedDescriptionIds.length ?? 0) / (store.connectedPlayers.length || 1)) * 100}%`,
+            transform: `scaleX(${(store.room?.submittedDescriptionIds.length ?? 0) / (store.connectedPlayers.length || 1)})`,
           }"
         ></div>
       </div>
       <p class="text-muted text-sm mt-2">
-        {{ store.room?.submittedDescriptionIds.length ?? 0 }} /
-        {{ store.connectedPlayers.length }} submitted
+        {{
+          t('imposter.description.submittedCount', {
+            count: store.room?.submittedDescriptionIds.length ?? 0,
+            total: store.connectedPlayers.length,
+          })
+        }}
       </p>
     </div>
   </div>

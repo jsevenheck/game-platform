@@ -3,7 +3,10 @@ import { onMounted, onBeforeUnmount, ref } from 'vue';
 import { useGameStore } from './stores/game';
 import { useSocket, type BlackoutSocket } from './composables/useSocket';
 import type { HubIntegrationProps } from './types/config';
+import { useI18n } from 'vue-i18n';
+import { localizeError } from '@platform/i18n/serverError';
 import type { Language, RoomView } from '@shared/types';
+import './i18n';
 import PlayersPanel from './panels/PlayersPanel.vue';
 import Lobby from './components/Lobby.vue';
 import GameRound from './components/GameRound.vue';
@@ -23,6 +26,7 @@ const props = withDefaults(defineProps<HubIntegrationProps>(), {
 const emit = defineEmits<{ 'phase-change': [phase: string] }>();
 
 const store = useGameStore();
+const { t } = useI18n();
 const error = ref('');
 const embeddedError = ref('');
 let socket: BlackoutSocket;
@@ -207,7 +211,7 @@ onBeforeUnmount(() => {
     <main class="mx-auto max-w-150 p-4">
       <template v-if="!store.room">
         <p class="mt-8 text-center text-muted">
-          {{ embeddedError || 'Connecting...' }}
+          {{ embeddedError ? localizeError(embeddedError, 'blackout') : t('blackout.connecting') }}
         </p>
         <button
           v-if="embeddedError"
@@ -215,7 +219,7 @@ onBeforeUnmount(() => {
           type="button"
           @click="retryEmbeddedJoin"
         >
-          Retry
+          {{ t('blackout.retry') }}
         </button>
       </template>
       <Lobby
@@ -235,13 +239,14 @@ onBeforeUnmount(() => {
       <GameOver v-else-if="store.phase === 'ended'" @restart="handleRestart" />
     </main>
 
-    <PlayersPanel v-if="store.room" />
+    <PlayersPanel v-if="store.room && store.phase !== 'lobby'" />
 
     <p
       v-if="error"
-      class="fixed bottom-4 left-1/2 -translate-x-1/2 rounded-[--radius-md] bg-danger-muted px-6 py-3 text-sm text-danger"
+      role="alert"
+      class="fixed bottom-4 left-1/2 -translate-x-1/2 rounded-md bg-danger-muted px-6 py-3 text-sm text-danger"
     >
-      {{ error }}
+      {{ localizeError(error, 'blackout') }}
     </p>
   </div>
 </template>

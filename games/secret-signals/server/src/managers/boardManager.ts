@@ -1,13 +1,14 @@
 import { BOARD_SIZE, getCardDistribution } from '../../../core/src/constants';
 import type { Card, CardType, TeamColor, TeamConfig } from '../../../core/src/types';
-import { WORD_LIST } from '../data/words';
+import { getWordList, type WordListLocale } from '../data/words';
 import { shuffle } from '../utils/helpers';
 
 export function generateBoard(
   teamCount: number,
-  turnOrder: TeamColor[]
+  turnOrder: TeamColor[],
+  locale: WordListLocale = 'en'
 ): { board: Card[]; teams: TeamConfig[] } {
-  const words = shuffle([...WORD_LIST]).slice(0, BOARD_SIZE);
+  const words = shuffle([...getWordList(locale)]).slice(0, BOARD_SIZE);
   const dist = getCardDistribution(teamCount);
 
   const types: CardType[] = [];
