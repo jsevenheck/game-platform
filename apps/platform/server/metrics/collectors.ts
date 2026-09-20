@@ -1,4 +1,4 @@
-import { Gauge } from 'prom-client';
+import { Gauge } from '@prometheus-io/client';
 import { metricsRegistry } from './registry';
 import { getPartySnapshot } from '../party/partyStore';
 import { getJoinablePublicPartiesSnapshot } from '../party/publicLobbies';

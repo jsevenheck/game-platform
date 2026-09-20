@@ -2,8 +2,10 @@ import { defineConfig, type Plugin, type PluginOption } from 'vite';
 import vue from '@vitejs/plugin-vue';
 import tailwindcss from '@tailwindcss/vite';
 import { resolve } from 'path';
+import { fileURLToPath } from 'node:url';
 
-const GAMES_ROOT = resolve(__dirname, '../../games');
+const ROOT_DIR = fileURLToPath(new URL('.', import.meta.url));
+const GAMES_ROOT = resolve(ROOT_DIR, '../../games');
 
 /**
  * Resolves `@shared/*` imports to the correct game's `core/src/` directory
@@ -50,7 +52,7 @@ export default defineConfig({
   resolve: {
     alias: [
       // Platform source alias
-      { find: '@platform', replacement: resolve(__dirname, 'src') },
+      { find: '@platform', replacement: resolve(ROOT_DIR, 'src') },
       // Game UI aliases — allow importing game adapters by short name
       { find: '@blackout-ui', replacement: resolve(GAMES_ROOT, 'blackout/ui-vue/src') },
       { find: '@imposter-ui', replacement: resolve(GAMES_ROOT, 'imposter/ui-vue/src') },
@@ -81,10 +83,10 @@ export default defineConfig({
   build: {
     outDir: 'dist/client',
     emptyOutDir: true,
-    rollupOptions: {
+    rolldownOptions: {
       output: {
-        manualChunks: {
-          pinia: ['pinia'],
+        codeSplitting: {
+          groups: [{ name: 'pinia', test: /node_modules[\\/]pinia[\\/]/ }],
         },
       },
     },

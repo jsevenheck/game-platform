@@ -10,7 +10,8 @@ overrides:
   'nanoid@<5': 3.3.18
 
 allowBuilds:
-  better-sqlite3: true
+  # v13 ships prebuilt N-API binaries (incl. linuxmusl), so no node-gyp build is needed.
+  better-sqlite3: false
   esbuild: true
 
 minimumReleaseAgeExclude:

@@ -1,6 +1,6 @@
 import { type Express, type Request } from 'express';
 import type { Logger } from 'pino';
-import { Counter } from 'prom-client';
+import { Counter } from '@prometheus-io/client';
 import { createComponentLogger, parseBooleanEnv } from '../logging/logger';
 import { metricsRegistry } from './registry';
 

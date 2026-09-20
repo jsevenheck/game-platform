@@ -1,4 +1,4 @@
-import { Counter, Gauge, Histogram } from 'prom-client';
+import { Counter, Gauge, Histogram } from '@prometheus-io/client';
 import { metricsRegistry } from './registry';
 
 export type MetricResult = 'ok' | 'rejected' | 'failed';

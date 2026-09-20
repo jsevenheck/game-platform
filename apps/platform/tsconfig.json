@@ -11,5 +11,5 @@
     "verbatimModuleSyntax": true,
     "types": ["node", "vitest/globals"]
   },
-  "include": ["src/**/*", "__tests__/**/*", "e2e/**/*", "env.d.ts", "vite.config.ts"]
+  "include": ["src/**/*", "__tests__/**/*", "e2e/**/*", "env.d.ts", "vite.config.mts"]
 }

@@ -1,4 +1,4 @@
-import { Registry } from 'prom-client';
+import { Registry } from '@prometheus-io/client';
 
 // Isolate a fresh registry for each test to avoid cross-test state.
 let testRegistry: Registry;

@@ -1,6 +1,6 @@
 FROM node:24-alpine AS base
-# Build tools required for better-sqlite3 native addon
-RUN apk update && apk upgrade --no-cache && apk add --no-cache python3 make g++ && corepack enable
+# better-sqlite3 13 ships prebuilt binaries (incl. linuxmusl), so no compiler toolchain is needed
+RUN apk update && apk upgrade --no-cache && corepack enable
 WORKDIR /app
 ENV CI=true
 
