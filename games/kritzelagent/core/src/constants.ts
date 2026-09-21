@@ -3,6 +3,9 @@ import type { Topic } from './types';
 export const MIN_PLAYERS = 5;
 export const MAX_PLAYERS = 12;
 export const DEFAULT_TOTAL_ROUNDS = 5;
+export const MIN_TOTAL_ROUNDS = 1;
+/** Upper bound the host may pick; the topic library can lower it further. */
+export const MAX_TOTAL_ROUNDS = 12;
 export const DRAWING_TURNS_PER_PLAYER = 2;
 export const MAX_STROKE_POINTS = 80;
 export const MAX_COORDINATE = 1;

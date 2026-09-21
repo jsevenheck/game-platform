@@ -65,6 +65,9 @@ export const en = {
     votedCount: '{count} / {total} voted',
   },
   reveal: {
+    standings: 'Standings · first to {score}',
+    point: '{count} point',
+    points: '{count} points',
     results: 'Vote Results',
     imposterBadge: 'Imposter!',
     wordWas: 'The Secret Word Was',

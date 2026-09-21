@@ -39,6 +39,7 @@ const store = useGameStore();
 const { socket, connected } = useSocket(props);
 const joinState = ref<'connecting' | 'joining' | 'ready' | 'error'>('connecting');
 const pending = ref(false);
+const pendingKind = ref<'start' | 'rounds' | 'other'>('other');
 const hasJoinAck = ref(false);
 const phaseRegion = ref<HTMLElement | null>(null);
 let joinTimer: ReturnType<typeof setTimeout> | undefined;
@@ -96,9 +97,13 @@ function retryConnection() {
   }
 }
 
-function runAction(action: (done: (response: { ok: boolean; error?: string }) => void) => void) {
+function runAction(
+  action: (done: (response: { ok: boolean; error?: string }) => void) => void,
+  kind: 'start' | 'rounds' | 'other' = 'other'
+) {
   if (pending.value) return;
   pending.value = true;
+  pendingKind.value = kind;
   store.clearError();
   action((response) => {
     pending.value = false;
@@ -108,7 +113,13 @@ function runAction(action: (done: (response: { ok: boolean; error?: string }) =>
 }
 
 function startGame() {
-  runAction((done) => socket.emit('startGame', { roomCode: store.roomCode }, done));
+  runAction((done) => socket.emit('startGame', { roomCode: store.roomCode }, done), 'start');
+}
+function setRounds(totalRounds: number) {
+  runAction(
+    (done) => socket.emit('setTotalRounds', { roomCode: store.roomCode, totalRounds }, done),
+    'rounds'
+  );
 }
 function submitStroke(points: StrokePoint[]) {
   runAction((done) => socket.emit('submitStroke', { roomCode: store.roomCode, points }, done));
@@ -229,8 +240,11 @@ onBeforeUnmount(() => {
       :players="store.room?.players ?? []"
       :is-host="store.isHost"
       :can-start="store.canStart"
-      :pending="pending"
+      :pending="pending && pendingKind === 'start'"
+      :settings-pending="pending && pendingKind === 'rounds'"
+      :total-rounds="store.room?.totalRounds ?? 5"
       @start="startGame"
+      @set-rounds="setRounds"
     />
     <DrawingView
       v-else-if="view === 'drawing' && store.room"

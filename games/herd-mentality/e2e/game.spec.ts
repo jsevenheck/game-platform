@@ -121,6 +121,40 @@ test.describe('Herd Mentality', () => {
     }
   });
 
+  test('host tunes the settings in the lobby and the standings show after a reveal', async ({
+    browser,
+  }) => {
+    const session = await openSession(browser);
+    try {
+      await launch(session);
+      const [host, ben, clara, david] = session.pages;
+      await expect(ben!.getByTestId('herd-mentality-rounds')).toHaveCount(0);
+
+      await host!.getByTestId('herd-mentality-rounds-minus').click();
+      await expect(host!.getByTestId('herd-mentality-rounds-value')).toHaveText('7');
+      await host!.getByTestId('herd-mentality-target-cows-plus').click();
+      await expect(host!.getByTestId('herd-mentality-target-cows-value')).toHaveText('9');
+      await expect(ben!.getByTestId('herd-mentality-lobby')).toContainText('7 questions');
+
+      await host!.getByRole('button', { name: 'Start game' }).click();
+      await expect(host!.getByTestId('herd-mentality-question')).toBeVisible();
+      for (const page of [host!, ben!, clara!, david!]) {
+        await page.getByTestId('herd-mentality-answer-input').fill('Pizza');
+        await page.getByTestId('herd-mentality-answer-submit').click();
+      }
+      await host!.getByTestId('herd-mentality-reveal-button').click();
+      for (const page of session.pages) {
+        await expect(page.getByTestId('herd-mentality-reveal')).toContainText('Goal: 9 cows');
+        await expect(page.getByTestId('herd-mentality-standings')).toBeVisible();
+        await expect(
+          page.getByTestId('herd-mentality-standings').getByRole('listitem')
+        ).toHaveCount(4);
+      }
+    } finally {
+      await closeSession(session);
+    }
+  });
+
   test('reaches the target, shows the final scoreboard, and replays through the platform overlay', async ({
     browser,
   }) => {
@@ -147,6 +181,8 @@ test.describe('Herd Mentality', () => {
 
       await expect(host!.getByTestId('herd-mentality-gameover')).toBeVisible();
       await expect(host!.getByRole('dialog', { name: 'Game over' })).toBeVisible();
+      await expect(host!.locator('#herd-mentality-gameover-title')).toBeFocused();
+      await host!.keyboard.press('Tab');
       await expect(host!.getByTestId('platform-replay')).toBeFocused();
       await expect(host!.getByTestId('platform-return')).toBeVisible();
       await expect(ben!.getByText('Waiting for the host to decide…')).toBeVisible();

@@ -76,6 +76,8 @@ export interface ServerRoom {
   phase: Phase;
   currentRound: number;
   totalRounds: number;
+  /** Target the host picked in the lobby; `targetCows` starts from it on every (re)start. */
+  baseTargetCows: number;
   /** Current target after official same-round tie-break escalation. */
   targetCows: number;
   prompt: Prompt | null;

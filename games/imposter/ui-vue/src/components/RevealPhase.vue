@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { ref, computed } from 'vue';
 import { useI18n } from 'vue-i18n';
+import ScoreStandings, { type StandingEntry } from '@platform/components/ScoreStandings.vue';
 import type { PlayerView } from '@shared/types';
 import { useGameStore } from '../stores/game';
 
@@ -39,6 +40,16 @@ function handleGuess() {
   guessError.value = '';
   emit('guessWord', trimmed);
 }
+
+const standings = computed<StandingEntry[]>(() =>
+  (store.room?.players ?? []).map((player: PlayerView) => ({
+    id: player.id,
+    name: player.name,
+    points: player.score,
+  }))
+);
+const formatPoints = (points: number) =>
+  t(points === 1 ? 'imposter.reveal.point' : 'imposter.reveal.points', { count: points });
 
 const voteTally = computed(() => {
   if (!store.room?.votes) return [];
@@ -235,6 +246,16 @@ const voteTally = computed(() => {
         </template>
       </div>
     </div>
+
+    <ScoreStandings
+      v-if="result"
+      class="w-full max-w-100"
+      :entries="standings"
+      :my-id="store.playerId ?? undefined"
+      :format-points="formatPoints"
+      :title="t('imposter.reveal.standings', { score: store.room?.targetScore })"
+      test-id="imposter-standings"
+    />
 
     <div v-if="isHost && result" class="flex gap-3 w-full max-w-100">
       <button

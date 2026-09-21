@@ -54,6 +54,22 @@ Host only. Requires ≥ 3 connected players.
 
 ---
 
+### `setTargetScore(data, cb)`
+
+Host only, lobby only. Sets the score a player must reach to end the game (default 200).
+
+```ts
+// request
+{ roomCode: string; targetScore: number } // multiple of 50, 100–500
+
+// response
+{ ok: true } | { ok: false; error: string }
+```
+
+Errors: `'Invalid request'`, `'Room not found'`, `'Only host can change the target score'`, `'Cannot change target score in phase …'`, `'Target score must be a multiple of 50 between 100 and 500'`.
+
+---
+
 ### `hit(data)`
 
 Current-turn player draws a card. Ignored unless it is your turn, no `pendingAction` is open, and you are `active`.
@@ -136,7 +152,7 @@ interface RoomView {
   ownerId: string | null;
   phase: 'lobby' | 'playing' | 'roundEnd' | 'ended';
   players: PlayerView[]; // all players, ordered by join time
-  targetScore: number; // fixed at 200 for Flip 7
+  targetScore: number; // 200 by default; host can change it in the lobby (100–500, step 50)
   currentRound: RoundView | null;
   roundHistory: RoundHistoryEntry[];
   winnerIds: string[];

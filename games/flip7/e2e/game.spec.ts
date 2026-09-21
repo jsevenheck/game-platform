@@ -83,7 +83,7 @@ test.describe('Flip 7 via Platform', () => {
     await ctx3.close();
   });
 
-  test('lobby shows fixed 200-point target score', async ({ browser }) => {
+  test('host can change the target score in the lobby', async ({ browser }) => {
     const ctx1 = await browser.newContext();
     const ctx2 = await browser.newContext();
     const ctx3 = await browser.newContext();
@@ -101,11 +101,20 @@ test.describe('Flip 7 via Platform', () => {
       timeout: 10_000,
     });
 
-    // Target score is fixed at 200 — no stepper controls visible
-    await expect(page1.getByText('200', { exact: true })).toBeVisible();
-    await expect(page1.getByText('Fixed per official rules')).toBeVisible();
-    await expect(page1.getByRole('button', { name: '+' })).not.toBeVisible();
-    await expect(page1.getByRole('button', { name: '\u2212' })).not.toBeVisible();
+    // Default is 200; only the host gets stepper controls and guests see the change live.
+    const hostValue = page1.getByTestId('flip7-target-score-stepper-value');
+    await expect(hostValue).toHaveText('200');
+    await expect(page2.getByTestId('flip7-target-score-stepper')).toHaveCount(0);
+    await expect(page2.getByTestId('flip7-target-score')).toContainText('200');
+
+    await page1.getByTestId('flip7-target-score-stepper-plus').click();
+    await expect(hostValue).toHaveText('250');
+    await expect(page2.getByTestId('flip7-target-score')).toContainText('250');
+    await expect(page3.getByTestId('flip7-target-score')).toContainText('250');
+
+    await page1.getByTestId('flip7-target-score-stepper-minus').click();
+    await page1.getByTestId('flip7-target-score-stepper-minus').click();
+    await expect(hostValue).toHaveText('150');
 
     await ctx1.close();
     await ctx2.close();

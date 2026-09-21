@@ -1,7 +1,8 @@
 <script setup lang="ts">
 import { computed } from 'vue';
 import { useI18n } from 'vue-i18n';
-import { MAX_PLAYERS, MIN_PLAYERS } from '@shared/constants';
+import SettingStepper from '@platform/components/SettingStepper.vue';
+import { MAX_PLAYERS, MAX_TOTAL_ROUNDS, MIN_PLAYERS, MIN_TOTAL_ROUNDS } from '@shared/constants';
 import type { PlayerView } from '@shared/types';
 
 const props = defineProps<{
@@ -9,12 +10,14 @@ const props = defineProps<{
   isHost: boolean;
   canStart: boolean;
   pending: boolean;
+  settingsPending: boolean;
+  totalRounds: number;
 }>();
 
 const { t } = useI18n();
 const playerCount = computed(() => props.players.filter((player) => player.connected).length);
 
-defineEmits<{ start: [] }>();
+const emit = defineEmits<{ start: []; setRounds: [rounds: number] }>();
 </script>
 
 <template>
@@ -44,11 +47,25 @@ defineEmits<{ start: [] }>();
         }}</span>
       </li>
     </ul>
+    <SettingStepper
+      v-if="isHost"
+      class="mt-5"
+      :label="t('kritzelagent.lobby.rounds')"
+      :value="totalRounds"
+      :min="MIN_TOTAL_ROUNDS"
+      :max="MAX_TOTAL_ROUNDS"
+      :disabled="settingsPending"
+      test-id="kritzelagent-rounds"
+      @change="emit('setRounds', $event)"
+    />
+    <p v-else class="mt-4 text-sm text-muted-foreground">
+      {{ t('kritzelagent.lobby.roundsPlanned', { rounds: totalRounds }) }}
+    </p>
     <button
       v-if="isHost"
       class="ui-btn-primary ui-btn-lg mt-5"
       type="button"
-      :disabled="!canStart || pending"
+      :disabled="!canStart || pending || settingsPending"
       @click="$emit('start')"
     >
       {{

@@ -14,6 +14,7 @@ export const en = {
     disconnected: 'Offline',
     disconnectedLabel: '{name} is disconnected',
     summary: '{connected} of {total} connected · {rounds} rounds planned',
+    rounds: 'Rounds:',
     start: 'Start game',
     starting: 'Starting game…',
     needPlayers: 'At least two players must be connected to start.',
@@ -45,6 +46,10 @@ export const en = {
     loading: 'Loading…',
     waitingForHost: 'Waiting for the host to reveal.',
   },
+  scoreboard: {
+    point: 'point',
+    points: 'points',
+  },
   numberLine: {
     title: 'Comparison of the estimates',
     solution: 'Solution',
@@ -66,6 +71,9 @@ export const en = {
     only_host_can_start: 'Only the host can start the game.',
     only_host_can_reveal: 'Only the host can reveal the solution.',
     only_host_can_advance: 'Only the host can advance to the next question.',
+    only_host_can_change_rounds: 'Only the host can change the number of rounds.',
+    rounds_must_be_a_whole_number_between_n_and_n:
+      'The number of rounds must be a whole number between {0} and {1}.',
     invalid_guess: 'Invalid estimate.',
     no_question_to_reveal: 'There is no question to reveal.',
     need_n_unique_questions_library_has_n: 'Not enough unique questions (need {0}, have {1}).',

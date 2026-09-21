@@ -57,7 +57,7 @@ score = (sum of numberCards × (hasX2 ? 2 : 1)) + sum(modifierAdds) + (isFlip7Tr
 - Busted players always score **0** regardless of held cards.
 - `x2` doubles the **number sum only**; flat modifiers and the Flip 7 bonus are added after.
 - The Flip 7 bonus (15 pts) goes only to the triggering player.
-- `targetScore` is fixed at **200** for Flip 7 and is not player-configurable.
+- `targetScore` defaults to **200** (official rules). The host can change it in the lobby via `setTargetScore` (100–500, step 50); it is locked once the game starts.
 
 ## Deck management
 

@@ -12,6 +12,12 @@ Vertrauensquelle.
 - `autoJoinRoom({ sessionId, playerId?, joinToken?, resumeToken? })`
   registriert oder verbindet eine Party-Mitgliedschaft. Erfolgreich werden
   `roomCode`, `playerId` und ein privater `resumeToken` zurückgegeben.
+- `updateSettings({ roomCode, totalRounds?, targetCows? })` — nur der autoritative
+  Host, nur in `lobby`. `totalRounds` ist eine ganze Zahl von 1 bis
+  `min(20, Anzahl der Fragen der Spielsprache)`, `targetCows` eine ganze Zahl von
+  3 bis 15 (Standard 8). Mindestens ein Feld ist Pflicht; `RoomView.totalRounds`
+  und `RoomView.targetCows` spiegeln die Wahl sofort. Der gewählte Zielwert bleibt
+  bei Neustart erhalten (die Eskalation bei Gleichstand nicht).
 - `startGame({ roomCode })` — nur der autoritative Host, nur in `lobby`.
 - `submitAnswer({ roomCode, answer })` — eine nichtleere Antwort mit maximal
   80 Zeichen, nur einmal pro Spieler und Runde.
@@ -43,6 +49,7 @@ interface RoomView {
   phase: 'lobby' | 'answering' | 'allSubmitted' | 'reveal' | 'ended';
   currentRound: number;
   totalRounds: number;
+  targetCows: number;
   prompt: { id: string; text: string } | null;
   players: PlayerView[];
   answers: { playerId: string; answer: string }[];

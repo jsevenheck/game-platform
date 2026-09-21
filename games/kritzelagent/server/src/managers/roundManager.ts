@@ -1,9 +1,15 @@
 import { nanoid } from 'nanoid';
-import { DRAWING_TURNS_PER_PLAYER, MAX_PLAYERS, MIN_PLAYERS } from '../../../core/src/constants';
+import {
+  DRAWING_TURNS_PER_PLAYER,
+  MAX_PLAYERS,
+  MAX_TOTAL_ROUNDS,
+  MIN_PLAYERS,
+  MIN_TOTAL_ROUNDS,
+} from '../../../core/src/constants';
 import { normalizeStroke } from '../../../core/src/drawing';
 import type { ServerRoom } from '../../../core/src/types';
 import { findPlayer } from '../models/room';
-import { pickRandomTopics, topicMatchesGuess } from '../utils/topicLibrary';
+import { getTopicLibrary, pickRandomTopics, topicMatchesGuess } from '../utils/topicLibrary';
 import { getVoteLeaders, toRoundResult } from './scoreManager';
 
 export class KritzelagentError extends Error {
@@ -60,6 +66,19 @@ function resetRoundState(room: ServerRoom): void {
     player.hasVoted = false;
   }
   room.phase = 'drawing';
+}
+
+/** Host picks how many rounds to play; only possible before the game starts. */
+export function setTotalRounds(room: ServerRoom, totalRounds: number): void {
+  if (room.phase !== 'lobby')
+    throw new KritzelagentError(`Cannot change rounds in phase ${room.phase}`);
+  const maxRounds = Math.min(MAX_TOTAL_ROUNDS, getTopicLibrary(room.locale).length);
+  if (!Number.isInteger(totalRounds) || totalRounds < MIN_TOTAL_ROUNDS || totalRounds > maxRounds) {
+    throw new KritzelagentError(
+      `Rounds must be a whole number between ${MIN_TOTAL_ROUNDS} and ${maxRounds}`
+    );
+  }
+  room.totalRounds = totalRounds;
 }
 
 export function startGame(room: ServerRoom): void {

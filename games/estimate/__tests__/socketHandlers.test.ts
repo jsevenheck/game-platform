@@ -516,6 +516,60 @@ describe('registerEstimate', () => {
     });
   });
 
+  describe('setTotalRounds', () => {
+    function joinBoth() {
+      const ns = setupServer();
+      const { tokens } = setupParty();
+      const hostSocket = makeSocket('game-host-socket');
+      ns.connect(hostSocket);
+      autoJoin(hostSocket, 'host', tokens.host);
+      const guestSocket = makeSocket('game-guest-socket');
+      ns.connect(guestSocket);
+      autoJoin(guestSocket, 'guest', tokens.guest);
+      return { hostSocket, guestSocket };
+    }
+
+    it('lets the host change the rounds and broadcasts them', () => {
+      const { hostSocket } = joinBoth();
+      const cb = vi.fn();
+      hostSocket.handlers.setTotalRounds({ roomCode: firstRoom()!.roomCode, totalRounds: 4 }, cb);
+      expect(cb).toHaveBeenCalledWith({ ok: true });
+      expect(firstRoom()!.totalRounds).toBe(4);
+    });
+
+    it('rejects a non-host', () => {
+      const { guestSocket } = joinBoth();
+      const cb = vi.fn();
+      guestSocket.handlers.setTotalRounds({ roomCode: firstRoom()!.roomCode, totalRounds: 4 }, cb);
+      expect(cb).toHaveBeenCalledWith({ ok: false, error: 'Only host can change rounds' });
+      expect(firstRoom()!.totalRounds).not.toBe(4);
+    });
+
+    it('rejects malformed payloads without throwing', () => {
+      const { hostSocket } = joinBoth();
+      const roomCode = firstRoom()!.roomCode;
+      for (const totalRounds of ['4', null, undefined, {}, [4]]) {
+        const cb = vi.fn();
+        expect(() =>
+          hostSocket.handlers.setTotalRounds({ roomCode, totalRounds }, cb)
+        ).not.toThrow();
+        expect(cb).toHaveBeenCalledWith({ ok: false, error: 'Invalid request' });
+      }
+    });
+
+    it('rejects changes once the game has started', () => {
+      const { hostSocket } = joinBoth();
+      const roomCode = firstRoom()!.roomCode;
+      hostSocket.handlers.startGame({ roomCode }, vi.fn());
+      const cb = vi.fn();
+      hostSocket.handlers.setTotalRounds({ roomCode, totalRounds: 4 }, cb);
+      expect(cb).toHaveBeenCalledWith({
+        ok: false,
+        error: 'Cannot change rounds in phase guessing',
+      });
+    });
+  });
+
   describe('startGame', () => {
     it('only the host may start the game', () => {
       const ns = setupServer();

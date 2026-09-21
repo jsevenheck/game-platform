@@ -221,6 +221,39 @@ describe('Herd Mentality socket handlers', () => {
     expect(latestRoomView(namespace).result).toBeNull();
   });
 
+  it('lets only the host tune the settings in the lobby and validates the payload', () => {
+    const namespace = setupServer();
+    const { tokens } = setupParty();
+    const host = makeSocket('host-socket');
+    const guest = makeSocket('ben-socket');
+    namespace.connect(host);
+    namespace.connect(guest);
+    const first = autoJoin(host, 'host', tokens.host);
+    autoJoin(guest, 'ben', tokens.ben);
+    const roomCode = first.roomCode as string;
+
+    const ok = vi.fn();
+    host.handlers.updateSettings({ roomCode, totalRounds: 2, targetCows: 5 }, ok);
+    expect(ok).toHaveBeenCalledWith({ ok: true });
+    expect(latestRoomView(namespace)).toMatchObject({ totalRounds: 2, targetCows: 5 });
+
+    const denied = vi.fn();
+    guest.handlers.updateSettings({ roomCode, targetCows: 6 }, denied);
+    expect(denied).toHaveBeenCalledWith({ ok: false, error: 'Only host can change settings' });
+
+    for (const payload of [
+      { roomCode },
+      { roomCode, totalRounds: '2' },
+      { roomCode, targetCows: null },
+      { roomCode, targetCows: {} },
+    ]) {
+      const cb = vi.fn();
+      expect(() => host.handlers.updateSettings(payload, cb)).not.toThrow();
+      expect(cb).toHaveBeenCalledWith({ ok: false, error: 'Invalid request' });
+    }
+    expect(getRoomByCode(roomCode)!.baseTargetCows).toBe(5);
+  });
+
   it('moves to allSubmitted when an unsubmitted player disconnects', () => {
     const namespace = setupServer();
     const { tokens } = setupParty();

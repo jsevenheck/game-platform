@@ -234,6 +234,43 @@ describe('kritzelagent socket security and lifecycle', () => {
     expect(restartCb).toHaveBeenCalledWith({ ok: false, error: 'Only host can act' });
   });
 
+  it('lets only the host change the rounds in the lobby and validates the payload', () => {
+    const namespace = makeNamespace();
+    registerKritzelagent({ of: vi.fn(() => namespace.nsp) } as never, '/g/kritzelagent');
+    const { tokens } = setupParty();
+    let roomCode = '';
+    const sockets = ['host', 'guest-2', 'guest-3', 'guest-4', 'guest-5'].map((id) => {
+      const socket = makeSocket(`${id}-game`);
+      namespace.connect(socket);
+      const joined = autoJoin(socket, id, tokens[id]!, 'match-kritzelagent');
+      if (!roomCode) roomCode = joined.roomCode as string;
+      return socket;
+    });
+    const [host, guest] = sockets as [TestSocket, TestSocket];
+
+    const ok = vi.fn();
+    host.handlers.setTotalRounds({ roomCode, totalRounds: 7 }, ok);
+    expect(ok).toHaveBeenCalledWith({ ok: true });
+
+    const denied = vi.fn();
+    guest.handlers.setTotalRounds({ roomCode, totalRounds: 3 }, denied);
+    expect(denied).toHaveBeenCalledWith({ ok: false, error: 'Only host can change rounds' });
+
+    for (const totalRounds of ['3', null, undefined, {}, [3]]) {
+      const cb = vi.fn();
+      expect(() => host.handlers.setTotalRounds({ roomCode, totalRounds }, cb)).not.toThrow();
+      expect(cb).toHaveBeenCalledWith({ ok: false, error: 'Invalid request' });
+    }
+
+    host.handlers.startGame({ roomCode }, vi.fn());
+    const late = vi.fn();
+    host.handlers.setTotalRounds({ roomCode, totalRounds: 3 }, late);
+    expect(late).toHaveBeenCalledWith({
+      ok: false,
+      error: 'Cannot change rounds in phase drawing',
+    });
+  });
+
   // F9 regression: submitStroke — the one high-frequency, attacker-shaped
   // payload in this game (real-time drawing input) — previously had no
   // rate limiting at all, unlike connection attempts and party

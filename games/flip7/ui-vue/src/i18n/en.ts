@@ -39,7 +39,6 @@ export const en = {
     host: 'Host',
     you: 'You',
     targetScore: 'Target Score',
-    fixedRule: 'Fixed per official rules',
     start: 'Start Game',
     needPlayers: 'Need at least {min} players to start',
     waitingForHost: 'Waiting for host to start…',
@@ -81,6 +80,11 @@ export const en = {
     playAgain: 'Play Again',
     waiting: 'Waiting for host…',
     reviewing: 'Reviewing scores…',
+  },
+  errors: {
+    only_host_can_change_the_target_score: 'Only the host can change the target score.',
+    target_score_must_be_a_multiple_of_n_between_n_and_n:
+      'The target score must be a multiple of {0} between {1} and {2}.',
   },
 };
 

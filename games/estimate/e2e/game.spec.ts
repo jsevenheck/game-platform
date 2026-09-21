@@ -176,6 +176,35 @@ test.describe('Estimate game', () => {
     }
   });
 
+  test('host tunes the rounds in the lobby and everyone sees the standings after a reveal', async ({
+    browser,
+  }) => {
+    const session = await createTwoPlayerEstimateSession(browser, 'Ann', 'Ben');
+    try {
+      await launchEstimateGame(session.hostPage, session.guestPage);
+      await expect(session.hostPage.getByTestId('estimate-lobby')).toBeVisible({ timeout: 15_000 });
+      await expect(session.guestPage.getByTestId('estimate-rounds')).toHaveCount(0);
+
+      const value = session.hostPage.getByTestId('estimate-rounds-value');
+      await expect(value).toHaveText('5');
+      await session.hostPage.getByTestId('estimate-rounds-minus').click();
+      await session.hostPage.getByTestId('estimate-rounds-minus').click();
+      await expect(value).toHaveText('3');
+      await expect(session.guestPage.getByTestId('estimate-lobby')).toContainText('3 rounds');
+
+      await hostStartsGame(session.hostPage);
+      await bothSubmitGuesses(session.hostPage, session.guestPage, '1', '999999');
+      await hostReveals(session.hostPage);
+      for (const page of [session.hostPage, session.guestPage]) {
+        await expect(page.getByTestId('estimate-reveal')).toContainText('Round 1 of 3');
+        await expect(page.getByTestId('estimate-scoreboard')).toBeVisible();
+        await expect(page.getByTestId('estimate-scoreboard').getByRole('listitem')).toHaveCount(2);
+      }
+    } finally {
+      await closeSession(session);
+    }
+  });
+
   test('host-only action: guest cannot reveal', async ({ browser }) => {
     const session = await createTwoPlayerEstimateSession(browser, 'Carol', 'Dave');
     try {
@@ -220,12 +249,14 @@ test.describe('Estimate game', () => {
       expect(questionTexts.size).toBe(5);
       await expect(session.hostPage.getByTestId('estimate-gameover')).toBeVisible();
       await expect(session.hostPage.getByRole('dialog', { name: 'Game over' })).toBeVisible();
-      await expect(session.hostPage.getByTestId('platform-replay')).toBeFocused();
-      await session.hostPage.keyboard.press('Shift+Tab');
-      await expect(session.hostPage.getByTestId('platform-return')).toBeFocused();
+      // Focus lands on the result heading; the replay choices follow in tab order.
+      await expect(session.hostPage.locator('#estimate-gameover-title')).toBeFocused();
       await session.hostPage.keyboard.press('Tab');
       await expect(session.hostPage.getByTestId('platform-replay')).toBeFocused();
-      await expect(session.hostPage.getByTestId('platform-return')).toBeVisible();
+      await session.hostPage.keyboard.press('Tab');
+      await expect(session.hostPage.getByTestId('platform-return')).toBeFocused();
+      // The final ranking stays visible next to the replay choice.
+      await expect(session.hostPage.getByTestId('estimate-gameover')).toBeInViewport();
       await expect(session.guestPage.getByText('Waiting for the host to decide…')).toBeVisible();
 
       await session.hostPage.getByTestId('platform-replay').click();

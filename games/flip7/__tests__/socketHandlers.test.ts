@@ -373,3 +373,94 @@ describe('registerFlip7 — startGame', () => {
     deleteSocketIndex('socket-host');
   });
 });
+
+describe('registerFlip7 — setTargetScore', () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+  });
+
+  function setup() {
+    const ns = makeNamespace();
+    registerFlip7(makeIo(ns.nsp) as never, '/g/flip7');
+    const hostSocket = makeSocket('socket-host');
+    const guestSocket = makeSocket('socket-guest');
+    ns.connect(hostSocket);
+    ns.connect(guestSocket);
+    const room = makeRoom('ABCD', 'player-host', 'socket-host');
+    room.players['p2'] = {
+      ...room.players['player-host'],
+      id: 'p2',
+      name: 'Bob',
+      socketId: 'socket-guest',
+      isHost: false,
+    };
+    (getRoom as Mock).mockReturnValue(room);
+    setSocketIndex('socket-host', 'ABCD', 'player-host');
+    setSocketIndex('socket-guest', 'ABCD', 'p2');
+    return { room, hostSocket, guestSocket };
+  }
+
+  afterEach(() => {
+    deleteSocketIndex('socket-host');
+    deleteSocketIndex('socket-guest');
+  });
+
+  it('lets the host change the target score in the lobby', () => {
+    const { room, hostSocket } = setup();
+    const cb = vi.fn();
+    hostSocket.handlers['setTargetScore']?.({ roomCode: 'ABCD', targetScore: 300 }, cb);
+    expect(cb).toHaveBeenCalledWith({ ok: true });
+    expect(room.targetScore).toBe(300);
+  });
+
+  it('rejects a non-host', () => {
+    const { room, guestSocket } = setup();
+    const cb = vi.fn();
+    guestSocket.handlers['setTargetScore']?.({ roomCode: 'ABCD', targetScore: 300 }, cb);
+    expect(cb).toHaveBeenCalledWith({
+      ok: false,
+      error: 'Only host can change the target score',
+    });
+    expect(room.targetScore).toBe(200);
+  });
+
+  it('rejects values outside the allowed range or step', () => {
+    const { room, hostSocket } = setup();
+    for (const targetScore of [0, 50, 550, 125, 200.5, Number.NaN, Infinity, -200]) {
+      const cb = vi.fn();
+      hostSocket.handlers['setTargetScore']?.({ roomCode: 'ABCD', targetScore }, cb);
+      expect(cb).toHaveBeenCalledTimes(1);
+      expect(cb.mock.calls[0]![0]).toMatchObject({ ok: false });
+    }
+    expect(room.targetScore).toBe(200);
+  });
+
+  it('rejects malformed payloads without throwing', () => {
+    const { room, hostSocket } = setup();
+    for (const payload of [
+      undefined,
+      null,
+      { roomCode: 'ABCD' },
+      { roomCode: 'ABCD', targetScore: '300' },
+      { roomCode: 'ABCD', targetScore: null },
+      { roomCode: 42, targetScore: 300 },
+    ]) {
+      const cb = vi.fn();
+      expect(() => hostSocket.handlers['setTargetScore']?.(payload, cb)).not.toThrow();
+      expect(cb).toHaveBeenCalledWith({ ok: false, error: 'Invalid request' });
+    }
+    expect(room.targetScore).toBe(200);
+  });
+
+  it('rejects changes once the game has started', () => {
+    const { room, hostSocket } = setup();
+    room.phase = 'playing';
+    const cb = vi.fn();
+    hostSocket.handlers['setTargetScore']?.({ roomCode: 'ABCD', targetScore: 300 }, cb);
+    expect(cb).toHaveBeenCalledWith({
+      ok: false,
+      error: 'Cannot change target score in phase playing',
+    });
+    expect(room.targetScore).toBe(200);
+  });
+});

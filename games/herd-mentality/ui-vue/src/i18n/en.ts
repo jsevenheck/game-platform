@@ -6,6 +6,8 @@ export const en = {
   joinTimeout: 'The game room could not be loaded.',
   lobby: {
     subtitle: 'Majority round · {rounds} questions',
+    rounds: 'Questions:',
+    targetCows: 'Cow goal:',
     title: 'The herd is gathering',
     players: 'Players',
     host: 'Host',
@@ -54,6 +56,11 @@ export const en = {
     pinkCow: 'Pink Cow',
   },
   errors: {
+    only_host_can_change_settings: 'Only the host can change the settings.',
+    rounds_must_be_a_whole_number_between_n_and_n:
+      'The number of questions must be a whole number between {0} and {1}.',
+    target_cows_must_be_a_whole_number_between_n_and_n:
+      'The cow goal must be a whole number between {0} and {1}.',
     not_in_room: 'You are not in this room.',
     only_host: 'Only the host can do that.',
     only_host_can_start: 'Only the host can start the game.',

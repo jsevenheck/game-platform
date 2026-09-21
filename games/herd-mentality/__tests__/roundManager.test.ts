@@ -12,8 +12,10 @@ import {
   HerdMentalityError,
   nextRound,
   revealAnswers,
+  restartGame,
   startGame,
   submitAnswer,
+  updateSettings,
 } from '../server/src/managers/roundManager';
 import { buildRoomView } from '../server/src/managers/broadcastManager';
 
@@ -34,6 +36,57 @@ function roomWithFour() {
   startGame(room);
   return { room, ids };
 }
+
+describe('updateSettings', () => {
+  function lobbyRoom() {
+    return createRoom('Host', { matchKey: 'settings', totalRounds: 2, hostPlayerId: 'host' });
+  }
+
+  it('changes rounds and cow goal in the lobby', () => {
+    const room = lobbyRoom();
+    updateSettings(room, { totalRounds: 1, targetCows: 5 });
+    expect(room.totalRounds).toBe(1);
+    expect(room.targetCows).toBe(5);
+    expect(room.baseTargetCows).toBe(5);
+  });
+
+  it('applies a partial change without touching the other value', () => {
+    const room = lobbyRoom();
+    updateSettings(room, { targetCows: 10 });
+    expect(room.totalRounds).toBe(2);
+    expect(room.targetCows).toBe(10);
+  });
+
+  it('rejects changes after the game has started', () => {
+    const { room } = roomWithFour();
+    expect(() => updateSettings(room, { targetCows: 5 })).toThrow(
+      'Cannot change settings in phase answering'
+    );
+  });
+
+  it.each([0, 3, 1.5, Number.NaN, -1])('rejects %s rounds', (rounds) => {
+    const room = lobbyRoom();
+    expect(() => updateSettings(room, { totalRounds: rounds })).toThrow(HerdMentalityError);
+    expect(room.totalRounds).toBe(2);
+  });
+
+  it.each([2, 16, 4.5, Number.NaN])('rejects %s target cows', (cows) => {
+    const room = lobbyRoom();
+    expect(() => updateSettings(room, { targetCows: cows })).toThrow(HerdMentalityError);
+    expect(room.baseTargetCows).toBe(8);
+  });
+
+  it('keeps the chosen goal on restart even after tie-break escalation', () => {
+    const room = lobbyRoom();
+    updateSettings(room, { targetCows: 4 });
+    for (const name of ['B', 'C', 'D']) attachPlayerToRoom(room, name, name.toLowerCase());
+    startGame(room);
+    room.targetCows += 2;
+    room.phase = 'ended';
+    restartGame(room);
+    expect(room.targetCows).toBe(4);
+  });
+});
 
 describe('round lifecycle', () => {
   it('requires four connected players and starts with a prompt', () => {

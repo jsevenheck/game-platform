@@ -1,11 +1,27 @@
 <script setup lang="ts">
 import { computed } from 'vue';
 import { useI18n } from 'vue-i18n';
+import ScoreStandings, { type StandingEntry } from '@platform/components/ScoreStandings.vue';
 import type { RoomView } from '@shared/types';
 const props = defineProps<{ room: RoomView; isHost: boolean; pending: boolean }>();
 const { t } = useI18n();
 const emit = defineEmits<{ reveal: []; next: [] }>();
 const isLast = computed(() => props.room.currentRound >= props.room.totalRounds);
+const standings = computed<StandingEntry[]>(() => {
+  const majorityIds = new Set(
+    props.room.result?.groups.find((group) => group.answer === props.room.result?.majorityAnswer)
+      ?.playerIds ?? []
+  );
+  return props.room.scores.map((score) => ({
+    id: score.playerId,
+    name: score.name,
+    points: score.cows,
+    delta: majorityIds.has(score.playerId) ? 1 : 0,
+    note: score.hasPinkCow ? t('herd-mentality.gameOver.pinkCow') : undefined,
+  }));
+});
+const formatCows = (cows: number) =>
+  t(cows === 1 ? 'herd-mentality.gameOver.cow' : 'herd-mentality.gameOver.cows', { count: cows });
 const groupText = (group: { playerNames: string[]; count: number }) =>
   `${group.playerNames.join(', ')} (${group.count})`;
 </script>
@@ -27,7 +43,7 @@ const groupText = (group: { playerNames: string[]; count: number }) =>
     <h2
       id="herd-mentality-reveal-title"
       class="mt-2 text-xl font-semibold"
-      data-phase-focus
+      :data-phase-focus="room.phase === 'ended' ? undefined : ''"
       tabindex="-1"
     >
       {{ room.prompt?.text }}
@@ -56,6 +72,13 @@ const groupText = (group: { playerNames: string[]; count: number }) =>
     <p v-else class="mt-5 text-muted-foreground" role="status">
       {{ t('herd-mentality.reveal.allIn') }}
     </p>
+    <ScoreStandings
+      v-if="room.result && room.phase === 'reveal'"
+      :entries="standings"
+      :format-points="formatCows"
+      test-id="herd-mentality-standings"
+      class="mt-5"
+    />
     <div v-if="isHost && room.phase === 'allSubmitted'" class="mt-5">
       <button
         class="ui-btn-primary"

@@ -48,7 +48,7 @@ const { socket, connected } = useSocket({
 });
 
 type JoinState = 'connecting' | 'joining' | 'ready' | 'error';
-type ActionName = 'start' | 'guess' | 'reveal' | 'next';
+type ActionName = 'start' | 'rounds' | 'guess' | 'reveal' | 'next';
 
 const joinState = ref<JoinState>('connecting');
 const pendingAction = ref<ActionName | null>(null);
@@ -189,6 +189,12 @@ function runAction(
 
 function startGame() {
   runAction('start', (done) => socket.emit('startGame', { roomCode: store.roomCode }, done));
+}
+
+function setRounds(totalRounds: number) {
+  runAction('rounds', (done) =>
+    socket.emit('setTotalRounds', { roomCode: store.roomCode, totalRounds }, done)
+  );
 }
 
 function submitGuess(guess: number) {
@@ -347,6 +353,7 @@ onBeforeUnmount(() => {
       :pending="pendingAction !== null"
       :total-rounds="store.room?.totalRounds ?? 5"
       @start="startGame"
+      @set-rounds="setRounds"
     />
 
     <QuestionView

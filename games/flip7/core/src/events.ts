@@ -35,6 +35,11 @@ export interface ClientToServerEvents {
 
   startGame: (data: { roomCode: string }, cb: (res: { ok: true } | ErrorResponse) => void) => void;
 
+  setTargetScore: (
+    data: { roomCode: string; targetScore: number },
+    cb: (res: { ok: true } | ErrorResponse) => void
+  ) => void;
+
   hit: (data: { roomCode: string }) => void;
 
   stay: (data: { roomCode: string }) => void;

@@ -16,6 +16,7 @@ export const de: EstimateMessages = {
     disconnected: 'Getrennt',
     disconnectedLabel: '{name} ist nicht verbunden',
     summary: '{connected} von {total} verbunden · {rounds} Runden geplant',
+    rounds: 'Runden:',
     start: 'Spiel starten',
     starting: 'Spiel wird gestartet…',
     needPlayers: 'Zum Starten müssen mindestens zwei Spieler verbunden sein.',
@@ -47,6 +48,10 @@ export const de: EstimateMessages = {
     loading: 'Wird geladen…',
     waitingForHost: 'Warte darauf, dass der Host auflöst.',
   },
+  scoreboard: {
+    point: 'Punkt',
+    points: 'Punkte',
+  },
   numberLine: {
     title: 'Vergleich der Schätzungen',
     solution: 'Lösung',
@@ -68,6 +73,9 @@ export const de: EstimateMessages = {
     only_host_can_start: 'Nur der Host kann das Spiel starten.',
     only_host_can_reveal: 'Nur der Host kann die Lösung aufdecken.',
     only_host_can_advance: 'Nur der Host kann zur nächsten Frage wechseln.',
+    only_host_can_change_rounds: 'Nur der Host kann die Rundenzahl ändern.',
+    rounds_must_be_a_whole_number_between_n_and_n:
+      'Die Rundenzahl muss eine ganze Zahl zwischen {0} und {1} sein.',
     invalid_guess: 'Ungültige Schätzung.',
     no_question_to_reveal: 'Es gibt keine Frage zum Auflösen.',
     need_n_unique_questions_library_has_n:

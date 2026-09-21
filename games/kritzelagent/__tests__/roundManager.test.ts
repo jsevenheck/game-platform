@@ -1,10 +1,16 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { DRAWING_TURNS_PER_PLAYER } from '@shared/constants';
+import {
+  __resetTopicFileReaderForTests,
+  __resetTopicLibraryCacheForTests,
+  __setTopicFileReaderForTests,
+} from '../server/src/utils/topicLibrary';
 import { privateAssignmentFor, buildRoomView } from '../server/src/managers/broadcastManager';
 import {
   currentDrawingPlayerId,
   nextRound,
   recheckAfterDisconnect,
+  setTotalRounds,
   startGame,
   submitAgentGuess,
   submitStroke,
@@ -21,6 +27,43 @@ import type { ServerRoom } from '../core/src/types';
 beforeEach(() => {
   __resetRoomStoreForTests();
   vi.restoreAllMocks();
+});
+
+describe('setTotalRounds', () => {
+  it('changes the number of rounds in the lobby', () => {
+    const { room } = setupRoom();
+    setTotalRounds(room, 7);
+    expect(room.totalRounds).toBe(7);
+    startGame(room);
+    expect(room.topicDeck).toHaveLength(7);
+  });
+
+  it('rejects changes after the game has started', () => {
+    const { room } = setupRoom();
+    startGame(room);
+    expect(() => setTotalRounds(room, 3)).toThrow('Cannot change rounds in phase drawing');
+  });
+
+  it.each([0, -2, 2.5, Number.NaN, 13, 500])('rejects %s rounds', (rounds) => {
+    const { room } = setupRoom();
+    expect(() => setTotalRounds(room, rounds)).toThrow('Rounds must be a whole number');
+    expect(room.totalRounds).toBe(2);
+  });
+
+  it('never allows more rounds than the topic library holds', () => {
+    __setTopicFileReaderForTests(() => 'category,topic\nA,Alpha\nB,Beta\nC,Gamma\n');
+    try {
+      const { room } = setupRoom();
+      expect(() => setTotalRounds(room, 4)).toThrow(
+        'Rounds must be a whole number between 1 and 3'
+      );
+      setTotalRounds(room, 3);
+      expect(room.totalRounds).toBe(3);
+    } finally {
+      __resetTopicFileReaderForTests();
+      __resetTopicLibraryCacheForTests();
+    }
+  });
 });
 
 function setupRoom(playerCount = 5): { room: ServerRoom; playerIds: string[] } {

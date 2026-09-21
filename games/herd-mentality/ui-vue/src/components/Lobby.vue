@@ -2,17 +2,29 @@
 import { computed } from 'vue';
 import { useI18n } from 'vue-i18n';
 import type { PlayerView } from '@shared/types';
-import { MIN_PLAYERS } from '@shared/constants';
+import SettingStepper from '@platform/components/SettingStepper.vue';
+import {
+  MAX_TARGET_COWS,
+  MAX_TOTAL_ROUNDS,
+  MIN_PLAYERS,
+  MIN_TARGET_COWS,
+  MIN_TOTAL_ROUNDS,
+} from '@shared/constants';
 
 const props = defineProps<{
   players: PlayerView[];
   isHost: boolean;
   canStart: boolean;
   pending: boolean;
+  settingsPending: boolean;
   totalRounds: number;
+  targetCows: number;
 }>();
 const { t } = useI18n();
-const emit = defineEmits<{ start: [] }>();
+const emit = defineEmits<{
+  start: [];
+  updateSettings: [settings: { totalRounds?: number; targetCows?: number }];
+}>();
 const connected = computed(() => props.players.filter((player) => player.connected).length);
 </script>
 <template>
@@ -51,12 +63,34 @@ const connected = computed(() => props.players.filter((player) => player.connect
         })
       }}
     </p>
+    <div v-if="isHost" class="mt-4 flex flex-col gap-3">
+      <SettingStepper
+        :label="t('herd-mentality.lobby.rounds')"
+        align-label
+        :value="totalRounds"
+        :min="MIN_TOTAL_ROUNDS"
+        :max="MAX_TOTAL_ROUNDS"
+        :disabled="settingsPending"
+        test-id="herd-mentality-rounds"
+        @change="emit('updateSettings', { totalRounds: $event })"
+      />
+      <SettingStepper
+        :label="t('herd-mentality.lobby.targetCows')"
+        align-label
+        :value="targetCows"
+        :min="MIN_TARGET_COWS"
+        :max="MAX_TARGET_COWS"
+        :disabled="settingsPending"
+        test-id="herd-mentality-target-cows"
+        @change="emit('updateSettings', { targetCows: $event })"
+      />
+    </div>
     <div v-if="isHost" class="mt-4">
       <button
         class="ui-btn-primary ui-btn-lg"
         type="button"
         data-testid="herd-mentality-start"
-        :disabled="!canStart || pending"
+        :disabled="!canStart || pending || settingsPending"
         @click="emit('start')"
       >
         {{ pending ? t('herd-mentality.lobby.starting') : t('herd-mentality.lobby.start') }}

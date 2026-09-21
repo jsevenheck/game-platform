@@ -1,8 +1,15 @@
-import { MAX_PLAYERS, MIN_PLAYERS, TARGET_COWS } from '../../../core/src/constants';
+import {
+  MAX_PLAYERS,
+  MAX_TARGET_COWS,
+  MAX_TOTAL_ROUNDS,
+  MIN_PLAYERS,
+  MIN_TARGET_COWS,
+  MIN_TOTAL_ROUNDS,
+} from '../../../core/src/constants';
 import { normalizeAnswer, getMajorityGroup, resolveRound } from '../../../core/src/rules';
 import type { Phase, ServerRoom } from '../../../core/src/types';
 import { findPlayer } from '../models/room';
-import { pickRandomPrompts } from '../utils/promptLibrary';
+import { getPromptLibrary, pickRandomPrompts } from '../utils/promptLibrary';
 
 export class HerdMentalityError extends Error {
   constructor(message: string) {
@@ -14,6 +21,38 @@ export class HerdMentalityError extends Error {
 export function allConnectedPlayersSubmitted(room: ServerRoom): boolean {
   const connected = room.players.filter((player) => player.connected);
   return connected.length > 0 && connected.every((player) => room.answers.has(player.id));
+}
+
+/** Host tunes the match length and the cow goal; only possible before the game starts. */
+export function updateSettings(
+  room: ServerRoom,
+  settings: { totalRounds?: number; targetCows?: number }
+): void {
+  if (room.phase !== 'lobby')
+    throw new HerdMentalityError(`Cannot change settings in phase ${room.phase}`);
+  const { totalRounds, targetCows } = settings;
+  if (totalRounds !== undefined) {
+    const maxRounds = Math.min(MAX_TOTAL_ROUNDS, getPromptLibrary(room.locale).length);
+    if (!Number.isInteger(totalRounds) || totalRounds < MIN_TOTAL_ROUNDS || totalRounds > maxRounds)
+      throw new HerdMentalityError(
+        `Rounds must be a whole number between ${MIN_TOTAL_ROUNDS} and ${maxRounds}`
+      );
+  }
+  if (targetCows !== undefined) {
+    if (
+      !Number.isInteger(targetCows) ||
+      targetCows < MIN_TARGET_COWS ||
+      targetCows > MAX_TARGET_COWS
+    )
+      throw new HerdMentalityError(
+        `Target cows must be a whole number between ${MIN_TARGET_COWS} and ${MAX_TARGET_COWS}`
+      );
+  }
+  if (totalRounds !== undefined) room.totalRounds = totalRounds;
+  if (targetCows !== undefined) {
+    room.baseTargetCows = targetCows;
+    room.targetCows = targetCows;
+  }
 }
 
 export function startGame(room: ServerRoom): void {
@@ -28,7 +67,7 @@ export function startGame(room: ServerRoom): void {
   if (room.promptDeck.length < room.totalRounds)
     throw new HerdMentalityError('Not enough unique prompts');
   for (const player of room.players) room.cows.set(player.id, 0);
-  room.targetCows = TARGET_COWS;
+  room.targetCows = room.baseTargetCows;
   room.pinkCowPlayerId = null;
   room.currentRound = 0;
   advanceRound(room);
@@ -102,6 +141,6 @@ export function restartGame(room: ServerRoom): void {
   room.answers.clear();
   room.roundResult = null;
   room.pinkCowPlayerId = null;
-  room.targetCows = TARGET_COWS;
+  room.targetCows = room.baseTargetCows;
   for (const player of room.players) room.cows.set(player.id, 0);
 }

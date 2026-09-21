@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { computed, nextTick, ref, watch } from 'vue';
+import { ref, computed } from 'vue';
 import { useI18n } from 'vue-i18n';
 import GameApp from './App.vue';
 
@@ -23,33 +23,8 @@ const props = withDefaults(defineProps<Props>(), {
 });
 const { t } = useI18n();
 const gamePhase = ref('');
-const dialog = ref<HTMLElement | null>(null);
-const replayButton = ref<HTMLButtonElement | null>(null);
 const gameEnded = computed(() => gamePhase.value === 'ended');
 const showHostDialog = computed(() => gameEnded.value && props.isHost);
-watch(showHostDialog, async (visible) => {
-  if (!visible) return;
-  await nextTick();
-  replayButton.value?.focus();
-});
-function trapDialogFocus(event: KeyboardEvent) {
-  if (event.key !== 'Tab' || !dialog.value) return;
-  const controls = Array.from(
-    dialog.value.querySelectorAll<HTMLElement>(
-      'button:not([disabled]), [href], [tabindex]:not([tabindex="-1"])'
-    )
-  );
-  if (controls.length === 0) return;
-  const first = controls[0]!;
-  const last = controls[controls.length - 1]!;
-  if (event.shiftKey && document.activeElement === first) {
-    event.preventDefault();
-    last.focus();
-  } else if (!event.shiftKey && document.activeElement === last) {
-    event.preventDefault();
-    first.focus();
-  }
-}
 function onPhaseChange(phase: string) {
   gamePhase.value = phase;
 }
@@ -57,7 +32,7 @@ function onPhaseChange(phase: string) {
 
 <template>
   <div class="platform-game-wrapper">
-    <div class="platform-game-surface" :inert="showHostDialog">
+    <div class="platform-game-surface">
       <GameApp
         :ws-namespace="namespace"
         :session-id="matchKey"
@@ -70,19 +45,15 @@ function onPhaseChange(phase: string) {
     </div>
     <section
       v-if="showHostDialog"
-      ref="dialog"
-      class="platform-overlay platform-overlay--modal"
+      class="platform-overlay"
       role="dialog"
-      aria-modal="true"
       aria-labelledby="kritzelagent-postgame-title"
-      @keydown="trapDialogFocus"
     >
       <h2 id="kritzelagent-postgame-title" class="text-xl font-semibold">
         {{ t('replay.title') }}
       </h2>
       <p class="text-sm text-muted-foreground">{{ t('replay.prompt') }}</p>
       <button
-        ref="replayButton"
         class="ui-btn-primary"
         type="button"
         data-testid="platform-replay"
@@ -134,13 +105,5 @@ function onPhaseChange(phase: string) {
   background: var(--color-panel);
   padding: 1.5rem;
   text-align: center;
-}
-.platform-overlay--modal {
-  position: absolute;
-  z-index: 10;
-  inset: 1rem;
-  max-height: min-content;
-  margin: auto;
-  box-shadow: 0 1.5rem 4rem rgba(0, 0, 0, 0.65);
 }
 </style>

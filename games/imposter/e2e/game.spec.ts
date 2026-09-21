@@ -154,6 +154,9 @@ test.describe('Imposter via Platform', () => {
     await playFullRound(pages, 'Player2');
     await Promise.all(pages.map((p) => handleGuessPhase(p, 'RandomWord')));
     await hostPage.waitForSelector('.round-result', { timeout: 10_000 });
+    await Promise.all(
+      pages.map((p) => expect(p.getByTestId('imposter-standings')).toBeVisible({ timeout: 5_000 }))
+    );
 
     await hostPage.click('#btn-end-game');
     await Promise.all(

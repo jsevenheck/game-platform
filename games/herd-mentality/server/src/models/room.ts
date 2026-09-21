@@ -48,6 +48,7 @@ export function createRoom(hostName: string, options: CreateRoomOptions): Server
     phase: 'lobby' as Phase,
     currentRound: 0,
     totalRounds: options.totalRounds ?? DEFAULT_TOTAL_ROUNDS,
+    baseTargetCows: TARGET_COWS,
     targetCows: TARGET_COWS,
     prompt: null,
     promptDeck: [],

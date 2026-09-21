@@ -24,6 +24,8 @@ export const en = {
     start: 'Start game',
     needPlayers: 'Waiting for at least {min} players',
     waitingForHost: 'Waiting for the host to start the game.',
+    rounds: 'Rounds:',
+    roundsPlanned: '{rounds} rounds planned',
   },
   drawing: {
     round: 'Round {round} of {total}',
@@ -79,6 +81,9 @@ export const en = {
     point: '{count} point',
   },
   errors: {
+    only_host_can_change_rounds: 'Only the host can change the number of rounds.',
+    rounds_must_be_a_whole_number_between_n_and_n:
+      'The number of rounds must be a whole number between {0} and {1}.',
     not_in_room: 'You are not in this room.',
     only_host: 'Only the host can do that.',
     invalid_stroke: 'Invalid stroke.',

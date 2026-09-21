@@ -1,6 +1,8 @@
 <script setup lang="ts">
 import { computed } from 'vue';
 import { useI18n } from 'vue-i18n';
+import SettingStepper from '@platform/components/SettingStepper.vue';
+import { MAX_TOTAL_ROUNDS, MIN_TOTAL_ROUNDS } from '@shared/constants';
 import type { PlayerView } from '@shared/types';
 
 const props = defineProps<{
@@ -12,7 +14,7 @@ const props = defineProps<{
 }>();
 
 const { t } = useI18n();
-const emit = defineEmits<{ start: [] }>();
+const emit = defineEmits<{ start: []; setRounds: [rounds: number] }>();
 const connectedCount = computed(() => props.players.filter((player) => player.connected).length);
 </script>
 
@@ -44,6 +46,17 @@ const connectedCount = computed(() => props.players.filter((player) => player.co
         })
       }}
     </p>
+    <SettingStepper
+      v-if="isHost"
+      class="mt-4"
+      :label="t('estimate.lobby.rounds')"
+      :value="totalRounds"
+      :min="MIN_TOTAL_ROUNDS"
+      :max="MAX_TOTAL_ROUNDS"
+      :disabled="pending"
+      test-id="estimate-rounds"
+      @change="emit('setRounds', $event)"
+    />
     <div v-if="isHost" class="mt-4">
       <button
         class="ui-btn-primary ui-btn-lg"

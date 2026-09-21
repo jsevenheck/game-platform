@@ -245,6 +245,17 @@ function handleConnectError() {
 
 // ── Game actions ──────────────────────────────────────────────────────────────
 
+const settingsPending = ref(false);
+
+function handleSetTargetScore(targetScore: number) {
+  if (settingsPending.value) return;
+  settingsPending.value = true;
+  socket.emit('setTargetScore', { roomCode: store.roomCode, targetScore }, (res) => {
+    settingsPending.value = false;
+    if (!res.ok) embeddedError.value = localizeError(res.error, 'flip7');
+  });
+}
+
 function handleStartGame() {
   socket.emit('startGame', { roomCode: store.roomCode }, (res) => {
     if (!res.ok) embeddedError.value = res.error;
@@ -354,7 +365,12 @@ onBeforeUnmount(() => {
     </template>
 
     <!-- Lobby -->
-    <Lobby v-else-if="store.phase === 'lobby'" @start-game="handleStartGame" />
+    <Lobby
+      v-else-if="store.phase === 'lobby'"
+      :settings-pending="settingsPending"
+      @start-game="handleStartGame"
+      @set-target-score="handleSetTargetScore"
+    />
 
     <!-- Active game -->
     <GameTable

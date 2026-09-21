@@ -92,6 +92,14 @@ export const de: MessageSchema = {
     replayFailed: 'Neustart fehlgeschlagen',
     returnFailed: 'Rückkehr zur Lobby fehlgeschlagen',
   },
+  stepper: {
+    decrease: 'Verringern: {label}',
+    increase: 'Erhöhen: {label}',
+  },
+  standings: {
+    title: 'Zwischenstand',
+    gain: '+{n} in dieser Runde',
+  },
   replay: {
     playAgain: 'Nochmal spielen',
     returnToLobby: 'Zurück zur Lobby',
@@ -183,6 +191,10 @@ export const de: MessageSchema = {
     too_many_requests_slow_down: 'Zu viele Anfragen. Bitte etwas langsamer.',
     need_at_least_n_connected_players_to_start_have_n:
       'Zum Start müssen mindestens {0} Spieler verbunden sein (aktuell {1}).',
+    cannot_change_target_score_in_phase_x:
+      'Die Zielpunktzahl kann nur in der Lobby geändert werden.',
+    cannot_change_rounds_in_phase_x: 'Die Rundenzahl kann nur in der Lobby geändert werden.',
+    cannot_change_settings_in_phase_x: 'Einstellungen können nur in der Lobby geändert werden.',
     cannot_start_game_in_phase_x: 'Das Spiel kann in dieser Phase nicht gestartet werden.',
     cannot_submit_guess_in_phase_x: 'Eine Schätzung kann in dieser Phase nicht abgegeben werden.',
     cannot_reveal_in_phase_x: 'Das Auflösen ist in dieser Phase nicht möglich.',

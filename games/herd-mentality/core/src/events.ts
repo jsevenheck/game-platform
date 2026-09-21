@@ -5,6 +5,10 @@ export interface ClientToServerEvents {
     data: { roomCode: string },
     cb: (res: { ok: true } | { ok: false; error: string }) => void
   ) => void;
+  updateSettings: (
+    data: { roomCode: string; totalRounds?: number; targetCows?: number },
+    cb: (res: { ok: true } | { ok: false; error: string }) => void
+  ) => void;
   autoJoinRoom: (
     data: { sessionId: string; playerId?: string; joinToken?: string; resumeToken?: string },
     cb: (

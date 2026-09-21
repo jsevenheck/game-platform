@@ -69,6 +69,27 @@ Response: `{ ok: true } | { ok: false, error: string }`. Errors:
 - `'Game already started'` (room is not in lobby)
 - `'Need at least 2 connected players to start, have …'`
 
+### `setTotalRounds`
+
+Host-only, lobby only. Sets how many rounds the match lasts (default 5). The upper bound is
+`min(MAX_TOTAL_ROUNDS, questions in the library for the match language)`.
+
+Payload:
+
+```ts
+{
+  roomCode: string;
+  totalRounds: number;
+}
+```
+
+Response: `{ ok: true } | { ok: false, error: string }`. Errors:
+
+- `'Invalid request'` (missing / non-numeric `totalRounds`)
+- `'Only host can change rounds'`
+- `'Cannot change rounds in phase …'`
+- `'Rounds must be a whole number between 1 and …'`
+
 ### `syncAuthority`
 
 Refreshes the game-room host state from the active platform party. The client

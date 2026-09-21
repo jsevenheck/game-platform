@@ -5,6 +5,10 @@ export interface ClientToServerEvents {
     data: { roomCode: string },
     cb: (res: { ok: true } | { ok: false; error: string }) => void
   ) => void;
+  setTotalRounds: (
+    data: { roomCode: string; totalRounds: number },
+    cb: (res: { ok: true } | { ok: false; error: string }) => void
+  ) => void;
   autoJoinRoom: (
     data: {
       sessionId: string;

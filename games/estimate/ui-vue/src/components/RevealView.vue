@@ -2,6 +2,7 @@
 import { computed } from 'vue';
 import { useI18n } from 'vue-i18n';
 import NumberLine from './NumberLine.vue';
+import ScoreStandings, { type StandingEntry } from '@platform/components/ScoreStandings.vue';
 import type { RoomView } from '@shared/types';
 
 const props = defineProps<{
@@ -16,6 +17,17 @@ const { t, locale } = useI18n();
 const numberFormatter = computed(
   () => new Intl.NumberFormat(locale.value, { maximumFractionDigits: 6 })
 );
+const standings = computed<StandingEntry[]>(() => {
+  const winnerIds = new Set(props.room.winners.map((winner) => winner.playerId));
+  return props.room.scores.map((score) => ({
+    id: score.playerId,
+    name: score.name,
+    points: score.points,
+    delta: winnerIds.has(score.playerId) ? 1 : 0,
+  }));
+});
+const formatPoints = (points: number) =>
+  `${points} ${points === 1 ? t('estimate.scoreboard.point') : t('estimate.scoreboard.points')}`;
 const isLastRound = computed(() => props.room.currentRound >= props.room.totalRounds);
 </script>
 
@@ -51,6 +63,15 @@ const isLastRound = computed(() => props.room.currentRound >= props.room.totalRo
         {{ room.winners.map((winner) => winner.name).join(', ') }}
       </p>
     </div>
+
+    <ScoreStandings
+      v-if="room.solution !== null"
+      :entries="standings"
+      :my-id="myId"
+      :format-points="formatPoints"
+      test-id="estimate-scoreboard"
+      class="mt-5"
+    />
 
     <div v-if="isHost" class="mt-4 flex min-w-0 flex-wrap gap-2 estimate-reveal-actions">
       <button

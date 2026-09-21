@@ -4,6 +4,11 @@ export const MIN_PLAYERS = 4;
 export const MAX_PLAYERS = 20;
 export const DEFAULT_TOTAL_ROUNDS = 8;
 export const TARGET_COWS = 8;
+export const MIN_TOTAL_ROUNDS = 1;
+/** Upper bound the host may pick; the prompt library can lower it further. */
+export const MAX_TOTAL_ROUNDS = 20;
+export const MIN_TARGET_COWS = 3;
+export const MAX_TARGET_COWS = 15;
 export const MAX_ANSWER_LENGTH = 80;
 export const ROOM_IDLE_TIMEOUT_MS = 30 * 60 * 1000;
 

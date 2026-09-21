@@ -3,6 +3,9 @@ import type { Question } from './types';
 export const MIN_PLAYERS = 2;
 export const MAX_PLAYERS = 12;
 export const DEFAULT_TOTAL_ROUNDS = 5;
+export const MIN_TOTAL_ROUNDS = 1;
+/** Upper bound the host may pick; the question library can lower it further. */
+export const MAX_TOTAL_ROUNDS = 20;
 /** Keep an empty room briefly so transient disconnects can resume safely. */
 export const ROOM_IDLE_TIMEOUT_MS = 30 * 60 * 1000;
 

@@ -90,6 +90,14 @@ export const en = {
     replayFailed: 'Replay failed',
     returnFailed: 'Return to lobby failed',
   },
+  stepper: {
+    decrease: 'Decrease: {label}',
+    increase: 'Increase: {label}',
+  },
+  standings: {
+    title: 'Standings',
+    gain: '+{n} this round',
+  },
   replay: {
     playAgain: 'Play again',
     returnToLobby: 'Return to lobby',
@@ -180,6 +188,9 @@ export const en = {
     too_many_requests_slow_down: 'Too many requests. Please slow down.',
     need_at_least_n_connected_players_to_start_have_n:
       'At least {0} connected players are required to start (currently {1}).',
+    cannot_change_target_score_in_phase_x: 'The target score can only be changed in the lobby.',
+    cannot_change_rounds_in_phase_x: 'The number of rounds can only be changed in the lobby.',
+    cannot_change_settings_in_phase_x: 'Settings can only be changed in the lobby.',
     cannot_start_game_in_phase_x: 'This is not possible in the current phase (start the game).',
     cannot_submit_guess_in_phase_x: 'This is not possible in the current phase (submit a guess).',
     cannot_reveal_in_phase_x: 'This is not possible in the current phase (reveal).',

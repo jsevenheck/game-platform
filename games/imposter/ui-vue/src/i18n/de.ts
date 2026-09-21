@@ -67,6 +67,9 @@ export const de: ImposterMessages = {
     votedCount: '{count} / {total} abgestimmt',
   },
   reveal: {
+    standings: 'Zwischenstand · wer zuerst {score} hat',
+    point: '{count} Punkt',
+    points: '{count} Punkte',
     results: 'Abstimmungsergebnis',
     imposterBadge: 'Hochstapler!',
     wordWas: 'Das geheime Wort war',

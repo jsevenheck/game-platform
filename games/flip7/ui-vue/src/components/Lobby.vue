@@ -1,10 +1,20 @@
 <script setup lang="ts">
 import { useI18n } from 'vue-i18n';
-import { MIN_PLAYERS, DEFAULT_TARGET_SCORE } from '@shared/constants';
+import SettingStepper from '@platform/components/SettingStepper.vue';
+import {
+  MAX_TARGET_SCORE,
+  MIN_PLAYERS,
+  MIN_TARGET_SCORE,
+  TARGET_SCORE_STEP,
+  DEFAULT_TARGET_SCORE,
+} from '@shared/constants';
 import { useGameStore } from '../stores/game';
+
+defineProps<{ settingsPending: boolean }>();
 
 const emit = defineEmits<{
   'start-game': [];
+  'set-target-score': [score: number];
 }>();
 
 const { t } = useI18n();
@@ -20,7 +30,7 @@ const store = useGameStore();
         <h1 class="text-3xl font-bold text-flip7">Flip 7</h1>
       </div>
       <p class="text-sm text-muted-foreground">
-        {{ t('flip7.lobby.tagline', { score: DEFAULT_TARGET_SCORE }) }}
+        {{ t('flip7.lobby.tagline', { score: store.room?.targetScore ?? DEFAULT_TARGET_SCORE }) }}
       </p>
     </div>
 
@@ -48,12 +58,24 @@ const store = useGameStore();
       </ul>
     </div>
 
-    <!-- Fixed target score (visible to all) -->
-    <div class="ui-panel w-full max-w-md">
+    <!-- Target score: host tunes it, everyone sees it -->
+    <div class="ui-panel w-full max-w-md" data-testid="flip7-target-score">
       <p class="ui-section-label mb-2">{{ t('flip7.lobby.targetScore') }}</p>
-      <p class="text-center text-2xl font-bold text-foreground">{{ DEFAULT_TARGET_SCORE }}</p>
-      <p class="mt-1 text-center text-xs text-muted-foreground">
-        {{ t('flip7.lobby.fixedRule') }}
+      <SettingStepper
+        v-if="store.isHost"
+        class="justify-center"
+        :label="t('flip7.lobby.targetScore')"
+        hide-label
+        :value="store.room?.targetScore ?? DEFAULT_TARGET_SCORE"
+        :min="MIN_TARGET_SCORE"
+        :max="MAX_TARGET_SCORE"
+        :step="TARGET_SCORE_STEP"
+        :disabled="settingsPending"
+        test-id="flip7-target-score-stepper"
+        @change="emit('set-target-score', $event)"
+      />
+      <p v-else class="text-center text-2xl font-bold text-foreground">
+        {{ store.room?.targetScore ?? DEFAULT_TARGET_SCORE }}
       </p>
     </div>
 

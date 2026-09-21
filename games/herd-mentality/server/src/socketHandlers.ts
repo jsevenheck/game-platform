@@ -4,6 +4,7 @@ import { getPartyByActiveMatch } from '../../../../apps/platform/server/party/pa
 import {
   authorizePartyJoin,
   normalizeJoinToken,
+  readFiniteNumber,
   normalizeStablePlayerId,
   restoreHostToFirstConnectedPlayer,
   syncRoomHostFromParty,
@@ -38,6 +39,7 @@ import {
   restartGame,
   revealAnswers,
   startGame as startRound,
+  updateSettings,
   submitAnswer,
   allConnectedPlayersSubmitted,
   HerdMentalityError,
@@ -461,6 +463,58 @@ function registerGameHandlers(
         socketLogger.info(
           { roomCode: room.roomCode, hostPlayerId: room.hostPlayerId },
           'herd-mentality game started'
+        );
+        return respond({ ok: true });
+      } catch (err) {
+        if (err instanceof HerdMentalityError) return respond({ ok: false, error: err.message });
+        instrumentation.finishError();
+        socketLogger.error({ err }, 'unexpected herd-mentality action failure');
+        return respond({ ok: false, error: 'Action failed' });
+      }
+    });
+
+    socket.on('updateSettings', (data: unknown, cb: unknown) => {
+      const instrumentation = startSocketHandlerInstrumentation(
+        namespace,
+        'updateSettings',
+        gameId
+      );
+      const respond = createInstrumentedResponder<{ ok: true } | { ok: false; error: string }>(
+        instrumentation,
+        cb
+      );
+      try {
+        if (!isObjectPayload(data)) return respond({ ok: false, error: INVALID_REQUEST_ERROR });
+        const roomCode = normalizeRequiredString(data.roomCode);
+        const totalRounds = readFiniteNumber(data.totalRounds);
+        const targetCows = readFiniteNumber(data.targetCows);
+        const malformed =
+          (data.totalRounds !== undefined && totalRounds === undefined) ||
+          (data.targetCows !== undefined && targetCows === undefined) ||
+          (totalRounds === undefined && targetCows === undefined);
+        if (!roomCode || malformed) return respond({ ok: false, error: INVALID_REQUEST_ERROR });
+        const room = getRoomByCode(roomCode);
+        if (!room) return respond({ ok: false, error: 'Room not found' });
+        const authorization = authorizeHost(nsp, socket, room);
+        if (!authorization.ok) {
+          return respond({
+            ok: false,
+            error:
+              authorization.error === 'Only host'
+                ? 'Only host can change settings'
+                : authorization.error,
+          });
+        }
+
+        updateSettings(room, { totalRounds, targetCows });
+        broadcastRoom(nsp, room);
+        socketLogger.info(
+          {
+            roomCode: room.roomCode,
+            totalRounds: room.totalRounds,
+            targetCows: room.baseTargetCows,
+          },
+          'herd-mentality settings changed'
         );
         return respond({ ok: true });
       } catch (err) {

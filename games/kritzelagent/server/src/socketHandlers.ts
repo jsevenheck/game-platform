@@ -4,6 +4,7 @@ import {
   authorizePartyJoin,
   normalizeJoinToken,
   normalizeStablePlayerId,
+  readFiniteNumber,
   restoreHostToFirstConnectedPlayer,
   syncRoomHostAfterJoin,
   syncRoomHostFromParty,
@@ -43,6 +44,7 @@ import {
   nextRound,
   recheckAfterDisconnect,
   restartGame,
+  setTotalRounds,
   startGame,
   submitAgentGuess,
   submitStroke,
@@ -374,6 +376,43 @@ export function registerKritzelagent(
         if (error instanceof KritzelagentError) return respond({ ok: false, error: error.message });
         instrumentation.finishError();
         socketLogger.error({ err: error }, 'kritzelagent start failed');
+        return respond({ ok: false, error: 'Action failed' });
+      }
+    });
+
+    socket.on('setTotalRounds', (data: unknown, callback: unknown) => {
+      const instrumentation = startSocketHandlerInstrumentation(
+        namespace,
+        'setTotalRounds',
+        GAME_ID
+      );
+      const respond = createResponder<ActionResponse>(instrumentation, callback);
+      try {
+        if (!isObjectPayload(data)) return respond({ ok: false, error: INVALID_REQUEST_ERROR });
+        const roomCode = requiredString(data.roomCode);
+        const totalRounds = readFiniteNumber(data.totalRounds);
+        if (!roomCode || totalRounds === undefined) {
+          return respond({ ok: false, error: INVALID_REQUEST_ERROR });
+        }
+        const room = getRoomByCode(roomCode);
+        if (!room) return respond({ ok: false, error: 'Room not found' });
+        const authorization = authorizeHost(nsp, socket, room);
+        if (!authorization.ok) {
+          return respond({
+            ok: false,
+            error:
+              authorization.error === 'Only host'
+                ? 'Only host can change rounds'
+                : authorization.error,
+          });
+        }
+        setTotalRounds(room, totalRounds);
+        broadcastGameRoom(nsp, room);
+        return respond({ ok: true });
+      } catch (error) {
+        if (error instanceof KritzelagentError) return respond({ ok: false, error: error.message });
+        instrumentation.finishError();
+        socketLogger.error({ err: error }, 'kritzelagent rounds change failed');
         return respond({ ok: false, error: 'Action failed' });
       }
     });

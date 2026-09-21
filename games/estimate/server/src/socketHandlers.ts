@@ -4,6 +4,7 @@ import { getPartyByActiveMatch } from '../../../../apps/platform/server/party/pa
 import {
   authorizePartyJoin,
   normalizeJoinToken,
+  readFiniteNumber,
   normalizeStablePlayerId,
   restoreHostToFirstConnectedPlayer,
   syncRoomHostFromParty,
@@ -37,6 +38,7 @@ import {
   nextRound,
   restartGame,
   revealSolution,
+  setTotalRounds,
   startGame as startRound,
   submitGuess,
   allConnectedPlayersSubmitted,
@@ -461,6 +463,51 @@ function registerGameHandlers(
         socketLogger.info(
           { roomCode: room.roomCode, hostPlayerId: room.hostPlayerId },
           'estimate game started'
+        );
+        return respond({ ok: true });
+      } catch (err) {
+        if (err instanceof EstimateError) return respond({ ok: false, error: err.message });
+        instrumentation.finishError();
+        socketLogger.error({ err }, 'unexpected estimate action failure');
+        return respond({ ok: false, error: 'Action failed' });
+      }
+    });
+
+    socket.on('setTotalRounds', (data: unknown, cb: unknown) => {
+      const instrumentation = startSocketHandlerInstrumentation(
+        namespace,
+        'setTotalRounds',
+        gameId
+      );
+      const respond = createInstrumentedResponder<{ ok: true } | { ok: false; error: string }>(
+        instrumentation,
+        cb
+      );
+      try {
+        if (!isObjectPayload(data)) return respond({ ok: false, error: INVALID_REQUEST_ERROR });
+        const roomCode = normalizeRequiredString(data.roomCode);
+        const totalRounds = readFiniteNumber(data.totalRounds);
+        if (!roomCode || totalRounds === undefined) {
+          return respond({ ok: false, error: INVALID_REQUEST_ERROR });
+        }
+        const room = getRoomByCode(roomCode);
+        if (!room) return respond({ ok: false, error: 'Room not found' });
+        const authorization = authorizeHost(nsp, socket, room);
+        if (!authorization.ok) {
+          return respond({
+            ok: false,
+            error:
+              authorization.error === 'Only host'
+                ? 'Only host can change rounds'
+                : authorization.error,
+          });
+        }
+
+        setTotalRounds(room, totalRounds);
+        broadcastRoom(nsp, room);
+        socketLogger.info(
+          { roomCode: room.roomCode, totalRounds: room.totalRounds },
+          'estimate rounds changed'
         );
         return respond({ ok: true });
       } catch (err) {

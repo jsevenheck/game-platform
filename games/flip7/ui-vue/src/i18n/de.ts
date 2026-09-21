@@ -41,7 +41,6 @@ export const de: Flip7Messages = {
     host: 'Host',
     you: 'Du',
     targetScore: 'Zielpunktzahl',
-    fixedRule: 'Fest nach den offiziellen Regeln',
     start: 'Spiel starten',
     needPlayers: 'Zum Start braucht es mindestens {min} Spieler',
     waitingForHost: 'Warte darauf, dass der Host startet…',
@@ -84,5 +83,10 @@ export const de: Flip7Messages = {
     playAgain: 'Nochmal spielen',
     waiting: 'Warte auf den Host…',
     reviewing: 'Punkte werden ausgewertet…',
+  },
+  errors: {
+    only_host_can_change_the_target_score: 'Nur der Host kann die Zielpunktzahl ändern.',
+    target_score_must_be_a_multiple_of_n_between_n_and_n:
+      'Die Zielpunktzahl muss ein Vielfaches von {0} zwischen {1} und {2} sein.',
   },
 };

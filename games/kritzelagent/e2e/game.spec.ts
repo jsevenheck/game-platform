@@ -96,6 +96,11 @@ test.describe('Kritzelagent game', () => {
     const session = await createSession(browser);
     try {
       await launchGame(session);
+      await expect(session.pages[1]!.getByTestId('kritzelagent-rounds')).toHaveCount(0);
+      await expect(session.pages[0]!.getByTestId('kritzelagent-rounds-value')).toHaveText('5');
+      await session.pages[0]!.getByTestId('kritzelagent-rounds-plus').click();
+      await session.pages[0]!.getByTestId('kritzelagent-rounds-minus').click();
+      await expect(session.pages[0]!.getByTestId('kritzelagent-rounds-value')).toHaveText('5');
       await session.pages[0]!.getByRole('button', { name: 'Start game' }).click();
       await Promise.all(
         session.pages.map((page) => expect(page.getByTestId('kritzelagent-drawing')).toBeVisible())
@@ -143,6 +148,13 @@ test.describe('Kritzelagent game', () => {
         session.pages.map((page) => expect(page.getByTestId('kritzelagent-reveal')).toBeVisible())
       );
       await expect(session.pages[0]!.getByText('The reveal')).toBeVisible();
+      await Promise.all(
+        session.pages.map(async (page) => {
+          const standings = page.getByTestId('kritzelagent-standings');
+          await expect(standings).toBeVisible();
+          await expect(standings.getByRole('listitem')).toHaveCount(5);
+        })
+      );
 
       const playerNames = ['Jona', 'Spieler 2', 'Spieler 3', 'Spieler 4', 'Spieler 5'];
       for (let round = 2; round <= 5; round += 1) {

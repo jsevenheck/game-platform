@@ -19,6 +19,7 @@ import {
   nextRound,
   revealSolution,
   restartGame,
+  setTotalRounds,
   startGame,
   submitGuess,
 } from '../server/src/managers/roundManager';
@@ -77,6 +78,35 @@ describe('isFiniteGuess', () => {
     expect(isFiniteGuess('10' as unknown as number)).toBe(false);
     expect(isFiniteGuess(null as unknown as number)).toBe(false);
     expect(isFiniteGuess(undefined as unknown as number)).toBe(false);
+  });
+});
+
+describe('setTotalRounds', () => {
+  it('changes the number of rounds in the lobby', () => {
+    const { room } = setupRoomWithPlayers(2);
+    setTotalRounds(room, 4);
+    expect(room.totalRounds).toBe(4);
+    startGame(room);
+    expect(room.questionDeck).toHaveLength(4);
+  });
+
+  it('rejects changes after the game has started', () => {
+    const { room } = setupRoomWithPlayers(2);
+    startGame(room);
+    expect(() => setTotalRounds(room, 4)).toThrow('Cannot change rounds in phase guessing');
+  });
+
+  it.each([0, -1, 2.5, Number.NaN, 21, 1000])('rejects %s rounds', (rounds) => {
+    const { room } = setupRoomWithPlayers(2);
+    expect(() => setTotalRounds(room, rounds)).toThrow(EstimateError);
+    expect(room.totalRounds).toBe(3);
+  });
+
+  it('never allows more rounds than the question library holds', () => {
+    const { room } = setupRoomWithPlayers(2);
+    expect(() => setTotalRounds(room, 6)).toThrow('Rounds must be a whole number between 1 and 5');
+    setTotalRounds(room, 5);
+    expect(room.totalRounds).toBe(5);
   });
 });
 

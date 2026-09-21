@@ -28,6 +28,20 @@ resume token. The response is:
 }
 ```
 
+### `setTotalRounds`
+
+```ts
+{
+  roomCode: string;
+  totalRounds: number;
+}
+```
+
+Host-only, lobby only. Sets the number of rounds (default 5). Allowed: a whole
+number from 1 to `min(12, topics in the match language)`. Errors:
+`Invalid request`, `Only host can change rounds`, `Cannot change rounds in phase …`,
+`Rounds must be a whole number between 1 and …`.
+
 ### `startGame`
 
 ```ts

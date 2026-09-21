@@ -1,5 +1,7 @@
 <script setup lang="ts">
+import { computed } from 'vue';
 import { useI18n } from 'vue-i18n';
+import ScoreStandings, { type StandingEntry } from '@platform/components/ScoreStandings.vue';
 import type { RoomView } from '@shared/types';
 
 const props = defineProps<{ room: RoomView; isHost: boolean; pending: boolean }>();
@@ -9,9 +11,18 @@ const agentName = () =>
   props.room.players.find((player) => player.id === props.room.roundResult?.agentId)?.name ??
   t('kritzelagent.reveal.unknown');
 
-function scoreDelta(playerId: string): number {
-  return props.room.roundResult?.scoreDeltas[playerId] ?? 0;
-}
+const standings = computed<StandingEntry[]>(() =>
+  props.room.scores.map((score) => ({
+    id: score.playerId,
+    name: score.name,
+    points: score.points,
+    delta: props.room.roundResult?.scoreDeltas[score.playerId] ?? 0,
+  }))
+);
+const formatPoints = (points: number) =>
+  t(points === 1 ? 'kritzelagent.gameOver.point' : 'kritzelagent.gameOver.points', {
+    count: points,
+  });
 </script>
 
 <template>
@@ -44,13 +55,13 @@ function scoreDelta(playerId: string): number {
         ><strong>{{ entry.votes }}</strong>
       </li>
     </ul>
-    <h3 class="mt-5 text-lg font-semibold">{{ t('kritzelagent.reveal.roundPoints') }}</h3>
-    <ul v-if="room.roundResult" class="kritzelagent-vote-results">
-      <li v-for="player in room.players" :key="player.id">
-        <span>{{ player.name }}</span
-        ><strong>{{ scoreDelta(player.id) > 0 ? '+' : '' }}{{ scoreDelta(player.id) }}</strong>
-      </li>
-    </ul>
+    <ScoreStandings
+      v-if="room.roundResult"
+      :entries="standings"
+      :format-points="formatPoints"
+      test-id="kritzelagent-standings"
+      class="mt-5"
+    />
     <button
       v-if="isHost"
       class="ui-btn-primary mt-5"

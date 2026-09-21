@@ -16,6 +16,10 @@ export interface ClientToServerEvents {
     cb: (res: JoinResponse) => void
   ) => void;
   startGame: (data: { roomCode: string }, cb: (res: ActionResponse) => void) => void;
+  setTotalRounds: (
+    data: { roomCode: string; totalRounds: number },
+    cb: (res: ActionResponse) => void
+  ) => void;
   syncAuthority: (data: { roomCode: string }, cb: (res: ActionResponse) => void) => void;
   submitStroke: (
     data: { roomCode: string; points: StrokePoint[] },

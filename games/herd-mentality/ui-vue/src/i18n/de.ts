@@ -8,6 +8,8 @@ export const de: HerdMentalityMessages = {
   joinTimeout: 'Der Spielraum konnte nicht geladen werden.',
   lobby: {
     subtitle: 'Mehrheitsrunde · {rounds} Fragen',
+    rounds: 'Fragen:',
+    targetCows: 'Kuh-Ziel:',
     title: 'Die Herde sammelt sich',
     players: 'Mitspieler',
     host: 'Host',
@@ -56,6 +58,11 @@ export const de: HerdMentalityMessages = {
     pinkCow: 'Pink Cow',
   },
   errors: {
+    only_host_can_change_settings: 'Nur der Host kann die Einstellungen ändern.',
+    rounds_must_be_a_whole_number_between_n_and_n:
+      'Die Anzahl der Fragen muss eine ganze Zahl zwischen {0} und {1} sein.',
+    target_cows_must_be_a_whole_number_between_n_and_n:
+      'Das Kuh-Ziel muss eine ganze Zahl zwischen {0} und {1} sein.',
     not_in_room: 'Du bist nicht in diesem Raum.',
     only_host: 'Das kann nur der Host.',
     only_host_can_start: 'Nur der Host kann das Spiel starten.',

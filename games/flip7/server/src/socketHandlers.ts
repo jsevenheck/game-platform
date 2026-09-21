@@ -21,15 +21,19 @@ import {
   authorizePartyJoin,
   normalizeJoinToken,
   normalizeStablePlayerId,
+  readFiniteNumber,
   readString,
   syncRoomHostAfterJoin,
   syncRoomHostFromParty,
 } from '../../../../apps/platform/server/party/gameAuth';
 import {
+  MAX_TARGET_SCORE,
   MIN_PLAYERS,
+  MIN_TARGET_SCORE,
   ROUND_END_DISPLAY_MS,
   ROOM_IDLE_TIMEOUT_MS,
   ROOM_ENDED_CLEANUP_MS,
+  TARGET_SCORE_STEP,
 } from '../../core/src/constants';
 import { getPartyByActiveMatch } from '../../../../apps/platform/server/party/partyStore';
 import {
@@ -361,6 +365,51 @@ export function registerFlip7(io: Server, namespace = '/g/flip7'): void {
       } catch (err) {
         instrumentation.finishError();
         socketLogger.error({ err: toLoggableError(err) }, 'startGame failed unexpectedly');
+        respond({ ok: false, error: 'Internal error' });
+      }
+    });
+
+    // ── setTargetScore ────────────────────────────────────────────────────────
+    socket.on('setTargetScore', (data, cb) => {
+      const instrumentation = startSocketHandlerInstrumentation(
+        namespace,
+        'setTargetScore',
+        gameId
+      );
+      const respond = instrumentation.wrapCallback(cb);
+      try {
+        const roomCode = readString(data?.roomCode);
+        const targetScore = readFiniteNumber(data?.targetScore);
+        if (!roomCode || targetScore === undefined) {
+          return respond({ ok: false, error: 'Invalid request' });
+        }
+        const room = getRoom(roomCode);
+        if (!room) return respond({ ok: false, error: 'Room not found' });
+        if (!verifyIsHost(socket, room)) {
+          return respond({ ok: false, error: 'Only host can change the target score' });
+        }
+        if (room.phase !== 'lobby') {
+          return respond({ ok: false, error: `Cannot change target score in phase ${room.phase}` });
+        }
+        const valid =
+          Number.isInteger(targetScore) &&
+          targetScore >= MIN_TARGET_SCORE &&
+          targetScore <= MAX_TARGET_SCORE &&
+          targetScore % TARGET_SCORE_STEP === 0;
+        if (!valid) {
+          return respond({
+            ok: false,
+            error: `Target score must be a multiple of ${TARGET_SCORE_STEP} between ${MIN_TARGET_SCORE} and ${MAX_TARGET_SCORE}`,
+          });
+        }
+
+        room.targetScore = targetScore;
+        broadcastRoom(nsp, room);
+        socketLogger.info({ roomCode: room.code, targetScore }, 'flip7 target score changed');
+        respond({ ok: true });
+      } catch (err) {
+        instrumentation.finishError();
+        socketLogger.error({ err: toLoggableError(err) }, 'setTargetScore failed unexpectedly');
         respond({ ok: false, error: 'Internal error' });
       }
     });

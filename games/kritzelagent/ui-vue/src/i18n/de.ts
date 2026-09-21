@@ -26,6 +26,8 @@ export const de: KritzelagentMessages = {
     start: 'Spiel starten',
     needPlayers: 'Warte auf mindestens {min} Spieler',
     waitingForHost: 'Warte, bis der Host das Spiel startet.',
+    rounds: 'Runden:',
+    roundsPlanned: '{rounds} Runden geplant',
   },
   drawing: {
     round: 'Runde {round} von {total}',
@@ -81,6 +83,9 @@ export const de: KritzelagentMessages = {
     point: '{count} Punkt',
   },
   errors: {
+    only_host_can_change_rounds: 'Nur der Host kann die Rundenzahl ändern.',
+    rounds_must_be_a_whole_number_between_n_and_n:
+      'Die Rundenzahl muss eine ganze Zahl zwischen {0} und {1} sein.',
     not_in_room: 'Du bist nicht in diesem Raum.',
     only_host: 'Das kann nur der Host.',
     invalid_stroke: 'Ungültiger Strich.',

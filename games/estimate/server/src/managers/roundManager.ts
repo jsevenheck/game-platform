@@ -1,7 +1,13 @@
-import { MAX_PLAYERS, MIN_PLAYERS, GUESS_VALUE_LIMIT } from '../../../core/src/constants';
+import {
+  MAX_PLAYERS,
+  MAX_TOTAL_ROUNDS,
+  MIN_PLAYERS,
+  MIN_TOTAL_ROUNDS,
+  GUESS_VALUE_LIMIT,
+} from '../../../core/src/constants';
 import type { Phase, ServerRoom } from '../../../core/src/types';
 import { findPlayer } from '../models/room';
-import { pickRandomQuestions } from '../utils/questionLibrary';
+import { getQuestionLibrary, pickRandomQuestions } from '../utils/questionLibrary';
 import { computeRoundWinners } from './scoreManager';
 
 export class EstimateError extends Error {
@@ -29,6 +35,20 @@ function prepareQuestionDeck(room: ServerRoom): void {
     );
   }
   room.questionDeck = deck;
+}
+
+/** Host picks how many rounds to play; only possible before the game starts. */
+export function setTotalRounds(room: ServerRoom, totalRounds: number): void {
+  if (room.phase !== 'lobby') {
+    throw new EstimateError(`Cannot change rounds in phase ${room.phase}`);
+  }
+  const maxRounds = Math.min(MAX_TOTAL_ROUNDS, getQuestionLibrary(room.locale).length);
+  if (!Number.isInteger(totalRounds) || totalRounds < MIN_TOTAL_ROUNDS || totalRounds > maxRounds) {
+    throw new EstimateError(
+      `Rounds must be a whole number between ${MIN_TOTAL_ROUNDS} and ${maxRounds}`
+    );
+  }
+  room.totalRounds = totalRounds;
 }
 
 /** Start the first round. The host triggers this. */

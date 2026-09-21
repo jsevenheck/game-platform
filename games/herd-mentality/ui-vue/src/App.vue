@@ -43,7 +43,7 @@ const { socket, connected } = useSocket({
   wsNamespace: props.wsNamespace,
 });
 const joinState = ref<'connecting' | 'joining' | 'ready' | 'error'>('connecting');
-const pending = ref<'start' | 'answer' | 'reveal' | 'next' | null>(null);
+const pending = ref<'start' | 'settings' | 'answer' | 'reveal' | 'next' | null>(null);
 const phaseRegion = ref<HTMLElement | null>(null);
 const joinAck = ref(false);
 const roomSnapshot = ref(false);
@@ -114,6 +114,11 @@ function action(
 }
 function startGame() {
   action('start', (done) => socket.emit('startGame', { roomCode: store.roomCode }, done));
+}
+function updateSettings(settings: { totalRounds?: number; targetCows?: number }) {
+  action('settings', (done) =>
+    socket.emit('updateSettings', { roomCode: store.roomCode, ...settings }, done)
+  );
 }
 function submitAnswer(answer: string) {
   action('answer', (done) =>
@@ -223,8 +228,11 @@ onBeforeUnmount(() => {
       :is-host="store.isHost"
       :can-start="store.canStart"
       :pending="pending === 'start'"
+      :settings-pending="pending === 'settings'"
       :total-rounds="store.room?.totalRounds ?? 8"
+      :target-cows="store.room?.targetCows ?? 8"
       @start="startGame"
+      @update-settings="updateSettings"
     />
     <QuestionView
       v-else-if="view === 'answering' && store.room?.prompt"
