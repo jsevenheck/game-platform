@@ -2,26 +2,26 @@
 
 ## Plattform-Controls und Game-Overlays
 
-**Betroffen:** integrierte Spiele, besonders Secret Signals auf Tablet/Desktop
+**Betroffen:** Secret Signals auf Tablet/Desktop
 
-**Aktuelles Verhalten:** Die Leave-/Language-Controls der Plattform liegen fest am oberen
-Viewport-Rand und werden absichtlich über normalen Game-Overlays gestapelt. Der
-Secret-Signals-Turn-Indikator beginnt bei größeren Breakpoints ebenfalls am oberen Rand;
-der zusätzliche Abstand im Game-Shell gilt derzeit nur für schmale Mobile-Breiten. Das
-Leave-Bestätigungsdialogfenster selbst hat jedoch einen niedrigeren z-Index als normale
-Game-Overlays und kann dadurch hinter einem Game-Overlay liegen.
+**Aktuelles Verhalten:** Die Plattform-Controls sind am oberen Viewport-Rand fixiert
+und liegen mit `z-index: 10000` über dem Basislayer normaler Game-Overlays
+(`.ui-overlay`, `z-index: 9999`). Der Leave-Bestätigungsdialog liegt darüber
+(`z-index: 10001`). Der Secret-Signals-Turn-Indikator beginnt weiterhin am oberen Rand;
+zusätzlicher Platz in der Game-Shell wird nur bei schmalen Viewports oder grobem Zeiger
+reserviert.
 
-**Auswirkung:** Der aktuelle Turn-/Team-Status kann teilweise von den festen Controls
-überdeckt werden. Ein bereits geöffnetes Leave-Bestätigungsdialogfenster kann in einem
-Game-Overlay verschwinden.
+**Auswirkung:** Bei größeren Viewports kann der feste Plattform-Header den aktuellen
+Turn-/Team-Status teilweise überdecken. Der Leave-Bestätigungsdialog bleibt über normalen
+Game-Overlays sichtbar.
 
-**Status:** Bekannte UI-Einschränkung; noch nicht durch eine einheitliche Overlay- und
-Header-Schichtung behoben.
+**Status:** Die Overlay-Reihenfolge des Leave-Bestätigungsdialogs ist behoben. Die
+Abstandskollision des Secret-Signals-Turn-Indikators an größeren Breakpoints bleibt
+bekannt.
 
-**Empfohlene Lösung:** Einen gemeinsamen Plattform-Headerbereich an allen Breakpoints
-reservieren und eine zentrale Overlay-Schichtung definieren, in der der Leave-Dialog über
-Game-Overlays liegt. Danach Leave-Dialog, Game-Overlays und Secret-Signals-Status gemeinsam
-per Browser-Smoke-Test prüfen.
+**Empfohlene Lösung:** Für Secret Signals an den betroffenen Breakpoints Platz unter dem
+Plattform-Header reservieren. Danach Header, Turn-Indikator, Game-Overlays und Leave-Dialog
+gemeinsam per Browser-Smoke-Test prüfen.
 
 ## Scout: 2-Spieler-Regeln
 
