@@ -14,7 +14,7 @@ uses `autoJoinRoom` plus resume tokens for join and reconnect behavior.
 ## Quick reference
 
 - **Min / max players:** 3 – 18
-- **Rounds:** until a player reaches the target score (200, fixed)
+- **Rounds:** until a player reaches the target score (200 by default; host-configurable in the lobby from 100 to 500 in steps of 50)
 - **Scoring:** sum of number cards (×2 if you drew the modifier) + flat modifiers + a 15-point Flip 7 bonus; busted players score 0 for the round
 - **Socket namespace:** `/g/flip7`
 

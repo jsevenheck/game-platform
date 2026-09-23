@@ -63,11 +63,11 @@ function handleRoomUpdate(room: RoomView) {
   emit('phase-change', room.phase);
 }
 
-function handleUpdateMaxRounds(rounds: number) {
+function handleUpdateMaxRounds(delta: -1 | 1) {
   socket.emit('updateMaxRounds', {
     roomCode: store.roomCode,
     playerId: store.playerId,
-    maxRounds: rounds,
+    delta,
   });
 }
 

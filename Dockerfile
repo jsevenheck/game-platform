@@ -47,10 +47,14 @@ RUN --mount=type=cache,id=pnpm-store,target=/pnpm/store \
 
 COPY --from=builder /app/apps/platform/dist ./apps/platform/dist
 
+RUN mkdir -p /data/blackout /data/imposter \
+    && chown -R node:node /data
+
 ENV PORT=3002
 EXPOSE 3002
 
 HEALTHCHECK --interval=30s --timeout=5s --start-period=10s --retries=3 \
   CMD node -e "require('http').get('http://localhost:3002/health', r => process.exit(r.statusCode === 200 ? 0 : 1)).on('error', () => process.exit(1))"
 
+USER node
 CMD ["node", "apps/platform/dist/server/apps/platform/server/index.js"]
