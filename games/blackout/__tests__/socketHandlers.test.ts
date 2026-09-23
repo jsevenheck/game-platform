@@ -337,3 +337,29 @@ describe('selectWinner / skipRound duplicate-advance guard (F5 regression)', () 
     expect(room.roundHistory).toHaveLength(1);
   });
 });
+
+describe('updateMaxRounds payload validation', () => {
+  afterEach(() => {
+    vi.clearAllMocks();
+    deleteSocketIndex('socket-host');
+  });
+
+  test.each([NaN, Infinity, -Infinity, 2.5, 'abc', null])(
+    'ignores invalid maxRounds payload %s',
+    (maxRounds) => {
+      const room = makeRoom('ABCD', 'host-1', 'socket-host');
+      vi.mocked(getRoom).mockReturnValue(room);
+      setSocketIndex('socket-host', room.code, 'host-1');
+
+      const namespace = makeNamespace();
+      registerBlackout({ of: () => namespace.nsp } as never, '/g/blackout');
+      const socket = makeSocket('socket-host');
+      namespace.connect(socket);
+
+      socket.handlers.updateMaxRounds({ roomCode: room.code, playerId: 'host-1', maxRounds });
+
+      expect(room.maxRounds).toBe(10);
+      expect(broadcastRoom).not.toHaveBeenCalled();
+    }
+  );
+});

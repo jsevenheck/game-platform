@@ -20,6 +20,7 @@ import {
   authorizePartyJoin,
   normalizeJoinToken,
   normalizeStablePlayerId,
+  readFiniteNumber,
   readString,
   syncRoomHostAfterJoin,
 } from '../../../../apps/platform/server/party/gameAuth';
@@ -433,7 +434,10 @@ export function registerBlackout(io: Server, namespace = '/g/blackout'): void {
         if (!verifyPlayer(socket, data.roomCode, room.hostId ?? '')) return;
         if (room.phase !== 'lobby') return;
 
-        const rounds = Math.min(MAX_ROUNDS, Math.max(MIN_ROUNDS, data.maxRounds));
+        const maxRounds = readFiniteNumber(data?.maxRounds);
+        if (maxRounds === undefined || !Number.isInteger(maxRounds)) return;
+
+        const rounds = Math.min(MAX_ROUNDS, Math.max(MIN_ROUNDS, maxRounds));
         room.maxRounds = rounds;
         broadcastRoom(nsp, room);
       } catch (err) {
