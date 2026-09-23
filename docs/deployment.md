@@ -16,9 +16,10 @@ Production does **not** build on the VPS. The flow is:
    - `ghcr.io/jsevenheck/game-platform:<sha>`
    - `ghcr.io/jsevenheck/game-platform:latest`
 3. **Deploy** ([`.github/workflows/deploy.yml`](../.github/workflows/deploy.yml))
-   triggers when the CI workflow completes successfully on `main`. It injects
-   `IMAGE_TAG=<sha>` plus the runtime secrets, then calls
-   `hostinger/deploy-on-vps`.
+   triggers when the CI workflow completes successfully on `main`. Runs are
+   serialized, and a deployment is skipped if its CI SHA is no longer the current
+   `main` SHA. The workflow injects `IMAGE_TAG=<sha>` plus the runtime secrets,
+   then calls `hostinger/deploy-on-vps`.
 4. [`docker-compose.yml`](../docker-compose.yml) pulls
    `ghcr.io/jsevenheck/game-platform:${IMAGE_TAG:-latest}` — the exact, immutable
    image built in step 2 — instead of rebuilding from source. This guarantees
@@ -44,6 +45,11 @@ In production these values are **not** read from a committed file. The deploy
 workflow injects them via its `environment-variables` block (sourced from GitHub
 repository secrets), which `hostinger/deploy-on-vps` writes to a `.env` next to
 `docker-compose.yml` on the VPS.
+
+The application runs as the image's `node` user. `prepare-app-data` is a one-shot
+startup dependency that assigns the `blackout-db` and existing `imposter-words`
+volumes to that user before the app starts. Only the setup container runs as root;
+the application process does not.
 
 ### Admin console
 
@@ -104,10 +110,11 @@ All HTTP responses include `X-Content-Type-Options: nosniff`, `X-Frame-Options: 
 
 ### Optional game flags
 
-| Variable                 | Default   | Purpose                                                                                                                                                                                                                                                                   |
-| ------------------------ | --------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `IMPOSTER_PERSIST_WORDS` | `true`    | When `false`, submitted Imposter words are kept in-memory only (prevents file divergence in multi-instance deployments)                                                                                                                                                   |
-| `IMPOSTER_WORDS_DIR`     | _(unset)_ | Directory for `words.<locale>.txt` submitted by players. `docker-compose.yml` mounts the `imposter-words` volume at `/data/imposter` so custom words survive container replacement; unset, words are appended beside the bundled assets (lost when the image is replaced) |
+| Variable                 | Default                          | Purpose                                                                                                                                                 |
+| ------------------------ | -------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `DB_PATH`                | `/data/blackout/blackout.sqlite` | SQLite database path; Compose mounts `blackout-db` at `/data/blackout` so the non-root app user can write the database and WAL files                    |
+| `IMPOSTER_PERSIST_WORDS` | `true`                           | When `false`, submitted Imposter words are kept in-memory only (prevents file divergence in multi-instance deployments)                                 |
+| `IMPOSTER_WORDS_DIR`     | `/data/imposter` in Compose      | Directory for `words.<locale>.txt` submitted by players. Compose mounts the `imposter-words` volume there so custom words survive container replacement |
 
 ### Required GitHub secrets
 
