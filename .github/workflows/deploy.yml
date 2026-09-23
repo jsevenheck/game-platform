@@ -9,6 +9,10 @@ on:
     types:
       - completed
 
+concurrency:
+  group: game-platform-production
+  cancel-in-progress: false
+
 permissions:
   contents: read
 
@@ -20,7 +24,22 @@ jobs:
     steps:
       - uses: actions/checkout@v5
 
+      - name: Skip stale deployments
+        id: freshness
+        env:
+          DEPLOY_SHA: ${{ github.event.workflow_run.head_sha }}
+        run: |
+          set -euo pipefail
+          latest_main_sha="$(git ls-remote --exit-code origin refs/heads/main | cut -f1)"
+          if [[ "$DEPLOY_SHA" != "$latest_main_sha" ]]; then
+            echo "deploy=false" >> "$GITHUB_OUTPUT"
+            echo "Skipping stale deployment $DEPLOY_SHA; main is at $latest_main_sha"
+            exit 0
+          fi
+          echo "deploy=true" >> "$GITHUB_OUTPUT"
+
       - name: Deploy to Hostinger
+        if: steps.freshness.outputs.deploy == 'true'
         uses: hostinger/deploy-on-vps@v2
         with:
           api-key: ${{ secrets.HOSTINGER_API_KEY }}
