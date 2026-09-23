@@ -344,9 +344,9 @@ describe('updateMaxRounds payload validation', () => {
     deleteSocketIndex('socket-host');
   });
 
-  test.each([NaN, Infinity, -Infinity, 2.5, 'abc', null])(
-    'ignores invalid maxRounds payload %s',
-    (maxRounds) => {
+  test.each([NaN, Infinity, -Infinity, 0, 0.5, 2, 'abc', null])(
+    'ignores invalid round adjustment %s',
+    (delta) => {
       const room = makeRoom('ABCD', 'host-1', 'socket-host');
       vi.mocked(getRoom).mockReturnValue(room);
       setSocketIndex('socket-host', room.code, 'host-1');
@@ -356,10 +356,28 @@ describe('updateMaxRounds payload validation', () => {
       const socket = makeSocket('socket-host');
       namespace.connect(socket);
 
-      socket.handlers.updateMaxRounds({ roomCode: room.code, playerId: 'host-1', maxRounds });
+      socket.handlers.updateMaxRounds({ roomCode: room.code, playerId: 'host-1', delta });
 
       expect(room.maxRounds).toBe(10);
       expect(broadcastRoom).not.toHaveBeenCalled();
     }
   );
+
+  test('applies rapid round adjustments to the latest server value', () => {
+    const room = makeRoom('ABCD', 'host-1', 'socket-host');
+    vi.mocked(getRoom).mockReturnValue(room);
+    setSocketIndex('socket-host', room.code, 'host-1');
+
+    const namespace = makeNamespace();
+    registerBlackout({ of: () => namespace.nsp } as never, '/g/blackout');
+    const socket = makeSocket('socket-host');
+    namespace.connect(socket);
+
+    for (let i = 0; i < 5; i++) {
+      socket.handlers.updateMaxRounds({ roomCode: room.code, playerId: 'host-1', delta: -1 });
+    }
+
+    expect(room.maxRounds).toBe(5);
+    expect(broadcastRoom).toHaveBeenCalledTimes(5);
+  });
 });

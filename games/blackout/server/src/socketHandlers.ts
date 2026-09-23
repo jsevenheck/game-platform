@@ -434,11 +434,11 @@ export function registerBlackout(io: Server, namespace = '/g/blackout'): void {
         if (!verifyPlayer(socket, data.roomCode, room.hostId ?? '')) return;
         if (room.phase !== 'lobby') return;
 
-        const maxRounds = readFiniteNumber(data?.maxRounds);
-        if (maxRounds === undefined || !Number.isInteger(maxRounds)) return;
+        const delta = readFiniteNumber(data?.delta);
+        if (delta === undefined || !Number.isInteger(delta) || (delta !== -1 && delta !== 1))
+          return;
 
-        const rounds = Math.min(MAX_ROUNDS, Math.max(MIN_ROUNDS, maxRounds));
-        room.maxRounds = rounds;
+        room.maxRounds = Math.min(MAX_ROUNDS, Math.max(MIN_ROUNDS, room.maxRounds + delta));
         broadcastRoom(nsp, room);
       } catch (err) {
         gameLogger.error({ err, event: 'updateMaxRounds' }, 'blackout handler error');
