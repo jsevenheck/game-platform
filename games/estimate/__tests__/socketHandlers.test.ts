@@ -326,7 +326,8 @@ describe('registerEstimate', () => {
 
       expect(previousRoom.players[0]).toMatchObject({ connected: false, socketId: '' });
       expect(socket.leave).toHaveBeenCalledWith(previousRoom.roomCode);
-      expect(ns.nsp.to).toHaveBeenCalledWith(previousRoom.roomCode);
+      // Broadcasts target bound player sockets, never the reusable room code.
+      expect(ns.nsp.to).not.toHaveBeenCalledWith(previousRoom.roomCode);
       expect(getSocketIndex(socket.id)).toEqual({
         roomCode: getRoomBySession('other-match')!.roomCode,
         playerId: 'other-host',
