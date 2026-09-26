@@ -6,6 +6,13 @@ export const de: MessageSchema = {
     english: 'English',
     german: 'Deutsch',
   },
+  connection: {
+    lost: 'Verbindung verloren – verbinde neu …',
+  },
+  session: {
+    ended:
+      'Deine Party ist nicht mehr verfügbar – der Server wurde vermutlich neu gestartet. Erstelle eine neue Party oder tritt einer bei, um weiterzuspielen.',
+  },
   common: {
     leave: 'Verlassen',
     refresh: 'Aktualisieren',
@@ -140,6 +147,8 @@ export const de: MessageSchema = {
     },
   },
   errors: {
+    request_timed_out:
+      'Der Server hat nicht geantwortet. Prüfe deine Verbindung und versuche es erneut.',
     invalid_request: 'Ungültige Anfrage',
     invalid_player_name: 'Ungültiger Spielername',
     internal_error: 'Interner Fehler',

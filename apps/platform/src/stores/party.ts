@@ -30,6 +30,21 @@ export interface PartyView {
 
 const SESSION_KEY = 'platform.party.session';
 
+/**
+ * `resumeParty` errors after which the stored session can never succeed again
+ * (the party is gone — e.g. the server restarted — or the member was removed).
+ * Anything else (rate limit, internal error) is transient and keeps the session.
+ */
+const TERMINAL_RESUME_ERRORS = new Set([
+  'Party not found',
+  'Player not in party',
+  'Invalid resume token',
+]);
+
+export function isTerminalResumeError(error: string): boolean {
+  return TERMINAL_RESUME_ERRORS.has(error);
+}
+
 interface PersistedSession {
   inviteCode: string;
   playerId: string;
@@ -42,6 +57,8 @@ export const usePartyStore = defineStore('platform-party', () => {
   const playerId = ref<string | null>(null);
   const playerName = ref<string | null>(null);
   const resumeToken = ref<string | null>(null);
+  /** Shown once on the home screen after a stored session turned out to be gone. */
+  const sessionEndedNotice = ref(false);
 
   const isHost = computed(() => {
     if (!party.value || !playerId.value) return false;
@@ -100,6 +117,12 @@ export const usePartyStore = defineStore('platform-party', () => {
     localStorage.removeItem(SESSION_KEY);
   }
 
+  /** Drop a session that can no longer be resumed and tell the player why. */
+  function endSession(): void {
+    clearSession();
+    sessionEndedNotice.value = true;
+  }
+
   return {
     party,
     playerId,
@@ -113,5 +136,7 @@ export const usePartyStore = defineStore('platform-party', () => {
     saveSession,
     loadSession,
     clearSession,
+    endSession,
+    sessionEndedNotice,
   };
 });

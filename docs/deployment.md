@@ -35,6 +35,12 @@ The image package must be pullable from the VPS. Either:
 - run `docker login ghcr.io` once on the VPS with a token that has
   `read:packages`.
 
+## Runtime state and deploys
+
+The app is a **single instance**: parties, matches and game rooms are held in memory, and nothing coordinates state between processes. Do not scale the `app` service beyond one replica.
+
+Every deploy (each green push to `main`, see the pipeline above) replaces the container, which ends all active parties and matches. Players are sent back to the home screen with a notice that their party is no longer available. Merge to `main` when an interruption is acceptable, or add a manual approval / environment protection rule to the deploy workflow if deploys must be scheduled.
+
 ## Runtime configuration
 
 Environment variables are documented in [`.env.example`](../.env.example). For
@@ -113,7 +119,7 @@ All HTTP responses include `X-Content-Type-Options: nosniff`, `X-Frame-Options: 
 | Variable                 | Default                          | Purpose                                                                                                                                                 |
 | ------------------------ | -------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | `DB_PATH`                | `/data/blackout/blackout.sqlite` | SQLite database path; Compose mounts `blackout-db` at `/data/blackout` so the non-root app user can write the database and WAL files                    |
-| `IMPOSTER_PERSIST_WORDS` | `true`                           | When `false`, submitted Imposter words are kept in-memory only (prevents file divergence in multi-instance deployments)                                 |
+| `IMPOSTER_PERSIST_WORDS` | `true`                           | When `false`, submitted Imposter words are kept in-memory only instead of being appended to the shared words file                                       |
 | `IMPOSTER_WORDS_DIR`     | `/data/imposter` in Compose      | Directory for `words.<locale>.txt` submitted by players. Compose mounts the `imposter-words` volume there so custom words survive container replacement |
 
 ### Required GitHub secrets

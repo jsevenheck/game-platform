@@ -37,8 +37,8 @@ function defaultWords(locale: WordLocale): string[] {
  */
 export const WORD_LIBRARY_MAX_SIZE = 2000;
 
-/** When false, submitted words are kept in-memory only (for multi-instance deployments
- * where a local file would diverge across processes). Defaults to true. */
+/** When false, submitted words are kept in-memory only instead of being appended to the
+ * shared words file. Defaults to true. */
 const PERSIST_ENABLED = (() => {
   const raw = process.env.IMPOSTER_PERSIST_WORDS;
   if (raw === undefined) return true;

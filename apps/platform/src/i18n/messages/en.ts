@@ -4,6 +4,13 @@ export const en = {
     english: 'English',
     german: 'Deutsch',
   },
+  connection: {
+    lost: 'Connection lost — reconnecting…',
+  },
+  session: {
+    ended:
+      'Your party is no longer available — the server may have restarted. Create or join a new party to keep playing.',
+  },
   common: {
     leave: 'Leave',
     refresh: 'Refresh',
@@ -138,6 +145,7 @@ export const en = {
     },
   },
   errors: {
+    request_timed_out: 'The server did not respond. Check your connection and try again.',
     invalid_request: 'Invalid request',
     invalid_player_name: 'Invalid player name',
     internal_error: 'Internal error',

@@ -1,3 +1,4 @@
+import { ref } from 'vue';
 import { io, type Socket } from 'socket.io-client';
 import type { PartyView } from '../stores/party';
 import type { JoinablePartyView } from '../stores/publicLobbies';
@@ -65,12 +66,31 @@ export type PartySocket = Socket<PartyServerToClientEvents, PartyClientToServerE
 
 let socket: PartySocket | null = null;
 
+/**
+ * True while the party socket has lost (or cannot establish) its connection
+ * and Socket.IO is retrying. Drives the app-wide connection banner so players
+ * are never left looking at a silently frozen screen.
+ */
+export const partyConnectionLost = ref(false);
+
+/** How long party actions wait for the server before giving up. */
+export const PARTY_ACK_TIMEOUT_MS = 10_000;
+
 export function usePartySocket(apiBaseUrl?: string): PartySocket {
   if (!socket) {
     const base = apiBaseUrl ?? '';
     socket = io(`${base}/party`, {
       autoConnect: false,
     }) as PartySocket;
+    socket.on('connect', () => {
+      partyConnectionLost.value = false;
+    });
+    socket.on('disconnect', (reason) => {
+      partyConnectionLost.value = reason !== 'io client disconnect';
+    });
+    socket.on('connect_error', () => {
+      partyConnectionLost.value = true;
+    });
   }
   return socket;
 }
@@ -80,4 +100,5 @@ export function disconnectPartySocket(): void {
     socket.disconnect();
     socket = null;
   }
+  partyConnectionLost.value = false;
 }

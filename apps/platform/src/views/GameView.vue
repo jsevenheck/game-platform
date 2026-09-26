@@ -2,7 +2,7 @@
 import { ref, computed, onMounted, onBeforeUnmount, shallowRef } from 'vue';
 import { useI18n } from 'vue-i18n';
 import { useRouter } from 'vue-router';
-import { usePartyStore } from '../stores/party';
+import { isTerminalResumeError, usePartyStore } from '../stores/party';
 import { usePartySocket } from '../composables/usePartySocket';
 import { getClientGame } from '../games/index';
 import LanguageSwitcher from '../components/LanguageSwitcher.vue';
@@ -109,7 +109,7 @@ function resumePartyBinding() {
     },
     (res) => {
       if (!res.ok) {
-        store.clearSession();
+        if (isTerminalResumeError(res.error)) store.endSession();
         router.push('/');
         return;
       }
@@ -147,7 +147,7 @@ onMounted(async () => {
           },
           (res) => {
             if (!res.ok) {
-              store.clearSession();
+              if (isTerminalResumeError(res.error)) store.endSession();
               router.push('/');
               return;
             }
