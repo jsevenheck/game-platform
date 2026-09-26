@@ -429,6 +429,15 @@ describe('socketHandlers autoJoinRoom', () => {
     const room = getRoom(roomCode);
     expect(room?.players[guestPlayerId]).toBeUndefined();
 
+    // The kicked member is still in the party, so their client may retry the join.
+    const rejoinCb = autoJoin(guestSocket, {
+      sessionId: 'session-kick-lobby',
+      playerId: guestPlayerId,
+      name: 'Guest',
+    });
+    expect(rejoinCb).toHaveBeenCalledWith({ ok: false, error: 'You were removed from the lobby' });
+    expect(room?.players[guestPlayerId]).toBeUndefined();
+
     deleteRoom(roomCode);
   });
 

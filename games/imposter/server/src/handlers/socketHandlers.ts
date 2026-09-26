@@ -316,6 +316,12 @@ export function registerGame(io: Server, namespace = `/g/${GAME_ID}`): void {
           });
         }
 
+        // A kick only removes the player from this match, not from the party,
+        // so without this the kicked member's client would simply rejoin.
+        if (mappedRoom.kickedPlayerIds.includes(authorizedPlayerId)) {
+          return respond({ ok: false, error: 'You were removed from the lobby' });
+        }
+
         if (mappedRoom.phase !== 'lobby') {
           return respond({ ok: false, error: 'Game already started' });
         }
@@ -512,6 +518,7 @@ export function registerGame(io: Server, namespace = `/g/${GAME_ID}`): void {
         kickedSocket?.emit('kicked', 'You were removed from the lobby');
 
         removePlayerFromRoom(room, data.targetId);
+        room.kickedPlayerIds.push(data.targetId);
 
         if (Object.keys(room.players).length === 0) {
           clearDiscussionTimer(room.code);

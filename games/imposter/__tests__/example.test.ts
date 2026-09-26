@@ -37,6 +37,7 @@ function makeRoom(playerCount = 3): Room {
     waitingForGuess: false,
     lastRoundResult: null,
     roundHistory: [],
+    kickedPlayerIds: [],
   };
   initGameState(room);
   for (let i = 1; i <= playerCount; i++) {

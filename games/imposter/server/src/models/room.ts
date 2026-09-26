@@ -76,6 +76,7 @@ export function createRoom(
     waitingForGuess: false,
     lastRoundResult: null,
     roundHistory: [],
+    kickedPlayerIds: [],
   };
 
   // Initialize with defaults from gameManager
