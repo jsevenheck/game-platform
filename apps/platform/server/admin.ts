@@ -162,6 +162,9 @@ function kickPartyMember(
       party.hostPlayerId = nextHost.playerId;
     }
   }
+  if (party.ownerPlayerId === playerId) {
+    party.ownerPlayerId = party.hostPlayerId;
+  }
 
   if (party.members.size === 0) {
     const partyId = party.partyId;

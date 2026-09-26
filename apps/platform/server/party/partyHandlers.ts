@@ -485,6 +485,11 @@ export function registerPartyHandlers(io: Server): void {
         }
         member.socketId = socket.id;
         member.connected = true;
+        // A brief disconnect hands host to another member; give it back to
+        // the owner once they are here again.
+        if (playerId === party.ownerPlayerId && party.hostPlayerId !== playerId) {
+          party.hostPlayerId = playerId;
+        }
         registerSocket(socket.id, party.partyId);
         clearPartyCleanup(party.partyId);
         socket.join(party.partyId);
@@ -561,6 +566,8 @@ export function registerPartyHandlers(io: Server): void {
             return;
           }
         }
+
+        if (party.ownerPlayerId === data.playerId) party.ownerPlayerId = party.hostPlayerId;
 
         if (party.members.size === 0) {
           cleanupActiveMatchOnPartyExpire(party);

@@ -46,6 +46,7 @@ export function createParty(
     partyId,
     inviteCode,
     hostPlayerId,
+    ownerPlayerId: hostPlayerId,
     members: new Map([[hostPlayerId, host]]),
     selectedGameId: null,
     activeMatch: null,
