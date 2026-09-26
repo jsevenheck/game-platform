@@ -5,6 +5,7 @@ import {
   chooseActionTarget,
   finalizeRound,
   computeWinners,
+  autoPlayDisconnectedPlayers,
 } from '../server/src/managers/roundManager';
 import { discardPileSize } from '../server/src/managers/deckManager';
 import type { Room } from '../core/src/types';
@@ -580,5 +581,72 @@ describe('Initial deal where everybody is frozen', () => {
     expect(Object.values(round.players).every((rp) => rp.status === 'stayed')).toBe(true);
     expect(round.roundEndReason).toBe('allDone');
     expect(room.roundHistory.length).toBeGreaterThan(0);
+  });
+});
+
+describe('autoPlayDisconnectedPlayers', () => {
+  function readyRoomWithHands() {
+    const room = makeRoom(['p1', 'p2', 'p3']);
+    startRoundReady(room);
+    const round = room.currentRound!;
+    round.players.p1!.numberCards = [3];
+    round.players.p2!.numberCards = [5];
+    round.players.p3!.numberCards = [7];
+    return room;
+  }
+
+  it('stays for a disconnected current player so the next player can act', () => {
+    const room = readyRoomWithHands();
+    const round = room.currentRound!;
+    const currentId = round.turnOrder[round.currentTurnIndex]!;
+    room.players[currentId]!.connected = false;
+
+    expect(autoPlayDisconnectedPlayers(room)).toBe(true);
+
+    expect(round.players[currentId]!.status).toBe('stayed');
+    const nextId = round.turnOrder[round.currentTurnIndex]!;
+    expect(nextId).not.toBe(currentId);
+    expect(room.players[nextId]!.connected).toBe(true);
+  });
+
+  it('resolves a pending action for a disconnected drawer on themselves', () => {
+    const room = readyRoomWithHands();
+    const round = room.currentRound!;
+    const drawerId = round.turnOrder[round.currentTurnIndex]!;
+    round.pendingAction = {
+      drawerId,
+      action: 'freeze',
+      eligibleTargets: [...round.turnOrder],
+    };
+    room.players[drawerId]!.connected = false;
+
+    autoPlayDisconnectedPlayers(room);
+
+    expect(round.pendingAction).toBeNull();
+    expect(round.players[drawerId]!.status).toBe('stayed');
+  });
+
+  it('does nothing while every player is disconnected', () => {
+    const room = readyRoomWithHands();
+    for (const player of Object.values(room.players)) player.connected = false;
+
+    expect(autoPlayDisconnectedPlayers(room)).toBe(false);
+    expect(Object.values(room.currentRound!.players).every((rp) => rp.status === 'active')).toBe(
+      true
+    );
+  });
+
+  it('ends the round once only disconnected players were left to act', () => {
+    const room = readyRoomWithHands();
+    const round = room.currentRound!;
+    for (const id of round.turnOrder) {
+      if (id !== 'p1') room.players[id]!.connected = false;
+    }
+    round.currentTurnIndex = round.turnOrder.indexOf('p1');
+    playerStay(room, 'p1');
+
+    autoPlayDisconnectedPlayers(room);
+
+    expect(round.roundEndReason).toBe('allDone');
   });
 });
