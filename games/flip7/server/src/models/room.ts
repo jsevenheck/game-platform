@@ -135,6 +135,9 @@ export function clearRoomCleanup(code: string): void {
 const CLEANUP_INTERVAL_MS = 10 * 60 * 1000;
 const cleanupInterval = setInterval(() => {
   for (const [code, room] of rooms) {
+    // Never re-arm a pending timer: rescheduling on every pass pushed the
+    // deadline out indefinitely whenever it exceeded the sweep interval.
+    if (roomTimers.has(code)) continue;
     const allDisconnected = Object.values(room.players).every((p) => !p.connected);
     if (room.phase === 'ended') {
       scheduleRoomCleanup(code, ROOM_ENDED_CLEANUP_MS);

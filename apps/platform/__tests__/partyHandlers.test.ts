@@ -304,6 +304,28 @@ describe('partyHandlers', () => {
     expect(getPartyByInviteCode(res.partyView.inviteCode)).toBeUndefined();
   });
 
+  it('ends the active match when the last connected host leaves mid-match', () => {
+    const ctx = setup();
+    const { socket: hostSocket, res: hostRes } = createPartyViaSocket(ctx, 'sock-host');
+    const joiner = connectSocket(ctx, 'sock-join');
+    joiner.handlers.joinParty(
+      { inviteCode: hostRes.partyView.inviteCode, playerName: 'Joiner' },
+      vi.fn()
+    );
+    hostSocket.handlers.selectGame({ playerId: hostRes.playerId, gameId: 'test-game' }, vi.fn());
+    const launchCb = vi.fn();
+    hostSocket.handlers.launchGame({ playerId: hostRes.playerId }, launchCb);
+    expect(launchCb).toHaveBeenCalledWith({ ok: true });
+    const matchKey = getParty(hostRes.partyView.partyId)!.activeMatch!.matchKey;
+
+    joiner.handlers.disconnect();
+    hostSocket.handlers.leaveParty({ playerId: hostRes.playerId });
+    partyIds.pop();
+
+    expect(getParty(hostRes.partyView.partyId)).toBeUndefined();
+    expect(cleanupMatchMock).toHaveBeenCalledWith(matchKey);
+  });
+
   it('schedules cleanup when leaveParty leaves only disconnected members behind', () => {
     vi.useFakeTimers();
     const ctx = setup();
@@ -524,6 +546,42 @@ describe('partyHandlers', () => {
     // Joiner ACKs for themselves — should work
     joiner.handlers.ackReturnedToLobby({ playerId: joinerId });
     expect(party.returnAcks.has(joinerId)).toBe(true);
+  });
+
+  it('does not let an earlier return timeout finish a later return early', () => {
+    vi.useFakeTimers();
+    const ctx = setup();
+    const { socket: hostSocket, res: hostRes } = createPartyViaSocket(ctx, 'sock-host');
+    const joiner = connectSocket(ctx, 'sock-join');
+    const joinCb = vi.fn();
+    joiner.handlers.joinParty(
+      { inviteCode: hostRes.partyView.inviteCode, playerName: 'P2' },
+      joinCb
+    );
+    const joinerId = joinCb.mock.calls[0][0].playerId;
+    const party = getParty(hostRes.partyView.partyId)!;
+    hostSocket.handlers.selectGame({ playerId: hostRes.playerId, gameId: 'test-game' }, vi.fn());
+
+    const launchAndReturn = () => {
+      hostSocket.handlers.launchGame({ playerId: hostRes.playerId }, vi.fn());
+      hostSocket.handlers.returnToLobby({ playerId: hostRes.playerId }, vi.fn());
+      expect(party.status).toBe('returning');
+    };
+
+    launchAndReturn();
+    hostSocket.handlers.ackReturnedToLobby({ playerId: hostRes.playerId });
+    joiner.handlers.ackReturnedToLobby({ playerId: joinerId });
+    expect(party.status).toBe('lobby');
+
+    vi.advanceTimersByTime(6_000);
+    launchAndReturn();
+
+    // The first return's 10 s timer fires now; the second return must stay open.
+    vi.advanceTimersByTime(5_000);
+    expect(party.status).toBe('returning');
+
+    vi.advanceTimersByTime(5_000);
+    expect(party.status).toBe('lobby');
   });
 
   // ────────────────────────────────────────────────────────────────

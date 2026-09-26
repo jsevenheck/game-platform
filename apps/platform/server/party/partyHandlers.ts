@@ -499,6 +499,10 @@ export function registerPartyHandlers(io: Server): void {
               'transferred host after leave'
             );
           } else {
+            // No connected member is left to return the party to the lobby, so
+            // end the match here — deleteParty also cancels the match timeout
+            // that would otherwise have been the only remaining cleanup path.
+            cleanupActiveMatchOnPartyExpire(party);
             deleteParty(party.partyId);
             socketLogger.info(
               {
@@ -515,6 +519,7 @@ export function registerPartyHandlers(io: Server): void {
         }
 
         if (party.members.size === 0) {
+          cleanupActiveMatchOnPartyExpire(party);
           deleteParty(party.partyId);
           socketLogger.info(
             {
@@ -1066,8 +1071,12 @@ function scheduleReturnCleanup(
   cleanupFn: ((key: string) => void) | undefined,
   logger: Logger
 ): void {
+  // Every return starts with a fresh `returnAcks` Set, so its identity marks
+  // this particular return. Without the check, a later return started within
+  // the 10 s window would be forced into the lobby early by this timer.
+  const returnAcks = party.returnAcks;
   setTimeout(() => {
-    if (party.status === 'returning') {
+    if (party.status === 'returning' && party.returnAcks === returnAcks) {
       party.status = 'lobby';
       party.returnAcks = new Set();
       broadcastPartyAndLobbies(io, party);
