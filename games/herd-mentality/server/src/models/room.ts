@@ -9,7 +9,6 @@ import { __resetSocketIndexForTests, clearSocketIndexesForRoom, createPlayer } f
 
 const roomsByCode = new Map<string, ServerRoom>();
 const codeBySession = new Map<string, string>();
-const codeByPlayer = new Map<string, string>();
 const cleanupTimers = new Map<string, ReturnType<typeof setTimeout>>();
 
 export class RoomFullError extends Error {
@@ -61,7 +60,6 @@ export function createRoom(hostName: string, options: CreateRoomOptions): Server
   };
   roomsByCode.set(room.roomCode, room);
   codeBySession.set(room.matchKey, room.roomCode);
-  codeByPlayer.set(host.id, room.roomCode);
   return room;
 }
 
@@ -79,7 +77,6 @@ export function attachPlayerToRoom(room: ServerRoom, name: string, playerId?: st
   const player = createPlayer(name, false, playerId);
   room.players.push(player);
   room.cows.set(player.id, 0);
-  codeByPlayer.set(player.id, room.roomCode);
   return { playerId: player.id, resumeToken: player.resumeToken };
 }
 
@@ -88,7 +85,6 @@ export function detachPlayerFromRoom(room: ServerRoom, playerId: string): void {
   room.answers.delete(playerId);
   room.cows.delete(playerId);
   if (room.pinkCowPlayerId === playerId) room.pinkCowPlayerId = null;
-  codeByPlayer.delete(playerId);
 }
 
 export function findPlayer(room: ServerRoom, playerId: string) {
@@ -98,7 +94,6 @@ export function findPlayer(room: ServerRoom, playerId: string) {
 export function deleteRoomByCode(roomCode: string): void {
   const room = roomsByCode.get(roomCode);
   if (!room) return;
-  for (const player of room.players) codeByPlayer.delete(player.id);
   codeBySession.delete(room.matchKey);
   clearRoomCleanup(roomCode);
   clearSocketIndexesForRoom(roomCode);
@@ -133,7 +128,6 @@ export function __resetRoomStoreForTests(): void {
   cleanupTimers.clear();
   roomsByCode.clear();
   codeBySession.clear();
-  codeByPlayer.clear();
   __resetSocketIndexForTests();
 }
 

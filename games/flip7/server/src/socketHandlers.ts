@@ -58,6 +58,7 @@ import {
   chooseActionTarget,
   computeWinners,
   popResolvedAction,
+  autoPlayDisconnectedPlayers,
 } from './managers/roundManager';
 import {
   transitionToPlaying,
@@ -191,13 +192,32 @@ export function registerFlip7(io: Server, namespace = '/g/flip7'): void {
       if (!r || r.phase !== 'roundEnd') return;
       transitionToPlaying(r);
       startRound(r);
-      broadcastRoom(nsp, r);
-      if (r.currentRound?.roundEndReason) advanceAfterRound(roomCode);
+      settleRound(r);
       gameLogger.info(
         { roomCode, roundNumber: r.currentRound?.roundNumber },
         'flip7 new round started'
       );
     }, ROUND_END_DISPLAY_MS);
+  }
+
+  function flushResolvedActions(room: Room): void {
+    let resolved = popResolvedAction(room.code);
+    while (resolved) {
+      broadcastActionResolved(nsp, room, resolved);
+      resolved = popResolvedAction(room.code);
+    }
+  }
+
+  /**
+   * Common tail of every round mutation: play for disconnected players so the
+   * turn never waits on someone who left, announce resolved actions before the
+   * new state, then advance the match if the round ended.
+   */
+  function settleRound(room: Room): void {
+    autoPlayDisconnectedPlayers(room);
+    flushResolvedActions(room);
+    broadcastRoom(nsp, room);
+    if (room.currentRound?.roundEndReason) advanceAfterRound(room.code);
   }
 
   nsp.on('connection', (socket: Flip7Socket) => {
@@ -351,8 +371,7 @@ export function registerFlip7(io: Server, namespace = '/g/flip7'): void {
 
         transitionToPlaying(room);
         startRound(room);
-        broadcastRoom(nsp, room);
-        if (room.currentRound?.roundEndReason) advanceAfterRound(room.code);
+        settleRound(room);
         socketLogger.info(
           {
             roomCode: room.code,
@@ -436,21 +455,7 @@ export function registerFlip7(io: Server, namespace = '/g/flip7'): void {
           return;
         }
 
-        // Broadcast all queued action announcements before room state.
-        let resolved = popResolvedAction(data.roomCode);
-        while (resolved) {
-          broadcastActionResolved(nsp, room, resolved);
-          resolved = popResolvedAction(data.roomCode);
-        }
-
-        // roundManager already calls finalizeRound internally when round ends.
-        // We only need to trigger the phase transition from here.
-        if (room.currentRound?.roundEndReason) {
-          broadcastRoom(nsp, room);
-          advanceAfterRound(data.roomCode);
-        } else {
-          broadcastRoom(nsp, room);
-        }
+        settleRound(room);
         instrumentation.finishSuccess();
       } catch (err) {
         instrumentation.finishError();
@@ -480,12 +485,7 @@ export function registerFlip7(io: Server, namespace = '/g/flip7'): void {
           return;
         }
 
-        if (room.currentRound?.roundEndReason) {
-          broadcastRoom(nsp, room);
-          advanceAfterRound(data.roomCode);
-        } else {
-          broadcastRoom(nsp, room);
-        }
+        settleRound(room);
         instrumentation.finishSuccess();
       } catch (err) {
         instrumentation.finishError();
@@ -524,19 +524,7 @@ export function registerFlip7(io: Server, namespace = '/g/flip7'): void {
           return;
         }
 
-        // Broadcast all queued action announcements before room state.
-        let resolved = popResolvedAction(data.roomCode);
-        while (resolved) {
-          broadcastActionResolved(nsp, room, resolved);
-          resolved = popResolvedAction(data.roomCode);
-        }
-
-        if (room.currentRound?.roundEndReason) {
-          broadcastRoom(nsp, room);
-          advanceAfterRound(data.roomCode);
-        } else {
-          broadcastRoom(nsp, room);
-        }
+        settleRound(room);
         instrumentation.finishSuccess();
       } catch (err) {
         instrumentation.finishError();
@@ -610,7 +598,11 @@ export function registerFlip7(io: Server, namespace = '/g/flip7'): void {
               }
             }
 
-            broadcastRoom(nsp, room);
+            if (room.phase === 'playing') {
+              settleRound(room);
+            } else {
+              broadcastRoom(nsp, room);
+            }
 
             const allDisconnected = Object.values(room.players).every((p) => !p.connected);
             if (allDisconnected) {

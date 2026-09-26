@@ -146,6 +146,11 @@ function shutdown(signal: NodeJS.Signals): void {
   }, 10_000);
   forceExitTimer.unref?.();
 
+  // All party and match state is in memory (see CLAUDE.md "Runtime State"),
+  // so tell connected players before their sockets drop instead of leaving
+  // them to discover it on reconnect.
+  io.of('/party').emit('serverShuttingDown');
+
   io.close(() => {
     clearTimeout(forceExitTimer);
     serverLogger.info({ signal }, 'shutdown complete');

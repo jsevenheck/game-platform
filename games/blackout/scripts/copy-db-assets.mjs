@@ -36,7 +36,8 @@ if (existsSync(legacySeedPath)) {
   rmSync(legacySeedPath);
 }
 
-// Remove old DB so the server re-seeds from the current CSVs on next start
+// Remove a stale local DB copy. The server rebuilds its content from the CSVs on every
+// start (see server/src/db/database.ts), wherever DB_PATH points.
 const dbPath = path.join(targetDir, 'blackout.sqlite');
 for (const ext of ['', '-shm', '-wal']) {
   const f = dbPath + ext;

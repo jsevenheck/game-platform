@@ -30,6 +30,8 @@ const router = createRouter({
       component: GameView,
       props: true,
     },
+    // Unknown URLs (typos, stale links) land on home instead of a blank page.
+    { path: '/:pathMatch(.*)*', redirect: '/' },
   ],
 });
 

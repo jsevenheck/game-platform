@@ -57,6 +57,8 @@ export interface Room {
 
   lastRoundResult: RoundResult | null;
   roundHistory: RoundResult[];
+  /** Party members the host kicked from this match; they may not rejoin it. */
+  kickedPlayerIds: string[];
 }
 
 export interface RoomView {

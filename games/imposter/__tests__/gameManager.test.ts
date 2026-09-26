@@ -49,6 +49,7 @@ function makeRoom(playerCount = 4): Room {
     waitingForGuess: false,
     lastRoundResult: null,
     roundHistory: [],
+    kickedPlayerIds: [],
   };
 
   for (let i = 1; i <= playerCount; i++) {
@@ -488,5 +489,15 @@ describe('gameManager', () => {
       expect(room.players['p1']!.score).toBe(0);
       expect(room.roundHistory).toEqual([]);
     });
+  });
+});
+
+describe('addWordToLibrary input validation', () => {
+  it('rejects words containing control characters such as newlines', () => {
+    const room = { wordLibrary: [] as string[] } as unknown as Parameters<
+      typeof addWordToLibrary
+    >[0];
+    expect(addWordToLibrary(room, 'Apple\nBanana')).toBe('Word contains invalid characters');
+    expect(room.wordLibrary).toEqual([]);
   });
 });

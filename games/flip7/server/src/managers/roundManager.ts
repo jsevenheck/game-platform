@@ -635,6 +635,70 @@ export function finalizeRound(room: Room): void {
   }
 }
 
+function isConnected(room: Room, playerId: string): boolean {
+  return room.players[playerId]?.connected === true;
+}
+
+/**
+ * Play for disconnected players so the round never waits on someone who is not
+ * there: a disconnected drawer resolves their pending action on themselves
+ * (Second Chance goes to the first eligible recipient), and a disconnected
+ * current player stays — or keeps drawing while a Flip Three is pending, or
+ * when their hand is still empty and staying is not allowed.
+ *
+ * Does nothing while nobody is connected, so a room that everyone briefly
+ * dropped out of is not played to completion. Returns whether state changed.
+ */
+export function autoPlayDisconnectedPlayers(room: Room): boolean {
+  if (!Object.values(room.players).some((player) => player.connected)) return false;
+
+  let changed = false;
+  // Each step draws a card or changes a status, so a round terminates well
+  // within this bound; the guard only protects against a rules regression.
+  for (let step = 0; step < 500; step++) {
+    const round = room.currentRound;
+    if (!round || round.roundEndReason !== null) return changed;
+
+    const pending = round.pendingAction;
+    if (pending) {
+      if (isConnected(room, pending.drawerId)) return changed;
+      const targetId =
+        pending.action !== 'secondChance' && pending.eligibleTargets.includes(pending.drawerId)
+          ? pending.drawerId
+          : pending.eligibleTargets.find((id) => round.players[id]?.status === 'active');
+      if (targetId) {
+        resolveAction(room, pending.drawerId, targetId, pending.action);
+      } else {
+        round.pendingAction = null;
+        advanceTurnOrFinalize(room);
+      }
+      if (round.phase === 'initialDeal' && !round.pendingAction && !round.roundEndReason) {
+        continueInitialDeal(room);
+      }
+      changed = true;
+      continue;
+    }
+
+    if (round.phase !== 'playing') return changed;
+    const currentId = getCurrentTurnPlayerId(round);
+    if (!currentId || isConnected(room, currentId)) return changed;
+    const rp = round.players[currentId];
+    if (!rp || rp.status !== 'active') return changed;
+
+    const before = `${round.currentTurnIndex}|${round.deck.length}|${round.discard.length}|${rp.status}`;
+    const handEmpty = rp.numberCards.length === 0 && rp.modifierAdds.length === 0 && !rp.hasX2;
+    if (rp.flipThreeRemaining > 0 || handEmpty) {
+      playerHit(room, currentId);
+    } else {
+      playerStay(room, currentId);
+    }
+    const after = `${round.currentTurnIndex}|${round.deck.length}|${round.discard.length}|${rp.status}`;
+    if (before === after && !round.pendingAction && round.roundEndReason === null) return changed;
+    changed = true;
+  }
+  return changed;
+}
+
 export function getCurrentTurnPlayer(room: Room): string | null {
   if (!room.currentRound) return null;
   return getCurrentTurnPlayerId(room.currentRound);

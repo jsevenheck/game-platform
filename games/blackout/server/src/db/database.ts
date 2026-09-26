@@ -157,60 +157,55 @@ function normalizeLetter(value: string): string | null {
   return letter;
 }
 
-function seedDefaultsFromCsv(shouldSeed: {
-  categories: boolean;
-  tasks: boolean;
-  letters: boolean;
-}): void {
-  if (shouldSeed.categories) {
-    const categoryRows = readCsvRows('categories.csv');
-    const insertCategory = db.prepare(
-      'INSERT OR IGNORE INTO categories (name_en, name_de) VALUES (@name_en, @name_de)'
-    );
-    const tx = db.transaction((rows: Record<string, string>[]) => {
-      for (const row of rows) {
-        if (!row.name_en || !row.name_de) continue;
-        insertCategory.run({ name_en: row.name_en, name_de: row.name_de });
-      }
-    });
-    tx(categoryRows);
-  }
+/**
+ * Replace the seed content with the current CSVs in one transaction.
+ *
+ * The database holds nothing but this bundled content — no gameplay writes to
+ * it — so it is rebuilt on every start. Seeding only when a table was empty
+ * meant that once a production volume (see `DB_PATH` in docker-compose.yml) had
+ * been seeded, later CSV edits never reached it.
+ */
+function refreshContentFromCsv(): void {
+  const categoryRows = readCsvRows('categories.csv');
+  const taskRows = readCsvRows('tasks.csv');
+  const letterRows = readCsvRows('default_excluded_letters.csv');
 
-  if (shouldSeed.tasks) {
-    const taskRows = readCsvRows('tasks.csv');
-    const insertTask = db.prepare(
-      `
-        INSERT OR IGNORE INTO tasks (text_en, text_de, requires_letter)
-        VALUES (@text_en, @text_de, @requires_letter)
-      `
-    );
-    const tx = db.transaction((rows: Record<string, string>[]) => {
-      for (const row of rows) {
-        if (!row.text_en || !row.text_de) continue;
-        insertTask.run({
-          text_en: row.text_en,
-          text_de: row.text_de,
-          requires_letter: toBooleanNumber(row.requires_letter ?? '1'),
-        });
-      }
-    });
-    tx(taskRows);
-  }
+  const insertCategory = db.prepare(
+    'INSERT OR IGNORE INTO categories (name_en, name_de) VALUES (@name_en, @name_de)'
+  );
+  const insertTask = db.prepare(
+    `
+      INSERT OR IGNORE INTO tasks (text_en, text_de, requires_letter)
+      VALUES (@text_en, @text_de, @requires_letter)
+    `
+  );
+  const insertLetter = db.prepare(
+    'INSERT OR IGNORE INTO default_excluded_letters (letter) VALUES (?)'
+  );
 
-  if (shouldSeed.letters) {
-    const letterRows = readCsvRows('default_excluded_letters.csv');
-    const insertLetter = db.prepare(
-      'INSERT OR IGNORE INTO default_excluded_letters (letter) VALUES (?)'
-    );
-    const tx = db.transaction((rows: Record<string, string>[]) => {
-      for (const row of rows) {
-        const letter = normalizeLetter(row.letter ?? '');
-        if (!letter) continue;
-        insertLetter.run(letter);
-      }
-    });
-    tx(letterRows);
-  }
+  db.transaction(() => {
+    db.exec('DELETE FROM categories; DELETE FROM tasks; DELETE FROM default_excluded_letters;');
+
+    for (const row of categoryRows) {
+      if (!row.name_en || !row.name_de) continue;
+      insertCategory.run({ name_en: row.name_en, name_de: row.name_de });
+    }
+
+    for (const row of taskRows) {
+      if (!row.text_en || !row.text_de) continue;
+      insertTask.run({
+        text_en: row.text_en,
+        text_de: row.text_de,
+        requires_letter: toBooleanNumber(row.requires_letter ?? '1'),
+      });
+    }
+
+    for (const row of letterRows) {
+      const letter = normalizeLetter(row.letter ?? '');
+      if (!letter) continue;
+      insertLetter.run(letter);
+    }
+  })();
 }
 
 function tableExists(tableName: string): boolean {
@@ -252,22 +247,7 @@ if (needsSchemaReset()) {
 
 db.exec(schemaSQL);
 
-const counts = db
-  .prepare(
-    `
-      SELECT
-        (SELECT COUNT(*) FROM categories) AS categoriesCount,
-        (SELECT COUNT(*) FROM tasks) AS tasksCount,
-        (SELECT COUNT(*) FROM default_excluded_letters) AS lettersCount
-    `
-  )
-  .get() as { categoriesCount: number; tasksCount: number; lettersCount: number };
-
-seedDefaultsFromCsv({
-  categories: counts.categoriesCount === 0,
-  tasks: counts.tasksCount === 0,
-  letters: counts.lettersCount === 0,
-});
+refreshContentFromCsv();
 
 const finalCounts = db
   .prepare(

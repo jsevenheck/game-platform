@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { ref, computed, onMounted, onUnmounted, watch } from 'vue';
+import { useModalDialog } from '../composables/useModalDialog';
 
 interface AdminLog {
   timestamp: string;
@@ -368,6 +369,13 @@ function memberStatusClass(connected: boolean): string {
 function formatStartedAt(startedAt: number): string {
   return new Date(startedAt).toLocaleString();
 }
+
+const cleanupDialogRef = ref<HTMLElement | null>(null);
+useModalDialog(cleanupDialogRef, {
+  onEscape: () => {
+    if (!cleaningUp.value) showCleanupConfirm.value = false;
+  },
+});
 </script>
 
 <template>
@@ -685,10 +693,17 @@ function formatStartedAt(startedAt: number): string {
            confirm()) naming exactly what's about to happen. -->
       <Transition name="fade">
         <div v-if="showCleanupConfirm" class="ui-overlay">
-          <div class="ui-dialog">
-            <div class="admin-dialog-icon">⚠️</div>
-            <h2 class="admin-dialog-title">Delete All Parties?</h2>
-            <p class="admin-dialog-desc">
+          <div
+            ref="cleanupDialogRef"
+            class="ui-dialog"
+            role="alertdialog"
+            aria-modal="true"
+            aria-labelledby="admin-cleanup-title"
+            aria-describedby="admin-cleanup-desc"
+          >
+            <div class="admin-dialog-icon" aria-hidden="true">⚠️</div>
+            <h2 id="admin-cleanup-title" class="admin-dialog-title">Delete All Parties?</h2>
+            <p id="admin-cleanup-desc" class="admin-dialog-desc">
               This disconnects every connected player and permanently deletes
               <strong>{{ parties.length }}</strong> {{ parties.length === 1 ? 'party' : 'parties' }}
               from the server. This cannot be undone.
@@ -700,6 +715,7 @@ function formatStartedAt(startedAt: number): string {
               <button
                 class="ui-btn-secondary"
                 :disabled="cleaningUp"
+                data-autofocus
                 @click="showCleanupConfirm = false"
               >
                 Cancel

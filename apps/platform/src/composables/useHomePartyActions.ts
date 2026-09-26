@@ -1,7 +1,7 @@
 import { ref, watch } from 'vue';
 import { useRouter } from 'vue-router';
-import { usePartyStore } from '../stores/party';
-import { usePartySocket } from './usePartySocket';
+import { isTerminalResumeError, usePartyStore } from '../stores/party';
+import { PARTY_ACK_TIMEOUT_MS, usePartySocket } from './usePartySocket';
 
 const NAME_KEY = 'home.playerName';
 const CODE_KEY = 'home.inviteCode';
@@ -55,7 +55,12 @@ export function useHomePartyActions() {
     error.value = '';
     submitting.value = true;
 
-    socket.emit('createParty', { playerName: name }, (res) => {
+    socket.timeout(PARTY_ACK_TIMEOUT_MS).emit('createParty', { playerName: name }, (err, res) => {
+      if (err) {
+        error.value = 'Request timed out';
+        submitting.value = false;
+        return;
+      }
       if (!res.ok) {
         error.value = res.error;
         submitting.value = false;
@@ -95,22 +100,28 @@ export function useHomePartyActions() {
     error.value = '';
     submitting.value = true;
 
-    socket.emit('joinParty', { playerName: name, inviteCode: code }, (res) => {
-      submitting.value = false;
-      if (!res.ok) {
-        error.value = res.error;
-        return;
-      }
-      store.setSession({
-        playerId: res.playerId,
-        playerName: name,
-        inviteCode: res.partyView.inviteCode,
-        resumeToken: res.resumeToken,
+    socket
+      .timeout(PARTY_ACK_TIMEOUT_MS)
+      .emit('joinParty', { playerName: name, inviteCode: code }, (err, res) => {
+        submitting.value = false;
+        if (err) {
+          error.value = 'Request timed out';
+          return;
+        }
+        if (!res.ok) {
+          error.value = res.error;
+          return;
+        }
+        store.setSession({
+          playerId: res.playerId,
+          playerName: name,
+          inviteCode: res.partyView.inviteCode,
+          resumeToken: res.resumeToken,
+        });
+        store.applyPartyUpdate(res.partyView);
+        store.saveSession(res.partyView.inviteCode);
+        router.push(`/party/${res.partyView.inviteCode}`);
       });
-      store.applyPartyUpdate(res.partyView);
-      store.saveSession(res.partyView.inviteCode);
-      router.push(`/party/${res.partyView.inviteCode}`);
-    });
   }
 
   function tryResume(): void {
@@ -128,7 +139,8 @@ export function useHomePartyActions() {
       (res) => {
         isResuming.value = false;
         if (!res.ok) {
-          store.clearSession();
+          if (isTerminalResumeError(res.error)) store.endSession();
+          else error.value = res.error;
           return;
         }
         store.setSession({

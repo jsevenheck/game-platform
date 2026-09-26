@@ -29,6 +29,12 @@ export interface PartySession {
   partyId: string;
   inviteCode: string;
   hostPlayerId: string;
+  /**
+   * Member who owns the party (its creator, or whoever inherited ownership
+   * when the owner left). Host moves to another member while the owner is
+   * disconnected and returns to the owner when they resume.
+   */
+  ownerPlayerId: string;
   members: Map<string, PartyMember>;
   selectedGameId: string | null;
   activeMatch: PartyMatch | null;

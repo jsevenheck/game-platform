@@ -304,6 +304,28 @@ describe('partyHandlers', () => {
     expect(getPartyByInviteCode(res.partyView.inviteCode)).toBeUndefined();
   });
 
+  it('ends the active match when the last connected host leaves mid-match', () => {
+    const ctx = setup();
+    const { socket: hostSocket, res: hostRes } = createPartyViaSocket(ctx, 'sock-host');
+    const joiner = connectSocket(ctx, 'sock-join');
+    joiner.handlers.joinParty(
+      { inviteCode: hostRes.partyView.inviteCode, playerName: 'Joiner' },
+      vi.fn()
+    );
+    hostSocket.handlers.selectGame({ playerId: hostRes.playerId, gameId: 'test-game' }, vi.fn());
+    const launchCb = vi.fn();
+    hostSocket.handlers.launchGame({ playerId: hostRes.playerId }, launchCb);
+    expect(launchCb).toHaveBeenCalledWith({ ok: true });
+    const matchKey = getParty(hostRes.partyView.partyId)!.activeMatch!.matchKey;
+
+    joiner.handlers.disconnect();
+    hostSocket.handlers.leaveParty({ playerId: hostRes.playerId });
+    partyIds.pop();
+
+    expect(getParty(hostRes.partyView.partyId)).toBeUndefined();
+    expect(cleanupMatchMock).toHaveBeenCalledWith(matchKey);
+  });
+
   it('schedules cleanup when leaveParty leaves only disconnected members behind', () => {
     vi.useFakeTimers();
     const ctx = setup();
@@ -352,6 +374,53 @@ describe('partyHandlers', () => {
     expect(party.hostPlayerId).toBe(joinRes.playerId);
     // Original host still in members but disconnected
     expect(party.members.get(hostRes.playerId)?.connected).toBe(false);
+  });
+
+  it('gives host back to the owner when they resume after a disconnect', () => {
+    const ctx = setup();
+    const { socket: hostSocket, res: hostRes } = createPartyViaSocket(ctx, 'sock-1');
+    const joiner = connectSocket(ctx, 'sock-2');
+    const joinCb = vi.fn();
+    joiner.handlers.joinParty(
+      { inviteCode: hostRes.partyView.inviteCode, playerName: 'Joiner' },
+      joinCb
+    );
+    const party = getPartyByInviteCode(hostRes.partyView.inviteCode)!;
+
+    hostSocket.handlers.disconnect();
+    expect(party.hostPlayerId).toBe(joinCb.mock.calls[0][0].playerId);
+
+    const resumed = connectSocket(ctx, 'sock-1b');
+    const resumeCb = vi.fn();
+    resumed.handlers.resumeParty(
+      {
+        inviteCode: hostRes.partyView.inviteCode,
+        playerId: hostRes.playerId,
+        resumeToken: hostRes.resumeToken,
+      },
+      resumeCb
+    );
+
+    expect(resumeCb.mock.calls[0][0].ok).toBe(true);
+    expect(party.hostPlayerId).toBe(hostRes.playerId);
+  });
+
+  it('passes ownership on when the owner leaves', () => {
+    const ctx = setup();
+    const { socket: hostSocket, res: hostRes } = createPartyViaSocket(ctx, 'sock-1');
+    const joiner = connectSocket(ctx, 'sock-2');
+    const joinCb = vi.fn();
+    joiner.handlers.joinParty(
+      { inviteCode: hostRes.partyView.inviteCode, playerName: 'Joiner' },
+      joinCb
+    );
+    const joinerId = joinCb.mock.calls[0][0].playerId;
+    const party = getPartyByInviteCode(hostRes.partyView.inviteCode)!;
+
+    hostSocket.handlers.leaveParty({ playerId: hostRes.playerId });
+
+    expect(party.hostPlayerId).toBe(joinerId);
+    expect(party.ownerPlayerId).toBe(joinerId);
   });
 
   it('schedules party cleanup when all members disconnect', () => {
@@ -524,6 +593,59 @@ describe('partyHandlers', () => {
     // Joiner ACKs for themselves — should work
     joiner.handlers.ackReturnedToLobby({ playerId: joinerId });
     expect(party.returnAcks.has(joinerId)).toBe(true);
+  });
+
+  it('does not let an earlier return timeout finish a later return early', () => {
+    vi.useFakeTimers();
+    const ctx = setup();
+    const { socket: hostSocket, res: hostRes } = createPartyViaSocket(ctx, 'sock-host');
+    const joiner = connectSocket(ctx, 'sock-join');
+    const joinCb = vi.fn();
+    joiner.handlers.joinParty(
+      { inviteCode: hostRes.partyView.inviteCode, playerName: 'P2' },
+      joinCb
+    );
+    const joinerId = joinCb.mock.calls[0][0].playerId;
+    const party = getParty(hostRes.partyView.partyId)!;
+    hostSocket.handlers.selectGame({ playerId: hostRes.playerId, gameId: 'test-game' }, vi.fn());
+
+    const launchAndReturn = () => {
+      hostSocket.handlers.launchGame({ playerId: hostRes.playerId }, vi.fn());
+      hostSocket.handlers.returnToLobby({ playerId: hostRes.playerId }, vi.fn());
+      expect(party.status).toBe('returning');
+    };
+
+    launchAndReturn();
+    hostSocket.handlers.ackReturnedToLobby({ playerId: hostRes.playerId });
+    joiner.handlers.ackReturnedToLobby({ playerId: joinerId });
+    expect(party.status).toBe('lobby');
+
+    vi.advanceTimersByTime(6_000);
+    launchAndReturn();
+
+    // The first return's 10 s timer fires now; the second return must stay open.
+    vi.advanceTimersByTime(5_000);
+    expect(party.status).toBe('returning');
+
+    vi.advanceTimersByTime(5_000);
+    expect(party.status).toBe('lobby');
+  });
+
+  it('limits joinParty per client IP even across fresh sockets', () => {
+    const ctx = setup();
+    const responses: Array<{ ok: boolean; error?: string }> = [];
+    for (let i = 0; i < 61; i += 1) {
+      const socket = connectSocket(ctx, `sock-guess-${i}`) as ReturnType<typeof createSocket> & {
+        handshake: unknown;
+      };
+      socket.handshake = { headers: {}, address: '203.0.113.7' };
+      const cb = vi.fn();
+      socket.handlers.joinParty({ inviteCode: 'ZZZZZZ', playerName: `Guess${i}` }, cb);
+      responses.push(cb.mock.calls[0][0]);
+    }
+
+    expect(responses.slice(0, 60).every((r) => r.error === 'Party not found')).toBe(true);
+    expect(responses[60]).toEqual({ ok: false, error: 'Too many requests' });
   });
 
   // ────────────────────────────────────────────────────────────────

@@ -58,6 +58,7 @@ function makeRoom(): Room {
     waitingForGuess: false,
     lastRoundResult: null,
     roundHistory: [],
+    kickedPlayerIds: [],
   };
 }
 
