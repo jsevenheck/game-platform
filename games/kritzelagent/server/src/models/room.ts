@@ -4,7 +4,6 @@ import { __resetSocketIndexForTests, clearSocketIndexesForRoom, createPlayer } f
 
 const roomsByCode = new Map<string, ServerRoom>();
 const codeBySession = new Map<string, string>();
-const codeByPlayer = new Map<string, string>();
 const roomCleanupTimers = new Map<string, ReturnType<typeof setTimeout>>();
 
 export class RoomFullError extends Error {
@@ -61,7 +60,6 @@ export function createRoom(hostName: string, options: CreateRoomOptions): Server
   };
   roomsByCode.set(roomCode, room);
   codeBySession.set(options.matchKey, roomCode);
-  codeByPlayer.set(host.id, roomCode);
   return room;
 }
 
@@ -71,11 +69,6 @@ export function getRoomByCode(roomCode: string): ServerRoom | undefined {
 
 export function getRoomBySession(sessionId: string): ServerRoom | undefined {
   const roomCode = codeBySession.get(sessionId);
-  return roomCode ? roomsByCode.get(roomCode) : undefined;
-}
-
-export function getRoomByPlayerId(playerId: string): ServerRoom | undefined {
-  const roomCode = codeByPlayer.get(playerId);
   return roomCode ? roomsByCode.get(roomCode) : undefined;
 }
 
@@ -90,7 +83,6 @@ export function attachPlayerToRoom(
   const player = createPlayer(playerName, false, playerId);
   room.players.push(player);
   room.scores.set(player.id, 0);
-  codeByPlayer.set(player.id, room.roomCode);
   return { playerId: player.id, resumeToken: player.resumeToken };
 }
 
@@ -99,7 +91,6 @@ export function detachPlayerFromRoom(room: ServerRoom, playerId: string): void {
   room.votes.delete(playerId);
   room.scores.delete(playerId);
   room.strokes = room.strokes.filter((stroke) => stroke.playerId !== playerId);
-  codeByPlayer.delete(playerId);
 }
 
 export function findPlayer(room: ServerRoom, playerId: string) {
@@ -109,7 +100,6 @@ export function findPlayer(room: ServerRoom, playerId: string) {
 export function deleteRoomByCode(roomCode: string): void {
   const room = roomsByCode.get(roomCode);
   if (!room) return;
-  for (const player of room.players) codeByPlayer.delete(player.id);
   codeBySession.delete(room.matchKey);
   clearRoomCleanup(roomCode);
   clearSocketIndexesForRoom(roomCode);
@@ -147,7 +137,6 @@ export function __resetRoomStoreForTests(): void {
   roomCleanupTimers.clear();
   roomsByCode.clear();
   codeBySession.clear();
-  codeByPlayer.clear();
   __resetSocketIndexForTests();
 }
 
