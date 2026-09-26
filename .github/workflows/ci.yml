@@ -29,6 +29,9 @@ jobs:
       - name: Lint
         run: pnpm lint
 
+      - name: Format check
+        run: pnpm format:check
+
       - name: Typecheck
         run: pnpm typecheck
 
@@ -50,6 +53,22 @@ jobs:
             test -s "$base/kritzelagent/server/data/topics.$l.csv"
             test -s "$base/imposter/server/data/words.$l.txt"
           done
+
+      # E2E runs against the Vite dev server, so boot the compiled production
+      # server once to catch build-only breakage (asset copying, compiled CJS
+      # paths, static serving and the SPA fallback).
+      - name: Smoke test production build
+        run: |
+          PORT=3100 NODE_ENV=production node apps/platform/dist/server/apps/platform/server/index.js &
+          server_pid=$!
+          trap 'kill "$server_pid"' EXIT
+          for _ in $(seq 1 30); do
+            curl -fsS http://localhost:3100/health >/dev/null && break
+            sleep 1
+          done
+          curl -fsS http://localhost:3100/health | grep -q '"ok":true'
+          curl -fsS http://localhost:3100/ | grep -q '<div id="app">'
+          curl -fsS http://localhost:3100/party/ABCDEF | grep -q '<div id="app">'
 
       - name: Install Playwright browsers
         run: pnpm exec playwright install --with-deps chromium

@@ -93,6 +93,9 @@ test.describe('Kritzelagent game', () => {
   test('runs all five rounds, preserves private assignments, and renders the platform overlay', async ({
     browser,
   }) => {
+    // A full five-round match across several browser contexts; the default
+    // 60 s budget is too tight on loaded CI runners.
+    test.slow();
     const session = await createSession(browser);
     try {
       await launchGame(session);
