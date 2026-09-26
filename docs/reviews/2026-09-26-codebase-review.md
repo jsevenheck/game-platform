@@ -2,6 +2,29 @@
 
 Base: `535443c` (branch `claude/codebase-review-t2pr4b`). This review changed no production code.
 
+## Resolution status (follow-up on the same branch)
+
+| ID       | Status        | Commit / note                                                                                                                                                                                          |
+| -------- | ------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| M1       | Fixed         | `fix(imposter): arm discussion timer on every path into discussion`                                                                                                                                    |
+| M2       | Fixed         | `fix(flip7): play for disconnected players instead of stalling the round`                                                                                                                              |
+| M3 (+N2) | Fixed         | `fix(blackout): rebuild seed content from CSVs on every start`                                                                                                                                         |
+| M4       | Fixed         | `fix(imposter): harden the shared word library against abuse` — rate limit, control-character rejection, cap counts only submitted words. Global persistence itself is unchanged (a product decision). |
+| M5       | **Open**      | Removing the game-level resume-token check was blocked by the session's safety classifier as an auth change; needs an explicit owner decision.                                                         |
+| M6 (+L2) | Mitigated     | `fix(platform): explain lost sessions and connection loss to players` — notice, reconnect banner, ack timeouts, single-instance docs. State is still in-memory by design.                              |
+| M7       | Fixed         | `fix(a11y): give modal overlays dialog semantics and focus handling`                                                                                                                                   |
+| L1, L3   | Fixed         | `fix: close cleanup gaps for matches and game rooms`                                                                                                                                                   |
+| L4       | Fixed         | `fix(estimate,herd-mentality): broadcast to bound players, not room codes`                                                                                                                             |
+| L5       | Fixed         | `fix(party): harden invite codes against guessing`                                                                                                                                                     |
+| L6       | Fixed         | `fix(imposter): keep kicked players out of the match`                                                                                                                                                  |
+| L7       | Fixed         | `fix(party): return host to the owner after a reconnect`                                                                                                                                               |
+| L8       | **Withdrawn** | Incorrect: Flip 7's rule checks return silently; only genuine exceptions reach the `error` log.                                                                                                        |
+| L9       | Fixed         | `ci: check formatting, smoke-test the production build, give long E2E time`                                                                                                                            |
+| L10      | Fixed         | `fix(platform): redirect unknown URLs to home instead of a blank page`                                                                                                                                 |
+| N1       | Fixed         | `refactor(games): drop unused player-to-room maps` (Kritzelagent had the same map)                                                                                                                     |
+| N3       | Open          | Aligning `apps/platform` dependency versions needs a lockfile update; `package.json`/lockfile writes are denied by the project settings.                                                               |
+| N4       | Fixed         | `fix(logging): redact token headers and stop logging failed admin usernames`                                                                                                                           |
+
 ## 1. Executive summary
 
 The codebase is healthy overall. The platform/game split is clear. Party authorization (`authorizePartyJoin`) is used consistently by all eight games. Payload validation is disciplined, and hidden game state is filtered per player on the server. All gates pass (lint, both typechecks, 595 unit tests, build, audit), and E2E passes with retries. The prior review's fixes (F-01…F-05) are present.
@@ -23,9 +46,10 @@ The codebase is healthy overall. The platform/game split is clear. Party authori
 ## 2. Scope and evidence
 
 **Read:**
+
 - Documentation: CLAUDE.md, AGENTS.md, README, docs/*, progress.md.
 - CI, deploy workflow, Dockerfile, docker-compose, .dockerignore.
-- The whole platform server: index, httpRoutes, env, admin, party/*, registry, logging/*, metrics/httpMetrics, observability/*.
+- The whole platform server: index, httpRoutes, env, admin, party/_, registry, logging/_, metrics/httpMetrics, observability/*.
 - Platform client: stores/party, usePartySocket, useHomePartyActions, PartyView, GameView, router.
 - Every game's socket handlers, with Imposter, Blackout, Flip 7 and Estimate read in depth.
 - Every game's room models and broadcast/view builders.
@@ -33,20 +57,21 @@ The codebase is healthy overall. The platform/game split is clear. Party authori
 
 **Commands run** (Node 22.22 locally; the repo declares `>=24`):
 
-| Command                                                       | Result                                                                                                                                                                                                                                                             |
-| ------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
-| `pnpm install --frozen-lockfile`                              | ok                                                                                                                                                                                                                                                                 |
-| `pnpm test`                                                   | 55 files / 595 tests pass                                                                                                                                                                                                                                          |
-| `pnpm lint`                                                   | pass                                                                                                                                                                                                                                                               |
-| `pnpm typecheck` / `pnpm typecheck:games`                     | pass / pass                                                                                                                                                                                                                                                        |
-| `pnpm build`                                                  | pass                                                                                                                                                                                                                                                               |
-| `pnpm audit --audit-level=high`                               | no known vulnerabilities                                                                                                                                                                                                                                           |
-| `pnpm format:check`                                           | failed on `.mcp.json` and `AGENTS.md`, but only because the session's graft tooling modified those files locally. The committed versions are not implicated.                                                                                                        |
-| `playwright test` (CI=true, preinstalled Chromium rev 1194 vs pinned 1243, 4 CPUs / 8 workers) | 64 passed, 2 flaky (the Kritzelagent and Herd Mentality long-match tests), both passing on retry                                                                                                                                                                  |
-| Throwaway Vitest repro (deleted afterwards)                   | confirmed finding M1                                                                                                                                                                                                                                               |
-| Production build served locally + Playwright screenshots      | home page renders at 375 px and 1280 px with no horizontal overflow; an unknown route renders an empty page                                                                                                                                                        |
+| Command                                                                                        | Result                                                                                                                                                       |
+| ---------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| `pnpm install --frozen-lockfile`                                                               | ok                                                                                                                                                           |
+| `pnpm test`                                                                                    | 55 files / 595 tests pass                                                                                                                                    |
+| `pnpm lint`                                                                                    | pass                                                                                                                                                         |
+| `pnpm typecheck` / `pnpm typecheck:games`                                                      | pass / pass                                                                                                                                                  |
+| `pnpm build`                                                                                   | pass                                                                                                                                                         |
+| `pnpm audit --audit-level=high`                                                                | no known vulnerabilities                                                                                                                                     |
+| `pnpm format:check`                                                                            | failed on `.mcp.json` and `AGENTS.md`, but only because the session's graft tooling modified those files locally. The committed versions are not implicated. |
+| `playwright test` (CI=true, preinstalled Chromium rev 1194 vs pinned 1243, 4 CPUs / 8 workers) | 64 passed, 2 flaky (the Kritzelagent and Herd Mentality long-match tests), both passing on retry                                                             |
+| Throwaway Vitest repro (deleted afterwards)                                                    | confirmed finding M1                                                                                                                                         |
+| Production build served locally + Playwright screenshots                                       | home page renders at 375 px and 1280 px with no horizontal overflow; an unknown route renders an empty page                                                  |
 
 **Not verified:**
+
 - Docker build and runtime.
 - The Hostinger/Traefik deployment.
 - The detailed game rules of Scout and Secret Signals.
@@ -55,52 +80,56 @@ The codebase is healthy overall. The platform/game split is clear. Party authori
 ## 3. System overview
 
 **Components:**
+
 - One Node process runs Express (static SPA, `/health`, `/metrics`, `/api/admin/*`) and Socket.IO.
 - `/party` owns the party lifecycle: create → join → select → launch → replay/return.
 - Each game registers `/g/<id>`.
 - All state is in-memory Maps. The only persistence is Blackout's read-only seed DB and Imposter's words file.
 
 **Trust model:**
+
 - The party `resumeToken` is the bearer credential. It is reused as the game `joinToken`.
 - A game's `autoJoinRoom` validates it against `party.activeMatch`.
 - Later game actions are authorized either by the socket→player index (Imposter, Blackout, Flip 7, Scout, Secret Signals) or by re-running `authorizePartyJoin` (Estimate, Herd Mentality, Kritzelagent).
 
 **Boundaries:**
+
 - Browser → Socket.IO: all payloads are untrusted and read through `readString`/`readFiniteNumber`.
 - Admin HTTP uses a JWT cookie plus a double-submit CSRF token.
 - Traefik → app: `X-Forwarded-For` is trusted for exactly one hop.
 
 ## 4. Findings summary
 
-| ID  | Sev    | Conf   | Category          | Location                                                                         | Finding                                                                                                     |
-| --- | ------ | ------ | ----------------- | -------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------- |
-| M1  | Medium | High   | Correctness       | `games/imposter/server/src/handlers/socketHandlers.ts:119-141`, `gameManager.ts:167-186,349-360` | A disconnect or leave that completes the description phase never arms the discussion timer, so the room stays in `discussion` forever |
-| M2  | Medium | High   | Correctness       | `games/flip7/server/src/managers/roundManager.ts`, `socketHandlers.ts:582-634`  | Flip 7 does not skip a disconnected current-turn player or pending action target, so the round stalls        |
-| M3  | Medium | High   | Data / deploy     | `games/blackout/server/src/db/database.ts:255-270`, `docker-compose.yml`, `copy-db-assets.mjs` | Blackout seed CSV changes never reach production (seeded only when empty, DB on a persistent volume)          |
-| M4  | Medium | High   | Security / abuse  | `games/imposter/server/src/utils/wordLibrary.ts:91-119`, `socketHandlers.ts:592-621` | Any player can permanently fill the shared global word pool (no rate limit, 2000 cap, newline injection)    |
-| M5  | Medium | Medium | Reliability       | all 8 games' `autoJoinRoom` ("Resume token required")                              | The redundant game-level resume token can permanently lock an authorized player out of a match              |
-| M6  | Medium | High   | Architecture / ops | in-memory stores + `deploy.yml` (deploys on every main push)                     | Every deploy drops all parties and matches without notice; the docs imply multi-instance support that cannot work |
-| M7  | Medium | High   | Accessibility     | `GameView.vue:209-224`, 5 `PlatformAdapter.vue`, Flip 7 `ActionTargetPicker`, Scout `ScoutDialog`, `AdminView` | Modal overlays lack `role="dialog"`/`aria-modal`, focus movement/trap and Escape handling               |
-| L1  | Low    | High   | Lifecycle         | `partyHandlers.ts:488-530`; `games/{blackout,flip7}/server/src/models/room.ts` sweeps | Leaving a party mid-match can orphan the game room, and the Blackout/Flip 7 backstop sweeps never fire   |
-| L2  | Low    | High   | UX                | `usePartySocket.ts`, `useHomePartyActions.ts`, `PartyView.vue`                   | Platform flows have no connection-error state and no ack timeouts, so Create/Join can spin forever       |
-| L3  | Low    | High   | Correctness       | `partyHandlers.ts:1062-1107`                                                     | `scheduleReturnCleanup` timers are untracked and can force a later "returning" state to lobby early        |
-| L4  | Low    | High   | Security          | `games/{estimate,herd-mentality}` `broadcastRoom` + all `deleteRoom`             | Sockets are never removed from Socket.IO rooms when a game room is deleted, so a reused 4-char code can leak public state |
-| L5  | Low    | Medium | Security          | `partyStore.ts:57-67`, `partyHandlers.ts` rate limit                              | Invite codes use `Math.random` (6×32 alphabet), and rate limits are per socket, not per IP               |
-| L6  | Low    | High   | Correctness       | Imposter `kickPlayer`                                                            | An in-game lobby kick is ineffective: the kicked party member can immediately `autoJoinRoom` again         |
-| L7  | Low    | High   | UX / design       | `partyHandlers.ts:1022-1027`                                                     | A brief host disconnect transfers host permanently; it is not restored when the host reconnects             |
-| L8  | Low    | High   | Observability     | Flip 7 `hit`/`stay`/`chooseActionTarget`                                         | Expected rule rejections (e.g. not your turn) are logged at `error` and counted as failures               |
-| L9  | Low    | High   | Testing / CI      | `playwright.config.ts`, `ci.yml`                                                 | E2E runs against the Vite dev server rather than the production build; `retries: 2` hides flakiness; no `format:check` in CI |
-| L10 | Low    | High   | UX                | `router/index.ts`                                                                | No catch-all route; unknown URLs render a blank page                                                        |
-| N1  | Nit    | High   | Maintainability   | Estimate/Herd `codeByPlayer`, `getRoomByPlayerId`                                | Dead global player→room map, and it would be wrong across replays if ever used                              |
-| N2  | Nit    | High   | Repo hygiene      | `games/blackout/server/src/db/blackout.sqlite`                                   | A tracked binary DB despite `.gitignore`, with the same seed-drift problem in dev                          |
-| N3  | Nit    | High   | Deps              | `apps/platform/package.json`                                                     | Duplicate, divergent versions (`@types/node` ^22 vs ^24, `concurrently` ^9 vs ^10); runtime image installs client-only deps |
-| N4  | Nit    | Medium | Privacy           | `admin.ts:424`, request logger                                                   | Failed-login usernames are logged; the `x-csrf-token` header is not in the redaction list                  |
+| ID  | Sev    | Conf   | Category           | Location                                                                                                       | Finding                                                                                                                               |
+| --- | ------ | ------ | ------------------ | -------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------- |
+| M1  | Medium | High   | Correctness        | `games/imposter/server/src/handlers/socketHandlers.ts:119-141`, `gameManager.ts:167-186,349-360`               | A disconnect or leave that completes the description phase never arms the discussion timer, so the room stays in `discussion` forever |
+| M2  | Medium | High   | Correctness        | `games/flip7/server/src/managers/roundManager.ts`, `socketHandlers.ts:582-634`                                 | Flip 7 does not skip a disconnected current-turn player or pending action target, so the round stalls                                 |
+| M3  | Medium | High   | Data / deploy      | `games/blackout/server/src/db/database.ts:255-270`, `docker-compose.yml`, `copy-db-assets.mjs`                 | Blackout seed CSV changes never reach production (seeded only when empty, DB on a persistent volume)                                  |
+| M4  | Medium | High   | Security / abuse   | `games/imposter/server/src/utils/wordLibrary.ts:91-119`, `socketHandlers.ts:592-621`                           | Any player can permanently fill the shared global word pool (no rate limit, 2000 cap, newline injection)                              |
+| M5  | Medium | Medium | Reliability        | all 8 games' `autoJoinRoom` ("Resume token required")                                                          | The redundant game-level resume token can permanently lock an authorized player out of a match                                        |
+| M6  | Medium | High   | Architecture / ops | in-memory stores + `deploy.yml` (deploys on every main push)                                                   | Every deploy drops all parties and matches without notice; the docs imply multi-instance support that cannot work                     |
+| M7  | Medium | High   | Accessibility      | `GameView.vue:209-224`, 5 `PlatformAdapter.vue`, Flip 7 `ActionTargetPicker`, Scout `ScoutDialog`, `AdminView` | Modal overlays lack `role="dialog"`/`aria-modal`, focus movement/trap and Escape handling                                             |
+| L1  | Low    | High   | Lifecycle          | `partyHandlers.ts:488-530`; `games/{blackout,flip7}/server/src/models/room.ts` sweeps                          | Leaving a party mid-match can orphan the game room, and the Blackout/Flip 7 backstop sweeps never fire                                |
+| L2  | Low    | High   | UX                 | `usePartySocket.ts`, `useHomePartyActions.ts`, `PartyView.vue`                                                 | Platform flows have no connection-error state and no ack timeouts, so Create/Join can spin forever                                    |
+| L3  | Low    | High   | Correctness        | `partyHandlers.ts:1062-1107`                                                                                   | `scheduleReturnCleanup` timers are untracked and can force a later "returning" state to lobby early                                   |
+| L4  | Low    | High   | Security           | `games/{estimate,herd-mentality}` `broadcastRoom` + all `deleteRoom`                                           | Sockets are never removed from Socket.IO rooms when a game room is deleted, so a reused 4-char code can leak public state             |
+| L5  | Low    | Medium | Security           | `partyStore.ts:57-67`, `partyHandlers.ts` rate limit                                                           | Invite codes use `Math.random` (6×32 alphabet), and rate limits are per socket, not per IP                                            |
+| L6  | Low    | High   | Correctness        | Imposter `kickPlayer`                                                                                          | An in-game lobby kick is ineffective: the kicked party member can immediately `autoJoinRoom` again                                    |
+| L7  | Low    | High   | UX / design        | `partyHandlers.ts:1022-1027`                                                                                   | A brief host disconnect transfers host permanently; it is not restored when the host reconnects                                       |
+| L8  | Low    | High   | Observability      | Flip 7 `hit`/`stay`/`chooseActionTarget`                                                                       | Expected rule rejections (e.g. not your turn) are logged at `error` and counted as failures                                           |
+| L9  | Low    | High   | Testing / CI       | `playwright.config.ts`, `ci.yml`                                                                               | E2E runs against the Vite dev server rather than the production build; `retries: 2` hides flakiness; no `format:check` in CI          |
+| L10 | Low    | High   | UX                 | `router/index.ts`                                                                                              | No catch-all route; unknown URLs render a blank page                                                                                  |
+| N1  | Nit    | High   | Maintainability    | Estimate/Herd `codeByPlayer`, `getRoomByPlayerId`                                                              | Dead global player→room map, and it would be wrong across replays if ever used                                                        |
+| N2  | Nit    | High   | Repo hygiene       | `games/blackout/server/src/db/blackout.sqlite`                                                                 | A tracked binary DB despite `.gitignore`, with the same seed-drift problem in dev                                                     |
+| N3  | Nit    | High   | Deps               | `apps/platform/package.json`                                                                                   | Duplicate, divergent versions (`@types/node` ^22 vs ^24, `concurrently` ^9 vs ^10); runtime image installs client-only deps           |
+| N4  | Nit    | Medium | Privacy            | `admin.ts:424`, request logger                                                                                 | Failed-login usernames are logged; the `x-csrf-token` header is not in the redaction list                                             |
 
 ## 5. Detailed findings
 
 ### M1 — Imposter room stuck in `discussion` after a disconnect ends the description phase
 
 **Evidence:**
+
 - `handleVoluntaryDisconnect` calls `syncDescriptionTurn`, which fills in `''` for a disconnected current describer and calls `advanceDescriptionTurn`. When no descriptions remain, that calls `startDiscussion`.
 - The discussion timer and `discussionEndsAt` are only set inside the `submitDescription` and `skipDescriptionTurn` handlers (`socketHandlers.ts:693-706, 737-750`).
 - `startVoting` is only reachable from those timers.
@@ -128,6 +157,7 @@ The codebase is healthy overall. The platform/game split is clear. Party authori
 ### M3 — Blackout content updates never reach production
 
 **Evidence:**
+
 - The seed runs only when a table is empty (`database.ts:266-270`).
 - Production sets `DB_PATH=/data/blackout/blackout.sqlite` on the `blackout-db` named volume.
 - `copy-db-assets.mjs` deletes the DB in `dist/` "so the server re-seeds from the current CSVs". That has no effect when `DB_PATH` points at the volume.
@@ -142,6 +172,7 @@ The codebase is healthy overall. The platform/game split is clear. Party authori
 ### M4 — Shared Imposter word pool can be polluted or exhausted by any player
 
 **Evidence:**
+
 - `submitWord` has no rate limit; only `submitDescription` and `submitVote` use `gameplayRateLimit`.
 - `persistWord` appends to a process-global, per-locale list that is persisted to the `imposter-words` volume and seeds every future room (`gameManager.ts:29`).
 - Words are length-checked (≤ 40) but not character-checked, so an embedded `\n` writes multiple lines to the file.
@@ -150,6 +181,7 @@ The codebase is healthy overall. The platform/game split is clear. Party authori
 **Impact:** one scripted client in any lobby can permanently inject arbitrary (e.g. offensive) secret words into all future games and fill the library to its cap.
 
 **Recommendation:**
+
 - Rate-limit `submitWord`.
 - Reject control characters.
 - Keep player-submitted words room-scoped, or send them to a moderation/allow-list step, instead of persisting them globally by default. Consider flipping `IMPOSTER_PERSIST_WORDS` to opt-in.
@@ -162,6 +194,7 @@ The codebase is healthy overall. The platform/game split is clear. Party authori
 **Evidence:** every game's `autoJoinRoom` returns "Resume token required" or "Invalid resume token" when an existing room player reconnects without the matching token that was stored in `localStorage` (`<game>.session`). The platform `joinToken` has already authenticated that same member, so the second token adds no security.
 
 **Impact:** the player is permanently unable to rejoin the running match (retries fail the same way) whenever:
+
 - the autoJoin ack is lost (disconnect between server commit and client receipt);
 - storage is cleared or unavailable;
 - another tab of the same browser overwrote the per-game key.
@@ -173,6 +206,7 @@ The codebase is healthy overall. The platform/game split is clear. Party authori
 ### M6 — Deploys terminate all sessions; multi-instance support is implied but impossible
 
 **Evidence:**
+
 - Parties, matches, rooms and rate limits are module-level Maps.
 - `deploy.yml` deploys every green `main` commit.
 - On SIGTERM, `io.close()` runs immediately.
@@ -182,6 +216,7 @@ The codebase is healthy overall. The platform/game split is clear. Party authori
 **Impact:** every merge ends all active games without warning. The documentation misleads operators about scaling.
 
 **Recommendation:**
+
 - Document single-instance as a hard constraint.
 - Gate deploys (manual approval or a quiet-hours window), or add a drain step: stop new launches and wait for active matches up to a limit, then shut down.
 - Show a "server restarted" message instead of silently returning users home.
@@ -191,6 +226,7 @@ The codebase is healthy overall. The platform/game split is clear. Party authori
 **Evidence:** 10 files use `.ui-dialog`. Only Estimate, Herd Mentality and Kritzelagent `PlatformAdapter` and one Secret Signals dialog declare `role="dialog"`. There is no Escape handling anywhere, and focus is not moved into or trapped within the platform leave dialog or most game overlays.
 
 **Impact:**
+
 - Screen-reader users are not told a modal opened.
 - Keyboard users can tab behind the overlay into the obscured game UI.
 
@@ -212,11 +248,13 @@ This is a functional defect under WCAG 2.2 (2.4.3 Focus Order, 4.1.2 Name, Role,
 ## 6. Architecture assessment
 
 **Strengths:**
+
 - A single owner for the lifecycle.
 - A shared auth helper, payload readers, socket index, rate limiter and logging/metrics helpers, all actually reused.
 - Server-side, per-viewer projection of hidden state in every game reviewed (Imposter, Secret Signals, Kritzelagent, Estimate, Herd Mentality).
 
 **Weaknesses:**
+
 - Eight hand-written variants of the same room lifecycle (join/rebind, host sync, cleanup sweep, disconnect-turn handling), which have drifted (L1, M2).
 - Two different authorization models for post-join actions.
 
@@ -227,18 +265,21 @@ A small shared "room lifecycle" kit would remove most of this class of bugs: reb
 **Verified working:** create/join/resume, launch/replay/return, reload-resume in each game, host-only enforcement, and content locale per match (all covered by unit tests and E2E).
 
 **Gaps:**
+
 - Disconnect-driven stalls (M1, M2).
 - Lifecycle leaks (L1).
 - In-game kick is ineffective (L6).
 - Known, documented rule deviation: Scout 2-player mode.
 
 **Docs vs. code:**
+
 - The multi-instance claim (M6).
 - `playwright.config.ts` comment "tests will need updating" is stale.
 
 ## 8. Security and privacy
 
 **Verified sound:**
+
 - Join authorization.
 - Host derived from party state.
 - No `v-html` anywhere.
@@ -252,6 +293,7 @@ A small shared "room lifecycle" kit would remove most of this class of bugs: reb
 **Verified weaknesses:** M4, L4, L5, N4.
 
 **Potential risk, not verified:**
+
 - Clients that call the server directly without the proxy: XFF is trusted for 1 hop by default. That is correct behind Traefik and spoofable if the app is ever exposed directly.
 - `resumeToken` doubles as `joinToken`, so any game module that mishandles it exposes party resume.
 
@@ -276,11 +318,13 @@ The reliability issues are the stalls (M1, M2) and deploy resets (M6), not throu
 ## 11. UI / UX / accessibility
 
 **Observed in the rendered page:**
+
 - The home page renders correctly at 375 px and 1280 px with no horizontal overflow.
 - Unknown routes are blank (L10).
 - Google Fonts failed to load in the sandbox (proxy certificate), which is environmental.
 
 **From source:**
+
 - M7.
 - L2.
 - Server errors that include player names ("X is already the Director…", "Waiting for X…") bypass localization and show in English.
@@ -290,12 +334,14 @@ The reliability issues are the stalls (M1, M2) and deploy resets (M6), not throu
 ## 12. Testing
 
 **Strengths:**
+
 - Handler-level tests with real party authorization.
 - Invalid-payload tests.
 - i18n parity tests.
 - Reload/resume E2E for every game.
 
 **Gaps (highest value first):**
+
 1. M1 disconnect-into-discussion.
 2. Flip 7 active-player disconnect.
 3. Cleanup-sweep timer behaviour (use fake timers).
