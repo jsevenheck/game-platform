@@ -1,7 +1,8 @@
 <script setup lang="ts">
-import { computed } from 'vue';
+import { computed, ref } from 'vue';
 import { useI18n } from 'vue-i18n';
 import type { PendingActionView, PlayerView } from '@shared/types';
+import { useModalDialog } from '@platform/composables/useModalDialog';
 
 const props = defineProps<{
   pendingAction: PendingActionView;
@@ -34,14 +35,25 @@ const info = computed(() => {
 const eligiblePlayers = computed(() =>
   props.players.filter((p) => props.pendingAction.eligibleTargets.includes(p.id))
 );
+
+const dialogRef = ref<HTMLElement | null>(null);
+useModalDialog(dialogRef);
 </script>
 
 <template>
   <div class="ui-overlay flex items-center justify-center">
-    <div class="ui-dialog w-full max-w-sm">
+    <div
+      ref="dialogRef"
+      class="ui-dialog w-full max-w-sm"
+      role="dialog"
+      aria-modal="true"
+      aria-labelledby="flip7-target-picker-title"
+    >
       <div class="mb-4 text-center">
-        <span class="text-3xl">{{ info.emoji }}</span>
-        <h2 class="mt-2 text-xl font-bold text-foreground">{{ info.label }}</h2>
+        <span class="text-3xl" aria-hidden="true">{{ info.emoji }}</span>
+        <h2 id="flip7-target-picker-title" class="mt-2 text-xl font-bold text-foreground">
+          {{ info.label }}
+        </h2>
         <p class="mt-1 text-sm text-muted-foreground">{{ info.description }}</p>
         <p class="mt-2 text-sm text-muted">{{ t('flip7.targetPicker.choose') }}</p>
       </div>

@@ -7,6 +7,7 @@ import GameBoard from './GameBoard.vue';
 import SignalInput from './SignalInput.vue';
 import GameLog from './GameLog.vue';
 import TeamRosterPanel from './TeamRosterPanel.vue';
+import { useModalDialog } from '@platform/composables/useModalDialog';
 
 const { t } = useI18n();
 const store = useGameStore();
@@ -76,6 +77,9 @@ watch(
     }
   }
 );
+
+const confirmDialogRef = ref<HTMLElement | null>(null);
+useModalDialog(confirmDialogRef, { onEscape: () => (confirmCardIndex.value = null) });
 </script>
 
 <template>
@@ -178,6 +182,7 @@ watch(
         @click.self="confirmCardIndex = null"
       >
         <div
+          ref="confirmDialogRef"
           class="ui-dialog !max-w-[440px] !p-5"
           role="dialog"
           aria-modal="true"
@@ -198,6 +203,7 @@ watch(
           <div class="flex justify-center flex-wrap gap-2.5 mt-5">
             <button
               class="ui-btn-secondary min-w-40 !py-3 !font-extrabold"
+              data-autofocus
               @click="confirmCardIndex = null"
             >
               {{ t('secret-signals.play.keepMarked') }}

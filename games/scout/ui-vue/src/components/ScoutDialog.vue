@@ -1,11 +1,12 @@
 <script setup lang="ts">
-import { computed, shallowRef } from 'vue';
+import { computed, ref, shallowRef } from 'vue';
 import { useI18n } from 'vue-i18n';
 import { analyzePlay, comparePlayAnalyses } from '@shared/analyzePlay';
 import { flipCard, type ScoutCard } from '@shared/deck';
 import type { RoomView } from '@shared/types';
 import { useGameStore } from '../stores/game';
 import Card from './Card.vue';
+import { useModalDialog } from '@platform/composables/useModalDialog';
 
 const props = defineProps<{
   room: RoomView;
@@ -131,14 +132,25 @@ function submit(scoutAndShow: boolean) {
 
   emit('scout', payload);
 }
+
+const dialogRef = ref<HTMLElement | null>(null);
+useModalDialog(dialogRef, { onEscape: () => emit('close') });
 </script>
 
 <template>
   <div class="ui-overlay">
-    <section class="ui-dialog max-w-5xl text-left">
+    <section
+      ref="dialogRef"
+      class="ui-dialog max-w-5xl text-left"
+      role="dialog"
+      aria-modal="true"
+      aria-labelledby="scout-dialog-title"
+    >
       <div class="mb-5 flex items-center justify-between gap-4">
         <div>
-          <h2 class="text-2xl font-black text-foreground">{{ t('scout.dialog.title') }}</h2>
+          <h2 id="scout-dialog-title" class="text-2xl font-black text-foreground">
+            {{ t('scout.dialog.title') }}
+          </h2>
           <p class="text-sm text-muted">
             {{ t('scout.dialog.intro', { owner: currentOwnerName }) }}
           </p>
