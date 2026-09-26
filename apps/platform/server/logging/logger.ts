@@ -29,6 +29,9 @@ const ALWAYS_REDACT_PATHS = [
   '*.joinToken',
   '*.resumeToken',
   '*.csrfToken',
+  'req.headers["x-csrf-token"]',
+  'req.headers["x-xsrf-token"]',
+  'req.headers["x-metrics-token"]',
 ];
 
 // Operational join data — redacted in production where logs may be aggregated

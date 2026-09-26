@@ -424,7 +424,8 @@ export function registerAdminRoutes(app: Express, io?: Server): void {
     const usernameOk = username === expectedUsername;
     const passwordOk = bcrypt.compareSync(password, hash);
     if (!usernameOk || !passwordOk) {
-      adminLogger.warn({ ip, username }, 'admin login failed');
+      // No username: a failed attempt is often a password typed into the wrong field.
+      adminLogger.warn({ ip }, 'admin login failed');
       res.status(401).json({ ok: false, error: 'Invalid credentials' });
       return;
     }
