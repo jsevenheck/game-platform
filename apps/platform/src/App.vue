@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { useI18n } from 'vue-i18n';
-import { partyConnectionLost } from './composables/usePartySocket';
+import { partyConnectionLost, partyServerRestarting } from './composables/usePartySocket';
 
 const { t } = useI18n();
 </script>
@@ -9,9 +9,13 @@ const { t } = useI18n();
   <RouterView />
   <Teleport to="body">
     <div class="connection-banner-region" role="status" aria-live="polite">
-      <p v-if="partyConnectionLost" class="connection-banner" data-testid="connection-banner">
+      <p
+        v-if="partyServerRestarting || partyConnectionLost"
+        class="connection-banner"
+        data-testid="connection-banner"
+      >
         <span class="connection-banner-dot" aria-hidden="true" />
-        {{ t('connection.lost') }}
+        {{ partyServerRestarting ? t('connection.restarting') : t('connection.lost') }}
       </p>
     </div>
   </Teleport>

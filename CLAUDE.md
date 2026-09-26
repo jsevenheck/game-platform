@@ -232,7 +232,7 @@ Each entry maps a game ID to its `PlatformAdapter.vue` via lazy `import('@{game}
 
 ## Runtime State
 
-The platform runs as **exactly one process**. Parties, matches, game rooms and rate-limit buckets live in in-memory Maps; there is no shared store, Socket.IO adapter or sticky-session setup, so running two instances would split parties between them. A restart or redeploy therefore ends every active party and match: clients get `Party not found` on resume, clear their session and see the "party is no longer available" notice on the home screen (`isTerminalResumeError` / `endSession` in `stores/party.ts`). Transient resume failures (rate limit, internal error) keep the stored session.
+The platform runs as **exactly one process**. Parties, matches, game rooms and rate-limit buckets live in in-memory Maps; there is no shared store, Socket.IO adapter or sticky-session setup, so running two instances would split parties between them. A restart or redeploy therefore ends every active party and match: clients get `Party not found` on resume, clear their session and see the "party is no longer available" notice on the home screen (`isTerminalResumeError` / `endSession` in `stores/party.ts`). Transient resume failures (rate limit, internal error) keep the stored session. On `SIGTERM` the server emits `serverShuttingDown` on `/party` first, which shows the restart banner (`partyServerRestarting` in `usePartySocket.ts`); deploys run in the `production` GitHub environment so approval rules can gate them.
 
 ## Adding a New Game
 

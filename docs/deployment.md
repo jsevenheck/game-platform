@@ -39,7 +39,7 @@ The image package must be pullable from the VPS. Either:
 
 The app is a **single instance**: parties, matches and game rooms are held in memory, and nothing coordinates state between processes. Do not scale the `app` service beyond one replica.
 
-Every deploy (each green push to `main`, see the pipeline above) replaces the container, which ends all active parties and matches. Players are sent back to the home screen with a notice that their party is no longer available. Merge to `main` when an interruption is acceptable, or add a manual approval / environment protection rule to the deploy workflow if deploys must be scheduled.
+Every deploy (each green push to `main`, see the pipeline above) replaces the container, which ends all active parties and matches. Players are sent back to the home screen with a notice that their party is no longer available. On `SIGTERM` the server first emits `serverShuttingDown` on `/party`, so connected players immediately see a "server is restarting" banner. The deploy job runs in the GitHub environment `production`: configure required reviewers or a wait timer there (Settings → Environments) to make deploys a deliberate, schedulable step instead of happening on every merge.
 
 ## Runtime configuration
 

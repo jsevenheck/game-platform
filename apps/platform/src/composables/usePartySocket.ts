@@ -59,6 +59,7 @@ interface PartyClientToServerEvents {
 interface PartyServerToClientEvents {
   partyUpdate: (partyView: PartyView) => void;
   partyKicked: (data: { reason: string }) => void;
+  serverShuttingDown: () => void;
   joinablePartiesUpdate: (parties: JoinablePartyView[]) => void;
 }
 
@@ -73,6 +74,9 @@ let socket: PartySocket | null = null;
  */
 export const partyConnectionLost = ref(false);
 
+/** Set when the server announced a shutdown; cleared once it is reachable again. */
+export const partyServerRestarting = ref(false);
+
 /** How long party actions wait for the server before giving up. */
 export const PARTY_ACK_TIMEOUT_MS = 10_000;
 
@@ -84,6 +88,10 @@ export function usePartySocket(apiBaseUrl?: string): PartySocket {
     }) as PartySocket;
     socket.on('connect', () => {
       partyConnectionLost.value = false;
+      partyServerRestarting.value = false;
+    });
+    socket.on('serverShuttingDown', () => {
+      partyServerRestarting.value = true;
     });
     socket.on('disconnect', (reason) => {
       partyConnectionLost.value = reason !== 'io client disconnect';
@@ -101,4 +109,5 @@ export function disconnectPartySocket(): void {
     socket = null;
   }
   partyConnectionLost.value = false;
+  partyServerRestarting.value = false;
 }

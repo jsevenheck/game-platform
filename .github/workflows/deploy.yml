@@ -19,6 +19,10 @@ permissions:
 jobs:
   deploy:
     runs-on: ubuntu-latest
+    # Every deploy ends all live parties (state is in memory). Required
+    # reviewers or a wait timer on this environment turn deploys into a
+    # deliberate, schedulable step without changing the pipeline.
+    environment: production
     if: ${{ github.event.workflow_run.conclusion == 'success' }}
 
     steps:

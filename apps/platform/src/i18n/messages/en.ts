@@ -5,6 +5,7 @@ export const en = {
     german: 'Deutsch',
   },
   connection: {
+    restarting: 'The server is restarting — running games will end. Reconnecting…',
     lost: 'Connection lost — reconnecting…',
   },
   session: {

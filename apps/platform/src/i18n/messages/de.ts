@@ -7,6 +7,7 @@ export const de: MessageSchema = {
     german: 'Deutsch',
   },
   connection: {
+    restarting: 'Der Server startet neu – laufende Spiele werden beendet. Verbinde neu …',
     lost: 'Verbindung verloren – verbinde neu …',
   },
   session: {
