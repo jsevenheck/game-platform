@@ -172,6 +172,33 @@ export function registerGame(io: Server, namespace = `/g/${GAME_ID}`): void {
     next();
   });
 
+  /**
+   * Arm the discussion → voting timer whenever the room is in `discussion`
+   * without one. Every path that can enter the phase (last clue submitted,
+   * host skip, the last pending describer disconnecting or leaving) and every
+   * path that can revive a room whose timers were cleared (a player
+   * reconnecting after everyone dropped) must call this; otherwise the room
+   * would stay in `discussion` forever.
+   */
+  function ensureDiscussionTimer(room: Room): void {
+    if (room.phase !== 'discussion' || discussionTimers.has(room.code)) return;
+
+    if (room.discussionEndsAt === null) {
+      room.discussionEndsAt = Date.now() + room.discussionDurationMs;
+    }
+
+    const timer = setTimeout(
+      () => {
+        discussionTimers.delete(room.code);
+        if (getRoom(room.code) !== room || room.phase !== 'discussion') return;
+        startVoting(room);
+        broadcastRoom(nsp, room);
+      },
+      Math.max(0, room.discussionEndsAt - Date.now())
+    );
+    discussionTimers.set(room.code, timer);
+  }
+
   nsp.on('connection', (socket: GameSocket) => {
     const socketLogger = createSocketLogger(gameLogger, socket);
 
@@ -266,6 +293,7 @@ export function registerGame(io: Server, namespace = `/g/${GAME_ID}`): void {
           );
 
           socket.join(mappedRoom.code);
+          ensureDiscussionTimer(mappedRoom);
           broadcastRoom(nsp, mappedRoom);
           socketLogger.info(
             {
@@ -356,6 +384,7 @@ export function registerGame(io: Server, namespace = `/g/${GAME_ID}`): void {
         clearRoomCleanup(room.code);
 
         socket.join(room.code);
+        ensureDiscussionTimer(room);
         broadcastRoom(nsp, room);
         socketLogger.info(
           {
@@ -400,6 +429,8 @@ export function registerGame(io: Server, namespace = `/g/${GAME_ID}`): void {
           if (!anyConnected) {
             clearRoomTimers(room.code);
             scheduleRoomCleanup(room.code);
+          } else {
+            ensureDiscussionTimer(room);
           }
 
           broadcastRoom(nsp, room);
@@ -690,20 +721,7 @@ export function registerGame(io: Server, namespace = `/g/${GAME_ID}`): void {
         const err = submitDescription(room, data.playerId, description);
         if (err) return respond({ ok: false, error: err });
 
-        if (room.phase === 'discussion') {
-          room.discussionEndsAt = Date.now() + room.discussionDurationMs;
-          clearDiscussionTimer(room.code);
-
-          const timer = setTimeout(() => {
-            if (room.phase === 'discussion') {
-              startVoting(room);
-              broadcastRoom(nsp, room);
-            }
-            discussionTimers.delete(room.code);
-          }, room.discussionDurationMs);
-
-          discussionTimers.set(room.code, timer);
-        }
+        ensureDiscussionTimer(room);
 
         broadcastRoom(nsp, room);
         respond({ ok: true });
@@ -734,20 +752,7 @@ export function registerGame(io: Server, namespace = `/g/${GAME_ID}`): void {
         const err = skipCurrentDescription(room);
         if (err) return respond({ ok: false, error: err });
 
-        if (room.phase === 'discussion') {
-          room.discussionEndsAt = Date.now() + room.discussionDurationMs;
-          clearDiscussionTimer(room.code);
-
-          const timer = setTimeout(() => {
-            if (room.phase === 'discussion') {
-              startVoting(room);
-              broadcastRoom(nsp, room);
-            }
-            discussionTimers.delete(room.code);
-          }, room.discussionDurationMs);
-
-          discussionTimers.set(room.code, timer);
-        }
+        ensureDiscussionTimer(room);
 
         broadcastRoom(nsp, room);
         respond({ ok: true });
@@ -982,6 +987,8 @@ export function registerGame(io: Server, namespace = `/g/${GAME_ID}`): void {
               clearRoomTimers(room.code);
               scheduleRoomCleanup(room.code);
               gameLogger.info({ roomCode: room.code }, 'scheduled imposter room cleanup');
+            } else {
+              ensureDiscussionTimer(room);
             }
 
             broadcastRoom(nsp, room);

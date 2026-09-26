@@ -535,4 +535,85 @@ describe('socketHandlers autoJoinRoom', () => {
     expect(responses.slice(0, 20).every((r) => r.error === 'Unauthorized')).toBe(true);
     expect(responses[20]).toEqual({ ok: false, error: 'Too many requests — slow down' });
   });
+
+  describe('discussion timer', () => {
+    function startThreePlayerRound(sessionId: string) {
+      const namespace = createNamespace();
+      registerGame({ of: vi.fn(() => namespace) } as unknown as Server);
+      const connectionHandler = namespace.getConnectionHandler()!;
+      const sockets: Record<string, ReturnType<typeof createSocket>> = {};
+      let roomCode = '';
+      for (const [playerId, name] of [
+        ['p1', 'Ann'],
+        ['p2', 'Ben'],
+        ['p3', 'Cat'],
+      ] as const) {
+        const socket = createSocket(`${sessionId}-${playerId}`);
+        namespace.sockets.set(socket.id, socket);
+        connectionHandler(socket);
+        sockets[playerId] = socket;
+        const cb = autoJoin(socket, { sessionId, playerId, name });
+        roomCode = cb.mock.calls[0][0].roomCode;
+      }
+      const start = vi.fn();
+      sockets.p1!.handlers.startGame({ roomCode, playerId: 'p1' }, start);
+      expect(start).toHaveBeenCalledWith({ ok: true });
+      const room = getRoom(roomCode)!;
+      const order = [...room.descriptionOrder];
+      for (const playerId of order.slice(0, -1)) {
+        const cb = vi.fn();
+        sockets[playerId]!.handlers.submitDescription(
+          { roomCode, playerId, description: 'clue' },
+          cb
+        );
+        expect(cb).toHaveBeenCalledWith({ ok: true });
+      }
+      return { room, sockets, lastDescriber: order[order.length - 1]! };
+    }
+
+    beforeEach(() => vi.useFakeTimers());
+    afterEach(() => vi.useRealTimers());
+
+    it('advances to voting when the last pending describer disconnects', () => {
+      const { room, sockets, lastDescriber } = startThreePlayerRound('session-disc-1');
+
+      sockets[lastDescriber]!.handlers.disconnect('transport close');
+
+      expect(room.phase).toBe('discussion');
+      expect(room.discussionEndsAt).not.toBeNull();
+      vi.advanceTimersByTime(room.discussionDurationMs);
+      expect(room.phase).toBe('voting');
+      deleteRoom(room.code);
+    });
+
+    it('re-arms the discussion timer when a player returns after everyone dropped', () => {
+      const { room, sockets } = startThreePlayerRound('session-disc-2');
+      const last = room.descriptionOrder[room.descriptionOrder.length - 1]!;
+      const cb = vi.fn();
+      sockets[last]!.handlers.submitDescription(
+        { roomCode: room.code, playerId: last, description: 'clue' },
+        cb
+      );
+      expect(room.phase).toBe('discussion');
+
+      for (const socket of Object.values(sockets)) socket.handlers.disconnect('transport close');
+      vi.advanceTimersByTime(room.discussionDurationMs);
+      expect(room.phase).toBe('discussion');
+
+      const returning = sockets.p1!;
+      const resume = vi.fn();
+      returning.handlers.resumePlayer(
+        {
+          roomCode: room.code,
+          playerId: 'p1',
+          resumeToken: room.players.p1!.resumeToken,
+        },
+        resume
+      );
+      expect(resume).toHaveBeenCalledWith({ ok: true });
+      vi.advanceTimersByTime(0);
+      expect(room.phase).toBe('voting');
+      deleteRoom(room.code);
+    });
+  });
 });
