@@ -1,3 +1,4 @@
+import { randomInt } from 'crypto';
 import { nanoid } from 'nanoid';
 import type { PartySession, PartyMember } from './types';
 
@@ -16,7 +17,9 @@ function generateInviteCode(): string {
   do {
     code = '';
     for (let i = 0; i < 6; i++) {
-      code += chars[Math.floor(Math.random() * chars.length)];
+      // The invite code is the only secret needed to join a lobby, so draw it
+      // from a CSPRNG rather than Math.random.
+      code += chars[randomInt(chars.length)];
     }
   } while (inviteCodeToParty.has(code));
   return code;

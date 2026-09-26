@@ -584,6 +584,23 @@ describe('partyHandlers', () => {
     expect(party.status).toBe('lobby');
   });
 
+  it('limits joinParty per client IP even across fresh sockets', () => {
+    const ctx = setup();
+    const responses: Array<{ ok: boolean; error?: string }> = [];
+    for (let i = 0; i < 61; i += 1) {
+      const socket = connectSocket(ctx, `sock-guess-${i}`) as ReturnType<typeof createSocket> & {
+        handshake: unknown;
+      };
+      socket.handshake = { headers: {}, address: '203.0.113.7' };
+      const cb = vi.fn();
+      socket.handlers.joinParty({ inviteCode: 'ZZZZZZ', playerName: `Guess${i}` }, cb);
+      responses.push(cb.mock.calls[0][0]);
+    }
+
+    expect(responses.slice(0, 60).every((r) => r.error === 'Party not found')).toBe(true);
+    expect(responses[60]).toEqual({ ok: false, error: 'Too many requests' });
+  });
+
   // ────────────────────────────────────────────────────────────────
   // Public lobby discovery
   // ────────────────────────────────────────────────────────────────

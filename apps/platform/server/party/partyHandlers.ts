@@ -38,6 +38,7 @@ import {
 import { incrementPartyLifecycle } from '../metrics/metrics';
 import { getGame } from '../registry/index';
 import { readString } from './gameAuth';
+import { resolveClientIp } from '../observability/clientIp';
 
 interface PartyClientToServerEvents {
   createParty: (
@@ -166,9 +167,36 @@ const partyActionPruneInterval = setInterval(
 );
 partyActionPruneInterval.unref?.();
 
-/** Reset the party-action rate limiter. Intended for test cleanup only. */
+// Per-IP ceiling for the invite-code-guessing actions (joinParty/resumeParty).
+// The per-socket limit alone can be sidestepped by opening new sockets (the
+// engine allows 20 connections per IP per 10 s). Generous enough for a whole
+// party on one NAT'd network joining and reconnecting at once.
+const partyJoinIpRateLimit = new Map<string, RateLimitRecord>();
+const PARTY_JOIN_IP_RATE_LIMIT_WINDOW_MS = 60_000;
+const PARTY_JOIN_IP_RATE_LIMIT_MAX = 60;
+const PARTY_JOIN_IP_RATE_LIMIT_ENABLED = process.env.E2E_TESTS !== '1';
+const partyJoinIpPruneInterval = setInterval(
+  () => pruneExpiredRateLimitEntries(partyJoinIpRateLimit),
+  60_000
+);
+partyJoinIpPruneInterval.unref?.();
+
+function allowPartyJoinFromIp(socket: PartySocket): boolean {
+  if (!PARTY_JOIN_IP_RATE_LIMIT_ENABLED) return true;
+  const ip = resolveClientIp(
+    socket.handshake?.headers?.['x-forwarded-for'],
+    socket.handshake?.address
+  );
+  return checkFixedWindowRateLimit(partyJoinIpRateLimit, ip, {
+    windowMs: PARTY_JOIN_IP_RATE_LIMIT_WINDOW_MS,
+    max: PARTY_JOIN_IP_RATE_LIMIT_MAX,
+  });
+}
+
+/** Reset the party-action rate limiters. Intended for test cleanup only. */
 export function resetPartyActionRateLimit(): void {
   partyActionRateLimit.clear();
+  partyJoinIpRateLimit.clear();
 }
 
 export function registerPartyHandlers(io: Server): void {
@@ -279,6 +307,14 @@ export function registerPartyHandlers(io: Server): void {
           });
           return respond({ ok: false, error: 'Too many requests' });
         }
+        if (!allowPartyJoinFromIp(socket)) {
+          incrementPartyLifecycle({
+            event: 'joinParty',
+            result: 'rejected',
+            reason: 'rate_limited',
+          });
+          return respond({ ok: false, error: 'Too many requests' });
+        }
 
         const name = readString(data?.playerName)?.trim();
         const inviteCode = readString(data?.inviteCode)?.trim().toUpperCase();
@@ -378,6 +414,14 @@ export function registerPartyHandlers(io: Server): void {
             max: PARTY_ACTION_RATE_LIMIT_MAX,
           })
         ) {
+          incrementPartyLifecycle({
+            event: 'resumeParty',
+            result: 'rejected',
+            reason: 'rate_limited',
+          });
+          return respond({ ok: false, error: 'Too many requests' });
+        }
+        if (!allowPartyJoinFromIp(socket)) {
           incrementPartyLifecycle({
             event: 'resumeParty',
             result: 'rejected',
