@@ -490,3 +490,13 @@ describe('gameManager', () => {
     });
   });
 });
+
+describe('addWordToLibrary input validation', () => {
+  it('rejects words containing control characters such as newlines', () => {
+    const room = { wordLibrary: [] as string[] } as unknown as Parameters<
+      typeof addWordToLibrary
+    >[0];
+    expect(addWordToLibrary(room, 'Apple\nBanana')).toBe('Word contains invalid characters');
+    expect(room.wordLibrary).toEqual([]);
+  });
+});

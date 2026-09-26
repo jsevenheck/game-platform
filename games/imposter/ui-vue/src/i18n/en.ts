@@ -133,6 +133,7 @@ export const en = {
     not_waiting_for_a_guess: 'No guess is expected right now.',
     player_not_found: 'Player not found.',
     unauthorized: 'You are not allowed to do that.',
+    word_contains_invalid_characters: 'The word contains invalid characters.',
     word_must_be_text: 'The word must be text.',
     already_submitted_a_description: 'You already submitted a description.',
     already_voted: 'You already voted.',

@@ -617,3 +617,23 @@ describe('socketHandlers autoJoinRoom', () => {
     });
   });
 });
+
+describe('submitWord rate limit', () => {
+  it('rejects the sixth submitWord from one socket within ten seconds', () => {
+    const namespace = createNamespace();
+    registerGame({ of: vi.fn(() => namespace) } as unknown as Server);
+    const socket = createSocket('socket-flood-word');
+    namespace.sockets.set(socket.id, socket);
+    namespace.getConnectionHandler()!(socket);
+
+    const responses: Array<{ ok: boolean; error?: string }> = [];
+    for (let i = 0; i < 6; i += 1) {
+      const cb = vi.fn();
+      socket.handlers.submitWord({ roomCode: 'nonexistent', playerId: 'x', word: 'w' }, cb);
+      responses.push(cb.mock.calls[0][0]);
+    }
+
+    expect(responses.slice(0, 5).every((r) => r.error === 'Unauthorized')).toBe(true);
+    expect(responses[5]).toEqual({ ok: false, error: 'Too many requests — slow down' });
+  });
+});

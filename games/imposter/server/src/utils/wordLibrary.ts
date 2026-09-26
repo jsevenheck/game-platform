@@ -29,13 +29,11 @@ function defaultWords(locale: WordLocale): string[] {
 }
 
 /**
- * Hard cap on the shared, process-global word library. Without this,
- * `persistWord` (called from every room's `submitWord` handler) grows the
- * in-memory cache — and, when persistence is enabled, the on-disk file —
- * without bound for the lifetime of the server, since custom words are
- * never removed. 2,000 unique words is far more than any single game needs
- * and keeps the resource footprint (memory and file size) definitively
- * bounded rather than unbounded.
+ * Hard cap on player-submitted words in the shared, process-global library.
+ * Without this, `persistWord` (called from every room's `submitWord` handler)
+ * grows the in-memory cache — and, when persistence is enabled, the on-disk
+ * file — without bound, since custom words are never removed. Bundled words
+ * do not count against the cap, so filling it never crowds them out.
  */
 export const WORD_LIBRARY_MAX_SIZE = 2000;
 
@@ -48,6 +46,27 @@ const PERSIST_ENABLED = (() => {
 })();
 
 const cache = new Map<WordLocale, string[]>();
+const bundledCache = new Map<WordLocale, Set<string>>();
+
+function bundledWordSet(locale: WordLocale): Set<string> {
+  let words = bundledCache.get(locale);
+  if (!words) {
+    let list: string[];
+    try {
+      list = readWordFile(bundledWordsFile(locale));
+    } catch {
+      list = [];
+    }
+    words = new Set((list.length > 0 ? list : defaultWords(locale)).map((w) => w.toLowerCase()));
+    bundledCache.set(locale, words);
+  }
+  return words;
+}
+
+function submittedWordCount(locale: WordLocale, words: string[]): number {
+  const bundled = bundledWordSet(locale);
+  return words.filter((w) => !bundled.has(w.toLowerCase())).length;
+}
 
 function readWordFile(file: string): string[] {
   const content = fs.readFileSync(file, 'utf8');
@@ -92,9 +111,10 @@ export function persistWord(word: string, locale: WordLocale = 'en'): void {
   const words = library(locale);
   const lower = word.toLowerCase();
   if (words.some((w) => w.toLowerCase() === lower)) return;
-  if (words.length >= WORD_LIBRARY_MAX_SIZE) {
+  const submitted = submittedWordCount(locale, words);
+  if (submitted >= WORD_LIBRARY_MAX_SIZE) {
     wordLogger.warn(
-      { size: words.length, limit: WORD_LIBRARY_MAX_SIZE, locale },
+      { size: submitted, limit: WORD_LIBRARY_MAX_SIZE, locale },
       'word library at capacity — dropping new submitted word'
     );
     return;

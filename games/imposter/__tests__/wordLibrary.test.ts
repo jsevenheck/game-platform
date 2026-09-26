@@ -35,16 +35,12 @@ describe('wordLibrary', () => {
 
   // F16 regression: the shared word library previously grew without bound —
   // every submitted word from every room, for the lifetime of the process,
-  // was appended with no cap.
-  it('stops growing once WORD_LIBRARY_MAX_SIZE is reached', () => {
-    // Fill the library up to the cap.
-    while (getGlobalWordLibrary().length < WORD_LIBRARY_MAX_SIZE) {
-      persistWord(`FillerWord-${getGlobalWordLibrary().length}`);
+  // was appended with no cap. Only submitted words count against the cap.
+  it('stops accepting submissions once WORD_LIBRARY_MAX_SIZE words were submitted', () => {
+    const bundledCount = getGlobalWordLibrary('de').length;
+    for (let i = 0; i < WORD_LIBRARY_MAX_SIZE + 5; i += 1) {
+      persistWord(`FillerWord-${i}`, 'de');
     }
-    expect(getGlobalWordLibrary().length).toBe(WORD_LIBRARY_MAX_SIZE);
-
-    persistWord(`OneWordTooMany-${Date.now()}`);
-
-    expect(getGlobalWordLibrary().length).toBe(WORD_LIBRARY_MAX_SIZE);
+    expect(getGlobalWordLibrary('de').length).toBe(bundledCount + WORD_LIBRARY_MAX_SIZE);
   });
 });

@@ -204,7 +204,8 @@ Behavior:
 - copied into each room as `room.wordLibrary`
 - custom lobby words are appended to the global file when writable
 - if the file cannot be read, the fallback `DEFAULT_WORD_LIBRARY` is used
-- capped at `WORD_LIBRARY_MAX_SIZE` (2000) entries — once at capacity, new submissions are dropped rather than appended, so the library (and the file behind it) can't grow unbounded
+- capped at `WORD_LIBRARY_MAX_SIZE` (2000) player-submitted entries (bundled words don't count) — once at capacity, new submissions are dropped rather than appended, so the library (and the file behind it) can't grow unbounded
+- `submitWord` is rate-limited per socket (5 / 10 s) and words containing control characters are rejected, so one line in the words file is always one word
 
 ## Per-player Sanitization
 

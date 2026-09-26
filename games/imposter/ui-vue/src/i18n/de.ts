@@ -136,6 +136,7 @@ export const de: ImposterMessages = {
     not_waiting_for_a_guess: 'Aktuell wird kein Tipp erwartet.',
     player_not_found: 'Spieler nicht gefunden.',
     unauthorized: 'Dazu bist du nicht berechtigt.',
+    word_contains_invalid_characters: 'Das Wort enthält ungültige Zeichen.',
     word_must_be_text: 'Das Wort muss Text sein.',
     already_submitted_a_description: 'Du hast schon eine Beschreibung abgegeben.',
     already_voted: 'Du hast schon abgestimmt.',

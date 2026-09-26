@@ -69,6 +69,10 @@ const GAME_ID = 'imposter';
 // "Rate limiting" section for the pattern.
 const gameplayRateLimit = createSocketRateLimiter({ windowMs: 1_000, max: 20 });
 
+// submitWord feeds the shared, persisted word library that seeds every future
+// room, so it gets a much tighter bound than in-round actions.
+const submitWordRateLimit = createSocketRateLimiter({ windowMs: 10_000, max: 5 });
+
 type GameSocket = Socket<ClientToServerEvents, ServerToClientEvents>;
 
 const discussionTimers = new Map<string, ReturnType<typeof setTimeout>>();
@@ -624,6 +628,9 @@ export function registerGame(io: Server, namespace = `/g/${GAME_ID}`): void {
       const instrumentation = startSocketHandlerInstrumentation(namespace, 'submitWord', GAME_ID);
       const respond = instrumentation.wrapCallback(cb);
       try {
+        if (!submitWordRateLimit.check(socket.id)) {
+          return respond({ ok: false, error: 'Too many requests — slow down' });
+        }
         if (!verifyPlayer(socket, data.roomCode, data.playerId)) {
           return respond({ ok: false, error: 'Unauthorized' });
         }
