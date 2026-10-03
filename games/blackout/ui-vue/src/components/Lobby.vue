@@ -2,7 +2,7 @@
 import { ref, watch } from 'vue';
 import { useI18n } from 'vue-i18n';
 import { useGameStore } from '../stores/game';
-import { MIN_ROUNDS, MAX_ROUNDS, MIN_PLAYERS } from '@shared/constants';
+import { MIN_PLAYERS } from '@shared/constants';
 import type { Language } from '@shared/types';
 
 const { t } = useI18n();
@@ -10,15 +10,13 @@ const store = useGameStore();
 const excludedLettersInput = ref('');
 
 const emit = defineEmits<{
-  updateMaxRounds: [rounds: number];
+  updateMaxRounds: [delta: -1 | 1];
   updateRoomSettings: [settings: { language: Language; excludedLetters: string[] }];
   startGame: [];
 }>();
 
-function adjustRounds(delta: number) {
-  const current = store.room?.maxRounds ?? 10;
-  const next = Math.min(MAX_ROUNDS, Math.max(MIN_ROUNDS, current + delta));
-  emit('updateMaxRounds', next);
+function adjustRounds(delta: -1 | 1) {
+  emit('updateMaxRounds', delta);
 }
 
 const connectedCount = () => store.room?.players.filter((p) => p.connected).length ?? 0;

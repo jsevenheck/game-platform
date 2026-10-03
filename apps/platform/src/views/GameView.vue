@@ -2,11 +2,12 @@
 import { ref, computed, onMounted, onBeforeUnmount, shallowRef } from 'vue';
 import { useI18n } from 'vue-i18n';
 import { useRouter } from 'vue-router';
-import { usePartyStore } from '../stores/party';
+import { isTerminalResumeError, usePartyStore } from '../stores/party';
 import { usePartySocket } from '../composables/usePartySocket';
 import { getClientGame } from '../games/index';
 import LanguageSwitcher from '../components/LanguageSwitcher.vue';
 import { localizeError } from '../i18n/serverError';
+import { useModalDialog } from '../composables/useModalDialog';
 import type { Component } from 'vue';
 
 const props = defineProps<{ inviteCode: string; gameId: string }>();
@@ -19,6 +20,8 @@ const gameComponent = shallowRef<Component | null>(null);
 const loadError = ref('');
 const actionError = ref('');
 const showLeaveConfirm = ref(false);
+const leaveDialogRef = ref<HTMLElement | null>(null);
+useModalDialog(leaveDialogRef, { onEscape: () => (showLeaveConfirm.value = false) });
 
 // The matchKey drives which match instance is rendered.
 // When it changes, Vue re-mounts the game adapter with the new match.
@@ -109,7 +112,7 @@ function resumePartyBinding() {
     },
     (res) => {
       if (!res.ok) {
-        store.clearSession();
+        if (isTerminalResumeError(res.error)) store.endSession();
         router.push('/');
         return;
       }
@@ -147,7 +150,7 @@ onMounted(async () => {
           },
           (res) => {
             if (!res.ok) {
-              store.clearSession();
+              if (isTerminalResumeError(res.error)) store.endSession();
               router.push('/');
               return;
             }
@@ -209,15 +212,22 @@ onBeforeUnmount(() => {
     <!-- Leave confirmation dialog -->
     <Transition name="fade">
       <div v-if="showLeaveConfirm" class="ui-overlay game-leave-overlay">
-        <div class="ui-dialog">
-          <div class="game-dialog-icon">🚪</div>
-          <h2 class="game-dialog-title">{{ t('gameView.leaveTitle') }}</h2>
-          <p class="game-dialog-desc">{{ t('gameView.leaveDescription') }}</p>
+        <div
+          ref="leaveDialogRef"
+          class="ui-dialog"
+          role="dialog"
+          aria-modal="true"
+          aria-labelledby="game-leave-title"
+          aria-describedby="game-leave-desc"
+        >
+          <div class="game-dialog-icon" aria-hidden="true">🚪</div>
+          <h2 id="game-leave-title" class="game-dialog-title">{{ t('gameView.leaveTitle') }}</h2>
+          <p id="game-leave-desc" class="game-dialog-desc">{{ t('gameView.leaveDescription') }}</p>
           <div class="flex flex-col gap-3">
             <button class="ui-btn-danger" @click="onLeaveGame">
               {{ t('gameView.leaveConfirm') }}
             </button>
-            <button class="ui-btn-secondary" @click="showLeaveConfirm = false">
+            <button class="ui-btn-secondary" data-autofocus @click="showLeaveConfirm = false">
               {{ t('gameView.stay') }}
             </button>
           </div>

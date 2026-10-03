@@ -111,6 +111,23 @@ onBeforeUnmount(() => {
         <p class="home-sub">{{ t('home.subtitle') }}</p>
       </div>
 
+      <div
+        v-if="store.sessionEndedNotice"
+        class="home-session-notice"
+        role="status"
+        data-testid="session-ended-notice"
+      >
+        <p>{{ t('session.ended') }}</p>
+        <button
+          type="button"
+          class="ui-btn-ghost home-session-notice-dismiss"
+          :aria-label="t('common.dismiss')"
+          @click="store.sessionEndedNotice = false"
+        >
+          ×
+        </button>
+      </div>
+
       <!-- Tab bar -->
       <HomeTabBar :model-value="activeTab" :tabs="HOME_TABS" @update:model-value="setTab" />
 
@@ -176,6 +193,27 @@ onBeforeUnmount(() => {
 </template>
 
 <style scoped>
+.home-session-notice {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 0.75rem;
+  margin-bottom: 1.25rem;
+  padding: 0.75rem 1rem;
+  border: 1px solid var(--color-warning);
+  border-radius: var(--radius-lg);
+  background: var(--color-warning-muted);
+  color: var(--color-foreground);
+  font-size: 0.875rem;
+  line-height: 1.5;
+}
+
+.home-session-notice-dismiss {
+  flex-shrink: 0;
+  min-width: 2.75rem;
+  min-height: 2.75rem;
+}
+
 .home-root {
   min-height: 100dvh;
   display: flex;

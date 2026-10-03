@@ -9,6 +9,7 @@
 import { ref, computed } from 'vue';
 import { useI18n } from 'vue-i18n';
 import GameApp from './App.vue';
+import { useModalDialog } from '@platform/composables/useModalDialog';
 
 defineProps<{
   matchKey: string;
@@ -29,6 +30,9 @@ const gameEnded = computed(() => gamePhase.value === 'ended');
 function onPhaseChange(phase: string) {
   gamePhase.value = phase;
 }
+
+const dialogRef = ref<HTMLElement | null>(null);
+useModalDialog(dialogRef);
 </script>
 
 <template>
@@ -47,8 +51,16 @@ function onPhaseChange(phase: string) {
     <!-- Platform overlay shown when game ends -->
     <Transition name="fade">
       <div v-if="gameEnded" class="platform-overlay ui-overlay">
-        <div class="ui-dialog">
-          <h2 class="mb-2 text-2xl font-extrabold">{{ t('replay.title') }}</h2>
+        <div
+          ref="dialogRef"
+          class="ui-dialog"
+          role="dialog"
+          aria-modal="true"
+          aria-labelledby="blackout-postgame-title"
+        >
+          <h2 id="blackout-postgame-title" class="mb-2 text-2xl font-extrabold">
+            {{ t('replay.title') }}
+          </h2>
           <template v-if="isHost">
             <p class="mb-6 text-sm text-muted-foreground">{{ t('replay.prompt') }}</p>
             <div class="flex flex-col gap-3">
@@ -59,7 +71,9 @@ function onPhaseChange(phase: string) {
                 {{ t('replay.returnToLobby') }}
               </button>
             </div>
-            <p v-if="actionError" class="mt-3 text-center text-sm text-danger">{{ actionError }}</p>
+            <p v-if="actionError" class="mt-3 text-center text-sm text-danger" role="alert">
+              {{ actionError }}
+            </p>
           </template>
           <p v-else class="mt-4 text-sm text-muted-foreground">{{ t('replay.waiting') }}</p>
         </div>

@@ -69,6 +69,10 @@ const GAME_ID = 'imposter';
 // "Rate limiting" section for the pattern.
 const gameplayRateLimit = createSocketRateLimiter({ windowMs: 1_000, max: 20 });
 
+// submitWord feeds the shared, persisted word library that seeds every future
+// room, so it gets a much tighter bound than in-round actions.
+const submitWordRateLimit = createSocketRateLimiter({ windowMs: 10_000, max: 5 });
+
 type GameSocket = Socket<ClientToServerEvents, ServerToClientEvents>;
 
 const discussionTimers = new Map<string, ReturnType<typeof setTimeout>>();
@@ -172,6 +176,33 @@ export function registerGame(io: Server, namespace = `/g/${GAME_ID}`): void {
     next();
   });
 
+  /**
+   * Arm the discussion → voting timer whenever the room is in `discussion`
+   * without one. Every path that can enter the phase (last clue submitted,
+   * host skip, the last pending describer disconnecting or leaving) and every
+   * path that can revive a room whose timers were cleared (a player
+   * reconnecting after everyone dropped) must call this; otherwise the room
+   * would stay in `discussion` forever.
+   */
+  function ensureDiscussionTimer(room: Room): void {
+    if (room.phase !== 'discussion' || discussionTimers.has(room.code)) return;
+
+    if (room.discussionEndsAt === null) {
+      room.discussionEndsAt = Date.now() + room.discussionDurationMs;
+    }
+
+    const timer = setTimeout(
+      () => {
+        discussionTimers.delete(room.code);
+        if (getRoom(room.code) !== room || room.phase !== 'discussion') return;
+        startVoting(room);
+        broadcastRoom(nsp, room);
+      },
+      Math.max(0, room.discussionEndsAt - Date.now())
+    );
+    discussionTimers.set(room.code, timer);
+  }
+
   nsp.on('connection', (socket: GameSocket) => {
     const socketLogger = createSocketLogger(gameLogger, socket);
 
@@ -266,6 +297,7 @@ export function registerGame(io: Server, namespace = `/g/${GAME_ID}`): void {
           );
 
           socket.join(mappedRoom.code);
+          ensureDiscussionTimer(mappedRoom);
           broadcastRoom(nsp, mappedRoom);
           socketLogger.info(
             {
@@ -282,6 +314,12 @@ export function registerGame(io: Server, namespace = `/g/${GAME_ID}`): void {
             playerId: existingPlayer.id,
             resumeToken: existingPlayer.resumeToken,
           });
+        }
+
+        // A kick only removes the player from this match, not from the party,
+        // so without this the kicked member's client would simply rejoin.
+        if (mappedRoom.kickedPlayerIds.includes(authorizedPlayerId)) {
+          return respond({ ok: false, error: 'You were removed from the lobby' });
         }
 
         if (mappedRoom.phase !== 'lobby') {
@@ -356,6 +394,7 @@ export function registerGame(io: Server, namespace = `/g/${GAME_ID}`): void {
         clearRoomCleanup(room.code);
 
         socket.join(room.code);
+        ensureDiscussionTimer(room);
         broadcastRoom(nsp, room);
         socketLogger.info(
           {
@@ -400,6 +439,8 @@ export function registerGame(io: Server, namespace = `/g/${GAME_ID}`): void {
           if (!anyConnected) {
             clearRoomTimers(room.code);
             scheduleRoomCleanup(room.code);
+          } else {
+            ensureDiscussionTimer(room);
           }
 
           broadcastRoom(nsp, room);
@@ -477,6 +518,7 @@ export function registerGame(io: Server, namespace = `/g/${GAME_ID}`): void {
         kickedSocket?.emit('kicked', 'You were removed from the lobby');
 
         removePlayerFromRoom(room, data.targetId);
+        room.kickedPlayerIds.push(data.targetId);
 
         if (Object.keys(room.players).length === 0) {
           clearDiscussionTimer(room.code);
@@ -593,6 +635,9 @@ export function registerGame(io: Server, namespace = `/g/${GAME_ID}`): void {
       const instrumentation = startSocketHandlerInstrumentation(namespace, 'submitWord', GAME_ID);
       const respond = instrumentation.wrapCallback(cb);
       try {
+        if (!submitWordRateLimit.check(socket.id)) {
+          return respond({ ok: false, error: 'Too many requests — slow down' });
+        }
         if (!verifyPlayer(socket, data.roomCode, data.playerId)) {
           return respond({ ok: false, error: 'Unauthorized' });
         }
@@ -690,20 +735,7 @@ export function registerGame(io: Server, namespace = `/g/${GAME_ID}`): void {
         const err = submitDescription(room, data.playerId, description);
         if (err) return respond({ ok: false, error: err });
 
-        if (room.phase === 'discussion') {
-          room.discussionEndsAt = Date.now() + room.discussionDurationMs;
-          clearDiscussionTimer(room.code);
-
-          const timer = setTimeout(() => {
-            if (room.phase === 'discussion') {
-              startVoting(room);
-              broadcastRoom(nsp, room);
-            }
-            discussionTimers.delete(room.code);
-          }, room.discussionDurationMs);
-
-          discussionTimers.set(room.code, timer);
-        }
+        ensureDiscussionTimer(room);
 
         broadcastRoom(nsp, room);
         respond({ ok: true });
@@ -734,20 +766,7 @@ export function registerGame(io: Server, namespace = `/g/${GAME_ID}`): void {
         const err = skipCurrentDescription(room);
         if (err) return respond({ ok: false, error: err });
 
-        if (room.phase === 'discussion') {
-          room.discussionEndsAt = Date.now() + room.discussionDurationMs;
-          clearDiscussionTimer(room.code);
-
-          const timer = setTimeout(() => {
-            if (room.phase === 'discussion') {
-              startVoting(room);
-              broadcastRoom(nsp, room);
-            }
-            discussionTimers.delete(room.code);
-          }, room.discussionDurationMs);
-
-          discussionTimers.set(room.code, timer);
-        }
+        ensureDiscussionTimer(room);
 
         broadcastRoom(nsp, room);
         respond({ ok: true });
@@ -982,6 +1001,8 @@ export function registerGame(io: Server, namespace = `/g/${GAME_ID}`): void {
               clearRoomTimers(room.code);
               scheduleRoomCleanup(room.code);
               gameLogger.info({ roomCode: room.code }, 'scheduled imposter room cleanup');
+            } else {
+              ensureDiscussionTimer(room);
             }
 
             broadcastRoom(nsp, room);

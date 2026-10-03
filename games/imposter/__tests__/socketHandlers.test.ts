@@ -429,6 +429,15 @@ describe('socketHandlers autoJoinRoom', () => {
     const room = getRoom(roomCode);
     expect(room?.players[guestPlayerId]).toBeUndefined();
 
+    // The kicked member is still in the party, so their client may retry the join.
+    const rejoinCb = autoJoin(guestSocket, {
+      sessionId: 'session-kick-lobby',
+      playerId: guestPlayerId,
+      name: 'Guest',
+    });
+    expect(rejoinCb).toHaveBeenCalledWith({ ok: false, error: 'You were removed from the lobby' });
+    expect(room?.players[guestPlayerId]).toBeUndefined();
+
     deleteRoom(roomCode);
   });
 
@@ -534,5 +543,106 @@ describe('socketHandlers autoJoinRoom', () => {
 
     expect(responses.slice(0, 20).every((r) => r.error === 'Unauthorized')).toBe(true);
     expect(responses[20]).toEqual({ ok: false, error: 'Too many requests — slow down' });
+  });
+
+  describe('discussion timer', () => {
+    function startThreePlayerRound(sessionId: string) {
+      const namespace = createNamespace();
+      registerGame({ of: vi.fn(() => namespace) } as unknown as Server);
+      const connectionHandler = namespace.getConnectionHandler()!;
+      const sockets: Record<string, ReturnType<typeof createSocket>> = {};
+      let roomCode = '';
+      for (const [playerId, name] of [
+        ['p1', 'Ann'],
+        ['p2', 'Ben'],
+        ['p3', 'Cat'],
+      ] as const) {
+        const socket = createSocket(`${sessionId}-${playerId}`);
+        namespace.sockets.set(socket.id, socket);
+        connectionHandler(socket);
+        sockets[playerId] = socket;
+        const cb = autoJoin(socket, { sessionId, playerId, name });
+        roomCode = cb.mock.calls[0][0].roomCode;
+      }
+      const start = vi.fn();
+      sockets.p1!.handlers.startGame({ roomCode, playerId: 'p1' }, start);
+      expect(start).toHaveBeenCalledWith({ ok: true });
+      const room = getRoom(roomCode)!;
+      const order = [...room.descriptionOrder];
+      for (const playerId of order.slice(0, -1)) {
+        const cb = vi.fn();
+        sockets[playerId]!.handlers.submitDescription(
+          { roomCode, playerId, description: 'clue' },
+          cb
+        );
+        expect(cb).toHaveBeenCalledWith({ ok: true });
+      }
+      return { room, sockets, lastDescriber: order[order.length - 1]! };
+    }
+
+    beforeEach(() => vi.useFakeTimers());
+    afterEach(() => vi.useRealTimers());
+
+    it('advances to voting when the last pending describer disconnects', () => {
+      const { room, sockets, lastDescriber } = startThreePlayerRound('session-disc-1');
+
+      sockets[lastDescriber]!.handlers.disconnect('transport close');
+
+      expect(room.phase).toBe('discussion');
+      expect(room.discussionEndsAt).not.toBeNull();
+      vi.advanceTimersByTime(room.discussionDurationMs);
+      expect(room.phase).toBe('voting');
+      deleteRoom(room.code);
+    });
+
+    it('re-arms the discussion timer when a player returns after everyone dropped', () => {
+      const { room, sockets } = startThreePlayerRound('session-disc-2');
+      const last = room.descriptionOrder[room.descriptionOrder.length - 1]!;
+      const cb = vi.fn();
+      sockets[last]!.handlers.submitDescription(
+        { roomCode: room.code, playerId: last, description: 'clue' },
+        cb
+      );
+      expect(room.phase).toBe('discussion');
+
+      for (const socket of Object.values(sockets)) socket.handlers.disconnect('transport close');
+      vi.advanceTimersByTime(room.discussionDurationMs);
+      expect(room.phase).toBe('discussion');
+
+      const returning = sockets.p1!;
+      const resume = vi.fn();
+      returning.handlers.resumePlayer(
+        {
+          roomCode: room.code,
+          playerId: 'p1',
+          resumeToken: room.players.p1!.resumeToken,
+        },
+        resume
+      );
+      expect(resume).toHaveBeenCalledWith({ ok: true });
+      vi.advanceTimersByTime(0);
+      expect(room.phase).toBe('voting');
+      deleteRoom(room.code);
+    });
+  });
+});
+
+describe('submitWord rate limit', () => {
+  it('rejects the sixth submitWord from one socket within ten seconds', () => {
+    const namespace = createNamespace();
+    registerGame({ of: vi.fn(() => namespace) } as unknown as Server);
+    const socket = createSocket('socket-flood-word');
+    namespace.sockets.set(socket.id, socket);
+    namespace.getConnectionHandler()!(socket);
+
+    const responses: Array<{ ok: boolean; error?: string }> = [];
+    for (let i = 0; i < 6; i += 1) {
+      const cb = vi.fn();
+      socket.handlers.submitWord({ roomCode: 'nonexistent', playerId: 'x', word: 'w' }, cb);
+      responses.push(cb.mock.calls[0][0]);
+    }
+
+    expect(responses.slice(0, 5).every((r) => r.error === 'Unauthorized')).toBe(true);
+    expect(responses[5]).toEqual({ ok: false, error: 'Too many requests — slow down' });
   });
 });

@@ -16,9 +16,10 @@ Production does **not** build on the VPS. The flow is:
    - `ghcr.io/jsevenheck/game-platform:<sha>`
    - `ghcr.io/jsevenheck/game-platform:latest`
 3. **Deploy** ([`.github/workflows/deploy.yml`](../.github/workflows/deploy.yml))
-   triggers when the CI workflow completes successfully on `main`. It injects
-   `IMAGE_TAG=<sha>` plus the runtime secrets, then calls
-   `hostinger/deploy-on-vps`.
+   triggers when the CI workflow completes successfully on `main`. Runs are
+   serialized, and a deployment is skipped if its CI SHA is no longer the current
+   `main` SHA. The workflow injects `IMAGE_TAG=<sha>` plus the runtime secrets,
+   then calls `hostinger/deploy-on-vps`.
 4. [`docker-compose.yml`](../docker-compose.yml) pulls
    `ghcr.io/jsevenheck/game-platform:${IMAGE_TAG:-latest}` — the exact, immutable
    image built in step 2 — instead of rebuilding from source. This guarantees
@@ -34,6 +35,12 @@ The image package must be pullable from the VPS. Either:
 - run `docker login ghcr.io` once on the VPS with a token that has
   `read:packages`.
 
+## Runtime state and deploys
+
+The app is a **single instance**: parties, matches and game rooms are held in memory, and nothing coordinates state between processes. Do not scale the `app` service beyond one replica.
+
+Every deploy (each green push to `main`, see the pipeline above) replaces the container, which ends all active parties and matches. Players are sent back to the home screen with a notice that their party is no longer available. On `SIGTERM` the server first emits `serverShuttingDown` on `/party`, so connected players immediately see a "server is restarting" banner. The deploy job runs in the GitHub environment `production`: configure required reviewers or a wait timer there (Settings → Environments) to make deploys a deliberate, schedulable step instead of happening on every merge.
+
 ## Runtime configuration
 
 Environment variables are documented in [`.env.example`](../.env.example). For
@@ -44,6 +51,11 @@ In production these values are **not** read from a committed file. The deploy
 workflow injects them via its `environment-variables` block (sourced from GitHub
 repository secrets), which `hostinger/deploy-on-vps` writes to a `.env` next to
 `docker-compose.yml` on the VPS.
+
+The application runs as the image's `node` user. `prepare-app-data` is a one-shot
+startup dependency that assigns the `blackout-db` and existing `imposter-words`
+volumes to that user before the app starts. Only the setup container runs as root;
+the application process does not.
 
 ### Admin console
 
@@ -104,10 +116,11 @@ All HTTP responses include `X-Content-Type-Options: nosniff`, `X-Frame-Options: 
 
 ### Optional game flags
 
-| Variable                 | Default   | Purpose                                                                                                                                                                                                                                                                   |
-| ------------------------ | --------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `IMPOSTER_PERSIST_WORDS` | `true`    | When `false`, submitted Imposter words are kept in-memory only (prevents file divergence in multi-instance deployments)                                                                                                                                                   |
-| `IMPOSTER_WORDS_DIR`     | _(unset)_ | Directory for `words.<locale>.txt` submitted by players. `docker-compose.yml` mounts the `imposter-words` volume at `/data/imposter` so custom words survive container replacement; unset, words are appended beside the bundled assets (lost when the image is replaced) |
+| Variable                 | Default                          | Purpose                                                                                                                                                 |
+| ------------------------ | -------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `DB_PATH`                | `/data/blackout/blackout.sqlite` | SQLite database path; Compose mounts `blackout-db` at `/data/blackout` so the non-root app user can write the database and WAL files                    |
+| `IMPOSTER_PERSIST_WORDS` | `true`                           | When `false`, submitted Imposter words are kept in-memory only instead of being appended to the shared words file                                       |
+| `IMPOSTER_WORDS_DIR`     | `/data/imposter` in Compose      | Directory for `words.<locale>.txt` submitted by players. Compose mounts the `imposter-words` volume there so custom words survive container replacement |
 
 ### Required GitHub secrets
 

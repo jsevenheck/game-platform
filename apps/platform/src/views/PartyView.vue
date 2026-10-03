@@ -2,7 +2,7 @@
 import { ref, computed, onMounted, onBeforeUnmount } from 'vue';
 import { useI18n } from 'vue-i18n';
 import { useRouter } from 'vue-router';
-import { usePartyStore } from '../stores/party';
+import { isTerminalResumeError, usePartyStore } from '../stores/party';
 import { usePartySocket } from '../composables/usePartySocket';
 import { clientGameRegistry, getClientGame, type PlatformGameMeta } from '../games/index';
 import { getCurrentLocale, SUPPORTED_LOCALES, type SupportedLocale } from '../i18n';
@@ -161,7 +161,7 @@ function doResume() {
     },
     (res) => {
       if (!res.ok) {
-        store.clearSession();
+        if (isTerminalResumeError(res.error)) store.endSession();
         router.push('/');
         return;
       }

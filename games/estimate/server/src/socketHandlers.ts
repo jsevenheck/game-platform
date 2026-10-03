@@ -126,9 +126,15 @@ function createInstrumentedResponder<T extends { ok?: boolean }>(
 }
 
 function broadcastRoom(nsp: EstimateNamespace, room: ServerRoom): void {
+  // Emit to each bound player socket rather than the Socket.IO room: room
+  // codes are short and reused once a room is deleted, and a socket that is
+  // still joined to a deleted room's code must never see another match.
   const view = buildRoomView(room);
-  nsp.to(room.roomCode).emit('roomUpdate', view);
-  nsp.to(room.roomCode).emit('phaseChange', { phase: view.phase });
+  for (const player of room.players) {
+    if (!player.socketId || !player.connected) continue;
+    nsp.to(player.socketId).emit('roomUpdate', view);
+    nsp.to(player.socketId).emit('phaseChange', { phase: view.phase });
+  }
 }
 
 function findPlayerBySocket(socket: EstimateSocket, room: ServerRoom): string | null {

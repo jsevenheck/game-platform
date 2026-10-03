@@ -72,6 +72,12 @@ export function addWordToLibrary(room: Room, word: string): string | null {
   if (!trimmed || trimmed.length > WORD_MAX_LENGTH) {
     return `Word must be between 1 and ${WORD_MAX_LENGTH} characters`;
   }
+  // Submitted words are appended line by line to the shared words file, so a
+  // control character (e.g. an embedded newline) would inject extra entries.
+  // eslint-disable-next-line no-control-regex
+  if (/[\u0000-\u001f\u007f]/.test(trimmed)) {
+    return 'Word contains invalid characters';
+  }
 
   const exists = room.wordLibrary.some((entry) => entry.toLowerCase() === trimmed.toLowerCase());
   if (exists) {

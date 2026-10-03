@@ -158,6 +158,9 @@ test.describe('Herd Mentality', () => {
   test('reaches the target, shows the final scoreboard, and replays through the platform overlay', async ({
     browser,
   }) => {
+    // Two full multi-round matches with four browser contexts; the default
+    // 60 s budget is too tight on loaded CI runners.
+    test.slow();
     const session = await openSession(browser);
     try {
       await launch(session);

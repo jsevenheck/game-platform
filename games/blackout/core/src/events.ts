@@ -22,7 +22,7 @@ export interface ClientToServerEvents {
   ) => void;
   leaveRoom: (data: { roomCode: string; playerId: string }) => void;
 
-  updateMaxRounds: (data: { roomCode: string; playerId: string; maxRounds: number }) => void;
+  updateMaxRounds: (data: { roomCode: string; playerId: string; delta: -1 | 1 }) => void;
   updateRoomSettings: (data: {
     roomCode: string;
     playerId: string;

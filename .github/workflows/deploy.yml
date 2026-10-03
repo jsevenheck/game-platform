@@ -9,18 +9,41 @@ on:
     types:
       - completed
 
+concurrency:
+  group: game-platform-production
+  cancel-in-progress: false
+
 permissions:
   contents: read
 
 jobs:
   deploy:
     runs-on: ubuntu-latest
+    # Every deploy ends all live parties (state is in memory). Required
+    # reviewers or a wait timer on this environment turn deploys into a
+    # deliberate, schedulable step without changing the pipeline.
+    environment: production
     if: ${{ github.event.workflow_run.conclusion == 'success' }}
 
     steps:
       - uses: actions/checkout@v5
 
+      - name: Skip stale deployments
+        id: freshness
+        env:
+          DEPLOY_SHA: ${{ github.event.workflow_run.head_sha }}
+        run: |
+          set -euo pipefail
+          latest_main_sha="$(git ls-remote --exit-code origin refs/heads/main | cut -f1)"
+          if [[ "$DEPLOY_SHA" != "$latest_main_sha" ]]; then
+            echo "deploy=false" >> "$GITHUB_OUTPUT"
+            echo "Skipping stale deployment $DEPLOY_SHA; main is at $latest_main_sha"
+            exit 0
+          fi
+          echo "deploy=true" >> "$GITHUB_OUTPUT"
+
       - name: Deploy to Hostinger
+        if: steps.freshness.outputs.deploy == 'true'
         uses: hostinger/deploy-on-vps@v2
         with:
           api-key: ${{ secrets.HOSTINGER_API_KEY }}

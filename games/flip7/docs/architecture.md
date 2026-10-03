@@ -80,6 +80,8 @@ All player face-up cards (`numberCards`, `modifierAdds`, `hasX2`) are public —
 
 On disconnect, the host role is transferred to the next connected player. If all players disconnect, a 5-minute idle cleanup timer is scheduled.
 
+A round never waits on a disconnected player: `autoPlayDisconnectedPlayers` (in `roundManager.ts`) stays for a disconnected current player (or keeps drawing while they owe Flip Three draws or still have an empty hand) and resolves a disconnected drawer's pending Freeze / Flip Three on themselves (a passed-on Second Chance goes to the first eligible player). It runs after every round mutation and on disconnect, and does nothing while nobody is connected.
+
 ## Logging
 
 All lifecycle events (room create, join, resume, start, round end, match end, cleanup) are emitted via `createComponentLogger('game-server', { gameId: 'flip7' })`. Sensitive fields (`resumeToken`, `inviteCode`) are never logged.
