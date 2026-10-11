@@ -1,4 +1,6 @@
 <script setup lang="ts">
+import { computed } from 'vue';
+import { useI18n } from 'vue-i18n';
 import { TEAM_HEX_BY_COLOR } from '@shared/constants';
 import type { CardView, TeamColor } from '@shared/types';
 import { CARD_HEX_BY_TYPE, getCardTextHex } from '../lib/teamTheme';
@@ -15,6 +17,28 @@ const props = defineProps<{
 defineEmits<{
   select: [];
 }>();
+
+const { t } = useI18n();
+// Never derive or render hidden card types: the server supplies null for agents.
+const typeLabel = computed(() => {
+  if ((!props.isDirectorView && !props.card.revealed) || !props.card.type) return '';
+  const type = props.card.type;
+  return type === 'neutral' || type === 'assassin'
+    ? t(`secret-signals.cards.${type}`)
+    : t(`secret-signals.teams.${type}`);
+});
+const accessibleLabel = computed(() =>
+  [
+    props.card.word,
+    typeLabel.value,
+    props.card.revealed ? t('secret-signals.cards.revealed') : '',
+    props.isFocused && props.focusedByName
+      ? t('secret-signals.cards.markedBy', { name: props.focusedByName })
+      : '',
+  ]
+    .filter(Boolean)
+    .join(', ')
+);
 
 function cardBackground(): string {
   if (props.card.revealed && props.card.type) {
@@ -50,6 +74,7 @@ function borderColor(): string {
 <template>
   <button
     class="card-cell"
+    :aria-label="accessibleLabel"
     :class="{
       revealed: card.revealed,
       clickable: clickable && !card.revealed,
@@ -69,11 +94,9 @@ function borderColor(): string {
       {{ focusedByName }}
     </span>
     <span class="relative z-1">{{ card.word }}</span>
-    <span
-      v-if="isDirectorView && !card.revealed && card.type === 'assassin'"
-      class="absolute top-1 right-1.5 text-xs opacity-70"
-      >&#x2620;</span
-    >
+    <span v-if="typeLabel" class="card-type-label" aria-hidden="true">
+      {{ typeLabel }}
+    </span>
   </button>
 </template>
 
@@ -83,6 +106,8 @@ function borderColor(): string {
   display: flex;
   align-items: center;
   justify-content: center;
+  flex-direction: column;
+  gap: 0.2rem;
   aspect-ratio: 3 / 2;
   border: 2px solid var(--color-border-strong);
   border-radius: var(--radius-sm);
@@ -101,6 +126,12 @@ function borderColor(): string {
   text-align: center;
   word-break: break-word;
   overflow: hidden;
+}
+
+.card-type-label {
+  font-size: clamp(0.5rem, 1vw, 0.65rem);
+  font-weight: 800;
+  letter-spacing: 0.03em;
 }
 
 .card-cell.clickable {

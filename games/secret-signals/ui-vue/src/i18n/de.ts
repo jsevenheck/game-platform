@@ -4,6 +4,12 @@ export const de: SecretSignalsMessages = {
   connecting: 'Verbinde...',
   teams: { red: 'Rot', blue: 'Blau', green: 'Grün', orange: 'Orange' },
   teamOf: 'Team {color}',
+  cards: {
+    neutral: 'Neutral',
+    assassin: 'Attentäter',
+    revealed: 'Aufgedeckt',
+    markedBy: 'Markiert von {name}',
+  },
   roles: { director: 'Spielleiter', agent: 'Agent', directorShort: 'SPL', agentShort: 'AGT' },
   lobby: {
     players: 'Spieler ({count})',

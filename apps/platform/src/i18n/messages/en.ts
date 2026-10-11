@@ -9,6 +9,8 @@ export const en = {
     lost: 'Connection lost — reconnecting…',
   },
   session: {
+    persistenceUnavailable:
+      'Browser storage is unavailable. You can keep playing, but reloading may lose your session.',
     ended:
       'Your party is no longer available — the server may have restarted. Create or join a new party to keep playing.',
   },
@@ -154,6 +156,7 @@ export const en = {
     too_many_requests: 'Too many requests. Please slow down.',
     party_not_found: 'Party not found',
     not_in_a_party: 'You are not in a party',
+    already_in_a_party: 'Leave your current party before joining or creating another.',
     player_not_in_party: 'Player not in party',
     name_already_taken: 'Name already taken',
     invalid_resume_token: 'Invalid resume token',

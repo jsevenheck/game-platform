@@ -1,7 +1,8 @@
 import { ref, watch } from 'vue';
 import { useRouter } from 'vue-router';
 import { isTerminalResumeError, usePartyStore } from '../stores/party';
-import { PARTY_ACK_TIMEOUT_MS, usePartySocket } from './usePartySocket';
+import { usePartySocket } from './usePartySocket';
+import { usePartyRequests } from './usePartyRequests';
 
 const NAME_KEY = 'home.playerName';
 const CODE_KEY = 'home.inviteCode';
@@ -18,23 +19,15 @@ function writeStr(key: string, value: string): void {
   try {
     sessionStorage.setItem(key, value);
   } catch {
-    /* ignore storage errors */
+    /* Draft persistence is best-effort. */
   }
 }
 
-/**
- * Owns the home-page create/join/resume actions and their form state.
- *
- * Moved out of `HomeView.vue` so the view stays a thin composition shell.
- * `playerName` and `inviteCode` drafts persist in `sessionStorage` so they
- * survive tab switches and refreshes. `selectedGameId` is in-memory only.
- * Must NOT disconnect the shared party socket.
- */
+/** Home form state and bounded create/join/resume requests. */
 export function useHomePartyActions() {
   const router = useRouter();
   const store = usePartyStore();
-  const socket = usePartySocket();
-
+  const { request, isActive } = usePartyRequests(usePartySocket());
   const playerName = ref(readStr(NAME_KEY));
   const inviteCode = ref(readStr(CODE_KEY));
   const selectedGameId = ref<string | null>(null);
@@ -49,114 +42,83 @@ export function useHomePartyActions() {
     error.value = '';
   }
 
-  function handleCreate(): void {
+  async function handleCreate(): Promise<void> {
     const name = playerName.value.trim();
     if (!name || submitting.value) return;
     error.value = '';
     submitting.value = true;
-
-    socket.timeout(PARTY_ACK_TIMEOUT_MS).emit('createParty', { playerName: name }, (err, res) => {
-      if (err) {
-        error.value = 'Request timed out';
-        submitting.value = false;
-        return;
-      }
-      if (!res.ok) {
-        error.value = res.error;
-        submitting.value = false;
-        return;
-      }
-      store.setSession({
-        playerId: res.playerId,
-        playerName: name,
-        inviteCode: res.partyView.inviteCode,
-        resumeToken: res.resumeToken,
-      });
-      store.applyPartyUpdate(res.partyView);
-      store.saveSession(res.partyView.inviteCode);
-
-      const code = res.partyView.inviteCode;
-      const gameId = selectedGameId.value;
+    const res = await request('createParty', { playerName: name });
+    if (!res) return;
+    if (!res.ok) {
       submitting.value = false;
-
-      // Best-effort, non-blocking game preselect. The party is already created;
-      // navigate regardless so it stays usable even if preselect fails.
-      if (gameId) {
-        socket.emit('selectGame', { playerId: res.playerId, gameId }, (sel) => {
-          if (!sel.ok) {
-            // HomeView is unmounting; the host can still select manually in PartyView.
-            error.value = sel.error;
-          }
-        });
-      }
-      router.push(`/party/${code}`);
+      error.value = res.error;
+      return;
+    }
+    store.setSession({
+      playerId: res.playerId,
+      playerName: name,
+      inviteCode: res.partyView.inviteCode,
+      resumeToken: res.resumeToken,
     });
+    store.applyPartyUpdate(res.partyView);
+    store.saveSession(res.partyView.inviteCode);
+
+    // Optional selection never prevents entering the successfully created
+    // party, even if its acknowledgement is lost. Do not retry creation.
+    if (selectedGameId.value) {
+      await request('selectGame', { playerId: res.playerId, gameId: selectedGameId.value });
+    }
+    if (!isActive()) return;
+    submitting.value = false;
+    await router.push(`/party/${res.partyView.inviteCode}`);
   }
 
-  function handleJoin(): void {
+  async function handleJoin(): Promise<void> {
     const name = playerName.value.trim();
     const code = inviteCode.value.trim().toUpperCase();
     if (!name || !code || submitting.value) return;
     error.value = '';
     submitting.value = true;
-
-    socket
-      .timeout(PARTY_ACK_TIMEOUT_MS)
-      .emit('joinParty', { playerName: name, inviteCode: code }, (err, res) => {
-        submitting.value = false;
-        if (err) {
-          error.value = 'Request timed out';
-          return;
-        }
-        if (!res.ok) {
-          error.value = res.error;
-          return;
-        }
-        store.setSession({
-          playerId: res.playerId,
-          playerName: name,
-          inviteCode: res.partyView.inviteCode,
-          resumeToken: res.resumeToken,
-        });
-        store.applyPartyUpdate(res.partyView);
-        store.saveSession(res.partyView.inviteCode);
-        router.push(`/party/${res.partyView.inviteCode}`);
-      });
+    const res = await request('joinParty', { playerName: name, inviteCode: code });
+    if (!res) return;
+    submitting.value = false;
+    if (!res.ok) {
+      error.value = res.error;
+      return;
+    }
+    store.setSession({
+      playerId: res.playerId,
+      playerName: name,
+      inviteCode: res.partyView.inviteCode,
+      resumeToken: res.resumeToken,
+    });
+    store.applyPartyUpdate(res.partyView);
+    store.saveSession(res.partyView.inviteCode);
+    await router.push(`/party/${res.partyView.inviteCode}`);
   }
 
-  function tryResume(): void {
+  async function tryResume(): Promise<void> {
     const session = store.loadSession();
-    if (!session) return;
+    if (!session || isResuming.value) return;
     isResuming.value = true;
-
-    socket.emit(
-      'resumeParty',
-      {
-        inviteCode: session.inviteCode,
-        playerId: session.playerId,
-        resumeToken: session.resumeToken,
-      },
-      (res) => {
-        isResuming.value = false;
-        if (!res.ok) {
-          if (isTerminalResumeError(res.error)) store.endSession();
-          else error.value = res.error;
-          return;
-        }
-        store.setSession({
-          playerId: session.playerId,
-          playerName: session.playerName,
-          inviteCode: session.inviteCode,
-          resumeToken: session.resumeToken,
-        });
-        store.applyPartyUpdate(res.partyView);
-
-        if (res.partyView.activeMatch) {
-          router.push(`/party/${session.inviteCode}/game/${res.partyView.activeMatch.gameId}`);
-        } else {
-          router.push(`/party/${session.inviteCode}`);
-        }
-      }
+    const res = await request('resumeParty', {
+      inviteCode: session.inviteCode,
+      playerId: session.playerId,
+      resumeToken: session.resumeToken,
+    });
+    if (!res) return;
+    isResuming.value = false;
+    if (!res.ok) {
+      if (isTerminalResumeError(res.error)) store.endSession();
+      else error.value = res.error;
+      return;
+    }
+    store.setSession(session);
+    store.applyPartyUpdate(res.partyView);
+    await router.push(
+      res.partyView.activeMatch
+        ? `/party/${session.inviteCode}/game/${res.partyView.activeMatch.gameId}`
+        : `/party/${session.inviteCode}`
     );
   }
 

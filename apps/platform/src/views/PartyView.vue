@@ -4,6 +4,7 @@ import { useI18n } from 'vue-i18n';
 import { useRouter } from 'vue-router';
 import { isTerminalResumeError, usePartyStore } from '../stores/party';
 import { usePartySocket } from '../composables/usePartySocket';
+import { usePartyRequests } from '../composables/usePartyRequests';
 import { clientGameRegistry, getClientGame, type PlatformGameMeta } from '../games/index';
 import { getCurrentLocale, SUPPORTED_LOCALES, type SupportedLocale } from '../i18n';
 import { localizeError } from '../i18n/serverError';
@@ -14,6 +15,7 @@ const { t, te, locale } = useI18n();
 const router = useRouter();
 const store = usePartyStore();
 const socket = usePartySocket();
+const { request, isActive } = usePartyRequests(socket);
 
 const error = ref('');
 const launching = ref(false);
@@ -71,56 +73,59 @@ function avatarInitials(name: string): string {
   return name.slice(0, 2).toUpperCase();
 }
 
-function handleSelectGame(gameId: string) {
+async function handleSelectGame(gameId: string) {
   if (!store.isHost || !store.playerId) return;
-  socket.emit('selectGame', { playerId: store.playerId, gameId }, (res) => {
-    if (!res.ok) error.value = res.error;
-  });
+  const res = await request('selectGame', { playerId: store.playerId, gameId });
+  if (res && !res.ok) error.value = res.error;
 }
 
-function handleLaunch() {
-  if (!store.isHost || !store.playerId) return;
+async function handleLaunch() {
+  if (!store.isHost || !store.playerId || launching.value) return;
   launching.value = true;
-  socket.emit('launchGame', { playerId: store.playerId, locale: contentLocale.value }, (res) => {
-    launching.value = false;
-    if (!res.ok) error.value = res.error;
+  error.value = '';
+  const res = await request('launchGame', {
+    playerId: store.playerId,
+    locale: contentLocale.value,
   });
+  if (!res) return;
+  launching.value = false;
+  if (!res.ok) error.value = res.error;
 }
 
-function handleEndGame() {
+async function handleEndGame() {
   if (!store.isHost || !store.playerId) return;
-  socket.emit('returnToLobby', { playerId: store.playerId }, (res) => {
-    if (!res.ok) error.value = res.error;
-  });
+  const res = await request('returnToLobby', { playerId: store.playerId });
+  if (res && !res.ok) error.value = res.error;
 }
 
 // Host opt-in to list this lobby publicly. No optimistic local mutation: we
 // wait for the resulting `partyUpdate` to update `store.party.isPublic`.
-function handlePublicToggle(event: Event) {
-  if (!store.isHost || !store.playerId) return;
+async function handlePublicToggle(event: Event) {
+  if (!store.isHost || !store.playerId || publicTogglePending.value) return;
   const target = event.target as HTMLInputElement;
   const isPublic = target.checked;
   publicTogglePending.value = true;
   error.value = '';
-  socket.emit('setPartyPublic', { playerId: store.playerId, isPublic }, (res) => {
-    publicTogglePending.value = false;
-    if (!res.ok) {
-      // Revert the checkbox to the authoritative store value.
-      target.checked = !!store.party?.isPublic;
-      error.value = res.error;
-    }
-    // On success, `partyUpdate` will update store.party.isPublic.
-  });
+  const res = await request('setPartyPublic', { playerId: store.playerId, isPublic });
+  if (!res) return;
+  publicTogglePending.value = false;
+  // Reconcile even on timeout: the server may have applied the mutation.
+  target.checked = !!store.party?.isPublic;
+  if (!res.ok) error.value = res.error;
 }
 
 function handleLeave() {
-  if (!store.playerId) return;
-  socket.emit('leaveParty', { playerId: store.playerId });
+  // A failed initial resume may not have populated playerId. The player
+  // must still be able to exit the error state and return home.
+  if (store.playerId) socket.emit('leaveParty', { playerId: store.playerId });
   store.clearSession();
   router.push('/');
 }
 
 function handlePartyUpdate(view: Parameters<typeof store.applyPartyUpdate>[0]) {
+  // resumeParty broadcasts before acknowledging. On a fresh page, wait for
+  // the ACK to restore credentials before navigating and disposing this scope.
+  if (!store.playerId) return;
   const wasInMatch = store.party?.status === 'in-match';
   store.applyPartyUpdate(view);
 
@@ -146,51 +151,40 @@ function handlePartyKicked(data: { reason: string }): void {
 
 // Hoisted so it can be registered for reconnects as well as initial mount.
 // Reads the session fresh each time — safe to call repeatedly.
-function doResume() {
+async function doResume() {
   const session = store.loadSession();
   if (!session || session.inviteCode !== props.inviteCode) {
     router.push('/');
     return;
   }
-  socket.emit(
-    'resumeParty',
-    {
-      inviteCode: session.inviteCode,
-      playerId: session.playerId,
-      resumeToken: session.resumeToken,
-    },
-    (res) => {
-      if (!res.ok) {
-        if (isTerminalResumeError(res.error)) store.endSession();
-        router.push('/');
-        return;
-      }
-      store.setSession({
-        playerId: session.playerId,
-        playerName: session.playerName,
-        inviteCode: session.inviteCode,
-        resumeToken: session.resumeToken,
-      });
-      store.applyPartyUpdate(res.partyView);
+  const res = await request('resumeParty', {
+    inviteCode: session.inviteCode,
+    playerId: session.playerId,
+    resumeToken: session.resumeToken,
+  });
+  if (!res) return;
+  if (!res.ok) {
+    if (isTerminalResumeError(res.error)) {
+      store.endSession();
+      await router.push('/');
+    } else {
+      error.value = res.error;
     }
-  );
+    return;
+  }
+  store.setSession(session);
+  handlePartyUpdate(res.partyView);
 }
 
-onMounted(() => {
+onMounted(async () => {
   socket.on('partyUpdate', handlePartyUpdate);
   socket.on('partyKicked', handlePartyKicked);
-  // Re-bind to party on every reconnect (network drop → new socket ID on server)
-  socket.on('connect', doResume);
-
-  // If we already have party state (arrived via redirect), no initial resume needed
-  if (store.party?.inviteCode === props.inviteCode) return;
-
-  // Otherwise resume from session
-  if (socket.connected) {
-    doResume();
-  } else {
-    socket.connect();
+  if (!socket.connected || store.party?.inviteCode !== props.inviteCode) {
+    await doResume();
   }
+  // All hooks were registered synchronously in setup; never attach socket
+  // listeners after a disposed view's asynchronous initial resume.
+  if (isActive()) socket.on('connect', doResume);
 });
 
 onBeforeUnmount(() => {
@@ -285,6 +279,7 @@ onBeforeUnmount(() => {
             v-for="game in clientGameRegistry"
             :key="game.definition.id"
             class="ui-game-card"
+            :aria-pressed="store.party?.selectedGameId === game.definition.id"
             :class="
               store.party?.selectedGameId === game.definition.id ? 'ui-game-card-selected' : ''
             "

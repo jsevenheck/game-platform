@@ -32,7 +32,7 @@ function focusedLabel(index: number): string | null {
       :data-card-index="index"
       :card="card"
       :clickable="store.canGuess && !card.revealed"
-      :is-director-view="store.isDirector"
+      :is-director-view="store.isDirector || store.room?.phase === 'ended'"
       :is-focused="focusedPlayers(index).length > 0"
       :focused-by-name="focusedLabel(index)"
       :focused-by-color="store.room?.currentTurnTeam ?? null"

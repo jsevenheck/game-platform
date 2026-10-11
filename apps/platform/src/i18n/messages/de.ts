@@ -11,6 +11,8 @@ export const de: MessageSchema = {
     lost: 'Verbindung verloren – verbinde neu …',
   },
   session: {
+    persistenceUnavailable:
+      'Der Browserspeicher ist nicht verfügbar. Du kannst weiterspielen, aber beim Neuladen kann deine Sitzung verloren gehen.',
     ended:
       'Deine Party ist nicht mehr verfügbar – der Server wurde vermutlich neu gestartet. Erstelle eine neue Party oder tritt einer bei, um weiterzuspielen.',
   },
@@ -148,6 +150,8 @@ export const de: MessageSchema = {
     },
   },
   errors: {
+    already_in_a_party:
+      'Verlasse zuerst deine aktuelle Party, bevor du einer anderen beitrittst oder eine neue erstellst.',
     request_timed_out:
       'Der Server hat nicht geantwortet. Prüfe deine Verbindung und versuche es erneut.',
     invalid_request: 'Ungültige Anfrage',

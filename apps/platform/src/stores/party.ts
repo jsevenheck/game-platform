@@ -59,6 +59,9 @@ export const usePartyStore = defineStore('platform-party', () => {
   const resumeToken = ref<string | null>(null);
   /** Shown once on the home screen after a stored session turned out to be gone. */
   const sessionEndedNotice = ref(false);
+  const persistenceUnavailable = ref(false);
+  let memorySession: PersistedSession | null = null;
+  let sessionRead = false;
 
   const isHost = computed(() => {
     if (!party.value || !playerId.value) return false;
@@ -87,6 +90,10 @@ export const usePartyStore = defineStore('platform-party', () => {
     playerId.value = data.playerId;
     playerName.value = data.playerName;
     if (data.resumeToken) resumeToken.value = data.resumeToken;
+    if (resumeToken.value) {
+      memorySession = { ...data, resumeToken: resumeToken.value };
+      sessionRead = true;
+    }
   }
 
   function saveSession(inviteCode: string): void {
@@ -97,13 +104,46 @@ export const usePartyStore = defineStore('platform-party', () => {
       playerName: playerName.value,
       resumeToken: resumeToken.value,
     };
-    localStorage.setItem(SESSION_KEY, JSON.stringify(session));
+    memorySession = session;
+    sessionRead = true;
+    try {
+      localStorage.setItem(SESSION_KEY, JSON.stringify(session));
+      persistenceUnavailable.value = false;
+    } catch {
+      // Keep the live session usable even if browser persistence is denied.
+      persistenceUnavailable.value = true;
+    }
   }
 
   function loadSession(): PersistedSession | null {
+    if (sessionRead) return memorySession;
+    sessionRead = true;
     try {
       const raw = localStorage.getItem(SESSION_KEY);
-      return raw ? (JSON.parse(raw) as PersistedSession) : null;
+      const value: unknown = raw ? JSON.parse(raw) : null;
+      if (!value || typeof value !== 'object') return null;
+      const session = value as Record<string, unknown>;
+      if (
+        typeof session.inviteCode !== 'string' ||
+        !/^[A-Z0-9]{6}$/.test(session.inviteCode) ||
+        typeof session.playerId !== 'string' ||
+        !session.playerId.trim() ||
+        session.playerId.length > 64 ||
+        typeof session.playerName !== 'string' ||
+        !session.playerName.trim() ||
+        session.playerName.length > 20 ||
+        typeof session.resumeToken !== 'string' ||
+        !session.resumeToken.trim() ||
+        session.resumeToken.length > 256
+      )
+        return null;
+      memorySession = {
+        inviteCode: session.inviteCode,
+        playerId: session.playerId,
+        playerName: session.playerName,
+        resumeToken: session.resumeToken,
+      };
+      return memorySession;
     } catch {
       return null;
     }
@@ -114,7 +154,15 @@ export const usePartyStore = defineStore('platform-party', () => {
     playerId.value = null;
     playerName.value = null;
     resumeToken.value = null;
-    localStorage.removeItem(SESSION_KEY);
+    memorySession = null;
+    // Do not resurrect a stale persisted session if removeItem fails.
+    sessionRead = true;
+    persistenceUnavailable.value = false;
+    try {
+      localStorage.removeItem(SESSION_KEY);
+    } catch {
+      /* In-memory logout still succeeds. */
+    }
   }
 
   /** Drop a session that can no longer be resumed and tell the player why. */
@@ -138,5 +186,6 @@ export const usePartyStore = defineStore('platform-party', () => {
     clearSession,
     endSession,
     sessionEndedNotice,
+    persistenceUnavailable,
   };
 });

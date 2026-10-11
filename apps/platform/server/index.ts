@@ -17,6 +17,7 @@ import {
   type RateLimitRecord,
 } from './observability/rateLimit';
 import { getTrustedProxyHops, resolveClientIp } from './observability/clientIp';
+import { createSocketOriginPolicy } from './observability/socketOrigin';
 
 const app = express();
 const httpServer = createServer(app);
@@ -62,9 +63,11 @@ app.use((_req, res, next) => {
 });
 registerMetricsRoutes(app, serverLogger);
 
+const socketOriginPolicy = createSocketOriginPolicy();
 const io = new Server(httpServer, {
+  allowRequest: socketOriginPolicy.allowRequest,
   cors: {
-    origin: process.env.NODE_ENV === 'production' ? false : '*',
+    origin: socketOriginPolicy.origins,
     methods: ['GET', 'POST'],
   },
   // Socket.IO defaults to 1 MB per message. No legitimate payload in this

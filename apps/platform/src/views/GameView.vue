@@ -4,6 +4,7 @@ import { useI18n } from 'vue-i18n';
 import { useRouter } from 'vue-router';
 import { isTerminalResumeError, usePartyStore } from '../stores/party';
 import { usePartySocket } from '../composables/usePartySocket';
+import { usePartyRequests } from '../composables/usePartyRequests';
 import { getClientGame } from '../games/index';
 import LanguageSwitcher from '../components/LanguageSwitcher.vue';
 import { localizeError } from '../i18n/serverError';
@@ -15,6 +16,8 @@ const { t } = useI18n();
 const router = useRouter();
 const store = usePartyStore();
 const socket = usePartySocket();
+const { request, isActive } = usePartyRequests(socket);
+const actionPending = ref(false);
 
 const gameComponent = shallowRef<Component | null>(null);
 const loadError = ref('');
@@ -29,26 +32,24 @@ const matchKey = computed(() => store.party?.activeMatch?.matchKey ?? null);
 const namespace = computed(() => store.party?.activeMatch?.namespace ?? `/g/${props.gameId}`);
 
 // Platform callbacks passed down to the game adapter
-function onReplayGame(): void {
-  if (!store.playerId) return;
+async function onReplayGame(): Promise<void> {
+  if (!store.playerId || actionPending.value) return;
+  actionPending.value = true;
   actionError.value = '';
-  socket.emit('replayGame', { playerId: store.playerId }, (res) => {
-    if (!res.ok) {
-      actionError.value = res.error ?? 'Replay failed';
-      console.error('[GameView] replayGame failed:', res.error);
-    }
-  });
+  const res = await request('replayGame', { playerId: store.playerId });
+  if (!res) return;
+  actionPending.value = false;
+  if (!res.ok) actionError.value = res.error;
 }
 
-function onReturnToLobby(): void {
-  if (!store.playerId) return;
+async function onReturnToLobby(): Promise<void> {
+  if (!store.playerId || actionPending.value) return;
+  actionPending.value = true;
   actionError.value = '';
-  socket.emit('returnToLobby', { playerId: store.playerId }, (res) => {
-    if (!res.ok) {
-      actionError.value = res.error ?? 'Return to lobby failed';
-      console.error('[GameView] returnToLobby failed:', res.error);
-    }
-  });
+  const res = await request('returnToLobby', { playerId: store.playerId });
+  if (!res) return;
+  actionPending.value = false;
+  if (!res.ok) actionError.value = res.error;
 }
 
 function onLeaveGame(): void {
@@ -83,6 +84,7 @@ async function loadGameComponent(retries = 2): Promise<void> {
   for (let i = 0; i <= retries; i++) {
     try {
       const mod = await game.loadClient();
+      if (!isActive()) return;
       gameComponent.value = mod.default;
       loadError.value = '';
       return;
@@ -95,97 +97,57 @@ async function loadGameComponent(retries = 2): Promise<void> {
     }
   }
 
-  loadError.value = t('gameView.loadFailed', { reason: String(lastError) });
+  if (isActive()) loadError.value = t('gameView.loadFailed', { reason: String(lastError) });
 }
 
-// Lightweight re-bind used on every reconnect after the component is mounted.
-// Does not await or resolve a Promise — fire-and-forget re-registration.
-function resumePartyBinding() {
+// Initial reload and reconnect share one bounded, cancellable resume path.
+async function resumePartyBinding(): Promise<boolean> {
   const session = store.loadSession();
-  if (!session) return;
-  socket.emit(
-    'resumeParty',
-    {
-      inviteCode: session.inviteCode,
-      playerId: session.playerId,
-      resumeToken: session.resumeToken,
-    },
-    (res) => {
-      if (!res.ok) {
-        if (isTerminalResumeError(res.error)) store.endSession();
-        router.push('/');
-        return;
-      }
-      store.setSession({
-        playerId: session.playerId,
-        playerName: session.playerName,
-        inviteCode: session.inviteCode,
-        resumeToken: session.resumeToken,
-      });
-      store.applyPartyUpdate(res.partyView);
+  if (!session || session.inviteCode !== props.inviteCode) {
+    await router.push('/');
+    return false;
+  }
+  const res = await request('resumeParty', {
+    inviteCode: session.inviteCode,
+    playerId: session.playerId,
+    resumeToken: session.resumeToken,
+  });
+  if (!res) return false;
+  if (!res.ok) {
+    if (isTerminalResumeError(res.error)) {
+      store.endSession();
+      await router.push('/');
+    } else {
+      loadError.value = localizeError(res.error);
     }
-  );
+    return false;
+  }
+  store.setSession(session);
+  handlePartyUpdate(res.partyView);
+  loadError.value = '';
+  if (store.party?.activeMatch && !gameComponent.value) await loadGameComponent();
+  return true;
 }
 
 onMounted(async () => {
   socket.on('partyUpdate', handlePartyUpdate);
   socket.on('partyKicked', handlePartyKicked);
 
-  // Resume party state if needed (initial load / hard reload)
-  if (!store.party) {
-    const session = store.loadSession();
-    if (!session) {
-      router.push('/');
-      return;
-    }
-
-    await new Promise<void>((resolve) => {
-      const doResume = () => {
-        socket.emit(
-          'resumeParty',
-          {
-            inviteCode: session.inviteCode,
-            playerId: session.playerId,
-            resumeToken: session.resumeToken,
-          },
-          (res) => {
-            if (!res.ok) {
-              if (isTerminalResumeError(res.error)) store.endSession();
-              router.push('/');
-              return;
-            }
-            store.setSession({
-              playerId: session.playerId,
-              playerName: session.playerName,
-              inviteCode: session.inviteCode,
-              resumeToken: session.resumeToken,
-            });
-            store.applyPartyUpdate(res.partyView);
-            resolve();
-          }
-        );
-      };
-
-      if (socket.connected) {
-        doResume();
-      } else {
-        socket.once('connect', doResume);
-        socket.connect();
-      }
-    });
-  }
-
-  // Register reconnect handler after initial setup — avoids double-firing
-  // on the first connect event alongside the socket.once above.
+  const needsResume =
+    !socket.connected ||
+    !store.playerId ||
+    !store.resumeToken ||
+    store.party?.inviteCode !== props.inviteCode;
+  const resumed = !needsResume || (await resumePartyBinding());
+  if (!isActive()) return;
   socket.on('connect', resumePartyBinding);
+  if (!resumed) return;
 
-  // If after resume there's no active match, go back to party lobby
   if (!store.party?.activeMatch) {
-    router.push(`/party/${props.inviteCode}`);
+    await router.push(`/party/${props.inviteCode}`);
     return;
   }
-
-  await loadGameComponent();
+  if (!gameComponent.value) await loadGameComponent();
 });
 
 onBeforeUnmount(() => {

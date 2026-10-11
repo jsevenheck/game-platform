@@ -2,7 +2,7 @@ import { randomUUID } from 'crypto';
 import type { Express, Request, Response, NextFunction } from 'express';
 import type { Server } from 'socket.io';
 import jwt from 'jsonwebtoken';
-import bcrypt from 'bcryptjs';
+import { createPasswordVerifier, PasswordVerificationBusyError } from './passwordVerification';
 import { createComponentLogger } from './logging/logger';
 import {
   clearAllParties,
@@ -26,6 +26,7 @@ import {
 import { broadcastJoinableParties } from './party/publicLobbies';
 
 const adminLogger = createComponentLogger('admin-http');
+const verifyPassword = createPasswordVerifier();
 
 // Simple in-memory rate limiting for admin endpoints
 const rateLimitMap = new Map<string, RateLimitRecord>();
@@ -392,7 +393,7 @@ function requireAdminCsrf(req: Request, res: Response, next: NextFunction): void
 }
 
 export function registerAdminRoutes(app: Express, io?: Server): void {
-  app.post('/api/admin/login', (req, res) => {
+  app.post('/api/admin/login', async (req, res) => {
     if (!isAdminEnabled()) {
       res.status(503).json({
         ok: false,
@@ -422,7 +423,17 @@ export function registerAdminRoutes(app: Express, io?: Server): void {
     const expectedUsername = readAdminUsername()!;
     const hash = readAdminPasswordHash()!;
     const usernameOk = username === expectedUsername;
-    const passwordOk = bcrypt.compareSync(password, hash);
+    let passwordOk: boolean;
+    try {
+      passwordOk = await verifyPassword(password, hash);
+    } catch (error) {
+      // Never log worker errors containing credentials or the password hash.
+      const busy = error instanceof PasswordVerificationBusyError;
+      adminLogger.warn({ busy }, 'admin password verification unavailable');
+      res.setHeader('Retry-After', '1');
+      res.status(503).json({ ok: false, error: 'Authentication temporarily unavailable' });
+      return;
+    }
     if (!usernameOk || !passwordOk) {
       // No username: a failed attempt is often a password typed into the wrong field.
       adminLogger.warn({ ip }, 'admin login failed');

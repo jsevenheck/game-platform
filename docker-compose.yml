@@ -27,6 +27,7 @@ services:
     environment:
       - NODE_ENV=production
       - PORT=3002
+      - SOCKET_ALLOWED_ORIGINS=${SOCKET_ALLOWED_ORIGINS:-https://${COMPOSE_PROJECT_NAME}.${TRAEFIK_HOST}}
       - DB_PATH=/data/blackout/blackout.sqlite
       - IMPOSTER_WORDS_DIR=/data/imposter
     volumes:

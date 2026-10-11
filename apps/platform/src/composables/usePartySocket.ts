@@ -8,7 +8,7 @@ export type JoinableListResponse =
 
 export type SetPartyPublicResponse = { ok: true; isPublic: boolean } | { ok: false; error: string };
 
-interface PartyClientToServerEvents {
+export interface PartyClientToServerEvents {
   createParty: (
     data: { playerName: string },
     cb: (

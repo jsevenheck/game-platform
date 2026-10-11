@@ -1,8 +1,10 @@
 <script setup lang="ts">
 import { useI18n } from 'vue-i18n';
 import { partyConnectionLost, partyServerRestarting } from './composables/usePartySocket';
+import { usePartyStore } from './stores/party';
 
 const { t } = useI18n();
+const store = usePartyStore();
 </script>
 
 <template>
@@ -16,6 +18,13 @@ const { t } = useI18n();
       >
         <span class="connection-banner-dot" aria-hidden="true" />
         {{ partyServerRestarting ? t('connection.restarting') : t('connection.lost') }}
+      </p>
+      <p
+        v-if="store.persistenceUnavailable && store.playerId"
+        class="connection-banner"
+        data-testid="session-storage-warning"
+      >
+        {{ t('session.persistenceUnavailable') }}
       </p>
     </div>
   </Teleport>

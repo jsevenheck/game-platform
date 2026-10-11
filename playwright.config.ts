@@ -10,6 +10,10 @@ import { defineConfig, devices } from '@playwright/test';
 const pnpmCommand = process.platform === 'win32' ? 'pnpm.cmd' : 'pnpm';
 const nodeCommand = process.platform === 'win32' ? `"${process.execPath}"` : process.execPath;
 
+// Dedicated ports keep tests isolated from a developer's running instance.
+const apiPort = Number(process.env.E2E_API_PORT ?? 3100);
+const clientPort = Number(process.env.E2E_CLIENT_PORT ?? 5273);
+
 export default defineConfig({
   testDir: '.',
   testMatch: ['games/*/e2e/**/*.spec.ts', 'apps/platform/e2e/**/*.spec.ts'],
@@ -17,10 +21,12 @@ export default defineConfig({
   fullyParallel: false,
   forbidOnly: !!process.env.CI,
   retries: process.env.CI ? 2 : 0,
-  workers: 8,
+  // Multiplayer tests open several browser contexts per worker. Bound resource
+  // pressure so request deadlines stay meaningful instead of failing on load.
+  workers: 2,
   reporter: [['html', { open: 'never' }]],
   use: {
-    baseURL: 'http://localhost:5173',
+    baseURL: `http://localhost:${clientPort}`,
     headless: true,
     trace: 'on-first-retry',
   },
@@ -33,14 +39,19 @@ export default defineConfig({
   webServer: [
     {
       command: `${nodeCommand} apps/platform/scripts/dev-server.cjs`,
-      port: 3000,
+      port: apiPort,
       reuseExistingServer: false,
-      env: { E2E_TESTS: '1' },
+      env: {
+        E2E_TESTS: '1',
+        PORT: String(apiPort),
+        SOCKET_ALLOWED_ORIGINS: `http://localhost:${clientPort}`,
+      },
     },
     {
-      command: `${pnpmCommand} -C apps/platform dev:client`,
-      port: 5173,
-      reuseExistingServer: !process.env.CI,
+      command: `${pnpmCommand} -C apps/platform dev:client --port ${clientPort} --strictPort`,
+      port: clientPort,
+      reuseExistingServer: false,
+      env: { API_PORT: String(apiPort) },
       stderr: 'ignore',
     },
   ],

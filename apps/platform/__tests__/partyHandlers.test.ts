@@ -3,6 +3,8 @@ import { registerPartyHandlers, resetPartyActionRateLimit } from '../server/part
 import {
   getParty,
   getPartyByInviteCode,
+  getPartyBySocket,
+  getAllParties,
   deleteParty,
   clearPartyCleanup,
 } from '../server/party/partyStore';
@@ -52,6 +54,7 @@ function createNamespace() {
     }),
     getConnectionHandler: () => connectionHandler,
     toMocks,
+    sockets: new Map<string, ReturnType<typeof createSocket>>(),
   };
 }
 
@@ -79,6 +82,7 @@ function setup() {
 
 function connectSocket(ctx: ReturnType<typeof setup>, socketId: string) {
   const socket = createSocket(socketId);
+  ctx.namespace.sockets.set(socketId, socket);
   ctx.connectionHandler(socket);
   return socket;
 }
@@ -122,6 +126,103 @@ describe('partyHandlers', () => {
     expect(res.partyView.members).toHaveLength(1);
     expect(res.playerId).toBeTruthy();
     expect(res.resumeToken).toBeTruthy();
+  });
+
+  it('rejects a second creation and expires the original party after disconnect', () => {
+    vi.useFakeTimers();
+    const ctx = setup();
+    const { socket, res } = createPartyViaSocket(ctx, 'sock-1');
+    socket.handlers.setPartyPublic({ playerId: res.playerId, isPublic: true }, vi.fn());
+    const count = getAllParties().length;
+    const cb = vi.fn();
+    socket.handlers.createParty({ playerName: 'Another host' }, cb);
+    expect(cb).toHaveBeenCalledExactlyOnceWith({ ok: false, error: 'Already in a party' });
+    expect(getAllParties()).toHaveLength(count);
+    expect(getPartyBySocket(socket.id)?.partyId).toBe(res.partyView.partyId);
+    socket.handlers.disconnect();
+    expect(getJoinablePublicPartiesSnapshot()).toHaveLength(0);
+    expect(getParty(res.partyView.partyId)?.members.get(res.playerId)?.connected).toBe(false);
+    vi.advanceTimersByTime(31 * 60 * 1000);
+    expect(getParty(res.partyView.partyId)).toBeUndefined();
+  });
+
+  it('rejects cross-party join and resume without altering either membership', () => {
+    const ctx = setup();
+    const { socket, res: first } = createPartyViaSocket(ctx, 'sock-1');
+    const { res: second } = createPartyViaSocket(ctx, 'sock-2');
+    const joinCb = vi.fn();
+    socket.handlers.joinParty(
+      { inviteCode: second.partyView.inviteCode, playerName: 'Other' },
+      joinCb
+    );
+    expect(joinCb).toHaveBeenCalledExactlyOnceWith({ ok: false, error: 'Already in a party' });
+    const resumeCb = vi.fn();
+    socket.handlers.resumeParty(
+      {
+        inviteCode: second.partyView.inviteCode,
+        playerId: second.playerId,
+        resumeToken: second.resumeToken,
+      },
+      resumeCb
+    );
+    expect(resumeCb).toHaveBeenCalledExactlyOnceWith({ ok: false, error: 'Already in a party' });
+    expect(getPartyBySocket(socket.id)?.partyId).toBe(first.partyView.partyId);
+    expect(getParty(second.partyView.partyId)?.members.size).toBe(1);
+    expect(getParty(second.partyView.partyId)?.members.get(second.playerId)?.socketId).toBe(
+      'sock-2'
+    );
+  });
+
+  it('allows idempotent same-session resume but rejects another identity on the same socket', () => {
+    const ctx = setup();
+    const { socket, res } = createPartyViaSocket(ctx, 'sock-1');
+    const cb = vi.fn();
+    socket.handlers.resumeParty(
+      {
+        inviteCode: res.partyView.inviteCode,
+        playerId: res.playerId,
+        resumeToken: res.resumeToken,
+      },
+      cb
+    );
+    expect(cb.mock.calls[0][0].ok).toBe(true);
+    const other = connectSocket(ctx, 'sock-2');
+    const joined = vi.fn();
+    other.handlers.joinParty({ inviteCode: res.partyView.inviteCode, playerName: 'Other' }, joined);
+    const member = joined.mock.calls[0][0];
+    const rejected = vi.fn();
+    socket.handlers.resumeParty(
+      {
+        inviteCode: res.partyView.inviteCode,
+        playerId: member.playerId,
+        resumeToken: member.resumeToken,
+      },
+      rejected
+    );
+    expect(rejected).toHaveBeenCalledExactlyOnceWith({ ok: false, error: 'Already in a party' });
+  });
+
+  it('removes a replaced socket from the old party room and ignores its later disconnect', () => {
+    const ctx = setup();
+    const { socket, res } = createPartyViaSocket(ctx, 'sock-1');
+    const replacement = connectSocket(ctx, 'sock-2');
+    const cb = vi.fn();
+    replacement.handlers.resumeParty(
+      {
+        inviteCode: res.partyView.inviteCode,
+        playerId: res.playerId,
+        resumeToken: res.resumeToken,
+      },
+      cb
+    );
+    expect(cb.mock.calls[0][0].ok).toBe(true);
+    expect(socket.leave).toHaveBeenCalledWith(res.partyView.partyId);
+    expect(getPartyBySocket(socket.id)).toBeUndefined();
+    socket.handlers.disconnect();
+    expect(getParty(res.partyView.partyId)?.members.get(res.playerId)).toMatchObject({
+      connected: true,
+      socketId: replacement.id,
+    });
   });
 
   it('rejects party creation with empty name', () => {

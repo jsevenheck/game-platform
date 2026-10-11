@@ -2,6 +2,12 @@ export const en = {
   connecting: 'Connecting...',
   teams: { red: 'Red', blue: 'Blue', green: 'Green', orange: 'Orange' },
   teamOf: '{color} Team',
+  cards: {
+    neutral: 'Neutral',
+    assassin: 'Assassin',
+    revealed: 'Revealed',
+    markedBy: 'Marked by {name}',
+  },
   roles: { director: 'Director', agent: 'Agent', directorShort: 'DIR', agentShort: 'AGT' },
   lobby: {
     players: 'Players ({count})',

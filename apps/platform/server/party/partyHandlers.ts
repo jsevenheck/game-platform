@@ -262,6 +262,10 @@ export function registerPartyHandlers(io: Server): void {
           return respond({ ok: false, error: 'Invalid player name' });
         }
 
+        if (getPartyBySocket(socket.id)) {
+          return respond({ ok: false, error: 'Already in a party' });
+        }
+
         const playerId = nanoid(8);
         const { party, hostResumeToken } = createParty(playerId, name, socket.id);
         socket.join(party.partyId);
@@ -360,6 +364,10 @@ export function registerPartyHandlers(io: Server): void {
         if (nameExists) {
           incrementPartyLifecycle({ event: 'joinParty', result: 'rejected', reason: 'name_taken' });
           return respond({ ok: false, error: 'Name already taken' });
+        }
+
+        if (getPartyBySocket(socket.id)) {
+          return respond({ ok: false, error: 'Already in a party' });
         }
 
         const playerId = nanoid(8);
@@ -480,7 +488,17 @@ export function registerPartyHandlers(io: Server): void {
           return respond({ ok: false, error: 'Invalid resume token' });
         }
 
-        if (member.socketId) {
+        // Resuming the same identity is idempotent. Rebinding an already
+        // occupied socket would orphan its previous member and party room.
+        const boundParty = getPartyBySocket(socket.id);
+        if (boundParty && (boundParty !== party || member.socketId !== socket.id)) {
+          return respond({ ok: false, error: 'Already in a party' });
+        }
+
+        if (member.socketId && member.socketId !== socket.id) {
+          // A second tab may take over a session, but the stale socket must
+          // no longer receive private party updates or act as this member.
+          nsp.sockets.get(member.socketId)?.leave(party.partyId);
           unregisterSocket(member.socketId);
         }
         member.socketId = socket.id;

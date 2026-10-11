@@ -99,6 +99,14 @@ test.describe('Secret Signals via Platform', () => {
 
     await expect(host.locator('.turn-indicator')).toContainText('Red Team');
 
+    // Essential card types are text and accessible names, never color alone.
+    // Unrevealed agents must receive no hidden type marker or type label.
+    await expect(host.locator('.card-type-label')).toHaveCount(25);
+    await expect(bob.locator('.card-type-label')).toHaveCount(0);
+    const directorCard = host.locator('[data-card-index="0"]');
+    await expect(directorCard).toHaveAccessibleName(/, Red$/);
+    await expect(bob.locator('[data-card-index="0"]')).not.toHaveAccessibleName(/, Red/);
+
     await host.getByPlaceholder('Clue word').fill('ALPHA');
     await host.getByRole('button', { name: 'Send Signal' }).click();
 
@@ -109,6 +117,10 @@ test.describe('Secret Signals via Platform', () => {
     await redFirstCard.click();
     await expect(bob.getByRole('button', { name: 'Reveal Card' })).toBeVisible();
     await bob.getByRole('button', { name: 'Reveal Card' }).click();
+    await expect(redFirstCard).toHaveAccessibleName(/, Red, Revealed/);
+    await expect(redFirstCard.locator('.card-type-label')).toHaveText('Red');
+    await host.getByRole('button', { name: 'DE', exact: true }).click();
+    await expect(directorCard).toHaveAccessibleName(/, Rot, Aufgedeckt/);
     await bob.getByRole('button', { name: 'End Turn' }).click();
 
     await expect(cara.locator('.turn-indicator')).toContainText('Blue Team');
