@@ -17,5 +17,13 @@ games/blackout/server/src/db/*.sqlite
 games/blackout/server/src/db/*.sqlite-shm
 games/blackout/server/src/db/*.sqlite-wal
 
-# graft's local graph cache — regenerable, not committed (run `graft build`).
-/graft/
+# Trail’s generated code map; keep the empty directory for the cache symlink.
+/graft/*
+!/graft/.gitkeep
+# Shared init intent: prevent first-session re-init and machine-wide writes.
+!/graft/.cache/
+/graft/.cache/*
+!/graft/.cache/wiring-stamp.json
+
+# Machine-specific Claude settings (shared Trail wiring lives in settings.json).
+.claude/settings.local.json

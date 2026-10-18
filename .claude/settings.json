@@ -68,10 +68,8 @@
       "Write(**/*.sh)",
       "Write(**/.env.example)",
       "Read(**/*)",
-      "Bash(graft:*)",
-      "Bash(npx graft:*)",
-      "Bash(graft-dev:*)",
-      "Bash(node dist/cli.js:*)"
+      "Bash(trail:*)",
+      "Bash(npx @trailhq/trail-code:*)"
     ],
     "deny": [
       "Bash(git add*)",
@@ -93,13 +91,13 @@
     ]
   },
   "hooks": {
-    "UserPromptSubmit": [
+    "SessionStart": [
       {
         "hooks": [
           {
             "type": "command",
-            "command": "node \"${CLAUDE_PROJECT_DIR:-.}/.claude/helpers/graft-hooks.cjs\" prompt",
-            "timeout": 15000
+            "command": "node \"${CLAUDE_PROJECT_DIR:-.}/.trail/hook.cjs\" session-start",
+            "timeout": 8000
           }
         ]
       }
@@ -110,29 +108,29 @@
         "hooks": [
           {
             "type": "command",
-            "command": "node \"${CLAUDE_PROJECT_DIR:-.}/.claude/helpers/graft-hooks.cjs\" post-edit",
+            "command": "node \"${CLAUDE_PROJECT_DIR:-.}/.trail/hook.cjs\" post-edit",
             "timeout": 10000
           }
         ]
       },
       {
-        "matcher": "Bash|mcp__graft__|Read|Grep|Glob",
+        "matcher": "Bash|mcp__trail__|Read|Grep|Glob",
         "hooks": [
           {
             "type": "command",
-            "command": "node \"${CLAUDE_PROJECT_DIR:-.}/.claude/helpers/graft-hooks.cjs\" tool-savings",
+            "command": "node \"${CLAUDE_PROJECT_DIR:-.}/.trail/hook.cjs\" tool-savings",
             "timeout": 8000
           }
         ]
       }
     ],
-    "SessionStart": [
+    "UserPromptSubmit": [
       {
         "hooks": [
           {
             "type": "command",
-            "command": "node \"${CLAUDE_PROJECT_DIR:-.}/.claude/helpers/graft-hooks.cjs\" session-start",
-            "timeout": 8000
+            "command": "node \"${CLAUDE_PROJECT_DIR:-.}/.trail/hook.cjs\" prompt",
+            "timeout": 15000
           }
         ]
       }
@@ -142,8 +140,19 @@
         "hooks": [
           {
             "type": "command",
-            "command": "node \"${CLAUDE_PROJECT_DIR:-.}/.claude/helpers/graft-hooks.cjs\" stop",
+            "command": "node \"${CLAUDE_PROJECT_DIR:-.}/.trail/hook.cjs\" stop",
             "timeout": 8000
+          }
+        ]
+      }
+    ],
+    "SessionEnd": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "node \"${CLAUDE_PROJECT_DIR:-.}/.trail/hook.cjs\" session-end",
+            "timeout": 5000
           }
         ]
       }
@@ -151,11 +160,11 @@
   },
   "statusLine": {
     "type": "command",
-    "command": "node \"${CLAUDE_PROJECT_DIR:-.}/.claude/helpers/graft-statusline.cjs\""
+    "command": "node \"${CLAUDE_PROJECT_DIR:-.}/.trail/statusline.cjs\""
   },
   "subagentStatusLine": {
     "type": "command",
-    "command": "node \"${CLAUDE_PROJECT_DIR:-.}/.claude/helpers/graft-statusline.cjs\""
+    "command": "node \"${CLAUDE_PROJECT_DIR:-.}/.trail/statusline.cjs\""
   },
   "footerLinksRegexes": [
     "graft/[\\w./-]+\\.md"

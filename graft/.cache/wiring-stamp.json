@@ -1,0 +1,13 @@
+{
+  "version": "0.23.0",
+  "hosts": [
+    "agents",
+    "claude"
+  ],
+  "opts": {
+    "global": false,
+    "mcp": true,
+    "hooks": true,
+    "statusline": true
+  }
+}
