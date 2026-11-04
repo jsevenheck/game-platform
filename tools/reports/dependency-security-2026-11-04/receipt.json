@@ -1,0 +1,83 @@
+{
+  "verifiedAtUtc": "2026-11-04T13:03:43Z",
+  "baseCommit": "933029c59410384ec5341f7c6919c97072cb21c1",
+  "branch": "fix/secret-signals-header-spacing",
+  "testedSourceSha256": {
+    "package.json": "0018b26b0b16379cade54c4f904871dbe96e54e5dfa1fa3eb812c45e992bbffa",
+    "apps/platform/package.json": "b8c403090a7e2b9f5753379e2ac3a27dc304b812c8ea14965f01eafc49adff0b",
+    "pnpm-workspace.yaml": "62b6281ebb4b9860eae71d716cbd40037da1febb29a4e050afb08324ab177b3e",
+    "pnpm-lock.yaml": "c76969f4e01f15a42701a2927ec9aca51df5a9a05c3db294103434d6bdd61df0"
+  },
+  "versions": {
+    "body-parser": "2.4.0",
+    "vue-i18n": "11.4.18",
+    "qs": "6.16.1"
+  },
+  "commands": {
+    "pnpm run test": {
+      "exitCode": 0,
+      "files": 63,
+      "passed": 658
+    },
+    "CI=true pnpm exec playwright test --project=chromium --retries=0 --reporter=line": {
+      "exitCode": 0,
+      "passed": 73,
+      "retries": 0
+    },
+    "pnpm run typecheck": {
+      "exitCode": 0
+    },
+    "pnpm run typecheck:games": {
+      "exitCode": 0
+    },
+    "pnpm run lint": {
+      "exitCode": 0
+    },
+    "pnpm run build": {
+      "exitCode": 0
+    },
+    "pnpm audit --audit-level=high --json": {
+      "exitCode": 0,
+      "high": 0,
+      "critical": 0,
+      "moderate": 1,
+      "low": 0
+    },
+    "node <scratch>/game-platform-security-smoke.cjs": {
+      "exitCode": 0,
+      "source": "production-smoke.cjs.txt",
+      "httpHealth": 200,
+      "httpIndex": 200,
+      "validGzip": 503,
+      "malformedGzip": 400,
+      "gzipWithTrailingBytes": 400,
+      "healthAfterRequests": 200,
+      "srcdocNeutralized": true,
+      "browser": "real production four-player party to Secret Signals lobby",
+      "viewports": [
+        [1280, 800],
+        [390, 844]
+      ],
+      "pageErrors": 0,
+      "ownedServerStopped": true
+    }
+  },
+  "boundaries": [
+    "one moderate minimatch dev-toolchain advisory remains",
+    "local production smoke is not deployment or full-game completion",
+    "external font requests blocked; no application/API response mocks",
+    "initial smoke fixture attempts failed before the recorded successful run; no app source changed",
+    "Docker build/runtime and Hosted CI not executed in this slice"
+  ],
+  "artifactsSha256": {
+    "audit-before.json": "c4bad217a025f861de42437f8a5caa826bfb43de8587585096e7788620fde9bd",
+    "audit-after-high.json": "33d34e163fc27d845776c20defc31a57b20b0186d23100922b2c719548c79e99",
+    "audit-after-all.json": "e6a6d5a80f6cadec9012a4cba4573e3ab5d2a8fe79839850bdc28880e56b785f",
+    "unit.log": "ce457b175e625fec53536b1aac8a9014364e6ed586480d2f965ac3f3ee06ce01",
+    "e2e.log": "caa89236d91108c8df8a2916b7952eacd97cfe4eb2c9bdf50dc0cedb11ce9ca6",
+    "production.log": "78b30907b09f131b1d4b75a824c99db00147768c3c6b370bd3a766dbdda720f2",
+    "production-390.png": "b3ce82a748f8e3f860f3e44f51d04071548280c812ddfbea8a71486d48f14029",
+    "production-1280.png": "15f2c017a1df4626a64d0f11936b20a186d87f9cd69f9d7b0d235a4d5253015b",
+    "production-smoke.cjs.txt": "918b30e38ea9bec5854826679896d1d96317dde3d759708b643f8d1ad1eb5119"
+  }
+}
