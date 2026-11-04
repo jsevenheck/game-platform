@@ -248,12 +248,11 @@ onBeforeUnmount(() => {
   z-index: 10001;
 }
 
-/* The fixed Leave button sits in the top-left corner; on phones game content
-   is full-width and would start underneath it, so reserve its height. */
-@media (max-width: 640px), (pointer: coarse) {
-  .game-shell {
-    padding-top: 3.5rem;
-  }
+/* Both teleported platform controls occupy the top edge on every viewport.
+   Reserve their height in the game shell so embedded game headers and turn
+   indicators never start underneath the controls. */
+.game-shell {
+  padding-top: 3.5rem;
 }
 
 .game-leave-btn {

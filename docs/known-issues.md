@@ -1,28 +1,5 @@
 # Bekannte Einschränkungen
 
-## Plattform-Controls und Game-Overlays
-
-**Betroffen:** Secret Signals auf Tablet/Desktop
-
-**Aktuelles Verhalten:** Die Plattform-Controls sind am oberen Viewport-Rand fixiert
-und liegen mit `z-index: 10000` über dem Basislayer normaler Game-Overlays
-(`.ui-overlay`, `z-index: 9999`). Der Leave-Bestätigungsdialog liegt darüber
-(`z-index: 10001`). Der Secret-Signals-Turn-Indikator beginnt weiterhin am oberen Rand;
-zusätzlicher Platz in der Game-Shell wird nur bei schmalen Viewports oder grobem Zeiger
-reserviert.
-
-**Auswirkung:** Bei größeren Viewports kann der feste Plattform-Header den aktuellen
-Turn-/Team-Status teilweise überdecken. Der Leave-Bestätigungsdialog bleibt über normalen
-Game-Overlays sichtbar.
-
-**Status:** Die Overlay-Reihenfolge des Leave-Bestätigungsdialogs ist behoben. Die
-Abstandskollision des Secret-Signals-Turn-Indikators an größeren Breakpoints bleibt
-bekannt.
-
-**Empfohlene Lösung:** Für Secret Signals an den betroffenen Breakpoints Platz unter dem
-Plattform-Header reservieren. Danach Header, Turn-Indikator, Game-Overlays und Leave-Dialog
-gemeinsam per Browser-Smoke-Test prüfen.
-
 ## Scout: 2-Spieler-Regeln
 
 **Betroffen:** Scout bei genau zwei Spielern

@@ -1,0 +1,43 @@
+const { createRequire } = require('node:module');
+const requireRepo = createRequire('/opt/data/workspace/coding/game-platform/package.json');
+const { chromium } = requireRepo('@playwright/test');
+const { createI18n } = requireRepo('vue-i18n');
+const { spawn } = require('node:child_process');
+const fs = require('node:fs');
+const net = require('node:net');
+const http = require('node:http');
+const zlib = require('node:zlib');
+const assert = require('node:assert/strict');
+const { once } = require('node:events');
+(async () => {
+ const root='/opt/data/workspace/coding/game-platform';
+ const dir=fs.mkdtempSync('/opt/data/cache/scratch/game-platform-prod-security-');
+ fs.writeFileSync(dir+'/.env','');
+ const holder=net.createServer();holder.listen(0,'127.0.0.1');await once(holder,'listening');const port=holder.address().port;await new Promise(r=>holder.close(r));
+ const child=spawn(process.execPath,[root+'/apps/platform/dist/server/apps/platform/server/index.js'],{cwd:dir,env:{...process.env,NODE_ENV:'production',PORT:String(port),DB_PATH:dir+'/blackout.sqlite',IMPOSTER_PERSIST_WORDS:'false',IMPOSTER_WORDS_DIR:dir+'/words',ADMIN_USERNAME:'',ADMIN_PASSWORD_HASH:'',ADMIN_JWT_SECRET:'',LOG_LEVEL:'error'}});
+ let log='';child.stdout.on('data',x=>log+=x);child.stderr.on('data',x=>log+=x);
+ const exit=once(child,'exit');let browser;
+ try {
+  const url='http://127.0.0.1:'+port;
+  let ready=false;
+  for(let n=0;n<80;n++){if(child.exitCode!==null)throw Error('server exited '+child.exitCode);try{const r=await fetch(url+'/health');if(r.ok){assert.deepEqual(await r.json(),{ok:true});ready=true;break;}}catch{} await new Promise(r=>setTimeout(r,100));}
+  assert.ok(ready,'production server ready');
+  assert.equal((await fetch(url+'/')).status,200);
+  async function post(body){return await new Promise((resolve,reject)=>{const req=http.request(url+'/api/admin/login',{method:'POST',headers:{'content-type':'application/json','content-encoding':'gzip','content-length':body.length}},res=>{res.resume();res.on('end',()=>resolve(res.statusCode));});req.setTimeout(5000,()=>req.destroy(Error('request timeout')));req.on('error',reject);req.end(body);});}
+  const valid=await post(zlib.gzipSync(Buffer.from('{}')));assert.equal(valid,503,'valid gzip reaches disabled admin route');
+  const malformed=await post(Buffer.from('not gzip'));assert.equal(malformed,400);
+  const trailing=await post(Buffer.concat([zlib.gzipSync(Buffer.from('{}')),Buffer.from('trailing bytes')]));assert.ok([400,503].includes(trailing));
+  assert.equal((await fetch(url+'/health')).status,200);assert.equal(child.exitCode,null);
+  const i18n=createI18n({legacy:false,locale:'en',escapeParameter:true,warnHtmlMessage:false,messages:{en:{message:'<iframe srcdoc="<b>x</b>"></iframe>'}}});
+  const sanitized=i18n.global.t('message');assert.ok(!/\bsrcdoc\s*=/i.test(sanitized),'srcdoc attribute neutralized');
+  browser=await chromium.launch({headless:true});const page=await browser.newPage();const pageErrors=[];page.on('pageerror',e=>pageErrors.push(e.message));await page.route('https://fonts.googleapis.com/**',r=>r.abort());await page.route('https://fonts.gstatic.com/**',r=>r.abort());
+  await page.goto(url);await page.locator('.home-title').waitFor();await page.getByRole('tab',{name:'Host a Party'}).click();await page.fill('#name','Security Smoke');await page.click('button[type="submit"]');await page.waitForURL(/\/party\/[A-Z0-9]+/);const invite=page.url().split('/party/')[1];for(const name of ['Smoke Two','Smoke Three','Smoke Four']){const guest=await (await browser.newContext()).newPage();await guest.goto(url);await guest.getByRole('tab',{name:'Join with Code'}).click();await guest.fill('#name',name);await guest.fill('#code',invite);await guest.click('button[type="submit"]');await guest.waitForURL(/\/party\/[A-Z0-9]+/);}await page.locator('text=Players (4)').waitFor();await page.getByRole('button',{name:'Secret Signals'}).click();await page.getByRole('button',{name:'Launch Game',exact:true}).click();await page.waitForURL(/\/game\/secret-signals/);await page.locator('.lobby').waitFor();
+  const viewports=[{width:1280,height:800},{width:390,height:844}];
+  for(const vp of viewports){await page.setViewportSize(vp);assert.ok(await page.locator('.game-controls-start').isVisible());assert.ok(await page.locator('.game-controls-end').isVisible());const overflow=await page.evaluate(()=>document.documentElement.scrollWidth>document.documentElement.clientWidth);assert.equal(overflow,false,JSON.stringify(vp)+' no document overflow');await page.screenshot({path:dir+'/production-'+vp.width+'.png',fullPage:true});}
+  assert.deepEqual(pageErrors,[]);
+  console.log(JSON.stringify({productionHealth:200,productionIndex:200,gzipStatus:valid,malformedGzipStatus:malformed,trailingGzipStatus:trailing,healthAfterCompressedRequests:200,i18nSanitized:sanitized,browser:'real production server, host/create/select/launch Secret Signals',viewports,pageErrors,artifacts:dir},null,2));
+ } finally {
+  if(browser)await browser.close();if(child.exitCode===null)child.kill('SIGTERM');await Promise.race([exit,new Promise((_,reject)=>setTimeout(()=>reject(Error('server shutdown timeout')),5000))]);assert.ok(child.exitCode!==null || child.signalCode!==null);console.log('Owned production server stopped');
+  fs.writeFileSync(dir+'/server.log',log);
+ }
+})().catch(e=>{console.error(e);process.exitCode=1;});

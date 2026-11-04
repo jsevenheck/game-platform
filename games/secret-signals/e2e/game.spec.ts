@@ -26,6 +26,29 @@ async function launchGame(hostPage: Page, gameName: string): Promise<void> {
   await hostPage.waitForURL(/\/game\//);
 }
 
+async function expectTurnIndicatorBelowPlatformControls(page: Page): Promise<void> {
+  const indicator = page.locator('.turn-indicator');
+  const controls = page.locator('.game-controls');
+  await expect(indicator).toBeVisible();
+  await expect(controls.first()).toBeVisible();
+
+  await page.evaluate(() => window.scrollTo(0, 0));
+  const [indicatorBox, controlBoxes] = await Promise.all([
+    indicator.boundingBox(),
+    controls.evaluateAll((elements) =>
+      elements.map((element) => {
+        const rect = element.getBoundingClientRect();
+        return { bottom: rect.bottom };
+      })
+    ),
+  ]);
+
+  expect(indicatorBox).not.toBeNull();
+  expect(controlBoxes.length).toBeGreaterThan(0);
+  const lowestControlBottom = Math.max(...controlBoxes.map(({ bottom }) => bottom));
+  expect(indicatorBox!.y).toBeGreaterThanOrEqual(lowestControlBottom);
+}
+
 // ── Game helpers ──────────────────────────────────────────────────────────────
 
 async function chooseTeam(page: Page, teamColor: string): Promise<void> {
@@ -98,6 +121,9 @@ test.describe('Secret Signals via Platform', () => {
     const [host, bob, cara] = pages as [Page, Page, Page, Page];
 
     await expect(host.locator('.turn-indicator')).toContainText('Red Team');
+    await expectTurnIndicatorBelowPlatformControls(host);
+    await host.setViewportSize({ width: 1024, height: 768 });
+    await expectTurnIndicatorBelowPlatformControls(host);
 
     // Essential card types are text and accessible names, never color alone.
     // Unrevealed agents must receive no hidden type marker or type label.

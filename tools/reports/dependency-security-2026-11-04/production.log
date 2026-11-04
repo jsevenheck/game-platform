@@ -1,0 +1,24 @@
+[intlify] Potentially dangerous srcdoc attribute detected in translation. Consider removing srcdoc from your translation messages.
+{
+  "productionHealth": 200,
+  "productionIndex": 200,
+  "gzipStatus": 503,
+  "malformedGzipStatus": 400,
+  "trailingGzipStatus": 400,
+  "healthAfterCompressedRequests": 200,
+  "i18nSanitized": "<iframe &#115;rcdoc=\"&lt;b&gt;x&lt;/b&gt;\"></iframe>",
+  "browser": "real production server, host/create/select/launch Secret Signals",
+  "viewports": [
+    {
+      "width": 1280,
+      "height": 800
+    },
+    {
+      "width": 390,
+      "height": 844
+    }
+  ],
+  "pageErrors": [],
+  "artifacts": "/opt/data/cache/scratch/game-platform-prod-security-9KMR1T"
+}
+Owned production server stopped
