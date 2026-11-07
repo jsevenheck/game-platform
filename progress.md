@@ -2,7 +2,27 @@
 
 Basis: `origin/main` `ad8cee9f4a365bde53770b1996b57cb2eb7f9e27` (03.11.2026). Bearbeitung auf Branch `fix/secret-signals-header-spacing`; Findings werden einzeln behoben und jeweils gezielt verifiziert. Merge und Deployment sind nicht Teil dieses Checkpoints.
 
-Aktuelle lokale Gates (04.11.2026): Unit-Tests 658/658, Chromium-E2E 73/73 ohne Retries, Lint, Format, Typecheck, Game-Typecheck, Build und `pnpm audit --audit-level=high` bestanden. Ein moderates Advisory in der Dev-Abhängigkeit `minimatch` bleibt offen. Produktionsbuild lokal per HTTP und Desktop-/Mobile-Browser geprüft; kein Deployment. Docker-Build/-Runtime weiterhin nicht verifiziert.
+Historische Review-Gates (04.11.2026): Unit-Tests 658/658, Chromium-E2E 73/73 ohne Retries, Lint, Format, Typecheck, Game-Typecheck, Build und `pnpm audit --audit-level=high` bestanden. Ein moderates Advisory in der Dev-Abhängigkeit `minimatch` bleibt offen. Produktionsbuild lokal per HTTP und Desktop-/Mobile-Browser geprüft; kein Deployment. Docker-Build/-Runtime weiterhin nicht verifiziert.
+
+## Kritzelagent-Feedback (07.11.2026)
+
+Branch `fix/kritzelagent-turn-feedback`, erstellt von `origin/main`
+`9ece1aad315cc8b8bae42f947845cd77a8348b7f`.
+
+- Zeichenreihenfolge wird pro Runde serverseitig gemischt; beide Zeichendurchgänge
+  verwenden dieselbe Rundenreihenfolge. Zufällige Wiederholungen sind möglich.
+- Lange Pointer-Gesten werden vor dem Versand auf maximal 80 Punkte reduziert,
+  statt wegen ihrer Länge als ungültig abgelehnt zu werden. Taps/degenerierte
+  Striche bleiben lokal und verbrauchen keinen Zug; Servervalidierung bleibt strikt.
+- Jeder eigene Zeichenzug öffnet ein DE/EN-Popup mit Bestätigung und Escape.
+  Fokus bleibt im Popup statt zur Phasenüberschrift zu springen.
+- Aktuell verifiziert: Typecheck, Game-Typecheck, Lint, Format, Unit-Tests
+  665/665 (Kritzelagent 44/44), Chromium-E2E 74/74 ohne Retries und Produktionsbuild.
+  Zusätzlicher Lauf gegen den echten lokalen Produktionsbuild: Kritzelagent 2/2,
+  einschließlich fünf Runden, langer Gesten, Taps, wiederkehrender Popups sowie
+  320-Pixel-Layout mit doppelter Schriftgröße und Tastaturbedienung.
+- Keine Dependencies geändert. Historische Audit-/Docker-Nachweise des Reviews
+  sind keine neuen Gates dieses Slices. Kein Merge oder Deployment.
 
 ## Findings
 
@@ -25,6 +45,6 @@ Aktuelle lokale Gates (04.11.2026): Unit-Tests 658/658, Chromium-E2E 73/73 ohne 
 - F-05: Flip-7-README nennt nun das Standardziel 200 und die Host-Einstellung 100–500 in 50er-Schritten. `docs/api.md` deckte das bereits korrekt ab und blieb unverändert. Known Issues dokumentiert weiterhin die gültige Overlay-Schichtung; die separate Secret-Signals-Turn-Indikator-Kollision wird in F-06 behandelt. Gegen `GameView.vue` abgeglichen: `.ui-overlay` 9999, Controls 10000, Leave-Dialog 10001. Keine F-05-Codeänderung.
 - F-06: `.game-shell` reserviert auf allen Viewports `3.5rem` Platz für die teleportierten Plattform-Controls. Der Secret-Signals-E2E-Test misst die tatsächlichen Bounding-Boxen und prüft den Ausgangs-Viewport sowie `1024×768`; der fokussierte Lauf bestand mit 1/1, der vollständige Chromium-Lauf mit 73/73. `pnpm run typecheck`, `pnpm run typecheck:games`, `pnpm test` (63 Dateien/658 Tests), `pnpm run build`, `pnpm lint`, `pnpm format:check`, `git diff --check` und `trail build` bestanden.
 - F-07 (04.11.2026): Vue-I18n-Mindestversion in Root und Plattform auf `^11.4.14` angehoben; Lockfile löst Vue-I18n und `@intlify/*` konsistent auf `11.4.18` auf. Ein auf die betroffene 2.x-Linie beschränkter Workspace-Override setzt `body-parser` auf `2.4.0`. Der bestehende `qs`-Pin steigt auf `6.16.1`, um dessen neue Mindestanforderung zu erfüllen. Keine anderen Paket-Majors geändert. Offizielle Advisories: [body-parser GHSA-27r3-jxmh-p828](https://github.com/advisories/GHSA-27r3-jxmh-p828), [Vue-I18n GHSA-83rm-6c8r-g728](https://github.com/intlify/vue-i18n/security/advisories/GHSA-83rm-6c8r-g728).
-- Aktuelle Abschluss-Gates: Unit-Tests 63 Dateien/658 Tests, Chromium-E2E 73/73 mit `--retries=0`, Typecheck, Game-Typecheck, Lint, Format, Build und High-Audit bestanden. Audit aktuell: 0 High/Critical/Low, 1 Moderate (`minimatch` 10.2.6 über ESLint/TypeScript-ESLint; GHSA-g3hv-75wg-m249, behobene Linie >=11.0.1). Ein erzwungener Major-Wechsel der Dev-Toolchain ist nicht Teil dieses Patch-Slices; kein Null-Advisory-Claim.
+- Historische Abschluss-Gates des Reviews (04.11.2026): Unit-Tests 63 Dateien/658 Tests, Chromium-E2E 73/73 mit `--retries=0`, Typecheck, Game-Typecheck, Lint, Format, Build und High-Audit bestanden. Audit aktuell: 0 High/Critical/Low, 1 Moderate (`minimatch` 10.2.6 über ESLint/TypeScript-ESLint; GHSA-g3hv-75wg-m249, behobene Linie >=11.0.1). Ein erzwungener Major-Wechsel der Dev-Toolchain ist nicht Teil dieses Patch-Slices; kein Null-Advisory-Claim.
 - Lokaler Produktionssmoke: `/health` und `/` HTTP 200; gültiger gzip-JSON-Body erreicht die bewusst deaktivierte Admin-Route (503), defektes gzip und gzip mit angehängten Bytes werden mit 400 abgelehnt, anschließender Healthcheck bleibt 200. Vue-I18n neutralisiert `srcdoc` im Advisory-Beispiel. Echter Produktionsbrowser: vier Spieler erstellen/joinen eine Party und öffnen die Secret-Signals-Lobby; bei `1280×800` und `390×844` keine Seitenüberbreite oder Page-Errors, Plattform-Controls sichtbar. Nur externe Font-Requests wurden blockiert, keine App-/API-Antworten gemockt. Eigener Testserver beendet. Dies ist kein vollständiger Angriffsnachweis, keine Multiplayer-Spielrundenabnahme und kein Deployment.
 - Belege: [Dependency-Security-Receipts](tools/reports/dependency-security-2026-11-04/receipt.json) mit Hashmanifest, Audit-JSON, Unit-/E2E-Logs, Produktionssmoke und Screenshots. Docker-Compose-Konfiguration, Image-Build und Containerlauf bleiben unverifiziert; kein Hosted-Deploy ausgelöst.

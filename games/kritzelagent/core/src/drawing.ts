@@ -20,6 +20,19 @@ function roundCoordinate(value: number): number {
   return Math.round(value * 10_000) / 10_000;
 }
 
+/** Samples a pointer gesture to the bounded wire format before validation. */
+export function prepareStrokeForSubmission(points: StrokePoint[]): StrokePoint[] | null {
+  // Keep the transport bounded without rejecting a longer pointer gesture.
+  const sampled =
+    points.length <= MAX_STROKE_POINTS
+      ? points
+      : Array.from(
+          { length: MAX_STROKE_POINTS },
+          (_, index) => points[Math.round((index * (points.length - 1)) / (MAX_STROKE_POINTS - 1))]!
+        );
+  return normalizeStroke(sampled);
+}
+
 /** Validates and canonicalizes a client-provided one-contiguous stroke. */
 export function normalizeStroke(input: unknown): StrokePoint[] | null {
   if (!Array.isArray(input) || input.length < 2 || input.length > MAX_STROKE_POINTS) {
@@ -33,7 +46,7 @@ export function normalizeStroke(input: unknown): StrokePoint[] | null {
       x: roundCoordinate(value.x),
       y: roundCoordinate(value.y),
     };
-    const previous = normalized.at(-1);
+    const previous = normalized[normalized.length - 1];
     if (!previous || previous.x !== point.x || previous.y !== point.y) {
       normalized.push(point);
     }

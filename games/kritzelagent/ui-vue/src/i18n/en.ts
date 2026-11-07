@@ -28,6 +28,10 @@ export const en = {
     roundsPlanned: '{rounds} rounds planned',
   },
   drawing: {
+    turnHint:
+      'Add one continuous stroke to the shared sketch. Lift your finger or mouse to finish.',
+    turnTitle: 'Your turn to draw!',
+    startDrawing: 'Start drawing',
     round: 'Round {round} of {total}',
     title: 'Shared sketch',
     strokes: '{turn} / {total} strokes',

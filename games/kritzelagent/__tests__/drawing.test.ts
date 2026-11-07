@@ -1,6 +1,35 @@
 import { describe, expect, it } from 'vitest';
 import { MAX_STROKE_POINTS } from '@shared/constants';
-import { normalizeStroke } from '../core/src/drawing';
+import { normalizeStroke, prepareStrokeForSubmission } from '../core/src/drawing';
+
+describe('prepareStrokeForSubmission', () => {
+  it.each([81, 500, 4096])(
+    'fits a %s-point gesture into the server limit with both endpoints',
+    (length) => {
+      const points = Array.from({ length }, (_, index) => ({ x: index / (length - 1), y: 0.5 }));
+      const prepared = prepareStrokeForSubmission(points)!;
+      expect(prepared).toHaveLength(MAX_STROKE_POINTS);
+      expect(prepared[0]).toEqual(points[0]);
+      expect(prepared.at(-1)).toEqual(points.at(-1));
+      expect(normalizeStroke(prepared)).toEqual(prepared);
+    }
+  );
+
+  it('does not submit stationary taps or movement below coordinate precision', () => {
+    expect(
+      prepareStrokeForSubmission([
+        { x: 0.2, y: 0.2 },
+        { x: 0.2, y: 0.2 },
+      ])
+    ).toBeNull();
+    expect(
+      prepareStrokeForSubmission([
+        { x: 0.2, y: 0.2 },
+        { x: 0.200001, y: 0.2 },
+      ])
+    ).toBeNull();
+  });
+});
 
 describe('normalizeStroke', () => {
   it('keeps valid normalized points and rounds noisy coordinates', () => {

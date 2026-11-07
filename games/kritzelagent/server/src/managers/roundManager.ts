@@ -60,6 +60,13 @@ function resetRoundState(room: ServerRoom): void {
   room.votes.clear();
   room.roundResult = null;
   room.drawingOrder = connected.map((player) => player.id);
+  for (let index = room.drawingOrder.length - 1; index > 0; index -= 1) {
+    const swapIndex = Math.floor(Math.random() * (index + 1));
+    [room.drawingOrder[index], room.drawingOrder[swapIndex]] = [
+      room.drawingOrder[swapIndex]!,
+      room.drawingOrder[index]!,
+    ];
+  }
   room.drawingTurn = 0;
   for (const player of room.players) {
     player.strokesSubmitted = 0;

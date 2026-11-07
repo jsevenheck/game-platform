@@ -58,15 +58,29 @@ async function launchGame(session: Session): Promise<void> {
   );
 }
 
-async function drawStroke(page: Page): Promise<void> {
+async function drawStroke(page: Page, steps = 2): Promise<void> {
+  const notice = page.getByRole('dialog', { name: 'Your turn to draw!' });
+  await expect(notice).toBeVisible();
+  const start = notice.getByRole('button', { name: 'Start drawing' });
+  await expect(start).toBeFocused();
+  await start.press('Tab');
+  await expect(start).toBeFocused();
+  await start.click();
+  await expect(notice).not.toBeVisible();
   const canvas = page.getByRole('img', { name: 'Shared doodle canvas' });
   const bounds = await canvas.boundingBox();
   expect(bounds).not.toBeNull();
   const box = bounds!;
+  if (steps > 80) {
+    await page.mouse.click(box.x + box.width * 0.2, box.y + box.height * 0.25);
+    await expect(page.getByText('Invalid stroke.', { exact: true })).toHaveCount(0);
+    await expect(page.getByText('Your turn: draw exactly one stroke.')).toBeVisible();
+    await expect(notice).not.toBeVisible();
+  }
   await page.mouse.move(box.x + box.width * 0.2, box.y + box.height * 0.25);
   await page.mouse.down();
   await page.mouse.move(box.x + box.width * 0.8, box.y + box.height * 0.75, {
-    steps: 2,
+    steps,
   });
   await page.mouse.up();
 }
@@ -81,7 +95,9 @@ async function completeDrawing(session: Session): Promise<void> {
       }
     }
     expect(activePage, `active page for turn ${turn + 1}`).toBeDefined();
-    await drawStroke(activePage!);
+    // Exercise a realistic long gesture (>80 pointer samples), not only a two-point line.
+    await drawStroke(activePage!, turn === 0 ? 160 : 2);
+    await expect(activePage!.getByText('Invalid stroke.', { exact: true })).toHaveCount(0);
     await expect(activePage!.getByText('Your turn: draw exactly one stroke.')).not.toBeVisible();
   }
   await Promise.all(
@@ -90,6 +106,58 @@ async function completeDrawing(session: Session): Promise<void> {
 }
 
 test.describe('Kritzelagent game', () => {
+  test('announces a turn on a narrow screen and dismisses with Escape', async ({ browser }) => {
+    const session = await createSession(browser);
+    try {
+      await launchGame(session);
+      await session.pages[0]!.getByRole('button', { name: 'Start game' }).click();
+      const noticeFor = (page: Page) => page.getByRole('dialog', { name: 'Your turn to draw!' });
+      await expect
+        .poll(async () => {
+          const visible = await Promise.all(
+            session.pages.map((page) => noticeFor(page).isVisible())
+          );
+          return visible.filter(Boolean).length;
+        })
+        .toBe(1);
+      const active = (
+        await Promise.all(
+          session.pages.map(async (page) => ((await noticeFor(page).isVisible()) ? page : null))
+        )
+      ).find((page): page is Page => page !== null)!;
+      await active.setViewportSize({ width: 320, height: 700 });
+      const notice = noticeFor(active);
+      await expect(notice).toBeVisible();
+      await active.evaluate(() => {
+        document.documentElement.style.fontSize = '200%';
+      });
+      const bounds = await notice.boundingBox();
+      expect(bounds).not.toBeNull();
+      expect(bounds!.x).toBeGreaterThanOrEqual(0);
+      expect(bounds!.x + bounds!.width).toBeLessThanOrEqual(320);
+      await expect
+        .poll(() =>
+          active.evaluate(
+            () => document.documentElement.scrollWidth <= document.documentElement.clientWidth
+          )
+        )
+        .toBe(true);
+      await expect(notice.getByRole('button', { name: 'Start drawing' })).toBeFocused();
+      await active.keyboard.press('Escape');
+      await expect(notice).not.toBeVisible();
+      await expect(active.getByText('Your turn: draw exactly one stroke.')).toBeVisible();
+      await expect
+        .poll(() =>
+          active.evaluate(
+            () => document.documentElement.scrollWidth <= document.documentElement.clientWidth
+          )
+        )
+        .toBe(true);
+    } finally {
+      await closeSession(session);
+    }
+  });
+
   test('runs all five rounds, preserves private assignments, and renders the platform overlay', async ({
     browser,
   }) => {

@@ -30,6 +30,10 @@ export const de: KritzelagentMessages = {
     roundsPlanned: '{rounds} Runden geplant',
   },
   drawing: {
+    turnHint:
+      'Ergänze die gemeinsame Skizze mit einem durchgehenden Strich. Hebe zum Beenden den Finger oder die Maustaste an.',
+    turnTitle: 'Du bist mit Zeichnen dran!',
+    startDrawing: 'Jetzt zeichnen',
     round: 'Runde {round} von {total}',
     title: 'Gemeinsame Skizze',
     strokes: '{turn} / {total} Striche',

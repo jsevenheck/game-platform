@@ -55,6 +55,16 @@ Clients send normalized points rather than SVG or image data. The pure
 `normalizeStroke` helper rejects malformed arrays, non-finite coordinates,
 out-of-range coordinates, and strokes above the 80-point limit. This keeps the
 wire payload bounded and makes the canvas transport independent of rendering.
+The canvas samples longer pointer gestures before submission, preserving their
+endpoints, and silently ignores taps/degenerate strokes. Pointer capture is
+tracked per gesture; canceled, superseded, and non-active pointer input cannot
+submit a stroke. Local gesture memory is also bounded.
+
+Each round shuffles connected player IDs with Fisher–Yates; the resulting order
+is reused for both drawing passes. The active player sees a localized modal
+turn notice with focus trapping and Escape dismissal. Its acknowledgement is
+keyed by round and drawing turn, so pending updates do not reopen it, while the
+next own turn and reconnect/remount show the notice again.
 
 ## Platform integration
 

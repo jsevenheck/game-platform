@@ -10,7 +10,7 @@ one player receives only the category and must infer the secret topic.
 - **Default rounds:** 5
 - **Socket namespace:** `/g/kritzelagent`
 - **Phases:** `lobby → drawing → voting → agentGuess → reveal → drawing`; after the last round, `ended`
-- **Drawing:** one bounded normalized stroke per turn, maximum 80 points
+- **Drawing:** one continuous stroke per turn; longer gestures are sampled to at most 80 transmitted points
 - **Scoring:** the agent earns 2 points for avoiding the vote or guessing the topic after being caught; artists earn 1 point each when a caught agent misses
 
 The platform remains authoritative for party membership, host state, replay,
@@ -23,8 +23,9 @@ runtime.
    player as the Kritzelagent.
 2. Artists receive category plus topic through a private assignment. The agent
    receives the category only.
-3. Players draw in a deterministic server-side order. Accepted strokes are
-   broadcast after validation.
+3. The server shuffles the connected players each round; that order repeats for
+   the second drawing pass. A popup announces each own drawing turn. Accepted
+   strokes are broadcast after validation; taps do not consume a turn.
 4. After two turns per player, connected eligible players vote for a suspect.
 5. If the agent leads the vote, only that player receives the topic guess form.
 6. The server reveals the agent, topic, vote counts, outcome, and score delta.

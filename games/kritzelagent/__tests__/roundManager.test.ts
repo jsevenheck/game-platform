@@ -90,7 +90,7 @@ function finishDrawing(room: ServerRoom): void {
 }
 
 describe('round lifecycle', () => {
-  it('starts with a private assignment and a deterministic two-stroke drawing phase', () => {
+  it('starts with a private assignment and a two-stroke drawing phase', () => {
     const { room, playerIds } = setupRoom();
     startGame(room);
 
@@ -117,6 +117,65 @@ describe('round lifecycle', () => {
       topic: room.topic!.topic,
       isAgent: false,
     });
+  });
+
+  it('shuffles only connected players and repeats that order for both drawing passes', () => {
+    const { room, playerIds } = setupRoom(6);
+    findPlayer(room, playerIds.at(-1)!)!.connected = false;
+    vi.spyOn(Math, 'random').mockReturnValue(0);
+
+    startGame(room);
+
+    const connectedIds = playerIds.slice(0, -1);
+    const expectedOrder = [...connectedIds.slice(1), connectedIds[0]!];
+    expect(room.drawingOrder).toEqual(expectedOrder);
+    expect(new Set(room.drawingOrder)).toEqual(new Set(connectedIds));
+    expect(room.players.map((player) => player.id)).toEqual(playerIds);
+
+    const turns: string[] = [];
+    for (let pass = 0; pass < DRAWING_TURNS_PER_PLAYER; pass += 1) {
+      for (const playerId of expectedOrder) {
+        expect(currentDrawingPlayerId(room)).toBe(playerId);
+        turns.push(playerId);
+        submitStroke(room, playerId, stroke);
+      }
+    }
+    expect(turns).toEqual([...expectedOrder, ...expectedOrder]);
+    expect(room.drawingOrder).toEqual(expectedOrder);
+    expect(room.phase).toBe('voting');
+    expect(findPlayer(room, playerIds.at(-1)!)!.strokesSubmitted).toBe(0);
+    expect(
+      room.players
+        .filter((player) => player.connected)
+        .every((player) => player.strokesSubmitted === DRAWING_TURNS_PER_PLAYER)
+    ).toBe(true);
+  });
+
+  it.each([0, 0.9999])('reshuffles each round without forbidding repeats (random %s)', (random) => {
+    const { room, playerIds } = setupRoom();
+    const randomSpy = vi.spyOn(Math, 'random').mockReturnValue(0);
+    startGame(room);
+    const firstOrder = [...playerIds.slice(1), playerIds[0]!];
+    expect(room.drawingOrder).toEqual(firstOrder);
+    finishDrawing(room);
+    const artistId = playerIds.find((playerId) => playerId !== room.agentId)!;
+    for (const playerId of playerIds) {
+      submitVote(room, playerId, playerId === artistId ? room.agentId! : artistId);
+    }
+    expect(room.phase).toBe('reveal');
+
+    randomSpy.mockReturnValue(random);
+    nextRound(room);
+
+    expect(room.currentRound).toBe(2);
+    expect(room.drawingOrder).toEqual(random === 0 ? firstOrder : playerIds);
+    expect(currentDrawingPlayerId(room)).toBe(room.drawingOrder[0]);
+    finishDrawing(room);
+    expect(room.strokes.map((entry) => entry.playerId)).toEqual([
+      ...room.drawingOrder,
+      ...room.drawingOrder,
+    ]);
+    expect(room.phase).toBe('voting');
   });
 
   it("accepts only the active player's valid stroke and enters voting after the quorum", () => {
