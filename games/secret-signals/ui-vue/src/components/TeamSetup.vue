@@ -1,7 +1,8 @@
 <script setup lang="ts">
 import { computed } from 'vue';
 import { useI18n } from 'vue-i18n';
-import { ASSASSIN_PENALTY_MODES, MAX_TEAMS, MIN_TEAMS, TEAM_HEX_BY_COLOR } from '@shared/constants';
+import { ASSASSIN_PENALTY_MODES, MAX_TEAMS, MIN_TEAMS } from '@shared/constants';
+import { TEAM_HEX, TEAM_TEXT_HEX } from '../lib/teamTheme';
 import type { AssassinPenaltyMode, PlayerRole, PlayerView, TeamColor } from '@shared/types';
 import { useGameStore } from '../stores/game';
 
@@ -62,31 +63,33 @@ defineExpose({ isSetupValid });
 </script>
 
 <template>
-  <div class="w-full max-w-150">
-    <div v-if="store.isHost" class="flex items-center flex-wrap gap-2 mb-4 justify-center">
-      <span class="text-muted text-sm font-semibold">{{ t('secret-signals.setup.teams') }}</span>
+  <div class="team-setup">
+    <div v-if="store.isHost" class="settings-row">
+      <span class="setting-label">{{ t('secret-signals.setup.teams') }}</span>
       <button
         v-for="n in teamCountOptions"
         :key="n"
-        class="w-9 h-9 border-2 border-border-strong rounded-sm bg-panel text-foreground/80 font-bold cursor-pointer transition-all"
+        class="setup-choice count-choice"
         :class="{ 'signals-active': store.room?.teamCount === n }"
+        :aria-pressed="store.room?.teamCount === n"
         @click="$emit('set-team-count', n)"
       >
         {{ n }}
       </button>
     </div>
 
-    <div class="flex items-center justify-center flex-wrap gap-2 mb-1">
-      <span class="text-muted text-sm font-semibold">{{ t('secret-signals.setup.assassin') }}</span>
+    <div class="settings-row assassin-settings">
+      <span class="setting-label">{{ t('secret-signals.setup.assassin') }}</span>
       <button
         v-for="mode in ASSASSIN_PENALTY_MODES"
         :key="mode"
         :data-mode="mode"
-        class="px-3 py-1.5 border-2 border-border-strong rounded-full bg-panel text-foreground/80 text-xs font-bold transition-all"
+        class="setup-choice mode-choice"
         :class="{
           'signals-active': store.room?.assassinPenaltyMode === mode,
           'cursor-pointer': store.isHost,
         }"
+        :aria-pressed="store.room?.assassinPenaltyMode === mode"
         :disabled="!store.isHost"
         @click="$emit('set-assassin-penalty-mode', mode)"
       >
@@ -97,7 +100,7 @@ defineExpose({ isSetupValid });
         }}
       </button>
     </div>
-    <p class="mode-hint mb-4 text-center text-muted-foreground text-xs">
+    <p class="mode-hint">
       {{
         store.room?.assassinPenaltyMode === 'instant-loss'
           ? t('secret-signals.setup.instantLossHint')
@@ -105,22 +108,22 @@ defineExpose({ isSetupValid });
       }}
     </p>
 
-    <div v-if="currentPlayer" class="mb-5 p-3.5 border border-border rounded-lg bg-shell">
-      <h4 class="ui-section-label">{{ t('secret-signals.setup.yourSeat') }}</h4>
-      <p class="mb-3 text-center text-muted text-sm">
+    <div v-if="currentPlayer" class="seat-panel">
+      <p class="seat-hint">
         {{ t('secret-signals.setup.seatHint') }}
       </p>
 
-      <div class="flex flex-wrap justify-center gap-2 mb-3">
+      <div class="team-choices">
         <button
           v-for="color in activeTeams"
           :key="color"
           :data-self-team="color"
-          class="px-3.5 py-1.5 border-2 border-border-strong rounded-full bg-panel text-foreground/95 text-xs font-bold cursor-pointer transition-all hover:brightness-110"
+          class="setup-choice team-choice"
           :class="{ 'active-team-btn': currentPlayerTeam === color }"
+          :aria-pressed="currentPlayerTeam === color"
           :style="{
-            borderColor: TEAM_HEX_BY_COLOR[color],
-            backgroundColor: currentPlayerTeam === color ? TEAM_HEX_BY_COLOR[color] : undefined,
+            '--team-color': TEAM_HEX[color],
+            '--team-ink': TEAM_TEXT_HEX[color],
           }"
           @click="pickTeam(color)"
         >
@@ -128,11 +131,12 @@ defineExpose({ isSetupValid });
         </button>
       </div>
 
-      <div v-if="currentPlayerTeam" class="flex flex-wrap justify-center gap-2">
+      <div v-if="currentPlayerTeam" class="role-choices">
         <button
           data-self-role="director"
-          class="min-w-24 px-3 py-1.5 border-2 border-border-strong rounded-full bg-panel text-foreground/95 text-xs font-bold cursor-pointer transition-all hover:brightness-110"
+          class="setup-choice role-choice"
           :class="{ 'signals-active': currentPlayer?.role === 'director' }"
+          :aria-pressed="currentPlayer?.role === 'director'"
           :disabled="isDirectorUnavailable(currentPlayerTeam)"
           @click="pickRole('director')"
         >
@@ -140,96 +144,267 @@ defineExpose({ isSetupValid });
         </button>
         <button
           data-self-role="agent"
-          class="min-w-24 px-3 py-1.5 border-2 border-border-strong rounded-full bg-panel text-foreground/95 text-xs font-bold cursor-pointer transition-all hover:brightness-110"
+          class="setup-choice role-choice"
           :class="{ 'signals-active': currentPlayer?.role === 'agent' }"
+          :aria-pressed="currentPlayer?.role === 'agent'"
           @click="pickRole('agent')"
         >
           {{ t('secret-signals.roles.agent') }}
         </button>
       </div>
 
-      <p
-        v-if="currentPlayerTeam && isDirectorUnavailable(currentPlayerTeam)"
-        class="mt-2.5 text-center text-muted text-xs"
-      >
+      <p v-if="currentPlayerTeam && isDirectorUnavailable(currentPlayerTeam)" class="seat-note">
         {{ t('secret-signals.setup.directorTaken', { team: teamLabel(currentPlayerTeam) }) }}
       </p>
     </div>
 
-    <div v-if="unassigned.length > 0" class="mb-4 text-center">
-      <h4 class="ui-section-label">{{ t('secret-signals.setup.unassigned') }}</h4>
+    <div v-if="unassigned.length > 0" class="unassigned-panel">
+      <h4 class="section-label">{{ t('secret-signals.setup.unassigned') }}</h4>
       <div
         v-for="player in unassigned"
         :key="player.id"
         :data-player-name="player.name"
-        class="inline-flex items-center gap-1 px-3 py-1 bg-elevated rounded-full text-foreground/85 text-sm mx-0.5 my-0.5"
+        class="unassigned-player"
       >
         {{ player.name }}
-        <span
-          v-if="player.isHost"
-          class="ui-badge bg-signals text-white text-[0.6rem]! px-1.5! py-0.5! rounded-sm!"
-          >{{ t('secret-signals.setup.hostShort') }}</span
-        >
+        <span v-if="player.isHost" class="ui-badge host-badge">{{
+          t('secret-signals.setup.hostShort')
+        }}</span>
       </div>
     </div>
 
-    <div class="grid grid-cols-[repeat(auto-fit,minmax(140px,1fr))] gap-3">
+    <div class="team-rosters">
       <div
         v-for="color in activeTeams"
         :key="color"
         :data-team-color="color"
-        class="bg-shell rounded-sm p-3"
+        class="team-roster"
+        :style="{ '--team-color': TEAM_HEX[color], '--team-ink': TEAM_TEXT_HEX[color] }"
       >
-        <h4
-          class="text-foreground/90 text-sm font-bold uppercase tracking-wider pb-2 border-b-[3px] mb-2"
-          :style="{ borderBottomColor: TEAM_HEX_BY_COLOR[color] }"
-        >
+        <h4 class="team-heading">
           {{ teamLabel(color) }}
         </h4>
-        <div v-if="teamPlayers(color).length === 0" class="text-muted-foreground/60 text-xs italic">
+        <div v-if="teamPlayers(color).length === 0" class="empty-roster">
           {{ t('secret-signals.setup.noPlayers') }}
         </div>
         <div
           v-for="player in teamPlayers(color)"
           :key="player.id"
           :data-player-name="player.name"
-          class="flex items-center justify-between py-1"
+          class="roster-player"
         >
-          <span class="agent-name text-foreground/85 text-sm">{{ player.name }}</span>
-          <button
+          <span class="agent-name">{{ player.name }}</span>
+          <span
             v-if="player.role"
-            class="px-1.5 py-0.5 rounded-sm text-[0.65rem] font-bold uppercase border-none cursor-default"
-            :class="{
-              'bg-violet-600 text-white': player.role === 'director',
-              'bg-border-strong text-foreground/85': player.role === 'agent',
-            }"
+            class="role-badge"
+            :class="{ 'is-director': player.role === 'director' }"
           >
             {{
               player.role === 'director'
                 ? t('secret-signals.roles.directorShort')
                 : t('secret-signals.roles.agentShort')
             }}
-          </button>
-          <button
-            v-else
-            class="px-1.5 py-0.5 rounded-sm text-[0.65rem] font-bold bg-elevated text-muted-foreground border border-dashed border-muted-foreground/40 cursor-default"
-          >
-            ?
-          </button>
+          </span>
+          <span v-else class="role-badge unassigned-role">?</span>
         </div>
       </div>
     </div>
 
-    <div v-if="!isSetupValid" class="mt-3 text-center text-warning text-xs">
+    <div v-if="!isSetupValid" class="setup-rules">
       {{ t('secret-signals.setup.rules') }}
     </div>
   </div>
 </template>
 
 <style scoped>
+.team-setup {
+  --setup-paper: #f2e8d5;
+  --setup-shell: #102d35;
+  --setup-panel: #163943;
+  --setup-muted: #b9c9c8;
+  display: grid;
+  gap: 12px;
+  width: 100%;
+  min-width: 0;
+  color: var(--setup-paper);
+}
+.settings-row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+}
+.setting-label {
+  flex: 1 1 100%;
+  font-size: 0.75rem;
+  font-weight: 700;
+  color: var(--setup-muted);
+}
+.setup-choice {
+  min-height: 44px;
+  min-width: 44px;
+  padding: 8px 12px;
+  border: 1px solid #688084;
+  border-radius: 6px;
+  background: var(--setup-panel);
+  color: var(--setup-paper);
+  font: inherit;
+  font-size: 0.8rem;
+  font-weight: 700;
+  line-height: 1.3;
+  overflow-wrap: anywhere;
+  cursor: pointer;
+}
+.setup-choice:hover:not(:disabled) {
+  border-color: var(--setup-paper);
+}
+.setup-choice:focus-visible {
+  outline: 3px solid var(--setup-paper);
+  outline-offset: 3px;
+}
+.setup-choice:disabled {
+  cursor: default;
+}
+.role-choice:disabled {
+  opacity: 0.45;
+}
 .signals-active {
-  border-color: var(--color-signals);
-  background: var(--color-signals);
-  color: white;
+  border-color: var(--setup-paper);
+  background: var(--setup-paper);
+  color: var(--setup-shell);
+  box-shadow: inset 0 -3px 0 #c9bca5;
+}
+.mode-choice {
+  flex: 1 1 110px;
+}
+.mode-hint,
+.seat-note,
+.setup-rules {
+  margin: 0;
+  color: var(--setup-muted);
+  font-size: 0.75rem;
+  line-height: 1.5;
+  overflow-wrap: anywhere;
+}
+.seat-panel {
+  display: grid;
+  gap: 12px;
+  padding: 14px;
+  border: 1px solid #45646b;
+  border-radius: 8px;
+  background: var(--setup-panel);
+}
+.seat-hint {
+  margin: 0;
+  font-size: 0.875rem;
+  line-height: 1.5;
+}
+.team-choices,
+.role-choices {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 8px;
+}
+.team-choice {
+  border-color: var(--team-color);
+}
+.active-team-btn {
+  color: var(--team-ink);
+  background: var(--team-color);
+  border-color: var(--team-color);
+  outline: 2px solid var(--setup-paper);
+  outline-offset: 2px;
+  box-shadow: inset 0 -3px 0 rgb(0 0 0 / 20%);
+}
+.section-label {
+  margin: 0 0 8px;
+  color: var(--setup-muted);
+  font-size: 0.75rem;
+  font-weight: 700;
+}
+.unassigned-player {
+  display: inline-flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px;
+  margin: 0 6px 6px 0;
+  padding: 6px 10px;
+  max-width: 100%;
+  border-radius: 4px;
+  background: var(--setup-panel);
+  overflow-wrap: anywhere;
+  font-size: 0.8rem;
+}
+.host-badge {
+  color: var(--setup-shell);
+  background: var(--setup-paper);
+}
+.team-rosters {
+  display: grid;
+  gap: 10px;
+  grid-template-columns: minmax(0, 1fr);
+}
+.team-roster {
+  min-width: 0;
+  border: 1px solid #36545a;
+  border-radius: 8px;
+  overflow: hidden;
+  background: var(--setup-panel);
+}
+.team-heading {
+  margin: 0 0 4px;
+  padding: 10px 12px;
+  color: var(--team-ink);
+  background: var(--team-color);
+  font-size: 0.875rem;
+  font-weight: 800;
+  overflow-wrap: anywhere;
+}
+.roster-player {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 12px;
+}
+.agent-name {
+  flex: 1;
+  min-width: 0;
+  overflow-wrap: anywhere;
+  font-size: 0.875rem;
+}
+.role-badge {
+  padding: 4px 6px;
+  border: 1px solid #688084;
+  border-radius: 4px;
+  color: var(--setup-paper);
+  font-size: 0.65rem;
+  font-weight: 700;
+  overflow-wrap: anywhere;
+}
+.is-director {
+  color: var(--setup-shell);
+  background: var(--setup-paper);
+  border-color: var(--setup-paper);
+}
+.empty-roster {
+  padding: 8px 12px 12px;
+  color: var(--setup-muted);
+  font-size: 0.75rem;
+}
+.setup-rules {
+  padding: 10px 12px;
+  border: 1px solid #dfc68f;
+  border-radius: 6px;
+  background: var(--setup-panel);
+  color: #efdaad;
+}
+@media (min-width: 480px) {
+  .team-rosters {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+  .setting-label {
+    flex: 0 0 100px;
+  }
 }
 </style>

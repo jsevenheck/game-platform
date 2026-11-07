@@ -13,16 +13,15 @@ const props = defineProps<{
   focusedByName: string | null;
   focusedByColor: TeamColor | null;
 }>();
-
-defineEmits<{
-  select: [];
-}>();
-
+defineEmits<{ select: [] }>();
 const { t } = useI18n();
-// Never derive or render hidden card types: the server supplies null for agents.
+// Ownership is only rendered when this viewer is authorized to see it.
+const visibleType = computed(() =>
+  props.card.revealed || props.isDirectorView ? props.card.type : null
+);
 const typeLabel = computed(() => {
-  if ((!props.isDirectorView && !props.card.revealed) || !props.card.type) return '';
-  const type = props.card.type;
+  const type = visibleType.value;
+  if (!type) return '';
   return type === 'neutral' || type === 'assassin'
     ? t(`secret-signals.cards.${type}`)
     : t(`secret-signals.teams.${type}`);
@@ -39,64 +38,60 @@ const accessibleLabel = computed(() =>
     .filter(Boolean)
     .join(', ')
 );
-
-function cardBackground(): string {
-  if (props.card.revealed && props.card.type) {
-    return CARD_HEX_BY_TYPE[props.card.type] ?? '#27272a';
-  }
-  if (props.isDirectorView && props.card.type) {
-    const color = CARD_HEX_BY_TYPE[props.card.type];
-    if (props.card.type === 'assassin') return '#27272a';
-    return color ? `${color}33` : '#27272a';
-  }
-  return '#27272a';
-}
-
-function textColor(): string {
-  if (props.card.revealed) return getCardTextHex(props.card.type);
-  if (props.isDirectorView && props.card.type === 'assassin') return '#ef4444';
-  return '#e4e4e7';
-}
-
-function borderColor(): string {
-  if (props.isFocused && props.focusedByColor) {
-    return TEAM_HEX_BY_COLOR[props.focusedByColor];
-  }
-  if (props.isDirectorView && !props.card.revealed && props.card.type) {
-    const color = CARD_HEX_BY_TYPE[props.card.type];
-    if (props.card.type === 'assassin') return '#ef4444';
-    return color ?? '#3f3f46';
-  }
-  return '#3f3f46';
-}
+const cardStyle = computed(() => ({
+  backgroundColor: visibleType.value ? CARD_HEX_BY_TYPE[visibleType.value] : '#f2e8d5',
+  color: getCardTextHex(visibleType.value),
+  '--marker-color': props.focusedByColor ? TEAM_HEX_BY_COLOR[props.focusedByColor] : '#f2e8d5',
+}));
 </script>
 
 <template>
   <button
+    type="button"
     class="card-cell"
     :aria-label="accessibleLabel"
+    :aria-pressed="clickable ? isFocused : undefined"
     :class="{
       revealed: card.revealed,
       clickable: clickable && !card.revealed,
-      assassin: card.type === 'assassin',
+      assassin: visibleType === 'assassin',
       'director-view': isDirectorView && !card.revealed,
       focused: isFocused,
     }"
-    :style="{
-      backgroundColor: cardBackground(),
-      color: textColor(),
-      borderColor: borderColor(),
-    }"
+    :style="cardStyle"
     :disabled="!clickable || card.revealed"
     @click="$emit('select')"
   >
-    <span v-if="isFocused && focusedByName" class="focus-chip">
-      {{ focusedByName }}
-    </span>
-    <span class="relative z-1">{{ card.word }}</span>
-    <span v-if="typeLabel" class="card-type-label" aria-hidden="true">
-      {{ typeLabel }}
-    </span>
+    <span class="card-word">{{ card.word }}</span>
+    <svg
+      v-if="card.revealed"
+      class="reveal-check"
+      width="13"
+      height="13"
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      stroke-width="3"
+      aria-hidden="true"
+    >
+      <path d="m5 12 4 4L19 6" />
+    </svg>
+    <svg
+      v-else-if="visibleType === 'assassin'"
+      class="reveal-check"
+      width="13"
+      height="13"
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      stroke-width="2.5"
+      aria-hidden="true"
+    >
+      <path d="m6 6 12 12M6 18 18 6" />
+    </svg>
+    <span v-if="isFocused && focusedByName" class="focus-chip" aria-hidden="true">{{
+      focusedByName
+    }}</span>
   </button>
 </template>
 
@@ -104,73 +99,88 @@ function borderColor(): string {
 .card-cell {
   position: relative;
   display: flex;
+  flex-direction: column;
   align-items: center;
   justify-content: center;
-  flex-direction: column;
   gap: 0.2rem;
-  aspect-ratio: 3 / 2;
-  border: 2px solid var(--color-border-strong);
-  border-radius: var(--radius-sm);
-  font-size: clamp(0.6rem, 1.4vw, 0.9rem);
-  font-weight: 600;
-  text-transform: uppercase;
-  letter-spacing: 0.05em;
-  cursor: default;
-  transition:
-    background-color 0.4s ease,
-    border-color 0.3s ease,
-    transform 0.15s ease,
-    box-shadow 0.15s ease;
-  user-select: none;
-  padding: 0.25rem;
-  text-align: center;
-  word-break: break-word;
-  overflow: hidden;
-}
-
-.card-type-label {
-  font-size: clamp(0.5rem, 1vw, 0.65rem);
+  width: 100%;
+  min-width: 0;
+  min-height: 4rem;
+  aspect-ratio: 1.35;
+  padding: 0.5rem 0.2rem;
+  border: 2px solid rgb(7 23 28 / 18%);
+  border-radius: 0.4rem;
+  font-size: clamp(0.75rem, 2.8vw, 1rem);
   font-weight: 800;
-  letter-spacing: 0.03em;
+  line-height: 1.15;
+  letter-spacing: 0.01em;
+  text-transform: uppercase;
+  text-align: center;
+  box-shadow: 0 2px 3px rgb(0 0 0 / 16%);
+  user-select: none;
+  transition:
+    background-color 180ms ease-out,
+    box-shadow 180ms ease-out;
 }
-
+.card-word {
+  width: 100%;
+  overflow-wrap: anywhere;
+}
+.card-cell:disabled {
+  opacity: 1;
+  cursor: default;
+}
 .card-cell.clickable {
   cursor: pointer;
+  touch-action: manipulation;
 }
-
 .card-cell.clickable:hover {
-  transform: scale(1.04);
-  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.4);
-  border-color: var(--color-signals);
+  box-shadow: 0 4px 10px rgb(0 0 0 / 30%);
 }
-
+.card-cell:focus-visible {
+  outline: 3px solid #fff;
+  outline-offset: 3px;
+  z-index: 2;
+}
 .card-cell.revealed {
-  opacity: 0.85;
-  border-color: transparent;
+  border-color: currentColor;
+  border-style: dashed;
 }
-
 .card-cell.focused {
-  transform: translateY(-2px);
-  box-shadow:
-    0 0 0 2px rgba(255, 255, 255, 0.05),
-    0 10px 24px rgba(0, 0, 0, 0.35);
+  outline: 3px solid var(--marker-color);
+  outline-offset: 2px;
+  z-index: 1;
 }
-
-.focus-chip {
+.card-cell.focused:focus-visible {
+  outline-color: #fff;
+}
+.reveal-check {
   position: absolute;
-  top: 6px;
-  left: 6px;
-  max-width: calc(100% - 12px);
-  padding: 0.14rem 0.38rem;
-  border-radius: var(--radius-pill);
-  background: rgba(9, 9, 11, 0.78);
-  color: var(--color-foreground);
-  font-size: 0.62rem;
-  font-weight: 800;
-  letter-spacing: 0.04em;
+  top: 2px;
+  right: 2px;
+}
+.focus-chip {
+  max-width: 100%;
+  padding: 0.1rem 0.2rem;
+  border-radius: 0.2rem;
+  background: #102d35;
+  color: #f4f7f6;
+  font-size: 0.625rem;
+  font-weight: 600;
+  line-height: 1.2;
   text-transform: none;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
+  overflow-wrap: anywhere;
+}
+@media (min-width: 700px) {
+  .card-cell {
+    min-height: 5.5rem;
+    aspect-ratio: 1.7;
+    padding: 0.75rem 0.4rem;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .card-cell {
+    transition: none;
+  }
 }
 </style>

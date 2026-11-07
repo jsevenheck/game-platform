@@ -34,6 +34,31 @@ const { socket } = useSocket({
 });
 
 const embeddedError = ref('');
+const actionError = ref('');
+const actionPending = ref(false);
+let actionTimer: ReturnType<typeof setTimeout> | undefined;
+let actionGeneration = 0;
+function beginAction() {
+  if (actionPending.value) return false;
+  actionPending.value = true;
+  actionError.value = '';
+  actionTimer = setTimeout(() => {
+    actionPending.value = false;
+    actionError.value = t('secret-signals.actionTimeout');
+    actionGeneration += 1;
+  }, 8000);
+  return true;
+}
+function actionCallback() {
+  const generation = actionGeneration;
+  return (response: { ok: boolean; error?: string }) => {
+    if (generation !== actionGeneration) return;
+    if (actionTimer) clearTimeout(actionTimer);
+    actionPending.value = false;
+    actionError.value = response.ok ? '' : (response.error ?? t('secret-signals.actionTimeout'));
+    actionGeneration += 1;
+  };
+}
 const autoJoinInFlight = ref(false);
 let autoJoinRetryTimer: number | undefined;
 let autoJoinRetryCount = 0;
@@ -81,78 +106,98 @@ function emitAutoJoinRoom() {
 }
 
 function handleStartGame() {
-  if (!store.roomCode || !store.playerId) return;
-  socket.emit('startGame', { roomCode: store.roomCode, playerId: store.playerId }, () => {});
+  if (!store.roomCode || !store.playerId || !beginAction()) return;
+  socket.emit(
+    'startGame',
+    { roomCode: store.roomCode, playerId: store.playerId },
+    actionCallback()
+  );
 }
 
 function handleAssignTeam(team: TeamColor) {
-  if (!store.roomCode || !store.playerId) return;
-  socket.emit('assignTeam', { roomCode: store.roomCode, playerId: store.playerId, team }, () => {});
+  if (!store.roomCode || !store.playerId || !beginAction()) return;
+  socket.emit(
+    'assignTeam',
+    { roomCode: store.roomCode, playerId: store.playerId, team },
+    actionCallback()
+  );
 }
 
 function handleAssignRole(role: PlayerRole) {
-  if (!store.roomCode || !store.playerId) return;
-  socket.emit('assignRole', { roomCode: store.roomCode, playerId: store.playerId, role }, () => {});
+  if (!store.roomCode || !store.playerId || !beginAction()) return;
+  socket.emit(
+    'assignRole',
+    { roomCode: store.roomCode, playerId: store.playerId, role },
+    actionCallback()
+  );
 }
 
 function handleSetTeamCount(count: number) {
-  if (!store.roomCode || !store.playerId) return;
+  if (!store.roomCode || !store.playerId || !beginAction()) return;
   socket.emit(
     'setTeamCount',
     { roomCode: store.roomCode, playerId: store.playerId, teamCount: count },
-    () => {}
+    actionCallback()
   );
 }
 
 function handleSetAssassinPenaltyMode(mode: AssassinPenaltyMode) {
-  if (!store.roomCode || !store.playerId) return;
+  if (!store.roomCode || !store.playerId || !beginAction()) return;
   socket.emit(
     'setAssassinPenaltyMode',
     { roomCode: store.roomCode, playerId: store.playerId, mode },
-    () => {}
+    actionCallback()
   );
 }
 
 function handleFocusCard(cardIndex: number | null) {
-  if (!store.roomCode || !store.playerId) return;
+  if (!store.roomCode || !store.playerId || !beginAction()) return;
   socket.emit(
     'focusCard',
     { roomCode: store.roomCode, playerId: store.playerId, cardIndex },
-    () => {}
+    actionCallback()
   );
 }
 
 function handleGiveSignal(word: string, number: number) {
-  if (!store.roomCode || !store.playerId) return;
+  if (!store.roomCode || !store.playerId || !beginAction()) return;
   socket.emit(
     'giveSignal',
     { roomCode: store.roomCode, playerId: store.playerId, word, number },
-    () => {}
+    actionCallback()
   );
 }
 
 function handleRevealCard(cardIndex: number) {
-  if (!store.roomCode || !store.playerId) return;
+  if (!store.roomCode || !store.playerId || !beginAction()) return;
   socket.emit(
     'revealCard',
     { roomCode: store.roomCode, playerId: store.playerId, cardIndex },
-    () => {}
+    actionCallback()
   );
 }
 
 function handleEndTurn() {
-  if (!store.roomCode || !store.playerId) return;
-  socket.emit('endTurn', { roomCode: store.roomCode, playerId: store.playerId }, () => {});
+  if (!store.roomCode || !store.playerId || !beginAction()) return;
+  socket.emit('endTurn', { roomCode: store.roomCode, playerId: store.playerId }, actionCallback());
 }
 
 function handleSkipGuessRound() {
-  if (!store.roomCode || !store.playerId) return;
-  socket.emit('skipGuessRound', { roomCode: store.roomCode, playerId: store.playerId }, () => {});
+  if (!store.roomCode || !store.playerId || !beginAction()) return;
+  socket.emit(
+    'skipGuessRound',
+    { roomCode: store.roomCode, playerId: store.playerId },
+    actionCallback()
+  );
 }
 
 function handleRestart() {
-  if (!store.roomCode || !store.playerId) return;
-  socket.emit('restartGame', { roomCode: store.roomCode, playerId: store.playerId }, () => {});
+  if (!store.roomCode || !store.playerId || !beginAction()) return;
+  socket.emit(
+    'restartGame',
+    { roomCode: store.roomCode, playerId: store.playerId },
+    actionCallback()
+  );
 }
 
 function handleSocketConnect() {
@@ -206,6 +251,8 @@ onMounted(() => {
 });
 
 onBeforeUnmount(() => {
+  if (actionTimer) clearTimeout(actionTimer);
+  actionGeneration += 1;
   if (autoJoinRetryTimer !== undefined) {
     clearTimeout(autoJoinRetryTimer);
   }
@@ -215,7 +262,13 @@ onBeforeUnmount(() => {
 </script>
 
 <template>
-  <div class="min-h-dvh">
+  <div class="signals-app">
+    <div v-if="actionError" class="signals-action-error" role="alert">
+      <span>{{ localizeError(actionError, 'secret-signals') }}</span>
+      <button type="button" class="ui-btn-secondary" @click="actionError = ''">
+        {{ t('secret-signals.dismiss') }}
+      </button>
+    </div>
     <template v-if="!store.room">
       <p class="py-8 px-4 text-center text-muted">
         {{
@@ -235,6 +288,7 @@ onBeforeUnmount(() => {
     />
     <GamePlay
       v-else-if="store.phase === 'playing'"
+      :pending="actionPending"
       @focus-card="handleFocusCard"
       @give-signal="handleGiveSignal"
       @reveal-card="handleRevealCard"
@@ -244,3 +298,31 @@ onBeforeUnmount(() => {
     <GameOver v-else-if="store.phase === 'ended'" @restart="handleRestart" />
   </div>
 </template>
+
+<style scoped>
+.signals-app {
+  min-height: calc(100dvh - 3.5rem);
+  background: #102d35;
+  font-family:
+    system-ui,
+    -apple-system,
+    BlinkMacSystemFont,
+    'Segoe UI',
+    sans-serif;
+}
+.signals-action-error {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+  padding: 0.75rem 1rem;
+  background: #512b2a;
+  color: #fff0eb;
+  font-size: 0.875rem;
+  overflow-wrap: anywhere;
+}
+.signals-action-error button {
+  min-height: 44px;
+}
+</style>

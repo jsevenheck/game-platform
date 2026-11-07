@@ -71,10 +71,10 @@ Handler responsibilities:
 
 - `Lobby.vue`: room view and host controls
 - `TeamSetup.vue`: host-managed match settings plus self-service team and role assignment
-- `GamePlay.vue`: active game layout, team roster rails, and reveal confirmation overlay
+- `GamePlay.vue`: board-first active game, selected-card reveal action, and expandable rosters/history/host controls
 - `GameBoard.vue` and `CardCell.vue`: board rendering, shared card focus marker, and guesses
 - `SignalInput.vue`: Director clue entry
-- `TurnIndicator.vue`: current team, phase, and signal status
+- `TurnIndicator.vue`: current-team instruction and remaining-card scoreboard
 - `GameLog.vue`: completed turn history
 - `GameOver.vue`: winner state, multi-winner endings, and replay action
 
@@ -86,6 +86,26 @@ Handler responsibilities:
 
 If a player disconnects during an active match, they reclaim the same slot through
 `autoJoinRoom` or `resumePlayer` with the stored `resumeToken`.
+
+### UI action and privacy boundaries
+
+`App.vue` guards in-flight actions until their Socket.IO acknowledgement or an
+eight-second timeout. A generation counter discards late acknowledgements after
+a timeout or unmount; no mutation is retried automatically. Rejections appear in
+a localized alert. `SignalInput` retains the clue draft until a successful phase
+change unmounts the form, so a server-rejected board word can be corrected.
+
+`CardCell` derives visible ownership only for a Director or a revealed card.
+It uses that same authorized type for color, assassin/reveal indicators and the
+accessible name. Visible color-name captions are intentionally absent. Agents
+receive neutral paper tiles until a reveal. `GamePlay` permits the reveal action
+only for an unrevealed selected card bearing the current player's server-confirmed
+mark. A turn/phase change clears the local selection.
+
+The game uses a scoped system UI font, a teal table surface and paper cards.
+Rosters, completed history and host skip controls are native expandable details;
+they do not displace the board on phones. There is no fixed action overlay that
+can cover the final row. See [DESIGN.md](DESIGN.md) for dimensions and tokens.
 
 ## State model
 
@@ -109,7 +129,7 @@ Typical flow:
    team targets.
 4. The active Director gives a signal.
 5. The active Agents can mark multiple candidate cards for the whole room, then confirm a reveal
-   locally from one of their own marks.
+   with the explicit Reveal Card action for a selected own mark. Marking never reveals a card.
 6. The active Agents reveal cards until they stop, miss, or exhaust the guess allowance.
 7. The host can also force-skip a stalled turn, including the Director thinking phase.
 8. Play rotates to the next active non-eliminated team.

@@ -2,6 +2,8 @@ import type { SecretSignalsMessages } from './en';
 
 export const de: SecretSignalsMessages = {
   connecting: 'Verbinde...',
+  dismiss: 'Schließen',
+  actionTimeout: 'Keine Antwort vom Server. Prüfe den Spielstand, bevor du es erneut versuchst.',
   teams: { red: 'Rot', blue: 'Blau', green: 'Grün', orange: 'Orange' },
   teamOf: 'Team {color}',
   cards: {
@@ -45,10 +47,22 @@ export const de: SecretSignalsMessages = {
     noAgents: 'Keine Agenten',
   },
   turn: {
+    giveSignal: 'Gib deinem Team einen Hinweis',
+    chooseCard: 'Findet eure Agenten',
+    scoreboard: 'Verbleibende Karten je Team',
+    remaining: '{team}: noch {count} Karten',
+    guessesUsed: '{count} / {total} Tipps',
     directorThinking: 'Der Spielleiter überlegt...',
     agentsGuessing: 'Die Agenten raten',
   },
   play: {
+    board: 'Wortfeld',
+    actions: 'Deine nächste Aktion',
+    selected: 'Ausgewählt:',
+    tapToMark: 'Tippe ein Wort zum Markieren an. Decke erst auf, wenn du sicher bist.',
+    clearMarks: 'Meine Markierungen löschen',
+    teamsAndRoles: 'Teams & Rollen',
+    hostControls: 'Spielleitung',
     agentsGuessingYours: 'Deine Agenten raten...',
     waitingOther: 'Warte auf das andere Team...',
     waitingDirector: 'Warte auf das Signal deines Spielleiters...',
@@ -60,6 +74,7 @@ export const de: SecretSignalsMessages = {
     revealCard: 'Karte aufdecken',
   },
   signal: {
+    number: 'Anzahl',
     clueWord: 'Hinweiswort',
     decrease: 'Signalzahl verringern',
     increase: 'Signalzahl erhöhen',

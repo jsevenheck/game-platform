@@ -24,6 +24,35 @@ Branch `fix/kritzelagent-turn-feedback`, erstellt von `origin/main`
 - Keine Dependencies geändert. Historische Audit-/Docker-Nachweise des Reviews
   sind keine neuen Gates dieses Slices. Kein Merge oder Deployment.
 
+## Secret-Signals-Mobile-UX (07.11.2026)
+
+Fortsetzung auf demselben Branch `fix/kritzelagent-turn-feedback`; Kritzelagent
+bleibt enthalten. Spielregeln, Server und 2–4-Team-Unterstützung unverändert.
+
+- Neues board-first UI für Lobby, Team-/Rollenwahl, laufendes Spiel und Ergebnis:
+  dunkler Spieltisch, helle Wortkarten, kompakte Restkartenanzeige und klarer Hinweis.
+- Keine sichtbaren Farbnamen auf Wortkarten; autorisierte Screenreader-Namen
+  bleiben erhalten, geheime Agenten-Karten erhalten keine Eigentumsdarstellung.
+- Vom Nutzer bestätigter Ablauf: antippen zum Markieren, separater Aufdecken-Button.
+  Mehrfachmarkierungen und Löschen eigener Markierungen bleiben möglich.
+- Teams, Protokoll und Host-Steuerung sind aufklappbar statt über dem Spielfeld.
+  Aktionsfehler sichtbar; Hinweisentwürfe bleiben bei Ablehnung erhalten.
+- Verifiziert: Typecheck, Game-Typecheck, Lint, Format, Build, 676/676 Unit-Tests
+  (Secret Signals 47/47) und 77/77 Chromium-E2E ohne Retries. Handy-Regressionen
+  decken Touch, 2/3/4 Teams, 320 Pixel mit doppelter Schrift, Rollengeheimhaltung,
+  Markieren/Löschen/Aufdecken und abgelehnte Hinweise ab.
+- Lokaler Produktionsbuild: `/health` und `/` HTTP 200; zusätzlich Secret Signals
+  12/12 Browser-Tests mit `E2E_TESTS=1` für deterministische Testbretter. Kein
+  Vite-Devserver und keine gemockten App-Antworten; eigener Server beendet.
+- Offizielle Online-/App-Seiten und App-Screenshot als UI-Referenz geprüft.
+  Direkter Zugriff auf `codenames.game` lieferte HTTP 403; kein behaupteter
+  Hands-on-Abgleich des fremden Online-Spiels. Keine Grafiken/Marken übernommen.
+- Unabhängiger UI-Abschlusscheck: `ship` für die drei Desktop-/Mobile-Captures
+  und den geprüften UI-Quellcode; keine materiellen Korrekturen. Zusätzliches
+  TypeScript-Gate für die Secret-Signals-E2E-Datei bestanden. Produkt-/Design-Doku
+  und game-lokales Design-Sidecar abgeschlossen; Auslieferung auf demselben Branch.
+  Kein Merge oder Deployment.
+
 ## Findings
 
 | ID   | Finding                                                                                                                                                                                                                                         | Plan                                                                                                                                  | Status                                   |
