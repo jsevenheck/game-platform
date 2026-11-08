@@ -1,0 +1,23 @@
+quorum {"spectator":false,"boundary":"disconnect","phase":"reveal","votes":0}
+quorum {"spectator":false,"boundary":"last-stroke","phase":"reveal","votes":0}
+quorum {"spectator":true,"boundary":"disconnect","phase":"reveal","votes":0}
+quorum {"spectator":true,"boundary":"last-stroke","phase":"reveal","votes":0}
+preserved ballots {"spectator":false,"caughtAgentStays":false,"votes":3,"phase":"reveal"}
+preserved ballots {"spectator":false,"caughtAgentStays":true,"votes":4,"phase":"reveal"}
+preserved ballots {"spectator":true,"caughtAgentStays":false,"votes":3,"phase":"reveal"}
+preserved ballots {"spectator":true,"caughtAgentStays":true,"votes":4,"phase":"reveal"}
+registered giveSignal + serialized roomState, withheld client ACK {"word":"alpha","serverWord":"ALPHA","pending":false}
+registered giveSignal + serialized roomState, withheld client ACK {"word":" Alpha ","serverWord":"ALPHA","pending":false}
+registered giveSignal + serialized roomState, withheld client ACK {"word":"aLpHa","serverWord":"ALPHA","pending":false}
+[2026-11-08 10:30:02.821 +0000] [32mINFO[39m: [36mcreated secret-signals room[39m
+    [35mcomponent[39m: "game-server"
+    [35mgameId[39m: "secret-signals"
+    [35mnamespace[39m: "/g/secret-signals"
+    [35msocketId[39m: "closeout-signals"
+    [35mroomCode[39m: "YB57"
+    [35mplayerId[39m: "me"
+    [35msessionId[39m: "closeout-signals"
+real 8050ms timeout absent {"word":"alpha","pending":false,"error":""}
+real 8050ms timeout absent {"word":" Alpha ","pending":false,"error":""}
+real 8050ms timeout absent {"word":"aLpHa","pending":false,"error":""}
+PASS: 8 quorum/ballot probes + 3 registered-handler clue variants

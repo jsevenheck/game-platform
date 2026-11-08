@@ -28,8 +28,12 @@ export function currentDrawingPlayerId(room: ServerRoom): string | null {
   return room.drawingOrder[room.drawingTurn % room.drawingOrder.length] ?? null;
 }
 
+function connectedRoundPlayers(room: ServerRoom) {
+  return connectedPlayers(room).filter((player) => room.drawingOrder.includes(player.id));
+}
+
 export function allConnectedPlayersDrew(room: ServerRoom): boolean {
-  const players = connectedPlayers(room);
+  const players = connectedRoundPlayers(room);
   return (
     players.length > 0 &&
     players.every((player) => player.strokesSubmitted >= DRAWING_TURNS_PER_PLAYER)
@@ -37,8 +41,10 @@ export function allConnectedPlayersDrew(room: ServerRoom): boolean {
 }
 
 export function allConnectedPlayersVoted(room: ServerRoom): boolean {
-  const players = connectedPlayers(room);
-  return players.length > 0 && players.every((player) => room.votes.has(player.id));
+  const players = connectedRoundPlayers(room);
+  // Self-votes are forbidden. With fewer than two available participants there
+  // can be no further legal ballot; resolve using any votes already cast.
+  return players.length < 2 || players.every((player) => room.votes.has(player.id));
 }
 
 function prepareTopicDeck(room: ServerRoom): void {
@@ -60,6 +66,13 @@ function resetRoundState(room: ServerRoom): void {
   room.votes.clear();
   room.roundResult = null;
   room.drawingOrder = connected.map((player) => player.id);
+  for (let index = room.drawingOrder.length - 1; index > 0; index -= 1) {
+    const swapIndex = Math.floor(Math.random() * (index + 1));
+    [room.drawingOrder[index], room.drawingOrder[swapIndex]] = [
+      room.drawingOrder[swapIndex]!,
+      room.drawingOrder[index]!,
+    ];
+  }
   room.drawingTurn = 0;
   for (const player of room.players) {
     player.strokesSubmitted = 0;
@@ -101,6 +114,8 @@ export function startGame(room: ServerRoom): void {
 
 function advanceDrawingTurn(room: ServerRoom): void {
   if (allConnectedPlayersDrew(room)) {
+    // Any remaining scheduled slots belong to unavailable players and are forfeited.
+    room.drawingTurn = room.drawingOrder.length * DRAWING_TURNS_PER_PLAYER;
     room.phase = 'voting';
     return;
   }
@@ -115,7 +130,9 @@ function advanceDrawingTurn(room: ServerRoom): void {
     room.drawingTurn += 1;
   }
 
-  if (allConnectedPlayersDrew(room)) room.phase = 'voting';
+  // The fixed round schedule is exhausted. Disconnected slots are forfeited,
+  // not owed as make-up turns after a resume. Stroke counts can therefore be <2.
+  room.phase = 'voting';
 }
 
 function resolveVotingIfReady(room: ServerRoom): void {
@@ -171,6 +188,7 @@ export function submitStroke(room: ServerRoom, playerId: string, points: unknown
   player.strokesSubmitted += 1;
   room.drawingTurn += 1;
   advanceDrawingTurn(room);
+  resolveVotingIfReady(room);
 }
 
 function resolveVotes(room: ServerRoom, agentGuessCorrect: boolean | null): void {
@@ -179,7 +197,7 @@ function resolveVotes(room: ServerRoom, agentGuessCorrect: boolean | null): void
   const result = toRoundResult({
     agentId: room.agentId,
     artistIds: room.players
-      .filter((player) => player.id !== room.agentId)
+      .filter((player) => room.drawingOrder.includes(player.id) && player.id !== room.agentId)
       .map((player) => player.id),
     voteLeaders,
     agentGuessCorrect,
@@ -200,6 +218,8 @@ export function submitVote(room: ServerRoom, playerId: string, targetId: string)
   if (!player?.connected) throw new KritzelagentError('Player is not connected in this room');
   if (!target || !target.connected)
     throw new KritzelagentError('Vote target is not connected in this room');
+  if (!room.drawingOrder.includes(playerId) || !room.drawingOrder.includes(targetId))
+    throw new KritzelagentError('Player is not participating in this round');
   if (playerId === targetId) throw new KritzelagentError('You cannot vote for yourself');
   if (room.votes.has(playerId)) throw new KritzelagentError('You already voted this round');
 

@@ -30,6 +30,7 @@ export function buildRoomView(room: ServerRoom): RoomView {
       name: player.name,
       isHost: player.isHost,
       connected: player.connected,
+      participating: room.drawingOrder.includes(player.id),
       strokesSubmitted: player.strokesSubmitted,
       hasVoted: player.hasVoted,
     })),
@@ -50,8 +51,7 @@ export function buildRoomView(room: ServerRoom): RoomView {
 }
 
 export function privateAssignmentFor(room: ServerRoom, playerId: string): PrivateAssignment | null {
-  if (!room.topic || !room.agentId || !room.players.some((player) => player.id === playerId))
-    return null;
+  if (!room.topic || !room.agentId || !room.drawingOrder.includes(playerId)) return null;
   const isAgent = room.agentId === playerId;
   return {
     category: room.topic.category,

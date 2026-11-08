@@ -71,10 +71,10 @@ Handler responsibilities:
 
 - `Lobby.vue`: room view and host controls
 - `TeamSetup.vue`: host-managed match settings plus self-service team and role assignment
-- `GamePlay.vue`: active game layout, team roster rails, and reveal confirmation overlay
+- `GamePlay.vue`: board-first active game, selected-card reveal action, and expandable rosters/history/host controls
 - `GameBoard.vue` and `CardCell.vue`: board rendering, shared card focus marker, and guesses
 - `SignalInput.vue`: Director clue entry
-- `TurnIndicator.vue`: current team, phase, and signal status
+- `TurnIndicator.vue`: current-team instruction and remaining-card scoreboard
 - `GameLog.vue`: completed turn history
 - `GameOver.vue`: winner state, multi-winner endings, and replay action
 
@@ -86,6 +86,39 @@ Handler responsibilities:
 
 If a player disconnects during an active match, they reclaim the same slot through
 `autoJoinRoom` or `resumePlayer` with the stored `resumeToken`.
+
+### UI action and privacy boundaries
+
+`App.vue` uses `lib/pendingAction.ts` to own one in-flight action. A successful ACK
+or action-specific authoritative `RoomView` evidence settles that action and
+invalidates its generation. Team/role and settings require the requested value;
+marks require the current player's requested mark (or absence of own marks for
+clear); signal requires its trimmed, uppercased word (matching server normalization),
+number and guessing phase; reveal requires the
+requested card to become revealed. Start/restart require the corresponding room
+phase transition; end/skip require a turn transition, completed log entry or match
+end. Unrelated presence/settings/other-player marks do not unlock pending work.
+A lost ACK after confirmed state cannot cause an eight-second false timeout or
+block the next action. Only unresolved work times out; no mutation is retried.
+
+Timeout, completion, disconnect and unmount invalidate action ownership and cancel
+its timer, so late ACKs cannot settle a newer action. Disconnect gates controls
+until the resumed authoritative state arrives. Join/resume callbacks also carry a
+connection generation, preventing a stale callback from restoring a replaced
+session after disconnect/unmount. Rejections appear in a localized alert. `SignalInput` retains the clue draft until a successful phase
+change unmounts the form, so a server-rejected board word can be corrected.
+
+`CardCell` derives visible ownership only for a Director or a revealed card.
+It uses that same authorized type for color, assassin/reveal indicators and the
+accessible name. Visible color-name captions are intentionally absent. Agents
+receive neutral paper tiles until a reveal. `GamePlay` permits the reveal action
+only for an unrevealed selected card bearing the current player's server-confirmed
+mark. A turn/phase change clears the local selection.
+
+The game uses a scoped system UI font, a teal table surface and paper cards.
+Rosters, completed history and host skip controls are native expandable details;
+they do not displace the board on phones. There is no fixed action overlay that
+can cover the final row. See [DESIGN.md](DESIGN.md) for dimensions and tokens.
 
 ## State model
 
@@ -109,7 +142,7 @@ Typical flow:
    team targets.
 4. The active Director gives a signal.
 5. The active Agents can mark multiple candidate cards for the whole room, then confirm a reveal
-   locally from one of their own marks.
+   with the explicit Reveal Card action for a selected own mark. Marking never reveals a card.
 6. The active Agents reveal cards until they stop, miss, or exhaust the guess allowance.
 7. The host can also force-skip a stalled turn, including the Director thinking phase.
 8. Play rotates to the next active non-eliminated team.

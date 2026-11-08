@@ -1,4 +1,5 @@
 import { expect, test, type Browser, type BrowserContext, type Page } from '@playwright/test';
+import type { RoomView } from '../core/src/types';
 
 interface Session {
   contexts: BrowserContext[];
@@ -23,14 +24,21 @@ async function joinParty(page: Page, name: string, inviteCode: string): Promise<
   await page.waitForURL(/\/party\/[A-Z0-9]+/);
 }
 
-async function createSession(browser: Browser): Promise<Session> {
-  const contexts = await Promise.all(Array.from({ length: 5 }, () => browser.newContext()));
+async function createSession(
+  browser: Browser,
+  observePage?: (page: Page) => void,
+  playerCount = 5
+): Promise<Session> {
+  const contexts = await Promise.all(
+    Array.from({ length: playerCount }, () => browser.newContext())
+  );
   const pages = await Promise.all(contexts.map((context) => context.newPage()));
+  pages.forEach((page) => observePage?.(page));
   const inviteCode = await createParty(pages[0]!, 'Jona');
   await Promise.all(
     pages.slice(1).map((page, index) => joinParty(page, `Spieler ${index + 2}`, inviteCode))
   );
-  await expect(pages[0]!.getByRole('heading', { name: 'Players (5)' })).toBeVisible();
+  await expect(pages[0]!.getByRole('heading', { name: `Players (${playerCount})` })).toBeVisible();
   return { contexts, pages };
 }
 
@@ -58,15 +66,29 @@ async function launchGame(session: Session): Promise<void> {
   );
 }
 
-async function drawStroke(page: Page): Promise<void> {
+async function drawStroke(page: Page, steps = 2): Promise<void> {
+  const notice = page.getByRole('dialog', { name: 'Your turn to draw!' });
+  await expect(notice).toBeVisible();
+  const start = notice.getByRole('button', { name: 'Start drawing' });
+  await expect(start).toBeFocused();
+  await start.press('Tab');
+  await expect(start).toBeFocused();
+  await start.click();
+  await expect(notice).not.toBeVisible();
   const canvas = page.getByRole('img', { name: 'Shared doodle canvas' });
   const bounds = await canvas.boundingBox();
   expect(bounds).not.toBeNull();
   const box = bounds!;
+  if (steps > 80) {
+    await page.mouse.click(box.x + box.width * 0.2, box.y + box.height * 0.25);
+    await expect(page.getByText('Invalid stroke.', { exact: true })).toHaveCount(0);
+    await expect(page.getByText('Your turn: draw exactly one stroke.')).toBeVisible();
+    await expect(notice).not.toBeVisible();
+  }
   await page.mouse.move(box.x + box.width * 0.2, box.y + box.height * 0.25);
   await page.mouse.down();
   await page.mouse.move(box.x + box.width * 0.8, box.y + box.height * 0.75, {
-    steps: 2,
+    steps,
   });
   await page.mouse.up();
 }
@@ -81,7 +103,9 @@ async function completeDrawing(session: Session): Promise<void> {
       }
     }
     expect(activePage, `active page for turn ${turn + 1}`).toBeDefined();
-    await drawStroke(activePage!);
+    // Exercise a realistic long gesture (>80 pointer samples), not only a two-point line.
+    await drawStroke(activePage!, turn === 0 ? 160 : 2);
+    await expect(activePage!.getByText('Invalid stroke.', { exact: true })).toHaveCount(0);
     await expect(activePage!.getByText('Your turn: draw exactly one stroke.')).not.toBeVisible();
   }
   await Promise.all(
@@ -90,6 +114,177 @@ async function completeDrawing(session: Session): Promise<void> {
 }
 
 test.describe('Kritzelagent game', () => {
+  test('finishes voting when only one participant and a resumed spectator remain', async ({
+    browser,
+  }) => {
+    let room: RoomView | undefined;
+    const session = await createSession(
+      browser,
+      (page) => {
+        page.on('websocket', (socket) =>
+          socket.on('framereceived', ({ payload }) => {
+            const prefix = '42/g/kritzelagent,';
+            if (typeof payload !== 'string' || !payload.startsWith(prefix)) return;
+            const packet = JSON.parse(payload.slice(prefix.length));
+            if (packet[0] === 'roomUpdate') room = packet[1];
+          })
+        );
+      },
+      6
+    );
+    try {
+      await launchGame(session);
+      const spectator = session.pages[5]!;
+      const url = spectator.url();
+      await spectator.goto('about:blank');
+      await expect.poll(() => room?.players.filter((p) => p.connected).length).toBe(5);
+      await session.pages[0]!.getByRole('button', { name: 'Start game', exact: true }).click();
+      await expect.poll(() => room?.phase).toBe('drawing');
+      await spectator.goto(url);
+      await expect.poll(() => room?.players.filter((p) => p.connected).length).toBe(6);
+      expect(room!.players.find((p) => p.name === 'Spieler 6')?.participating).toBe(false);
+      await completeDrawing(session);
+      await Promise.all(session.contexts.slice(1, 5).map((context) => context.close()));
+      await expect(session.pages[0]!.getByTestId('kritzelagent-reveal')).toBeVisible();
+      await expect(spectator.getByTestId('kritzelagent-reveal')).toBeVisible();
+      expect(room!.voteCounts.every((entry) => entry.votes === 0)).toBe(true);
+      expect(room!.revealedTopic).not.toBeNull();
+    } finally {
+      await closeSession(session);
+    }
+  });
+
+  test('submits closed excursions with stationary tails and aliasing loops using native pointer input', async ({
+    browser,
+  }) => {
+    test.slow();
+    const submitted: Array<Array<{ x: number; y: number }>> = [];
+    // Observe before party entry: Socket.IO multiplexes the later game
+    // namespace onto the already-open party transport.
+    const session = await createSession(browser, (page) => {
+      page.on('websocket', (socket) => {
+        socket.on('framesent', ({ payload }) => {
+          const text = String(payload);
+          const start = text.indexOf('[');
+          if (start < 0) return;
+          try {
+            const message = JSON.parse(text.slice(start));
+            if (message[0] === 'submitStroke') submitted.push(message[1].points);
+          } catch {
+            /* Other Engine.IO frames are not action payloads. */
+          }
+        });
+      });
+    });
+    try {
+      await launchGame(session);
+      await session.pages[0]!.getByRole('button', { name: 'Start game' }).click();
+      for (const pattern of ['stationary-tail', 'alternating-loops']) {
+        const noticeFor = (page: Page) => page.getByRole('dialog', { name: 'Your turn to draw!' });
+        await expect
+          .poll(
+            async () =>
+              (await Promise.all(session.pages.map((page) => noticeFor(page).isVisible()))).filter(
+                Boolean
+              ).length
+          )
+          .toBe(1);
+        const active = (
+          await Promise.all(
+            session.pages.map(async (page) => ((await noticeFor(page).isVisible()) ? page : null))
+          )
+        ).find((page): page is Page => page !== null)!;
+        await noticeFor(active).getByRole('button', { name: 'Start drawing' }).click();
+        const bounds = (await active
+          .getByRole('img', { name: 'Shared doodle canvas' })
+          .boundingBox())!;
+        const move = (fraction: number) =>
+          active.mouse.move(
+            bounds.x + bounds.width * fraction,
+            bounds.y + bounds.height * fraction
+          );
+        await move(0.1);
+        await active.mouse.down();
+        if (pattern === 'stationary-tail') {
+          for (let index = 0; index < 10; index += 1) await move(0.9);
+          for (let index = 0; index < 1200; index += 1) await move(0.1);
+        } else {
+          for (let index = 0; index < 79; index += 1) {
+            await move(0.9);
+            await move(0.1);
+          }
+        }
+        const before = submitted.length;
+        await active.mouse.up();
+        await expect.poll(() => submitted.length).toBe(before + 1);
+        const points = submitted.at(-1)!;
+        expect(points.length).toBeLessThanOrEqual(80);
+        expect(points.length).toBeGreaterThanOrEqual(3);
+        expect(points[0]!.x).toBeCloseTo(points.at(-1)!.x, 2);
+        expect(points[0]!.y).toBeCloseTo(points.at(-1)!.y, 2);
+        expect(
+          Math.max(...points.map((point) => point.x)) - Math.min(...points.map((point) => point.x))
+        ).toBeGreaterThan(0.6);
+        await expect(active.getByText('Your turn: draw exactly one stroke.')).not.toBeVisible();
+        await expect(active.getByText('Invalid stroke.', { exact: true })).toHaveCount(0);
+      }
+    } finally {
+      await closeSession(session);
+    }
+  });
+
+  test('announces a turn on a narrow screen and dismisses with Escape', async ({ browser }) => {
+    const session = await createSession(browser);
+    try {
+      await launchGame(session);
+      await session.pages[0]!.getByRole('button', { name: 'Start game' }).click();
+      const noticeFor = (page: Page) => page.getByRole('dialog', { name: 'Your turn to draw!' });
+      await expect
+        .poll(async () => {
+          const visible = await Promise.all(
+            session.pages.map((page) => noticeFor(page).isVisible())
+          );
+          return visible.filter(Boolean).length;
+        })
+        .toBe(1);
+      const active = (
+        await Promise.all(
+          session.pages.map(async (page) => ((await noticeFor(page).isVisible()) ? page : null))
+        )
+      ).find((page): page is Page => page !== null)!;
+      await active.setViewportSize({ width: 320, height: 700 });
+      const notice = noticeFor(active);
+      await expect(notice).toBeVisible();
+      await active.evaluate(() => {
+        document.documentElement.style.fontSize = '200%';
+      });
+      const bounds = await notice.boundingBox();
+      expect(bounds).not.toBeNull();
+      expect(bounds!.x).toBeGreaterThanOrEqual(0);
+      expect(bounds!.x + bounds!.width).toBeLessThanOrEqual(320);
+      await expect
+        .poll(() =>
+          active.evaluate(
+            () => document.documentElement.scrollWidth <= document.documentElement.clientWidth
+          )
+        )
+        .toBe(true);
+      await expect(notice.getByRole('button', { name: 'Start drawing' })).toBeFocused();
+      await active.keyboard.press('Escape');
+      await expect(notice).not.toBeVisible();
+      await expect(active.getByText('Your turn: draw exactly one stroke.')).toBeVisible();
+      await expect
+        .poll(() =>
+          active.evaluate(
+            () => document.documentElement.scrollWidth <= document.documentElement.clientWidth
+          )
+        )
+        .toBe(true);
+    } finally {
+      await closeSession(session);
+    }
+  });
+
   test('runs all five rounds, preserves private assignments, and renders the platform overlay', async ({
     browser,
   }) => {

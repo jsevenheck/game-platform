@@ -90,7 +90,7 @@ function finishDrawing(room: ServerRoom): void {
 }
 
 describe('round lifecycle', () => {
-  it('starts with a private assignment and a deterministic two-stroke drawing phase', () => {
+  it('starts with a private assignment and a two-stroke drawing phase', () => {
     const { room, playerIds } = setupRoom();
     startGame(room);
 
@@ -119,6 +119,65 @@ describe('round lifecycle', () => {
     });
   });
 
+  it('shuffles only connected players and repeats that order for both drawing passes', () => {
+    const { room, playerIds } = setupRoom(6);
+    findPlayer(room, playerIds.at(-1)!)!.connected = false;
+    vi.spyOn(Math, 'random').mockReturnValue(0);
+
+    startGame(room);
+
+    const connectedIds = playerIds.slice(0, -1);
+    const expectedOrder = [...connectedIds.slice(1), connectedIds[0]!];
+    expect(room.drawingOrder).toEqual(expectedOrder);
+    expect(new Set(room.drawingOrder)).toEqual(new Set(connectedIds));
+    expect(room.players.map((player) => player.id)).toEqual(playerIds);
+
+    const turns: string[] = [];
+    for (let pass = 0; pass < DRAWING_TURNS_PER_PLAYER; pass += 1) {
+      for (const playerId of expectedOrder) {
+        expect(currentDrawingPlayerId(room)).toBe(playerId);
+        turns.push(playerId);
+        submitStroke(room, playerId, stroke);
+      }
+    }
+    expect(turns).toEqual([...expectedOrder, ...expectedOrder]);
+    expect(room.drawingOrder).toEqual(expectedOrder);
+    expect(room.phase).toBe('voting');
+    expect(findPlayer(room, playerIds.at(-1)!)!.strokesSubmitted).toBe(0);
+    expect(
+      room.players
+        .filter((player) => player.connected)
+        .every((player) => player.strokesSubmitted === DRAWING_TURNS_PER_PLAYER)
+    ).toBe(true);
+  });
+
+  it.each([0, 0.9999])('reshuffles each round without forbidding repeats (random %s)', (random) => {
+    const { room, playerIds } = setupRoom();
+    const randomSpy = vi.spyOn(Math, 'random').mockReturnValue(0);
+    startGame(room);
+    const firstOrder = [...playerIds.slice(1), playerIds[0]!];
+    expect(room.drawingOrder).toEqual(firstOrder);
+    finishDrawing(room);
+    const artistId = playerIds.find((playerId) => playerId !== room.agentId)!;
+    for (const playerId of playerIds) {
+      submitVote(room, playerId, playerId === artistId ? room.agentId! : artistId);
+    }
+    expect(room.phase).toBe('reveal');
+
+    randomSpy.mockReturnValue(random);
+    nextRound(room);
+
+    expect(room.currentRound).toBe(2);
+    expect(room.drawingOrder).toEqual(random === 0 ? firstOrder : playerIds);
+    expect(currentDrawingPlayerId(room)).toBe(room.drawingOrder[0]);
+    finishDrawing(room);
+    expect(room.strokes.map((entry) => entry.playerId)).toEqual([
+      ...room.drawingOrder,
+      ...room.drawingOrder,
+    ]);
+    expect(room.phase).toBe('voting');
+  });
+
   it("accepts only the active player's valid stroke and enters voting after the quorum", () => {
     const { room } = setupRoom();
     startGame(room);
@@ -132,6 +191,126 @@ describe('round lifecycle', () => {
     expect(room.phase).toBe('voting');
     expect(room.strokes).toHaveLength(room.players.length * DRAWING_TURNS_PER_PLAYER);
     expect(room.players.every((player) => player.strokesSubmitted === 2)).toBe(true);
+  });
+
+  it.each([0, 1, 4, 5, 8, 9])(
+    'forfeits a disconnected scheduled slot at turn %s without owing make-up strokes',
+    (skipTurn) => {
+      const { room } = setupRoom();
+      startGame(room);
+      for (let index = 0; index < skipTurn; index += 1)
+        submitStroke(room, currentDrawingPlayerId(room)!, stroke);
+      const skipped = findPlayer(room, currentDrawingPlayerId(room)!)!;
+      skipped.connected = false;
+      recheckAfterDisconnect(room);
+      skipped.connected = true;
+      for (let index = 0; index < 10 && room.phase === 'drawing'; index += 1)
+        submitStroke(room, currentDrawingPlayerId(room)!, stroke);
+      expect(room.phase).toBe('voting');
+      expect(room.drawingTurn).toBeLessThanOrEqual(10);
+      expect(skipped.strokesSubmitted).toBe(1);
+      expect(room.strokes).toHaveLength(9);
+      expect(currentDrawingPlayerId(room)).toBeNull();
+    }
+  );
+
+  it('keeps a round-start absentee out of assignment, voting, targets and scoring until the next round', () => {
+    const { room, playerIds } = setupRoom(6);
+    const spectator = findPlayer(room, playerIds.at(-1)!)!;
+    spectator.connected = false;
+    startGame(room);
+    spectator.connected = true;
+    expect(privateAssignmentFor(room, spectator.id)).toBeNull();
+    expect(
+      buildRoomView(room).players.find((player) => player.id === spectator.id)?.participating
+    ).toBe(false);
+    finishDrawing(room);
+    expect(room.phase).toBe('voting');
+    expect(() => submitVote(room, spectator.id, room.agentId!)).toThrow('not participating');
+    expect(() => submitVote(room, room.agentId!, spectator.id)).toThrow('not participating');
+    const artist = room.drawingOrder.find((id) => id !== room.agentId)!;
+    for (const id of room.drawingOrder)
+      submitVote(room, id, id === room.agentId ? artist : room.agentId!);
+    expect(room.phase).toBe('agentGuess');
+    submitAgentGuess(room, room.agentId!, 'incorrect guess');
+    expect(room.phase).toBe('reveal');
+    expect(room.roundResult?.scoreDeltas).not.toHaveProperty(spectator.id);
+    expect(room.scores.get(spectator.id)).toBe(0);
+    nextRound(room);
+    expect(room.drawingOrder).toContain(spectator.id);
+    expect(privateAssignmentFor(room, spectator.id)).not.toBeNull();
+  });
+
+  it('completes an empty eligible quorum even if a connected spectator remains', () => {
+    const { room, playerIds } = setupRoom(6);
+    const spectator = findPlayer(room, playerIds.at(-1)!)!;
+    spectator.connected = false;
+    startGame(room);
+    spectator.connected = true;
+    for (const id of room.drawingOrder) {
+      findPlayer(room, id)!.connected = false;
+      recheckAfterDisconnect(room);
+    }
+    expect(room.phase).toBe('reveal');
+    expect(currentDrawingPlayerId(room)).toBeNull();
+    expect(room.roundResult?.scoreDeltas).not.toHaveProperty(spectator.id);
+  });
+
+  it.each([false, true])(
+    'settles a lone remaining voter with no legal target (spectator %s)',
+    (withSpectator) => {
+      const { room, playerIds } = setupRoom(withSpectator ? 6 : 5);
+      const spectator = withSpectator ? findPlayer(room, playerIds.at(-1)!)! : null;
+      if (spectator) spectator.connected = false;
+      startGame(room);
+      finishDrawing(room);
+      if (spectator) spectator.connected = true;
+      for (const id of room.drawingOrder.slice(1)) {
+        findPlayer(room, id)!.connected = false;
+        recheckAfterDisconnect(room);
+      }
+      expect(room.phase).toBe('reveal');
+      expect(room.votes.size).toBe(0);
+      expect(room.roundResult?.agentCaught).toBe(false);
+      if (spectator) expect(room.roundResult?.scoreDeltas).not.toHaveProperty(spectator.id);
+    }
+  );
+
+  it('resolves an unattainable voting quorum immediately after the last drawing slot', () => {
+    const { room, playerIds } = setupRoom(6);
+    const spectator = findPlayer(room, playerIds.at(-1)!)!;
+    spectator.connected = false;
+    startGame(room);
+    spectator.connected = true;
+    const survivor = room.drawingOrder[0]!;
+    for (const id of room.drawingOrder.slice(1)) {
+      findPlayer(room, id)!.connected = false;
+      recheckAfterDisconnect(room);
+    }
+    submitStroke(room, survivor, stroke);
+    submitStroke(room, survivor, stroke);
+    expect(room.phase).toBe('reveal');
+    expect(room.strokes).toHaveLength(2);
+    expect(room.votes.size).toBe(0);
+    expect(room.roundResult?.scoreDeltas).not.toHaveProperty(spectator.id);
+  });
+
+  it('retains already-cast votes when the last possible target disappears', () => {
+    const { room } = setupRoom();
+    startGame(room);
+    finishDrawing(room);
+    const survivor = room.agentId!;
+    const others = room.drawingOrder.filter((id) => id !== survivor);
+    for (const id of others) submitVote(room, id, survivor);
+    for (const id of others) {
+      findPlayer(room, id)!.connected = false;
+      recheckAfterDisconnect(room);
+    }
+    expect(room.votes.size).toBe(others.length);
+    expect(room.phase).toBe('agentGuess');
+    submitAgentGuess(room, survivor, 'incorrect guess');
+    expect(room.phase).toBe('reveal');
+    expect(room.roundResult?.agentCaught).toBe(true);
   });
 
   it('moves to agentGuess only for a unique agent vote leader, then reveals artist points on a miss', () => {

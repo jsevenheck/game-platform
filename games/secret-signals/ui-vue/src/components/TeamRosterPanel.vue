@@ -1,8 +1,8 @@
 <script setup lang="ts">
 import { computed } from 'vue';
 import { useI18n } from 'vue-i18n';
-import { TEAM_HEX_BY_COLOR } from '@shared/constants';
 import type { PlayerView, TeamColor } from '@shared/types';
+import { TEAM_HEX, TEAM_TEXT_HEX } from '../lib/teamTheme';
 
 const props = defineProps<{
   teamColor: TeamColor;
@@ -18,54 +18,114 @@ const agents = computed(() => props.players.filter((player) => player.role === '
 
 <template>
   <section
-    class="min-w-[180px] px-3.5 py-3.5 border border-border rounded-lg bg-shell shadow-[inset_0_1px_0_rgba(255,255,255,0.03)]"
-    :class="{
-      'shadow-[inset_0_1px_0_rgba(255,255,255,0.03),0_0_0_1px_rgba(6,182,212,0.25)]': isCurrentTurn,
-      'opacity-55': eliminated,
-    }"
+    class="roster-panel"
+    :class="{ 'is-current': isCurrentTurn, 'is-eliminated': eliminated }"
+    :style="{ '--team-color': TEAM_HEX[teamColor], '--team-ink': TEAM_TEXT_HEX[teamColor] }"
   >
-    <header class="mb-3 pb-2 border-b-[3px]" :style="{ borderColor: TEAM_HEX_BY_COLOR[teamColor] }">
-      <div class="flex items-center justify-between gap-2">
-        <h3 class="text-foreground/95 text-sm font-extrabold uppercase tracking-[0.08em]">
-          {{ t('secret-signals.teamOf', { color: t(`secret-signals.teams.${teamColor}`) }) }}
-        </h3>
-        <span v-if="isCurrentTurn" class="ui-badge bg-signals text-white">{{
-          t('secret-signals.roster.turn')
-        }}</span>
-        <span v-else-if="eliminated" class="ui-badge bg-border-strong text-muted-foreground">{{
-          t('secret-signals.roster.out')
-        }}</span>
-      </div>
+    <header class="roster-header">
+      <h3>{{ t('secret-signals.teamOf', { color: t(`secret-signals.teams.${teamColor}`) }) }}</h3>
+      <span v-if="isCurrentTurn" class="ui-badge turn-badge">{{
+        t('secret-signals.roster.turn')
+      }}</span>
+      <span v-else-if="eliminated" class="ui-badge out-badge">{{
+        t('secret-signals.roster.out')
+      }}</span>
     </header>
 
-    <div class="flex flex-col gap-1">
-      <span class="text-muted-foreground text-[0.7rem] font-bold uppercase tracking-[0.08em]">{{
-        t('secret-signals.roster.directorLabel')
-      }}</span>
-      <span
-        class="text-foreground/90 text-sm font-semibold"
-        :class="{ 'text-muted-foreground italic': !director }"
-      >
+    <div class="roster-group">
+      <span class="role-label">{{ t('secret-signals.roster.directorLabel') }}</span>
+      <span class="director-name" :class="{ 'is-empty': !director }">
         {{ director?.name ?? t('secret-signals.roster.unassigned') }}
       </span>
     </div>
 
-    <div class="flex flex-col gap-1 mt-2.5">
-      <span class="text-muted-foreground text-[0.7rem] font-bold uppercase tracking-[0.08em]">{{
-        t('secret-signals.roster.agents')
-      }}</span>
-      <ul class="flex flex-col gap-0.5 list-none">
-        <li
-          v-for="agent in agents"
-          :key="agent.id"
-          class="agent-name text-foreground/90 text-sm font-semibold"
-        >
-          {{ agent.name }}
-        </li>
-        <li v-if="agents.length === 0" class="text-muted-foreground text-sm italic">
+    <div class="roster-group">
+      <span class="role-label">{{ t('secret-signals.roster.agents') }}</span>
+      <ul class="agent-list">
+        <li v-for="agent in agents" :key="agent.id" class="agent-name">{{ agent.name }}</li>
+        <li v-if="agents.length === 0" class="is-empty">
           {{ t('secret-signals.roster.noAgents') }}
         </li>
       </ul>
     </div>
   </section>
 </template>
+
+<style scoped>
+.roster-panel {
+  --roster-shell: #102d35;
+  --roster-panel: #163943;
+  --roster-paper: #f2e8d5;
+  --roster-muted: #b9c9c8;
+  min-width: 0;
+  border: 1px solid #36545a;
+  border-radius: 8px;
+  background: var(--roster-panel);
+  color: var(--roster-paper);
+}
+.is-current {
+  outline: 2px solid var(--roster-paper);
+  outline-offset: 2px;
+}
+.is-eliminated {
+  border-style: dashed;
+}
+.roster-header {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 6px;
+  padding: 10px 12px;
+  border-radius: 7px 7px 0 0;
+  color: var(--team-ink);
+  background: var(--team-color);
+}
+.roster-header h3 {
+  min-width: 0;
+  margin: 0;
+  font-size: 0.875rem;
+  font-weight: 800;
+  overflow-wrap: anywhere;
+}
+.turn-badge,
+.out-badge {
+  background: var(--roster-shell);
+  color: var(--roster-paper);
+  white-space: normal;
+}
+.roster-group {
+  display: grid;
+  gap: 4px;
+  padding: 10px 12px;
+}
+.roster-group + .roster-group {
+  border-top: 1px solid #36545a;
+}
+.role-label {
+  color: var(--roster-muted);
+  font-size: 0.65rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+}
+.director-name,
+.agent-name {
+  overflow-wrap: anywhere;
+  font-size: 0.875rem;
+  font-weight: 600;
+}
+.agent-list {
+  display: grid;
+  gap: 4px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+.is-empty {
+  color: var(--roster-muted);
+  font-size: 0.8rem;
+  font-weight: 400;
+  overflow-wrap: anywhere;
+}
+</style>

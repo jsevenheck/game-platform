@@ -37,8 +37,12 @@ export const useGameStore = defineStore('kritzelagent-game', {
   },
   actions: {
     setRoom(room: RoomView) {
-      if (this.room?.currentRound !== room.currentRound || room.phase === 'lobby') {
-        this.assignment = room.phase === 'lobby' ? null : this.assignment;
+      if (
+        this.room?.currentRound !== room.currentRound ||
+        room.phase === 'lobby' ||
+        !room.players.some((player) => player.id === this.playerId && player.participating)
+      ) {
+        this.assignment = null;
       }
       this.room = room;
       this.roomCode = room.roomCode;

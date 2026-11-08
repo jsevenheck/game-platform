@@ -153,6 +153,8 @@ const focusKey = computed(
 watch(focusKey, async () => {
   if (joinState.value !== 'ready') return;
   await nextTick();
+  // A turn modal owns focus; do not steal it for the phase heading.
+  if (document.getElementById('kritzelagent-turn-title')) return;
   const focusTarget = phaseRegion.value?.querySelector<HTMLElement>('[data-phase-focus]');
   (focusTarget ?? phaseRegion.value)?.focus();
 });

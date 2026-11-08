@@ -2,6 +2,7 @@
 import { onBeforeUnmount, onMounted, ref, watch } from 'vue';
 import { useI18n } from 'vue-i18n';
 import type { StrokePoint, StrokeView } from '@shared/types';
+import { prepareStrokeForSubmission, sampleStroke } from '@shared/drawing';
 
 const props = defineProps<{ strokes: StrokeView[]; disabled: boolean }>();
 const { t } = useI18n();
@@ -9,6 +10,7 @@ const emit = defineEmits<{ stroke: [points: StrokePoint[]] }>();
 const canvas = ref<HTMLCanvasElement | null>(null);
 const drawing = ref<StrokePoint[]>([]);
 let resizeObserver: ResizeObserver | undefined;
+let activePointer: number | null = null;
 
 function coordinates(event: PointerEvent): StrokePoint {
   const element = canvas.value!;
@@ -54,29 +56,42 @@ function redraw() {
 }
 
 function start(event: PointerEvent) {
-  if (props.disabled || !canvas.value) return;
+  if (props.disabled || !canvas.value || activePointer !== null || event.button !== 0) return;
+  activePointer = event.pointerId;
   canvas.value.setPointerCapture(event.pointerId);
   drawing.value = [coordinates(event)];
   redraw();
 }
 
-function move(event: PointerEvent) {
-  if (drawing.value.length === 0) return;
+function appendPoint(event: PointerEvent) {
+  // Use the same geometry-aware reduction locally: event-index thinning can
+  // erase every excursion of a repeated closed path before submission.
+  if (drawing.value.length >= 4096) drawing.value = sampleStroke(drawing.value, 2048) ?? [];
   drawing.value.push(coordinates(event));
+}
+
+function move(event: PointerEvent) {
+  if (event.pointerId !== activePointer || props.disabled) return;
+  appendPoint(event);
+  redraw();
+}
+
+function resetDrawing() {
+  const pointer = activePointer;
+  activePointer = null;
+  drawing.value = [];
+  if (pointer !== null && canvas.value?.hasPointerCapture(pointer))
+    canvas.value.releasePointerCapture(pointer);
   redraw();
 }
 
 function finish(event: PointerEvent, canceled = false) {
-  if (canceled || drawing.value.length < 2) {
-    drawing.value = [];
-    redraw();
-    return;
-  }
-  if (canvas.value?.hasPointerCapture(event.pointerId))
-    canvas.value.releasePointerCapture(event.pointerId);
-  emit('stroke', drawing.value);
-  drawing.value = [];
-  redraw();
+  if (event.pointerId !== activePointer) return;
+  if (!canceled && !props.disabled) appendPoint(event);
+  const points = canceled || props.disabled ? null : prepareStrokeForSubmission(drawing.value);
+  resetDrawing();
+  // Taps and stationary jitter do not consume a turn or produce a server error.
+  if (points) emit('stroke', points);
 }
 
 onMounted(() => {
@@ -85,6 +100,12 @@ onMounted(() => {
   redraw();
 });
 watch(() => props.strokes, redraw, { deep: true });
+watch(
+  () => props.disabled,
+  (disabled) => {
+    if (disabled) resetDrawing();
+  }
+);
 onBeforeUnmount(() => resizeObserver?.disconnect());
 </script>
 
@@ -99,6 +120,7 @@ onBeforeUnmount(() => resizeObserver?.disconnect());
     @pointermove="move"
     @pointerup="finish"
     @pointercancel="finish($event, true)"
+    @lostpointercapture="finish($event, true)"
   />
 </template>
 
@@ -107,7 +129,8 @@ onBeforeUnmount(() => resizeObserver?.disconnect());
   display: block;
   /* Fit the viewport: never taller than the space left below the header. */
   width: min(100%, calc((100dvh - 20rem) * 4 / 3));
-  min-width: 16rem;
+  min-width: min(16rem, 100%);
+  max-width: 100%;
   margin-inline: auto;
   aspect-ratio: 4 / 3;
   touch-action: none;

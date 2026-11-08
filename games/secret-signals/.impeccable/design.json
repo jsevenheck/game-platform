@@ -1,0 +1,183 @@
+{
+  "schemaVersion": 2,
+  "generatedAt": "2026-11-07T22:45:01.527055Z",
+  "title": "Design System: Secret Signals",
+  "extensions": {
+    "colorMeta": {
+      "shell": {
+        "role": "primary",
+        "displayName": "Dark teal table"
+      },
+      "panel": {
+        "role": "primary",
+        "displayName": "Teal panel"
+      },
+      "paper": {
+        "role": "neutral",
+        "displayName": "Cream paper"
+      },
+      "ink": {
+        "role": "neutral",
+        "displayName": "Dark ink"
+      },
+      "neutral-card": {
+        "role": "neutral",
+        "displayName": "Warm taupe"
+      },
+      "assassin-card": {
+        "role": "neutral",
+        "displayName": "Assassin near-black"
+      },
+      "team-red": {
+        "role": "secondary",
+        "displayName": "Red team"
+      },
+      "team-blue": {
+        "role": "secondary",
+        "displayName": "Blue team"
+      },
+      "team-green": {
+        "role": "secondary",
+        "displayName": "Green team"
+      },
+      "team-orange": {
+        "role": "secondary",
+        "displayName": "Orange team"
+      }
+    },
+    "typographyMeta": {
+      "card": {
+        "displayName": "Word card",
+        "purpose": "Heavy uppercase words on all board cards."
+      },
+      "clue": {
+        "displayName": "Current clue",
+        "purpose": "Prominent current-turn word."
+      }
+    },
+    "shadows": [
+      {
+        "name": "card-rest",
+        "value": "0 2px 3px rgb(0 0 0 / 16%)",
+        "purpose": "Word cards at rest."
+      },
+      {
+        "name": "card-hover",
+        "value": "0 4px 10px rgb(0 0 0 / 30%)",
+        "purpose": "Clickable word-card hover."
+      },
+      {
+        "name": "setup-selected",
+        "value": "inset 0 -3px 0 #c9bca5",
+        "purpose": "Selected non-team setup choice."
+      },
+      {
+        "name": "team-selected",
+        "value": "inset 0 -3px 0 rgb(0 0 0 / 20%)",
+        "purpose": "Selected team choice."
+      }
+    ],
+    "motion": [
+      {
+        "name": "card-state",
+        "value": "background-color 180ms ease-out, box-shadow 180ms ease-out",
+        "purpose": "Word-card state transitions; transition:none under prefers-reduced-motion:reduce."
+      }
+    ],
+    "breakpoints": [
+      {
+        "name": "compact-max",
+        "value": "380px"
+      },
+      {
+        "name": "setup-rosters-min",
+        "value": "480px"
+      },
+      {
+        "name": "clue-row-min",
+        "value": "600px"
+      },
+      {
+        "name": "lobby-results-min",
+        "value": "640px"
+      },
+      {
+        "name": "wide-cards-min",
+        "value": "700px"
+      }
+    ]
+  },
+  "components": [
+    {
+      "name": "Setup choice",
+      "kind": "button",
+      "description": "Unselected role choice, using the game-local control styles.",
+      "html": "<button class=\"ds-choice\" type=\"button\">Agent</button>",
+      "css": ".ds-choice {font-family:system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;font-size:0.8rem;font-weight:700;line-height:1.3;min-height:44px;min-width:44px;padding:8px 12px;border:1px solid #688084;border-radius:6px;background:#163943;color:#f2e8d5;overflow-wrap:anywhere;cursor:pointer;} .ds-choice:hover:not(:disabled) {border-color:#f2e8d5} .ds-choice:focus-visible {outline:3px solid #f2e8d5;outline-offset:3px} .ds-choice:disabled {cursor:default;opacity:0.45}",
+      "refersTo": "setup-choice"
+    },
+    {
+      "name": "Selected setup choice",
+      "kind": "button",
+      "description": "Paper selected-role state with inset lower edge.",
+      "html": "<button class=\"ds-selected\" type=\"button\" aria-pressed=\"true\">Director</button>",
+      "css": ".ds-selected {font-family:system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;font-size:0.8rem;font-weight:700;line-height:1.3;min-height:44px;min-width:44px;padding:8px 12px;border:1px solid #688084;border-radius:6px;background:#163943;color:#f2e8d5;overflow-wrap:anywhere;cursor:pointer;border-color:#f2e8d5;background:#f2e8d5;color:#102d35;box-shadow:inset 0 -3px 0 #c9bca5} .ds-selected:hover:not(:disabled) {border-color:#f2e8d5} .ds-selected:focus-visible {outline:3px solid #f2e8d5;outline-offset:3px} .ds-selected:disabled {cursor:default;opacity:0.45}",
+      "refersTo": "setup-choice-selected"
+    },
+    {
+      "name": "Clue word field",
+      "kind": "input",
+      "description": "Local word-field overrides; shared platform input defaults are not retokenized.",
+      "html": "<label class=\"ds-field\">Word<input placeholder=\"Enter a word\" /></label>",
+      "css": ".ds-field {display:grid;gap:0.35rem;min-width:0;font-family:system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;color:#d5e3e5;font-size:0.75rem;font-weight:600} .ds-field input {min-width:0;width:100%;min-height:46px;text-transform:uppercase;background:#f2e8d5;color:#07171c;border:1px solid #f2e8d5;border-radius:0.35rem} .ds-field input::placeholder {color:#52636a;text-transform:none} .ds-field input:focus-visible {outline:2px solid #fff;outline-offset:2px}"
+    },
+    {
+      "name": "Unknown word card",
+      "kind": "card",
+      "description": "Unknown Agent card; sample text is illustrative, never a hidden ownership cue.",
+      "html": "<button class=\"ds-card\" type=\"button\" aria-pressed=\"false\">ACORN</button>",
+      "css": ".ds-card {position:relative;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:0.2rem;width:100%;min-width:0;min-height:4rem;aspect-ratio:1.35;padding:0.5rem 0.2rem;border:2px solid rgb(7 23 28 / 18%);border-radius:0.4rem;font-family:system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;font-size:clamp(0.75rem,2.8vw,1rem);font-weight:800;line-height:1.15;letter-spacing:0.01em;text-transform:uppercase;text-align:center;overflow-wrap:anywhere;box-shadow:0 2px 3px rgb(0 0 0 / 16%);user-select:none;background:#f2e8d5;color:#07171c;cursor:pointer;touch-action:manipulation;transition:background-color 180ms ease-out,box-shadow 180ms ease-out} .ds-card:hover {box-shadow:0 4px 10px rgb(0 0 0 / 30%)} .ds-card:focus-visible {outline:3px solid #fff;outline-offset:3px;z-index:2} .ds-card:disabled {opacity:1;cursor:default} @media(min-width:700px) {.ds-card {min-height:5.5rem;aspect-ratio:1.7;padding:0.75rem 0.4rem}} @media(prefers-reduced-motion:reduce) {.ds-card {transition:none}}",
+      "refersTo": "word-card"
+    },
+    {
+      "name": "Active team score",
+      "kind": "chip",
+      "description": "Active score indicator, not an interactive control; red is the actual core team token.",
+      "html": "<span class=\"ds-score\"><span class=\"ds-dot\"></span>Red <strong>9</strong></span>",
+      "css": ".ds-score {display:inline-flex;align-items:center;gap:0.4rem;padding:0.3rem 0.6rem;border:1px solid #ef4444;border-radius:0.4rem;font-family:system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;font-size:0.75rem;color:#f4f7f6;background:#163943} .ds-dot {display:inline-block;width:0.6rem;height:0.6rem;flex-shrink:0;border-radius:50%;background:#ef4444} .ds-score strong {font-size:1.35rem;line-height:1;font-variant-numeric:tabular-nums}"
+    },
+    {
+      "name": "Folded team details",
+      "kind": "custom",
+      "description": "Native disclosure keeps secondary information off the initial board surface.",
+      "html": "<details class=\"ds-details\"><summary>Teams &amp; roles</summary></details>",
+      "css": ".ds-details {min-width:0;border-top:1px solid #47717b;font-family:system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif} .ds-details summary {min-height:44px;padding-block:0.75rem;font-size:0.8rem;font-weight:600;color:#d5e3e5;cursor:pointer} .ds-details summary:focus-visible {outline:2px solid #f2e8d5;outline-offset:2px}"
+    }
+  ],
+  "narrative": {
+    "northStar": "Dark teal table, cream word cards",
+    "overview": "Mobile-first, board-first team play: a dark teal table holds cream word cards, with saturated team colors reserved for known ownership and team identity. This records the user-pinned online/mobile word-association direction, not proprietary artwork, branding, or a new identity workshop.",
+    "keyCharacteristics": [
+      "Compact scores and a prominent current clue.",
+      "Separate marking, revealing, and ending a turn.",
+      "Folded secondary information; the same palette in lobby and results."
+    ],
+    "rules": [
+      {
+        "name": "The Ownership Rule",
+        "body": "Ownership color appears on a card only for Directors, revealed cards, or the ended-game board; unknown Agent cards remain paper.",
+        "section": "colors"
+      }
+    ],
+    "dos": [
+      "Do preserve the five-column board, wrapping words and names instead of truncating them.",
+      "Do keep authorized ownership in accessible card names without visible written color labels.",
+      "Do retain native buttons, visible keyboard focus, status announcements, and reduced-motion handling."
+    ],
+    "donts": [
+      "Don't reveal hidden card types through color, text, ARIA, or client-only concealment.",
+      "Don't make a card tap reveal it or replace the separate Reveal Card / End Turn actions.",
+      "Don't restyle the platform shell, import proprietary art, or substitute the shared core team palette."
+    ]
+  }
+}

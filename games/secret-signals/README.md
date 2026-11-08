@@ -22,7 +22,11 @@ Current game rules:
 - Minimum players scales with team count: `max(4, teamCount * 2)`.
 - Directors can see hidden card ownership during play; Agents only see revealed ownership.
 - Active agents can mark multiple candidate cards for the whole team before confirming a reveal.
-- The in-game layout shows each team's Director and Agents around the board.
+- Mobile-first play keeps the 5×5 board, current clue and remaining team targets in view.
+- Tap a word to mark/select it, then use the explicit Reveal Card action. Marks alone never reveal a card; multiple candidate marks and clearing your own marks remain supported.
+- Team rosters, completed signal history and host controls are available in expandable sections below the board.
+- Ownership is shown through full card colors, not repeated color-name text. Accessible names retain authorized ownership; unrevealed ownership remains absent for Agents.
+- Rejected actions show a localized error; rejected clues retain their draft. All lobby, gameplay and replay actions are guarded until their acknowledgement or action-specific authoritative state confirms completion. Only unresolved actions reach the eight-second timeout; no action is automatically retried. Pending controls use `aria-disabled` and guarded activation rather than native disabling, keeping keyboard focus on the selected card.
 - In multi-team games, eliminated teams are skipped in turn rotation.
 - The host can force-skip the active turn, including the Director thinking step.
 - A disconnected player can reclaim their slot through the platform-driven reconnect flow using the
@@ -50,3 +54,5 @@ pnpm lint       # ESLint
 
 - `docs/architecture.md`: runtime and code structure
 - `docs/api.md`: Socket.IO event contracts
+- `docs/PRODUCT.md`: product constraints and approved interaction
+- `docs/DESIGN.md`: game-scoped visual system and mobile behavior

@@ -2,6 +2,7 @@ import { afterEach, describe, expect, it, vi, type Mock } from 'vitest';
 import type { PartySession } from '../../../apps/platform/server/party/types';
 import { clearAllParties, createParty } from '../../../apps/platform/server/party/partyStore';
 import { __resetRoomStoreForTests, getRoomByCode } from '../server/src/models/room';
+import { currentDrawingPlayerId } from '../server/src/managers/roundManager';
 import { registerKritzelagent } from '../server/src/socketHandlers';
 
 interface TestSocket {
@@ -115,6 +116,101 @@ describe('kritzelagent socket security and lifecycle', () => {
     clearAllParties();
     vi.clearAllMocks();
   });
+
+  it.each(['skipped-slot', 'round-start-absentee'])(
+    'completes drawing and voting after authenticated resume: %s',
+    (scenario) => {
+      const namespace = makeNamespace();
+      registerKritzelagent({ of: vi.fn(() => namespace.nsp) } as never, '/g/kritzelagent');
+      const { party, tokens } = setupParty();
+      if (scenario === 'round-start-absentee') {
+        tokens['guest-6'] = 'party-token-6';
+        party.members.set('guest-6', {
+          playerId: 'guest-6',
+          name: 'Guest 6',
+          connected: true,
+          socketId: 'party-guest-6',
+          resumeToken: tokens['guest-6'],
+        });
+      }
+      const sockets = new Map<string, TestSocket>();
+      const resumes = new Map<string, string>();
+      let roomCode = '';
+      for (const id of Object.keys(tokens)) {
+        const socket = makeSocket(`${id}-game`);
+        namespace.connect(socket);
+        const joined = autoJoin(socket, id, tokens[id]!, 'match-kritzelagent');
+        expect(joined.ok).toBe(true);
+        roomCode = joined.roomCode as string;
+        sockets.set(id, socket);
+        resumes.set(id, joined.resumeToken as string);
+      }
+      const action = (id: string, event: string, extra = {}) => {
+        const callback = vi.fn();
+        sockets.get(id)!.handlers[event]!({ roomCode, ...extra }, callback);
+        expect(callback).toHaveBeenCalledWith({ ok: true });
+      };
+      if (scenario === 'round-start-absentee') sockets.get('guest-6')!.handlers.disconnect!();
+      action('host', 'startGame');
+      const room = getRoomByCode(roomCode)!;
+      const resumedId = scenario === 'skipped-slot' ? currentDrawingPlayerId(room)! : 'guest-6';
+      if (scenario === 'skipped-slot') sockets.get(resumedId)!.handlers.disconnect!();
+      const reconnect = makeSocket('resumed-game');
+      namespace.connect(reconnect);
+      expect(
+        autoJoin(
+          reconnect,
+          resumedId,
+          tokens[resumedId]!,
+          'match-kritzelagent',
+          resumes.get(resumedId)
+        )
+      ).toMatchObject({ ok: true });
+      sockets.set(resumedId, reconnect);
+      if (scenario === 'round-start-absentee') {
+        expect(
+          namespace.emissions.filter(
+            (event) => event.target === reconnect.id && event.event === 'privateAssignment'
+          )
+        ).toEqual([]);
+      }
+      const invalid = vi.fn();
+      const beforeInvalid = room.drawingTurn;
+      sockets.get(currentDrawingPlayerId(room)!)!.handlers.submitStroke!(
+        {
+          roomCode,
+          points: Array.from({ length: 81 }, (_, index) => ({ x: index / 80, y: 0.5 })),
+        },
+        invalid
+      );
+      expect(invalid).toHaveBeenCalledWith({ ok: false, error: 'Invalid stroke' });
+      expect(room.drawingTurn).toBe(beforeInvalid);
+      expect(room.strokes).toHaveLength(0);
+      for (let turn = 0; turn < 12 && room.phase === 'drawing'; turn += 1)
+        action(currentDrawingPlayerId(room)!, 'submitStroke', {
+          points: [
+            { x: 0.1, y: 0.1 },
+            { x: 0.9, y: 0.9 },
+          ],
+        });
+      expect(room.phase).toBe('voting');
+      expect(room.players.find((player) => player.id === resumedId)?.strokesSubmitted).toBe(
+        scenario === 'skipped-slot' ? 1 : 0
+      );
+      const artistId = room.drawingOrder.find((id) => id !== room.agentId)!;
+      for (const id of room.drawingOrder)
+        action(id, 'submitVote', {
+          targetPlayerId: id === room.agentId ? artistId : room.agentId!,
+        });
+      expect(room.phase).toBe('agentGuess');
+      action(room.agentId!, 'submitAgentGuess', { guess: 'incorrect guess' });
+      expect(room.phase).toBe('reveal');
+      const lastUpdate = namespace.emissions
+        .filter((event) => event.target === reconnect.id && event.event === 'roomUpdate')
+        .at(-1);
+      expect(lastUpdate?.payload).toMatchObject({ phase: 'reveal', activePlayerId: null });
+    }
+  );
 
   it('rejects an unauthorized party member before creating a game room', () => {
     const namespace = makeNamespace();

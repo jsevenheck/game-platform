@@ -1,0 +1,1 @@
+$ node apps/platform/scripts/typecheck-games.cjs

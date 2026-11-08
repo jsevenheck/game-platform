@@ -1,0 +1,194 @@
+{
+  "baseline": "c27587ff450c46513194b820501b41ebc9c74613",
+  "environment": "local workstation; real local servers; not deployment",
+  "gates": [
+    {
+      "name": "typecheck",
+      "command": ["pnpm", "typecheck"],
+      "exit": 0,
+      "durationSeconds": 7.73,
+      "log": "typecheck.log"
+    },
+    {
+      "name": "typecheck-games",
+      "command": ["pnpm", "typecheck:games"],
+      "exit": 0,
+      "durationSeconds": 17.88,
+      "log": "typecheck-games.log"
+    },
+    {
+      "name": "lint",
+      "command": ["pnpm", "lint"],
+      "exit": 0,
+      "durationSeconds": 1.7,
+      "log": "lint.log"
+    },
+    {
+      "name": "format",
+      "command": ["pnpm", "format:check"],
+      "exit": 0,
+      "durationSeconds": 8.01,
+      "log": "format.log"
+    },
+    {
+      "name": "unit",
+      "command": ["pnpm", "test"],
+      "exit": 0,
+      "durationSeconds": 7.63,
+      "log": "unit.log"
+    },
+    {
+      "name": "kritzelagent",
+      "command": ["pnpm", "test:kritzelagent"],
+      "exit": 0,
+      "durationSeconds": 1.13,
+      "log": "kritzelagent.log"
+    },
+    {
+      "name": "secret-signals",
+      "command": ["pnpm", "test:secret-signals"],
+      "exit": 0,
+      "durationSeconds": 1.27,
+      "log": "secret-signals.log"
+    },
+    {
+      "name": "build",
+      "command": ["pnpm", "build"],
+      "exit": 0,
+      "durationSeconds": 11.73,
+      "log": "build.log"
+    },
+    {
+      "name": "browser",
+      "command": ["pnpm", "test:e2e"],
+      "exit": 0,
+      "durationSeconds": 193.44,
+      "log": "browser.log"
+    },
+    {
+      "name": "audit",
+      "command": ["pnpm", "audit", "--audit-level=low", "--json"],
+      "exit": 0,
+      "durationSeconds": 0.39,
+      "log": "audit.log"
+    }
+  ],
+  "productionBrowser": {
+    "command": [
+      "node",
+      "node_modules/@playwright/test/cli.js",
+      "test",
+      "--config",
+      "/opt/data/cache/scratch/feedback-remediation-production.config.cjs"
+    ],
+    "exit": 0,
+    "passed": 18,
+    "workers": 1,
+    "retries": 0,
+    "port": 3397,
+    "environment": {
+      "NODE_ENV": "production",
+      "E2E_TESTS": "1"
+    },
+    "log": "production-browser.log"
+  },
+  "observedCounts": {
+    "unit": 718,
+    "kritzelagent": 66,
+    "secretSignals": 67,
+    "browser": 81
+  },
+  "supplementalProbes": {
+    "exit": 0,
+    "positiveAssertions": [
+      "both previously stuck reconnect cases reach voting",
+      "short closed excursion and stationary tail retain geometry",
+      "compiled canvas submits both formerly vanished closed gestures",
+      "actual Socket.IO reconnect reaches voting",
+      "keyboard focus remains on card while pending and after ACK"
+    ],
+    "logs": [
+      "kritzelagent-runtime-probe.log",
+      "kritzelagent-ui-probe.log",
+      "kritzelagent-socket-probe.log",
+      "secret-signals-keyboard-probe.log",
+      "secret-signals-privacy-probe.log"
+    ],
+    "scope": "Reproduced original cases after initial fixes; runtime log deliberately includes unfixed historical main comparison. Final residuals additionally covered by final unit/browser/production runs."
+  },
+  "sourceSha256": {
+    "games/kritzelagent/__tests__/drawing.test.ts": "a7cc655a361ed463742ba621116b3fb01cca468d679e6ce0c44798afac169dfc",
+    "games/kritzelagent/__tests__/roundManager.test.ts": "72f10d2e7990e1a7ca423f351c12f6238589cc16cecb0fe21ee00a9c1ec23a31",
+    "games/kritzelagent/__tests__/socketHandlers.test.ts": "7dcb608821b2caa301016a8bd539f12ab509360564b355ae4b85350ca1f75266",
+    "games/kritzelagent/core/src/drawing.ts": "02d5f32242301dd654e953938404ec731695ab88f2169be5349938d9f6fbc156",
+    "games/kritzelagent/core/src/types.ts": "4c141a5ff15d826240257b830ef1eb0a93cab3ea32f1016a6d0252ee36be6fad",
+    "games/kritzelagent/e2e/game.spec.ts": "084a5244ec3212fd8351e59f4a4b7979d691a937a07a3c9c649fc8e0559d9920",
+    "games/kritzelagent/server/src/managers/broadcastManager.ts": "49f7b9391094ccaa14607ce80b139b13dc98f7959d03871b1dd96b1d4b12b1e1",
+    "games/kritzelagent/server/src/managers/roundManager.ts": "a2c15f771df504152fce3860068f4a8c2cbf5d7007f4535b796e9f2e4104e9e8",
+    "games/kritzelagent/ui-vue/src/components/DrawingCanvas.vue": "ccf107800edc5413e74fb11d877a4196bd4345aa312ecefd415ab03af2b1be4a",
+    "games/kritzelagent/ui-vue/src/components/VotingView.vue": "e4a5169fa3fded29ea573b57c109d3d7977aa838ca5a59e3a34e0aac44151d9d",
+    "games/kritzelagent/ui-vue/src/stores/game.ts": "2a923d75e4b8005f8848c399040fbc6d2fb2042a515c9a0c0a4e139cf72dd9ca",
+    "games/secret-signals/__tests__/pendingAction.test.ts": "8da27db399a8e3747d6afec43ead6a58a2e6408e93d205246129f62b64913765",
+    "games/secret-signals/e2e/pending.spec.ts": "61a1ce3c87f171b07911986179ec0320ea86f543ee29c49f066bd73a8d0f3421",
+    "games/secret-signals/ui-vue/src/App.vue": "a9aa69961e72b75ff7261b5bd00f797d51380c15ecfad321c60ec6bfb430bcda",
+    "games/secret-signals/ui-vue/src/components/CardCell.vue": "2d086685550f6a715974997f44f051e9e08917fcf233800b2529e6d6d22654eb",
+    "games/secret-signals/ui-vue/src/components/GameBoard.vue": "824294a03fd6a816e4fd9735aba51326d1d05d2698a3a2f33c4407e07bb09a28",
+    "games/secret-signals/ui-vue/src/components/GameOver.vue": "1275404abd15127838ee5c348212179a08a9269c69a2468463593be7898eb816",
+    "games/secret-signals/ui-vue/src/components/GamePlay.vue": "4b986c83e5e47a940901afeaca9639ee96415a6673309f55f01ceff83985e9ac",
+    "games/secret-signals/ui-vue/src/components/Lobby.vue": "afd43d4f44c0e9716e2def29078bfb2f8534c0555232960b9d9e6b89e78fa595",
+    "games/secret-signals/ui-vue/src/components/SignalInput.vue": "d0624b290afb1b5206e398b275ac6cf383f0a9c086cd0d6d9fbff5544a0549f5",
+    "games/secret-signals/ui-vue/src/components/TeamSetup.vue": "1a10c616f7f93cf72a4f339d5fc81cddf16db61ad51b44d74f121a0bc0b94f82",
+    "games/secret-signals/ui-vue/src/lib/pendingAction.ts": "671d4a9fc8bd0ab592b7985c7fa70d7ace42052df31d0009067798d76efdbfd1",
+    "pnpm-lock.yaml": "eb2dae45ef22464a4426f073f39496ea344ad96e99e132584f6c33762d96ff2c",
+    "pnpm-workspace.yaml": "17783f1ac09b3fb21fb72ddc650cc18cd955c3ab9adeb4407aa379472b57a2e2"
+  },
+  "warnings": [
+    "Existing Vite/Vitest CJS configuration warning about future native loader; active configured loader passes.",
+    "NO_COLOR/FORCE_COLOR cosmetic test-runner warning."
+  ],
+  "boundaries": [
+    "local Chromium, not real mobile hardware or complete screenreader/WCAG validation",
+    "no Docker image/runtime, hosted CI, merge or deployment claim"
+  ],
+  "residualRegressions": {
+    "beforeFix": {
+      "command": [
+        "pnpm",
+        "exec",
+        "vitest",
+        "run",
+        "--project",
+        "kritzelagent",
+        "--project",
+        "secret-signals"
+      ],
+      "observedFailures": 7,
+      "expectedExit": 1,
+      "log": "residual-red.log"
+    },
+    "finalCoverage": [
+      "lowercase, whitespace and mixed-case clue ACK reconciliation",
+      "one remaining eligible voter with and without spectator",
+      "no remaining ballot target at drawing completion",
+      "preserve ballots already cast",
+      "real six-client spectator resume, four disconnects, automatic reveal",
+      "real lost ACK for lowercase clue beyond eight-second deadline"
+    ]
+  },
+  "independentCloseout": {
+    "disposition": "fixed; bounded merge recommendation after full parent gates",
+    "parentRerunExit": 0,
+    "quorumBallotProbes": 8,
+    "registeredHandlerClueVariants": 3,
+    "actualWaitMilliseconds": 8050,
+    "log": "independent-closeout.log",
+    "findings": {
+      "sampling": "fixed",
+      "drawingReconnectSchedule": "fixed",
+      "pendingActionOwnership": "fixed",
+      "keyboardFocus": "fixed",
+      "normalizedClueLostAck": "fixed",
+      "singletonVotingQuorum": "fixed"
+    }
+  }
+}

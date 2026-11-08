@@ -1,5 +1,7 @@
 <script setup lang="ts">
+import { computed, ref } from 'vue';
 import { useI18n } from 'vue-i18n';
+import { useModalDialog } from '@platform/composables/useModalDialog';
 import type { PrivateAssignment, RoomView } from '@shared/types';
 import DrawingCanvas from './DrawingCanvas.vue';
 
@@ -11,6 +13,15 @@ const props = defineProps<{
 }>();
 const { t } = useI18n();
 const emit = defineEmits<{ stroke: [points: { x: number; y: number }[]] }>();
+const notifiedTurn = ref<string | null>(null);
+const turnKey = computed(() => `${props.room.currentRound}:${props.room.drawingTurn}`);
+const showTurnNotice = computed(() => props.canDraw && notifiedTurn.value !== turnKey.value);
+const dialogRef = ref<HTMLElement | null>(null);
+function dismissTurnNotice() {
+  notifiedTurn.value = turnKey.value;
+}
+useModalDialog(dialogRef, { onEscape: dismissTurnNotice });
+// The round/turn key keeps a pending submission from reopening this notice.
 
 function submitStroke(points: { x: number; y: number }[]) {
   if (!props.canDraw || props.pending) return;
@@ -55,7 +66,11 @@ function submitStroke(points: { x: number; y: number }[]) {
         >{{ t('kritzelagent.drawing.motif') }} <strong>{{ assignment.topic }}</strong></span
       >
     </div>
-    <DrawingCanvas :strokes="room.strokes" :disabled="!canDraw || pending" @stroke="submitStroke" />
+    <DrawingCanvas
+      :strokes="room.strokes"
+      :disabled="!canDraw || pending || showTurnNotice"
+      @stroke="submitStroke"
+    />
     <p class="mt-3 text-sm text-muted-foreground" aria-live="polite">
       <template v-if="canDraw">{{ t('kritzelagent.drawing.yourTurn') }}</template>
       <template v-else>{{
@@ -67,6 +82,28 @@ function submitStroke(points: { x: number; y: number }[]) {
       }}</template>
     </p>
   </section>
+  <Teleport to="body">
+    <div v-if="showTurnNotice" class="ui-overlay">
+      <section
+        ref="dialogRef"
+        class="ui-dialog"
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="kritzelagent-turn-title"
+        aria-describedby="kritzelagent-turn-hint"
+      >
+        <h2 id="kritzelagent-turn-title" class="text-2xl font-bold">
+          {{ t('kritzelagent.drawing.turnTitle') }}
+        </h2>
+        <p id="kritzelagent-turn-hint" class="my-4">
+          {{ t('kritzelagent.drawing.turnHint') }}
+        </p>
+        <button type="button" class="ui-btn-primary" @click="dismissTurnNotice">
+          {{ t('kritzelagent.drawing.startDrawing') }}
+        </button>
+      </section>
+    </div>
+  </Teleport>
 </template>
 
 <style scoped>

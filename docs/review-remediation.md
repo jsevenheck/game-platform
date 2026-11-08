@@ -32,9 +32,11 @@ This document describes the implementation and deployment considerations for the
   unbounded queue. Workers have a 10-second execution deadline and are terminated
   after completion/failure. Existing per-IP limits and generic credential errors
   remain. Passwords/hashes and worker error details are never logged.
-- **F06 — Card accessibility:** Secret Signals includes localized visible card-type
-  text and accessible names for director/revealed/final-board cards. Agent views
-  do not render hidden type labels. Names also include revealed/marked state.
+- **F06 — Card accessibility:** Secret Signals retains localized accessible names
+  for director/revealed/final-board card types. The subsequent mobile-UX redesign
+  uses color instead of visible type-name captions; agent views render neither
+  hidden type labels nor hidden ownership styling. Names also include
+  revealed/marked state.
 - **F07 — Storage failure recovery:** session writes/removals are best-effort,
   with an in-memory fallback and a localized persistence warning. Failed logout
   removal cannot resurrect a stale session in the current tab. Parsed session

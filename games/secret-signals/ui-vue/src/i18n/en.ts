@@ -1,5 +1,7 @@
 export const en = {
   connecting: 'Connecting...',
+  dismiss: 'Dismiss',
+  actionTimeout: 'No response from the server. Check the game state before trying again.',
   teams: { red: 'Red', blue: 'Blue', green: 'Green', orange: 'Orange' },
   teamOf: '{color} Team',
   cards: {
@@ -41,10 +43,22 @@ export const en = {
     noAgents: 'No agents',
   },
   turn: {
+    giveSignal: 'Give your team a clue',
+    chooseCard: 'Find your agents',
+    scoreboard: 'Cards remaining per team',
+    remaining: '{team}: {count} cards remaining',
+    guessesUsed: '{count} / {total} guesses',
     directorThinking: 'Director is thinking...',
     agentsGuessing: 'Agents are guessing',
   },
   play: {
+    board: 'Word board',
+    actions: 'Your next action',
+    selected: 'Selected:',
+    tapToMark: 'Tap a word to mark it. Reveal only when you are sure.',
+    clearMarks: 'Clear my marks',
+    teamsAndRoles: 'Teams & roles',
+    hostControls: 'Host controls',
     agentsGuessingYours: 'Your agents are guessing...',
     waitingOther: 'Waiting for other team...',
     waitingDirector: "Waiting for your Director's signal...",
@@ -56,6 +70,7 @@ export const en = {
     revealCard: 'Reveal Card',
   },
   signal: {
+    number: 'Number',
     clueWord: 'Clue word',
     decrease: 'Decrease signal number',
     increase: 'Increase signal number',

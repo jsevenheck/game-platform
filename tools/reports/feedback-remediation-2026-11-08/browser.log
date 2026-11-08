@@ -1,0 +1,103 @@
+
+
+
+
+Running 81 tests using 2 workers
+
+
+
+
+
+[1/81] [chromium] › apps/platform/e2e/home-library.spec.ts:20:7 › home library › renders every registered game
+[2/81] [chromium] › apps/platform/e2e/home-tabs.spec.ts:13:7 › home tabs › first visit defaults to Browse
+[3/81] [chromium] › apps/platform/e2e/home-tabs.spec.ts:22:7 › home tabs › ?tab=join opens Join
+[4/81] [chromium] › apps/platform/e2e/home-library.spec.ts:29:7 › home library › does not block creating a party
+[5/81] [chromium] › apps/platform/e2e/home-tabs.spec.ts:31:7 › home tabs › invalid ?tab falls back to Browse
+[6/81] [chromium] › apps/platform/e2e/home-tabs.spec.ts:36:7 › home tabs › active tab persists across refresh
+[7/81] [chromium] › apps/platform/e2e/live-rooms.spec.ts:22:7 › live rooms / public lobby discovery › public lobby appears, can be pre-filled, and tracks lifecycle
+[8/81] [chromium] › apps/platform/e2e/home-tabs.spec.ts:44:7 › home tabs › Host form name survives switching away and back
+[9/81] [chromium] › apps/platform/e2e/home-tabs.spec.ts:53:7 › home tabs › Join form invite code survives switching away and back
+[10/81] [chromium] › apps/platform/e2e/home-tabs.spec.ts:61:7 › home tabs › Host tab can create a party
+[11/81] [chromium] › apps/platform/e2e/home-tabs.spec.ts:69:7 › home tabs › Join tab can join an existing party
+[12/81] [chromium] › apps/platform/e2e/party-resume.spec.ts:28:7 › platform party resume › player can leave the game view, see the in-progress banner, and rejoin the active match
+[13/81] [chromium] › apps/platform/e2e/home-tabs.spec.ts:88:7 › home tabs › clicking a public lobby pre-fills the Join tab
+[14/81] [chromium] › apps/platform/e2e/home-tabs.spec.ts:112:7 › home tabs › clicking a game in Browse switches to Host and shows the selected-game hint
+[15/81] [chromium] › apps/platform/e2e/party-resume.spec.ts:64:7 › platform party resume › all players can disconnect briefly and the first returning player resumes the active match
+[16/81] [chromium] › apps/platform/e2e/home-tabs.spec.ts:122:7 › home tabs › mobile viewport uses the native select and changes panels
+[17/81] [chromium] › apps/platform/e2e/home-tabs.spec.ts:132:7 › home tabs › keyboard Arrow + Enter activates a tab and focuses the panel
+[18/81] [chromium] › apps/platform/e2e/home-tabs.spec.ts:144:7 › home tabs › creating from a preselected game lands in PartyView with that game selected
+[19/81] [chromium] › apps/platform/e2e/home-tabs.spec.ts:160:7 › home tabs › tryResume redirects from / even when the stored tab is Browse
+[20/81] [chromium] › apps/platform/e2e/party-resume.spec.ts:102:7 › platform party resume › repeated home visits while a match is active always redirect back into the game view
+[21/81] [chromium] › apps/platform/e2e/review-regressions.spec.ts:94:5 › storage write/removal failures do not strand creation or leave
+[22/81] [chromium] › apps/platform/e2e/review-regressions.spec.ts:120:5 › game choice exposes mutually exclusive pressed state to assistive technology
+[23/81] [chromium] › apps/platform/e2e/review-regressions.spec.ts:135:5 › missing public-toggle acknowledgement unlocks the control and restores authoritative state
+[24/81] [chromium] › apps/platform/e2e/party-resume.spec.ts:134:7 › platform party resume › home route resumes an active match and redirects directly back into the game view
+[25/81] [chromium] › games/blackout/e2e/game.spec.ts:32:7 › Blackout via Platform › create party, launch Blackout, and start a game
+[26/81] [chromium] › games/blackout/e2e/game.spec.ts:66:7 › Blackout via Platform › host resumes the active blackout match after reloading the tab
+[27/81] [chromium] › games/blackout/e2e/game.spec.ts:96:7 › Blackout via Platform › player resumes the active blackout match after reloading the tab
+[28/81] [chromium] › apps/platform/e2e/review-regressions.spec.ts:157:5 › a lost acknowledgement keeps a public toggle aligned with the already-applied server update
+[29/81] [chromium] › games/blackout/e2e/game.spec.ts:128:7 › Blackout via Platform › player can reload the active blackout match multiple times and still resume
+[30/81] [chromium] › games/blackout/e2e/game.spec.ts:163:7 › Blackout via Platform › player can return to party lobby via platform overlay after game ends
+[31/81] [chromium] › apps/platform/e2e/review-regressions.spec.ts:175:5 › missing launch acknowledgement clears pending state without automatically retrying
+[32/81] [chromium] › games/estimate/e2e/game.spec.ts:121:7 › Estimate game › desktop game shell stays centered and bounded
+[33/81] [chromium] › apps/platform/e2e/review-regressions.spec.ts:209:5 › initial game resume times out visibly and can recover after a reload
+[34/81] [chromium] › games/estimate/e2e/game.spec.ts:138:7 › Estimate game › happy path: 2 players play 1 round end-to-end
+[35/81] [chromium] › games/estimate/e2e/game.spec.ts:179:7 › Estimate game › host tunes the rounds in the lobby and everyone sees the standings after a reveal
+[36/81] [chromium] › games/estimate/e2e/game.spec.ts:208:7 › Estimate game › host-only action: guest cannot reveal
+[37/81] [chromium] › games/estimate/e2e/game.spec.ts:227:7 › Estimate game › final round shows the game-over scoreboard and platform replay overlay
+[38/81] [chromium] › apps/platform/e2e/review-regressions.spec.ts:239:5 › opening the party URL during an active match restores identity before mounting the game
+[39/81] [chromium] › games/estimate/e2e/game.spec.ts:285:7 › Estimate game › multiple rounds: advancing progresses to a new question
+[40/81] [chromium] › games/flip7/e2e/game.spec.ts:46:7 › Flip 7 via Platform › create party, launch Flip 7, and start a game
+[41/81] [chromium] › games/estimate/e2e/game.spec.ts:306:7 › Estimate game › rejoins the active game after a browser reload
+[42/81] [chromium] › games/flip7/e2e/game.spec.ts:86:7 › Flip 7 via Platform › host can change the target score in the lobby
+[43/81] [chromium] › games/estimate/e2e/game.spec.ts:325:7 › Estimate game › promotes the connected guest when the original host disconnects
+[44/81] [chromium] › games/flip7/e2e/game.spec.ts:124:7 › Flip 7 via Platform › current-turn player sees Hit / Stay controls
+[45/81] [chromium] › games/herd-mentality/e2e/game.spec.ts:53:7 › Herd Mentality › plays a private-answer round through reveal and next round
+[46/81] [chromium] › games/flip7/e2e/game.spec.ts:157:7 › Flip 7 via Platform › host resumes the active Flip 7 match after reloading the tab
+[47/81] [chromium] › games/imposter/e2e/game.spec.ts:126:7 › Imposter via Platform › shows a visible error when a duplicate player name tries to join the party
+[48/81] [chromium] › games/herd-mentality/e2e/game.spec.ts:124:7 › Herd Mentality › host tunes the settings in the lobby and the standings show after a reveal
+[49/81] [chromium] › games/imposter/e2e/game.spec.ts:150:7 › Imposter via Platform › host can end game after a round and see final scoreboard
+[50/81] [chromium] › games/herd-mentality/e2e/game.spec.ts:158:7 › Herd Mentality › reaches the target, shows the final scoreboard, and replays through the platform overlay
+[51/81] [chromium] › games/imposter/e2e/game.spec.ts:176:7 › Imposter via Platform › host can start a next round after reveal
+[52/81] [chromium] › games/imposter/e2e/game.spec.ts:195:7 › Imposter via Platform › paranoia mode (0 infiltrators): civilians always win
+[53/81] [chromium] › games/kritzelagent/e2e/game.spec.ts:117:7 › Kritzelagent game › finishes voting when only one participant and a resumed spectator remain
+[54/81] [chromium] › games/imposter/e2e/game.spec.ts:237:7 › Imposter via Platform › host can skip the infiltrator guess
+[55/81] [chromium] › games/imposter/e2e/game.spec.ts:258:7 › Imposter via Platform › player resumes session after page reload
+[56/81] [chromium] › games/kritzelagent/e2e/game.spec.ts:157:7 › Kritzelagent game › submits closed excursions with stationary tails and aliasing loops using native pointer input
+[57/81] [chromium] › games/imposter/e2e/game.spec.ts:282:7 › Imposter via Platform › host resumes the active imposter match after reloading the tab
+[58/81] [chromium] › games/imposter/e2e/game.spec.ts:299:7 › Imposter via Platform › player resumes the active imposter match after reloading the tab
+[59/81] [chromium] › games/imposter/e2e/game.spec.ts:316:7 › Imposter via Platform › host can replay the game via platform overlay
+[60/81] [chromium] › games/scout/e2e/game.spec.ts:171:7 › Scout via Platform › create party, launch Scout, complete setup, and reach game table
+[61/81] [chromium] › games/scout/e2e/game.spec.ts:190:7 › Scout via Platform › scout lobby and setup controls use the Scout-specific flow
+[62/81] [chromium] › games/scout/e2e/game.spec.ts:207:7 › Scout via Platform › host resumes active Scout match after reloading the tab
+[63/81] [chromium] › games/scout/e2e/game.spec.ts:221:7 › Scout via Platform › flip row swaps card values
+[64/81] [chromium] › games/scout/e2e/game.spec.ts:253:7 › Scout via Platform › current turn controls are enabled only for active player
+[65/81] [chromium] › games/scout/e2e/game.spec.ts:276:7 › Scout via Platform › run, scout response, and official all-scouted scoring flow
+[66/81] [chromium] › games/kritzelagent/e2e/game.spec.ts:236:7 › Kritzelagent game › announces a turn on a narrow screen and dismisses with Escape
+[67/81] [chromium] › games/kritzelagent/e2e/game.spec.ts:288:7 › Kritzelagent game › runs all five rounds, preserves private assignments, and renders the platform overlay
+[68/81] [chromium] › games/secret-signals/e2e/game.spec.ts:135:9 › Secret Signals via Platform › mobile board-first flow supports 2 teams without leaking ownership
+[69/81] [chromium] › games/secret-signals/e2e/game.spec.ts:135:9 › Secret Signals via Platform › mobile board-first flow supports 3 teams without leaking ownership
+[70/81] [chromium] › games/secret-signals/e2e/game.spec.ts:135:9 › Secret Signals via Platform › mobile board-first flow supports 4 teams without leaking ownership
+[71/81] [chromium] › games/secret-signals/e2e/game.spec.ts:225:7 › Secret Signals via Platform › platform home shows Game Platform screen
+[72/81] [chromium] › games/secret-signals/e2e/game.spec.ts:234:7 › Secret Signals via Platform › host can configure the lobby and complete the opening turn
+[73/81] [chromium] › games/secret-signals/e2e/game.spec.ts:272:7 › Secret Signals via Platform › host can toggle assassin behavior in the lobby
+[74/81] [chromium] › games/secret-signals/e2e/game.spec.ts:300:7 › Secret Signals via Platform › player resumes session after page reload
+[75/81] [chromium] › games/secret-signals/e2e/game.spec.ts:326:7 › Secret Signals via Platform › host can skip the current guess round
+[76/81] [chromium] › games/secret-signals/e2e/game.spec.ts:341:7 › Secret Signals via Platform › disconnected player can rejoin an active game by reclaiming the same name
+[77/81] [chromium] › games/secret-signals/e2e/game.spec.ts:368:7 › Secret Signals via Platform › host resumes the active secret-signals match after reloading the tab
+[78/81] [chromium] › games/secret-signals/e2e/pending.spec.ts:119:5 › lost/delayed real ACKs reconcile team → role and start → signal without a false timeout
+[79/81] [chromium] › games/secret-signals/e2e/game.spec.ts:385:7 › Secret Signals via Platform › player resumes the active secret-signals match after reloading the tab
+[80/81] [chromium] › games/secret-signals/e2e/game.spec.ts:401:7 › Secret Signals via Platform › host returns to party lobby via platform overlay after match ends
+[81/81] [chromium] › games/secret-signals/e2e/pending.spec.ts:169:5 › keyboard mark retains focus while pending; unrelated state and late ACK cannot release newer ownership; resume remains playable
+  81 passed (3.2m)
+$ playwright test
+[WebServer] (node:930491) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+[WebServer] (Use `node --trace-warnings ...` to show where the warning was created)
+[WebServer] (node:930497) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+[WebServer] (Use `node --trace-warnings ...` to show where the warning was created)
+[WebServer] (node:930497) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+[WebServer] (Use `node --trace-warnings ...` to show where the warning was created)
+(node:930566) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+(node:930567) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)

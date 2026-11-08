@@ -1,8 +1,11 @@
 <script setup lang="ts">
+import { useI18n } from 'vue-i18n';
 import { useGameStore } from '../stores/game';
 import CardCell from './CardCell.vue';
 
 const store = useGameStore();
+const { t } = useI18n();
+withDefaults(defineProps<{ disabled?: boolean }>(), { disabled: false });
 
 defineEmits<{
   'card-press': [cardIndex: number];
@@ -25,13 +28,14 @@ function focusedLabel(index: number): string | null {
 </script>
 
 <template>
-  <div class="grid grid-cols-5 gap-2 max-w-[720px] w-full mx-auto max-[480px]:gap-1">
+  <div class="signals-board" :aria-label="t('secret-signals.play.board')">
     <CardCell
       v-for="(card, index) in store.board"
       :key="index"
       :data-card-index="index"
       :card="card"
       :clickable="store.canGuess && !card.revealed"
+      :pending="disabled"
       :is-director-view="store.isDirector || store.room?.phase === 'ended'"
       :is-focused="focusedPlayers(index).length > 0"
       :focused-by-name="focusedLabel(index)"
@@ -40,3 +44,15 @@ function focusedLabel(index: number): string | null {
     />
   </div>
 </template>
+
+<style scoped>
+.signals-board {
+  display: grid;
+  grid-template-columns: repeat(5, minmax(0, 1fr));
+  gap: clamp(0.3rem, 1.2vw, 0.65rem);
+  width: 100%;
+  max-width: 58rem;
+  min-width: 0;
+  margin-inline: auto;
+}
+</style>

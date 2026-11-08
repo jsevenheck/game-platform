@@ -1,0 +1,25 @@
+tap {"submitted":0,"captures":[]}
+finalpoint-no-move {"submitted":1,"last":[{"x":0.005,"y":0},{"x":0.355,"y":0.4033}],"captures":[]}
+pointercancel {"submitted":0,"last":[{"x":0.005,"y":0},{"x":0.355,"y":0.4033}],"captures":[]}
+lostpointercapture {"submitted":0,"last":[{"x":0.005,"y":0},{"x":0.355,"y":0.4033}],"captures":[]}
+multitouch-nonactive-ignored {"submitted":1,"last":[{"x":0.005,"y":0},{"x":0.23,"y":0},{"x":0.355,"y":0}],"captures":[]}
+disabled-discards {"submitted":0,"last":[{"x":0.005,"y":0},{"x":0.23,"y":0},{"x":0.355,"y":0}],"captures":[]}
+long-closed-path-then-stationary {"submitted":1,"last":[{"x":0.005,"y":0},{"x":0.355,"y":0.4033},{"x":0.005,"y":0}],"captures":[]}
+aliasing-79-closed-loops {"submitted":1,"last":[{"x":0.005,"y":0},{"x":0.355,"y":0.4033},{"x":0.005,"y":0}],"captures":[]}
+8200-moves-finalpoint {"submitted":1,"last":{"length":80,"first":{"x":0.005,"y":0},"final":{"x":0.93,"y":0.8367}},"captures":[]}
+unmount-active {"submitted":0,"last":{"length":80,"first":{"x":0.005,"y":0},"final":{"x":0.93,"y":0.8367}},"captures":[1]}
+modal-initial { active: 'kritzelagent.drawing.startDrawing', open: true }
+modal-tab kritzelagent.drawing.startDrawing
+modal-escape { open: false, active: 'before' }
+pending { open: false, active: 'before' }
+rejected { open: false, active: 'before' }
+next-own-turn { open: true, active: 'kritzelagent.drawing.startDrawing' }
+next-round { open: true, active: 'kritzelagent.drawing.startDrawing' }
+native-outside-up {
+  submitted: 1,
+  last: [ { x: 0.075, y: 0.1 }, { x: 0.25, y: 0.3333 }, { x: 1, y: 1 } ],
+  capture: false
+}
+native-lostcapture { submitted: 0 }
+native-unmount { submitted: 0, removed: true }
+pageErrors []
