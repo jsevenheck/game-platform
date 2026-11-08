@@ -2,7 +2,7 @@
 import { onBeforeUnmount, onMounted, ref, watch } from 'vue';
 import { useI18n } from 'vue-i18n';
 import type { StrokePoint, StrokeView } from '@shared/types';
-import { prepareStrokeForSubmission } from '@shared/drawing';
+import { prepareStrokeForSubmission, sampleStroke } from '@shared/drawing';
 
 const props = defineProps<{ strokes: StrokeView[]; disabled: boolean }>();
 const { t } = useI18n();
@@ -64,9 +64,9 @@ function start(event: PointerEvent) {
 }
 
 function appendPoint(event: PointerEvent) {
-  // Bound local memory too, while retaining the beginning and latest position.
-  if (drawing.value.length >= 4096)
-    drawing.value = drawing.value.filter((_, index) => index % 2 === 0);
+  // Use the same geometry-aware reduction locally: event-index thinning can
+  // erase every excursion of a repeated closed path before submission.
+  if (drawing.value.length >= 4096) drawing.value = sampleStroke(drawing.value, 2048) ?? [];
   drawing.value.push(coordinates(event));
 }
 

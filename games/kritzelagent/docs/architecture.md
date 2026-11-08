@@ -44,8 +44,17 @@ new socket to the existing authorized player, disconnects the superseded
 transport, and restores the private assignment through the new socket.
 
 Disconnecting players are marked unavailable, their socket index is removed,
-and the drawing/vote quorum is recalculated from connected eligible players. If
-voting becomes complete after a disconnect, the game resolves immediately. A
+and pending drawing slots are skipped. Round membership is frozen in
+`drawingOrder` at round start: reconnects restore only remaining scheduled
+slots, never make-up turns. Exhausting both passes always enters voting, even
+when skipped slots left a participant below two accepted strokes. Round-start
+absentees spectate until the next reset; they receive no private assignment,
+cannot vote or be targeted, and receive no artist score delta. `PlayerView`
+exposes `participating` so the UI uses the same eligibility policy. Voting waits
+only for connected round participants. With fewer than two available participants,
+no additional legal ballot exists (self-votes are forbidden), so voting resolves
+immediately using any votes already cast; no synthetic vote is added. This is
+checked both after disconnects and when drawing enters voting. A
 caught agent who disconnects during `agentGuess` is treated as a missed guess.
 When all game sockets disconnect, a 30-minute cleanup timer is scheduled.
 
@@ -55,8 +64,13 @@ Clients send normalized points rather than SVG or image data. The pure
 `normalizeStroke` helper rejects malformed arrays, non-finite coordinates,
 out-of-range coordinates, and strokes above the 80-point limit. This keeps the
 wire payload bounded and makes the canvas transport independent of rendering.
-The canvas samples longer pointer gestures before submission, preserving their
-endpoints, and silently ignores taps/degenerate strokes. Pointer capture is
+The canvas deduplicates rounded coordinates and uses bounded, largest-deviation
+segment subdivision for longer gestures before submission. It preserves both
+endpoints and meaningful excursions even for closed loops and stationary tails,
+unlike raw-event-index sampling. Every raw point is validated before reduction;
+the server still rejects arrays over 80 points. Local buffer compaction at 4096
+points uses the same geometry-aware helper with a 2048-point budget. The canvas
+silently ignores taps/degenerate strokes. Pointer capture is
 tracked per gesture; canceled, superseded, and non-active pointer input cannot
 submit a stroke. Local gesture memory is also bounded.
 

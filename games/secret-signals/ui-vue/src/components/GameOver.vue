@@ -6,6 +6,7 @@ import { TEAM_HEX, TEAM_TEXT_HEX } from '../lib/teamTheme';
 import { useGameStore } from '../stores/game';
 import GameBoard from './GameBoard.vue';
 
+withDefaults(defineProps<{ pending?: boolean }>(), { pending: false });
 const { t } = useI18n();
 const store = useGameStore();
 const teamName = (color: TeamColor) => t(`secret-signals.teams.${color}`);
@@ -74,7 +75,12 @@ const winningLabel = computed(() => {
     </div>
 
     <footer class="result-action">
-      <button v-if="isHost" class="ui-btn-primary restart-button" @click="$emit('restart')">
+      <button
+        v-if="isHost"
+        class="ui-btn-primary restart-button"
+        :aria-disabled="pending"
+        @click="$emit('restart')"
+      >
         {{ t('secret-signals.gameOver.playAgain') }}
       </button>
       <p v-else>{{ t('secret-signals.gameOver.waiting') }}</p>

@@ -1,0 +1,9 @@
+[2026-11-08 10:11:00.057 +0000] [32mINFO[39m: [36mkritzelagent room created[39m
+    [35mcomponent[39m: "game-server"
+    [35mgameId[39m: "kritzelagent"
+    [35msocketId[39m: "mdwF7vSeZlOhEeu7AAAA"
+    [35msessionId[39m: "review-runtime"
+    [35mplayerId[39m: "p0"
+    [35mroomCode[39m: "9CGE"
+real-socket-rejoin {"ok":true,"skippedTurn":2,"returning":"p1","stableToken":true}
+real-socket-end {"phase":"voting","drawingTurn":10,"total":10,"counts":[2,1,2,2,2],"result":{"ok":true}}

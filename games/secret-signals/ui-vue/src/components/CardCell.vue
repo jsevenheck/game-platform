@@ -8,6 +8,7 @@ import { CARD_HEX_BY_TYPE, getCardTextHex } from '../lib/teamTheme';
 const props = defineProps<{
   card: CardView;
   clickable: boolean;
+  pending?: boolean;
   isDirectorView: boolean;
   isFocused: boolean;
   focusedByName: string | null;
@@ -60,7 +61,8 @@ const cardStyle = computed(() => ({
     }"
     :style="cardStyle"
     :disabled="!clickable || card.revealed"
-    @click="$emit('select')"
+    :aria-disabled="pending || !clickable || card.revealed"
+    @click="!pending && clickable && !card.revealed && $emit('select')"
   >
     <span class="card-word">{{ card.word }}</span>
     <svg

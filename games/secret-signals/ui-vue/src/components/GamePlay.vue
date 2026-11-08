@@ -110,7 +110,8 @@ watch([() => store.room?.currentTurnTeam, () => store.room?.turnPhase, () => sto
             <button
               type="button"
               class="ui-btn-primary reveal-action"
-              :disabled="!selectedCard || pending"
+              :disabled="!selectedCard"
+              :aria-disabled="!selectedCard || pending"
               @click="revealSelected"
             >
               {{ t('secret-signals.play.revealCard') }}
@@ -118,7 +119,7 @@ watch([() => store.room?.currentTurnTeam, () => store.room?.turnPhase, () => sto
             <button
               type="button"
               class="ui-btn-secondary"
-              :disabled="pending"
+              :aria-disabled="pending"
               @click="emit('end-turn')"
             >
               {{ t('secret-signals.play.endTurn') }}
@@ -127,7 +128,7 @@ watch([() => store.room?.currentTurnTeam, () => store.room?.turnPhase, () => sto
               v-if="hasOwnMarks"
               type="button"
               class="clear-action"
-              :disabled="pending"
+              :aria-disabled="pending"
               @click="clearMarks"
             >
               {{ t('secret-signals.play.clearMarks') }}
@@ -160,7 +161,7 @@ watch([() => store.room?.currentTurnTeam, () => store.room?.turnPhase, () => sto
           <button
             type="button"
             class="ui-btn-secondary"
-            :disabled="pending"
+            :aria-disabled="pending"
             @click="emit('skip-guess-round')"
           >
             {{ t('secret-signals.play.skipTurn') }}

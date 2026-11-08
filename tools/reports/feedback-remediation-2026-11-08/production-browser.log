@@ -1,0 +1,23 @@
+
+Running 18 tests using 1 worker
+
+  ✓   1 games/kritzelagent/e2e/game.spec.ts:117:7 › Kritzelagent game › finishes voting when only one participant and a resumed spectator remain (7.8s)
+  ✓   2 games/kritzelagent/e2e/game.spec.ts:157:7 › Kritzelagent game › submits closed excursions with stationary tails and aliasing loops using native pointer input (26.2s)
+  ✓   3 games/kritzelagent/e2e/game.spec.ts:236:7 › Kritzelagent game › announces a turn on a narrow screen and dismisses with Escape (2.4s)
+  ✓   4 games/kritzelagent/e2e/game.spec.ts:288:7 › Kritzelagent game › runs all five rounds, preserves private assignments, and renders the platform overlay (25.7s)
+  ✓   5 games/secret-signals/e2e/game.spec.ts:135:9 › Secret Signals via Platform › mobile board-first flow supports 2 teams without leaking ownership (3.2s)
+  ✓   6 games/secret-signals/e2e/game.spec.ts:135:9 › Secret Signals via Platform › mobile board-first flow supports 3 teams without leaking ownership (3.7s)
+  ✓   7 games/secret-signals/e2e/game.spec.ts:135:9 › Secret Signals via Platform › mobile board-first flow supports 4 teams without leaking ownership (4.5s)
+  ✓   8 games/secret-signals/e2e/game.spec.ts:225:7 › Secret Signals via Platform › platform home shows Game Platform screen (275ms)
+  ✓   9 games/secret-signals/e2e/game.spec.ts:234:7 › Secret Signals via Platform › host can configure the lobby and complete the opening turn (2.5s)
+  ✓  10 games/secret-signals/e2e/game.spec.ts:272:7 › Secret Signals via Platform › host can toggle assassin behavior in the lobby (1.6s)
+  ✓  11 games/secret-signals/e2e/game.spec.ts:300:7 › Secret Signals via Platform › player resumes session after page reload (1.4s)
+  ✓  12 games/secret-signals/e2e/game.spec.ts:326:7 › Secret Signals via Platform › host can skip the current guess round (2.2s)
+  ✓  13 games/secret-signals/e2e/game.spec.ts:341:7 › Secret Signals via Platform › disconnected player can rejoin an active game by reclaiming the same name (2.2s)
+  ✓  14 games/secret-signals/e2e/game.spec.ts:368:7 › Secret Signals via Platform › host resumes the active secret-signals match after reloading the tab (1.9s)
+  ✓  15 games/secret-signals/e2e/game.spec.ts:385:7 › Secret Signals via Platform › player resumes the active secret-signals match after reloading the tab (1.9s)
+  ✓  16 games/secret-signals/e2e/game.spec.ts:401:7 › Secret Signals via Platform › host returns to party lobby via platform overlay after match ends (3.4s)
+  ✓  17 games/secret-signals/e2e/pending.spec.ts:119:5 › lost/delayed real ACKs reconcile team → role and start → signal without a false timeout (10.6s)
+  ✓  18 games/secret-signals/e2e/pending.spec.ts:169:5 › keyboard mark retains focus while pending; unrelated state and late ACK cannot release newer ownership; resume remains playable (4.9s)
+
+  18 passed (1.8m)

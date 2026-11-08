@@ -89,10 +89,23 @@ If a player disconnects during an active match, they reclaim the same slot throu
 
 ### UI action and privacy boundaries
 
-`App.vue` guards in-flight actions until their Socket.IO acknowledgement or an
-eight-second timeout. A generation counter discards late acknowledgements after
-a timeout or unmount; no mutation is retried automatically. Rejections appear in
-a localized alert. `SignalInput` retains the clue draft until a successful phase
+`App.vue` uses `lib/pendingAction.ts` to own one in-flight action. A successful ACK
+or action-specific authoritative `RoomView` evidence settles that action and
+invalidates its generation. Team/role and settings require the requested value;
+marks require the current player's requested mark (or absence of own marks for
+clear); signal requires its trimmed, uppercased word (matching server normalization),
+number and guessing phase; reveal requires the
+requested card to become revealed. Start/restart require the corresponding room
+phase transition; end/skip require a turn transition, completed log entry or match
+end. Unrelated presence/settings/other-player marks do not unlock pending work.
+A lost ACK after confirmed state cannot cause an eight-second false timeout or
+block the next action. Only unresolved work times out; no mutation is retried.
+
+Timeout, completion, disconnect and unmount invalidate action ownership and cancel
+its timer, so late ACKs cannot settle a newer action. Disconnect gates controls
+until the resumed authoritative state arrives. Join/resume callbacks also carry a
+connection generation, preventing a stale callback from restoring a replaced
+session after disconnect/unmount. Rejections appear in a localized alert. `SignalInput` retains the clue draft until a successful phase
 change unmounts the form, so a server-rejected board word can be corrected.
 
 `CardCell` derives visible ownership only for a Director or a revealed card.

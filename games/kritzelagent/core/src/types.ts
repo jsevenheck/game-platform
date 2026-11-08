@@ -19,6 +19,8 @@ export interface StrokeView {
 }
 
 export interface PlayerView {
+  /** Frozen round-start membership; other connected players spectate until next round. */
+  participating: boolean;
   id: string;
   name: string;
   isHost: boolean;

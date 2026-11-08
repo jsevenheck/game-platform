@@ -6,6 +6,7 @@ import { TEAM_HEX, TEAM_TEXT_HEX } from '../lib/teamTheme';
 import type { AssassinPenaltyMode, PlayerRole, PlayerView, TeamColor } from '@shared/types';
 import { useGameStore } from '../stores/game';
 
+withDefaults(defineProps<{ pending?: boolean }>(), { pending: false });
 const { t } = useI18n();
 const store = useGameStore();
 
@@ -72,6 +73,7 @@ defineExpose({ isSetupValid });
         class="setup-choice count-choice"
         :class="{ 'signals-active': store.room?.teamCount === n }"
         :aria-pressed="store.room?.teamCount === n"
+        :aria-disabled="pending"
         @click="$emit('set-team-count', n)"
       >
         {{ n }}
@@ -91,6 +93,7 @@ defineExpose({ isSetupValid });
         }"
         :aria-pressed="store.room?.assassinPenaltyMode === mode"
         :disabled="!store.isHost"
+        :aria-disabled="pending || !store.isHost"
         @click="$emit('set-assassin-penalty-mode', mode)"
       >
         {{
@@ -121,6 +124,7 @@ defineExpose({ isSetupValid });
           class="setup-choice team-choice"
           :class="{ 'active-team-btn': currentPlayerTeam === color }"
           :aria-pressed="currentPlayerTeam === color"
+          :aria-disabled="pending"
           :style="{
             '--team-color': TEAM_HEX[color],
             '--team-ink': TEAM_TEXT_HEX[color],
@@ -138,6 +142,7 @@ defineExpose({ isSetupValid });
           :class="{ 'signals-active': currentPlayer?.role === 'director' }"
           :aria-pressed="currentPlayer?.role === 'director'"
           :disabled="isDirectorUnavailable(currentPlayerTeam)"
+          :aria-disabled="pending || isDirectorUnavailable(currentPlayerTeam)"
           @click="pickRole('director')"
         >
           {{ t('secret-signals.roles.director') }}
@@ -147,6 +152,7 @@ defineExpose({ isSetupValid });
           class="setup-choice role-choice"
           :class="{ 'signals-active': currentPlayer?.role === 'agent' }"
           :aria-pressed="currentPlayer?.role === 'agent'"
+          :aria-disabled="pending"
           @click="pickRole('agent')"
         >
           {{ t('secret-signals.roles.agent') }}

@@ -1,0 +1,136 @@
+
+ RUN  v5.0.3 /opt/data/workspace/coding/game-platform
+
+ ❯ |kritzelagent| games/kritzelagent/__tests__/roundManager.test.ts (32 tests | 4 failed) 54ms
+   ❯ round lifecycle (22)
+     × settles a lone remaining voter with no legal target (spectator false) 12ms
+     × settles a lone remaining voter with no legal target (spectator true) 1ms
+     × resolves an unattainable voting quorum immediately after the last drawing slot 1ms
+     × retains already-cast votes when the last possible target disappears 1ms
+{"level":40,"time":"2026-11-08T10:15:36.421Z","pid":926629,"host":"9b8b64733b91","component":"kritzelagent-topic-library","line":4,"msg":"invalid topic row — skipped"}
+{"level":40,"time":"2026-11-08T10:15:36.423Z","pid":926629,"host":"9b8b64733b91","component":"kritzelagent-topic-library","line":5,"msg":"invalid topic row — skipped"}
+{"level":40,"time":"2026-11-08T10:15:36.424Z","pid":926629,"host":"9b8b64733b91","component":"kritzelagent-topic-library","line":2,"msg":"invalid topic row — skipped"}
+{"level":40,"time":"2026-11-08T10:15:36.424Z","pid":926629,"host":"9b8b64733b91","component":"kritzelagent-topic-library","path":"/opt/data/workspace/coding/game-platform/games/kritzelagent/server/data/topics.en.csv","msg":"topics csv produced no valid rows — using defaults"}
+{"level":40,"time":"2026-11-08T10:15:36.971Z","pid":926655,"host":"9b8b64733b91","component":"game-server","gameId":"secret-signals","namespace":"/g/secret-signals","socketId":"socket-2","roomCode":"BEG9","playerId":"host-2","sessionId":"session-2","msg":"autoJoinRoom rejected: invalid secret-signals resume token"}
+ ❯ |secret-signals| games/secret-signals/__tests__/pendingAction.test.ts (20 tests | 3 failed) 25ms
+   ❯ action-specific authoritative reconciliation (20)
+     × reconciles the server-normalized clue "alpha" without ACK or false timeout 8ms
+     × reconciles the server-normalized clue " Alpha " without ACK or false timeout 1ms
+     × reconciles the server-normalized clue "aLpHa" without ACK or false timeout 1ms
+
+ Test Files  2 failed | 10 passed (12)
+      Tests  7 failed | 126 passed (133)
+   Start at  10:15:35
+   Duration  1.26s (transform 51%, import 28%, tests 15%, worker 6%)
+
+    Isolate  12 workers spawned · ~126ms startup each (spawn + environment, per file)
+             at least ~379ms faster with isolate: false — reuses workers across files instead of one per file
+
+(!) Your Vite config uses features that are unsupported by `configLoader: 'native'`, which is planned to become the default in a future major version of Vite:
+  - ESM syntax in a file loaded as CommonJS (vitest.config.ts:1:1). Use a `.mjs` extension or set `"type": "module"` in the closest package.json
+  - ESM syntax in a file loaded as CommonJS (vitest.projects.ts:1:1). Use a `.mjs` extension or set `"type": "module"` in the closest package.json
+Set `VITE_CONFIG_NATIVE_IGNORE_WARNING=true` to suppress this warning.
+(!) Your Vite config uses features that are unsupported by `configLoader: 'native'`, which is planned to become the default in a future major version of Vite:
+  - ESM syntax in a file loaded as CommonJS (vitest.config.ts:1:1). Use a `.mjs` extension or set `"type": "module"` in the closest package.json
+  - ESM syntax in a file loaded as CommonJS (vitest.projects.ts:1:1). Use a `.mjs` extension or set `"type": "module"` in the closest package.json
+Set `VITE_CONFIG_NATIVE_IGNORE_WARNING=true` to suppress this warning.
+(!) Your Vite config uses features that are unsupported by `configLoader: 'native'`, which is planned to become the default in a future major version of Vite:
+  - ESM syntax in a file loaded as CommonJS (vitest.config.ts:1:1). Use a `.mjs` extension or set `"type": "module"` in the closest package.json
+  - ESM syntax in a file loaded as CommonJS (vitest.projects.ts:1:1). Use a `.mjs` extension or set `"type": "module"` in the closest package.json
+Set `VITE_CONFIG_NATIVE_IGNORE_WARNING=true` to suppress this warning.
+(!) Your Vite config uses features that are unsupported by `configLoader: 'native'`, which is planned to become the default in a future major version of Vite:
+  - ESM syntax in a file loaded as CommonJS (vitest.config.ts:1:1). Use a `.mjs` extension or set `"type": "module"` in the closest package.json
+  - ESM syntax in a file loaded as CommonJS (vitest.projects.ts:1:1). Use a `.mjs` extension or set `"type": "module"` in the closest package.json
+Set `VITE_CONFIG_NATIVE_IGNORE_WARNING=true` to suppress this warning.
+(!) Your Vite config uses features that are unsupported by `configLoader: 'native'`, which is planned to become the default in a future major version of Vite:
+  - ESM syntax in a file loaded as CommonJS (vitest.config.ts:1:1). Use a `.mjs` extension or set `"type": "module"` in the closest package.json
+  - ESM syntax in a file loaded as CommonJS (vitest.projects.ts:1:1). Use a `.mjs` extension or set `"type": "module"` in the closest package.json
+Set `VITE_CONFIG_NATIVE_IGNORE_WARNING=true` to suppress this warning.
+(!) Your Vite config uses features that are unsupported by `configLoader: 'native'`, which is planned to become the default in a future major version of Vite:
+  - ESM syntax in a file loaded as CommonJS (vitest.config.ts:1:1). Use a `.mjs` extension or set `"type": "module"` in the closest package.json
+  - ESM syntax in a file loaded as CommonJS (vitest.projects.ts:1:1). Use a `.mjs` extension or set `"type": "module"` in the closest package.json
+Set `VITE_CONFIG_NATIVE_IGNORE_WARNING=true` to suppress this warning.
+(!) Your Vite config uses features that are unsupported by `configLoader: 'native'`, which is planned to become the default in a future major version of Vite:
+  - ESM syntax in a file loaded as CommonJS (vitest.config.ts:1:1). Use a `.mjs` extension or set `"type": "module"` in the closest package.json
+  - ESM syntax in a file loaded as CommonJS (vitest.projects.ts:1:1). Use a `.mjs` extension or set `"type": "module"` in the closest package.json
+Set `VITE_CONFIG_NATIVE_IGNORE_WARNING=true` to suppress this warning.
+(!) Your Vite config uses features that are unsupported by `configLoader: 'native'`, which is planned to become the default in a future major version of Vite:
+  - ESM syntax in a file loaded as CommonJS (vitest.config.ts:1:1). Use a `.mjs` extension or set `"type": "module"` in the closest package.json
+  - ESM syntax in a file loaded as CommonJS (vitest.projects.ts:1:1). Use a `.mjs` extension or set `"type": "module"` in the closest package.json
+Set `VITE_CONFIG_NATIVE_IGNORE_WARNING=true` to suppress this warning.
+(!) Your Vite config uses features that are unsupported by `configLoader: 'native'`, which is planned to become the default in a future major version of Vite:
+  - ESM syntax in a file loaded as CommonJS (vitest.config.ts:1:1). Use a `.mjs` extension or set `"type": "module"` in the closest package.json
+  - ESM syntax in a file loaded as CommonJS (vitest.projects.ts:1:1). Use a `.mjs` extension or set `"type": "module"` in the closest package.json
+Set `VITE_CONFIG_NATIVE_IGNORE_WARNING=true` to suppress this warning.
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 7 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  |secret-signals| games/secret-signals/__tests__/pendingAction.test.ts > action-specific authoritative reconciliation > reconciles the server-normalized clue "alpha" without ACK or false timeout
+ FAIL  |secret-signals| games/secret-signals/__tests__/pendingAction.test.ts > action-specific authoritative reconciliation > reconciles the server-normalized clue " Alpha " without ACK or false timeout
+ FAIL  |secret-signals| games/secret-signals/__tests__/pendingAction.test.ts > action-specific authoritative reconciliation > reconciles the server-normalized clue "aLpHa" without ACK or false timeout
+AssertionError: expected true to be false // Object.is equality
+
+- Expected
++ Received
+
+- false
++ true
+
+ ❯ games/secret-signals/__tests__/pendingAction.test.ts:92:37
+     90|         room({ currentSignal: { word: 'ALPHA', number: 1, teamColor: '…
+     91|       );
+     92|       expect(actions.pending.value).toBe(false);
+       |                                     ^
+     93|       vi.advanceTimersByTime(8001);
+     94|       expect(actions.error.value).toBe('');
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/7]⎯
+
+ FAIL  |kritzelagent| games/kritzelagent/__tests__/roundManager.test.ts > round lifecycle > settles a lone remaining voter with no legal target (spectator false)
+ FAIL  |kritzelagent| games/kritzelagent/__tests__/roundManager.test.ts > round lifecycle > settles a lone remaining voter with no legal target (spectator true)
+AssertionError: expected 'voting' to be 'reveal' // Object.is equality
+
+Expected: "reveal"
+Received: "voting"
+
+ ❯ games/kritzelagent/__tests__/roundManager.test.ts:272:26
+    270|         recheckAfterDisconnect(room);
+    271|       }
+    272|       expect(room.phase).toBe('reveal');
+       |                          ^
+    273|       expect(room.votes.size).toBe(0);
+    274|       expect(room.roundResult?.agentCaught).toBe(false);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/7]⎯
+
+ FAIL  |kritzelagent| games/kritzelagent/__tests__/roundManager.test.ts > round lifecycle > resolves an unattainable voting quorum immediately after the last drawing slot
+AssertionError: expected 'voting' to be 'reveal' // Object.is equality
+
+Expected: "reveal"
+Received: "voting"
+
+ ❯ games/kritzelagent/__tests__/roundManager.test.ts:292:24
+    290|     submitStroke(room, survivor, stroke);
+    291|     submitStroke(room, survivor, stroke);
+    292|     expect(room.phase).toBe('reveal');
+       |                        ^
+    293|     expect(room.strokes).toHaveLength(2);
+    294|     expect(room.votes.size).toBe(0);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/7]⎯
+
+ FAIL  |kritzelagent| games/kritzelagent/__tests__/roundManager.test.ts > round lifecycle > retains already-cast votes when the last possible target disappears
+AssertionError: expected 'voting' to be 'agentGuess' // Object.is equality
+
+Expected: "agentGuess"
+Received: "voting"
+
+ ❯ games/kritzelagent/__tests__/roundManager.test.ts:310:24
+    308|     }
+    309|     expect(room.votes.size).toBe(others.length);
+    310|     expect(room.phase).toBe('agentGuess');
+       |                        ^
+    311|     submitAgentGuess(room, survivor, 'incorrect guess');
+    312|     expect(room.phase).toBe('reveal');
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[4/7]⎯

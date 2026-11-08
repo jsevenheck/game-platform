@@ -1,0 +1,7 @@
+seeded shuffle/turn conservation 160 PASS
+malformed wire payloads 10 PASS
+public/private view boundary PASS
+disconnect-reconnect-midround {"phase":"voting","drawingTurn":10,"total":10,"accepted":9,"active":null,"returning":"p0","counts":[2,1,2,2,2],"error":null}
+excluded-then-reconnect {"phase":"voting","drawingTurn":10,"total":10,"active":null,"counts":[2,2,2,2,2,0],"error":null}
+closed-then-stationary {"input":1212,"distinct":2,"prepared":[{"x":0.1,"y":0.1},{"x":0.9,"y":0.9},{"x":0.1,"y":0.1}]}
+BASE same reconnect scenario {"phase":"drawing","drawingTurn":10,"error":"You already drew all strokes this round"}

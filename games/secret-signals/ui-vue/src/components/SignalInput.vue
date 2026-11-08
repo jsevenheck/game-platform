@@ -40,7 +40,8 @@ function submit() {
         type="text"
         :placeholder="t('secret-signals.signal.clueWord')"
         class="ui-input"
-        :disabled="disabled"
+        :readonly="disabled"
+        :aria-disabled="disabled"
         :aria-invalid="!!error"
         :aria-describedby="error ? 'signals-clue-error' : undefined"
         autocomplete="off"
@@ -55,8 +56,9 @@ function submit() {
         <button
           type="button"
           :aria-label="t('secret-signals.signal.decrease')"
-          :disabled="disabled || number <= 0"
-          @click="number--"
+          :disabled="number <= 0"
+          :aria-disabled="disabled || number <= 0"
+          @click="!disabled && number--"
         >
           −
         </button>
@@ -64,14 +66,15 @@ function submit() {
         <button
           type="button"
           :aria-label="t('secret-signals.signal.increase')"
-          :disabled="disabled || number >= MAX_SIGNAL_NUMBER"
-          @click="number++"
+          :disabled="number >= MAX_SIGNAL_NUMBER"
+          :aria-disabled="disabled || number >= MAX_SIGNAL_NUMBER"
+          @click="!disabled && number++"
         >
           +
         </button>
       </div>
     </div>
-    <button type="submit" class="ui-btn-primary send-signal" :disabled="disabled">
+    <button type="submit" class="ui-btn-primary send-signal" :aria-disabled="disabled">
       {{ t('secret-signals.signal.send') }}
     </button>
     <p v-if="error" id="signals-clue-error" role="alert" class="signal-error">{{ error }}</p>

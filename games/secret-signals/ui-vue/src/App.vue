@@ -10,6 +10,7 @@ import { useSocket } from './composables/useSocket';
 import Lobby from './components/Lobby.vue';
 import GamePlay from './components/GamePlay.vue';
 import GameOver from './components/GameOver.vue';
+import { createPendingAction, type ActionIntent } from './lib/pendingAction';
 
 const props = withDefaults(defineProps<HubIntegrationProps>(), {
   playerId: undefined,
@@ -34,30 +35,27 @@ const { socket } = useSocket({
 });
 
 const embeddedError = ref('');
-const actionError = ref('');
-const actionPending = ref(false);
-let actionTimer: ReturnType<typeof setTimeout> | undefined;
-let actionGeneration = 0;
-function beginAction() {
-  if (actionPending.value) return false;
-  actionPending.value = true;
-  actionError.value = '';
-  actionTimer = setTimeout(() => {
-    actionPending.value = false;
-    actionError.value = t('secret-signals.actionTimeout');
-    actionGeneration += 1;
-  }, 8000);
-  return true;
+const actions = createPendingAction(() => t('secret-signals.actionTimeout'));
+const { pending: actionPending, error: actionError } = actions;
+const transportReady = ref(false);
+let connectionGeneration = 0;
+function beginAction(intent: ActionIntent) {
+  if (!transportReady.value || !store.room || !store.playerId) return null;
+  return actions.begin(intent, store.room, store.playerId);
 }
-function actionCallback() {
-  const generation = actionGeneration;
-  return (response: { ok: boolean; error?: string }) => {
-    if (generation !== actionGeneration) return;
-    if (actionTimer) clearTimeout(actionTimer);
-    actionPending.value = false;
-    actionError.value = response.ok ? '' : (response.error ?? t('secret-signals.actionTimeout'));
-    actionGeneration += 1;
-  };
+function handleSocketDisconnect() {
+  transportReady.value = false;
+  connectionGeneration += 1;
+  actions.invalidate();
+  autoJoinInFlight.value = false;
+}
+// aria-disabled keeps keyboard focus in place; suppress activation at the boundary too.
+function guardPending(event: Event) {
+  if (!(event.target instanceof Element)) return;
+  if (event.target.closest('[aria-disabled="true"]')) {
+    event.preventDefault();
+    event.stopPropagation();
+  }
 }
 const autoJoinInFlight = ref(false);
 let autoJoinRetryTimer: number | undefined;
@@ -65,7 +63,9 @@ let autoJoinRetryCount = 0;
 const MAX_AUTO_JOIN_RETRIES = 3;
 
 function handleRoomState(state: Parameters<typeof store.applyRoomState>[0]) {
+  actions.reconcile(state);
   store.applyRoomState(state);
+  transportReady.value = true;
   autoJoinInFlight.value = false;
   autoJoinRetryCount = 0;
   embeddedError.value = '';
@@ -79,6 +79,7 @@ function emitAutoJoinRoom() {
 
   embeddedError.value = '';
   autoJoinInFlight.value = true;
+  const generation = connectionGeneration;
   socket.emit(
     'autoJoinRoom',
     {
@@ -89,6 +90,7 @@ function emitAutoJoinRoom() {
       resumeToken: store.resumeToken || undefined,
     },
     (res) => {
+      if (generation !== connectionGeneration) return;
       autoJoinInFlight.value = false;
       if (!res.ok) {
         embeddedError.value = res.error;
@@ -106,106 +108,110 @@ function emitAutoJoinRoom() {
 }
 
 function handleStartGame() {
-  if (!store.roomCode || !store.playerId || !beginAction()) return;
-  socket.emit(
-    'startGame',
-    { roomCode: store.roomCode, playerId: store.playerId },
-    actionCallback()
-  );
+  if (!store.roomCode || !store.playerId) return;
+  const callback = beginAction({ kind: 'start' });
+  if (!callback) return;
+  socket.emit('startGame', { roomCode: store.roomCode, playerId: store.playerId }, callback);
 }
 
 function handleAssignTeam(team: TeamColor) {
-  if (!store.roomCode || !store.playerId || !beginAction()) return;
-  socket.emit(
-    'assignTeam',
-    { roomCode: store.roomCode, playerId: store.playerId, team },
-    actionCallback()
-  );
+  if (!store.roomCode || !store.playerId) return;
+  const callback = beginAction({ kind: 'team', value: team });
+  if (!callback) return;
+  socket.emit('assignTeam', { roomCode: store.roomCode, playerId: store.playerId, team }, callback);
 }
 
 function handleAssignRole(role: PlayerRole) {
-  if (!store.roomCode || !store.playerId || !beginAction()) return;
-  socket.emit(
-    'assignRole',
-    { roomCode: store.roomCode, playerId: store.playerId, role },
-    actionCallback()
-  );
+  if (!store.roomCode || !store.playerId) return;
+  const callback = beginAction({ kind: 'role', value: role });
+  if (!callback) return;
+  socket.emit('assignRole', { roomCode: store.roomCode, playerId: store.playerId, role }, callback);
 }
 
 function handleSetTeamCount(count: number) {
-  if (!store.roomCode || !store.playerId || !beginAction()) return;
+  if (!store.roomCode || !store.playerId) return;
+  const callback = beginAction({ kind: 'teamCount', value: count });
+  if (!callback) return;
   socket.emit(
     'setTeamCount',
     { roomCode: store.roomCode, playerId: store.playerId, teamCount: count },
-    actionCallback()
+    callback
   );
 }
 
 function handleSetAssassinPenaltyMode(mode: AssassinPenaltyMode) {
-  if (!store.roomCode || !store.playerId || !beginAction()) return;
+  if (!store.roomCode || !store.playerId) return;
+  const callback = beginAction({ kind: 'penalty', value: mode });
+  if (!callback) return;
   socket.emit(
     'setAssassinPenaltyMode',
     { roomCode: store.roomCode, playerId: store.playerId, mode },
-    actionCallback()
+    callback
   );
 }
 
 function handleFocusCard(cardIndex: number | null) {
-  if (!store.roomCode || !store.playerId || !beginAction()) return;
+  if (!store.roomCode || !store.playerId) return;
+  const callback = beginAction({ kind: 'mark', value: cardIndex });
+  if (!callback) return;
   socket.emit(
     'focusCard',
     { roomCode: store.roomCode, playerId: store.playerId, cardIndex },
-    actionCallback()
+    callback
   );
 }
 
 function handleGiveSignal(word: string, number: number) {
-  if (!store.roomCode || !store.playerId || !beginAction()) return;
+  if (!store.roomCode || !store.playerId) return;
+  const callback = beginAction({ kind: 'signal', word, number });
+  if (!callback) return;
   socket.emit(
     'giveSignal',
     { roomCode: store.roomCode, playerId: store.playerId, word, number },
-    actionCallback()
+    callback
   );
 }
 
 function handleRevealCard(cardIndex: number) {
-  if (!store.roomCode || !store.playerId || !beginAction()) return;
+  if (!store.roomCode || !store.playerId) return;
+  const callback = beginAction({ kind: 'reveal', value: cardIndex });
+  if (!callback) return;
   socket.emit(
     'revealCard',
     { roomCode: store.roomCode, playerId: store.playerId, cardIndex },
-    actionCallback()
+    callback
   );
 }
 
 function handleEndTurn() {
-  if (!store.roomCode || !store.playerId || !beginAction()) return;
-  socket.emit('endTurn', { roomCode: store.roomCode, playerId: store.playerId }, actionCallback());
+  if (!store.roomCode || !store.playerId) return;
+  const callback = beginAction({ kind: 'end' });
+  if (!callback) return;
+  socket.emit('endTurn', { roomCode: store.roomCode, playerId: store.playerId }, callback);
 }
 
 function handleSkipGuessRound() {
-  if (!store.roomCode || !store.playerId || !beginAction()) return;
-  socket.emit(
-    'skipGuessRound',
-    { roomCode: store.roomCode, playerId: store.playerId },
-    actionCallback()
-  );
+  if (!store.roomCode || !store.playerId) return;
+  const callback = beginAction({ kind: 'skip' });
+  if (!callback) return;
+  socket.emit('skipGuessRound', { roomCode: store.roomCode, playerId: store.playerId }, callback);
 }
 
 function handleRestart() {
-  if (!store.roomCode || !store.playerId || !beginAction()) return;
-  socket.emit(
-    'restartGame',
-    { roomCode: store.roomCode, playerId: store.playerId },
-    actionCallback()
-  );
+  if (!store.roomCode || !store.playerId) return;
+  const callback = beginAction({ kind: 'restart' });
+  if (!callback) return;
+  socket.emit('restartGame', { roomCode: store.roomCode, playerId: store.playerId }, callback);
 }
 
 function handleSocketConnect() {
+  const generation = connectionGeneration;
   if (store.room && store.roomCode && store.playerId && store.resumeToken) {
     socket.emit(
       'resumePlayer',
       { roomCode: store.roomCode, playerId: store.playerId, resumeToken: store.resumeToken },
       (res) => {
+        if (generation !== connectionGeneration) return;
         if (!res.ok) {
           store.clearSession();
           emitAutoJoinRoom();
@@ -224,6 +230,7 @@ onMounted(() => {
   }
 
   socket.on('connect', handleSocketConnect);
+  socket.on('disconnect', handleSocketDisconnect);
 
   const savedSession = store.loadSession();
   store.reset(); // Clear stale room state from a previous match (e.g. after replay re-mount)
@@ -251,18 +258,25 @@ onMounted(() => {
 });
 
 onBeforeUnmount(() => {
-  if (actionTimer) clearTimeout(actionTimer);
-  actionGeneration += 1;
+  connectionGeneration += 1;
+  actions.invalidate();
+  transportReady.value = false;
   if (autoJoinRetryTimer !== undefined) {
     clearTimeout(autoJoinRetryTimer);
   }
   socket.off('roomState', handleRoomState);
   socket.off('connect', handleSocketConnect);
+  socket.off('disconnect', handleSocketDisconnect);
 });
 </script>
 
 <template>
-  <div class="signals-app">
+  <div
+    class="signals-app"
+    :aria-busy="actionPending || !transportReady"
+    @click.capture="guardPending"
+    @submit.capture="guardPending"
+  >
     <div v-if="actionError" class="signals-action-error" role="alert">
       <span>{{ localizeError(actionError, 'secret-signals') }}</span>
       <button type="button" class="ui-btn-secondary" @click="actionError = ''">
@@ -280,6 +294,7 @@ onBeforeUnmount(() => {
     </template>
     <Lobby
       v-else-if="store.phase === 'lobby'"
+      :pending="actionPending || !transportReady"
       @start-game="handleStartGame"
       @assign-team="handleAssignTeam"
       @assign-role="handleAssignRole"
@@ -288,14 +303,18 @@ onBeforeUnmount(() => {
     />
     <GamePlay
       v-else-if="store.phase === 'playing'"
-      :pending="actionPending"
+      :pending="actionPending || !transportReady"
       @focus-card="handleFocusCard"
       @give-signal="handleGiveSignal"
       @reveal-card="handleRevealCard"
       @end-turn="handleEndTurn"
       @skip-guess-round="handleSkipGuessRound"
     />
-    <GameOver v-else-if="store.phase === 'ended'" @restart="handleRestart" />
+    <GameOver
+      v-else-if="store.phase === 'ended'"
+      :pending="actionPending || !transportReady"
+      @restart="handleRestart"
+    />
   </div>
 </template>
 
@@ -324,5 +343,9 @@ onBeforeUnmount(() => {
 }
 .signals-action-error button {
   min-height: 44px;
+}
+.signals-app :deep(button[aria-disabled='true']) {
+  cursor: not-allowed;
+  opacity: 0.55;
 }
 </style>

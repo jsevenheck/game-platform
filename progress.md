@@ -1,8 +1,53 @@
-# Main-Codebase-Review: Fortschritt der Findings
+# Game-Platform: Fortschritt und Verifikation
 
-Basis: `origin/main` `ad8cee9f4a365bde53770b1996b57cb2eb7f9e27` (03.11.2026). Bearbeitung auf Branch `fix/secret-signals-header-spacing`; Findings werden einzeln behoben und jeweils gezielt verifiziert. Merge und Deployment sind nicht Teil dieses Checkpoints.
+Historische Review-Basis: `origin/main` `ad8cee9f4a365bde53770b1996b57cb2eb7f9e27` (03.11.2026), damals Branch `fix/secret-signals-header-spacing`. Der aktuelle Checkpoint steht im folgenden Abschnitt. Merge und Deployment sind nicht Teil dieses Checkpoints.
 
-Historische Review-Gates (04.11.2026): Unit-Tests 658/658, Chromium-E2E 73/73 ohne Retries, Lint, Format, Typecheck, Game-Typecheck, Build und `pnpm audit --audit-level=high` bestanden. Ein moderates Advisory in der Dev-Abhängigkeit `minimatch` bleibt offen. Produktionsbuild lokal per HTTP und Desktop-/Mobile-Browser geprüft; kein Deployment. Docker-Build/-Runtime weiterhin nicht verifiziert.
+Historische Review-Gates (04.11.2026): Unit-Tests 658/658, Chromium-E2E 73/73 ohne Retries, Lint, Format, Typecheck, Game-Typecheck, Build und `pnpm audit --audit-level=high` bestanden. Ein moderates Advisory in der Dev-Abhängigkeit `minimatch` war damals noch offen. Produktionsbuild lokal per HTTP und Desktop-/Mobile-Browser geprüft; kein Deployment. Docker-Build/-Runtime weiterhin nicht verifiziert.
+
+## Double-Check-Nachbesserungen (08.11.2026)
+
+Aktueller Branch: `fix/kritzelagent-turn-feedback`, unverändert von der unten
+festgehaltenen Main-Basis. Die Gates dieses Abschnitts ersetzen keine historischen
+Messwerte und sind kein Merge-, Hosted-CI-, Docker- oder Deployment-Nachweis.
+
+- **Kritzelagent / Sampling:** Geometrische Reduktion statt Auswahl nach Event-Index;
+  kurze geschlossene Auslenkungen mit stationärem Ende und alternierende Schleifen
+  bleiben erhalten, auch bei lokaler Pufferkomprimierung. Sämtliche Rohpunkte werden
+  vor der Reduktion geprüft; der strikte serverseitige 80-Punkte-Vertrag bleibt erhalten.
+- **Kritzelagent / Reconnect:** Der Teilnehmerkreis und die beiden Zeichendurchgänge
+  stehen je Runde fest. Bei Disconnect übersprungene Slots verfallen; Resume erzeugt
+  keine Nachholschuld. Nach dem letzten Slot folgt Voting auch bei weniger als zwei
+  tatsächlich abgegebenen Strichen. Beim Rundenstart abwesende Spieler beobachten
+  bis zur nächsten Runde, ohne geheime Zuteilung, Stimme, Zielberechtigung oder
+  Künstlerpunkte dieser Runde. Öffentliche Views und UI verwenden `participating`.
+  Sind weniger als zwei Rundenteilnehmer verbunden, wird ohne erfundene Stimme
+  aus vorhandenen Stimmen aufgelöst, auch direkt nach dem letzten Strich.
+- **Secret Signals / Aktionen:** Passender autoritativer Zustand kann eine verlorene
+  Bestätigung ersetzen; beliebige Präsenzupdates lösen Pending nicht auf. Späte
+  Bestätigungen, Disconnect und Unmount sind durch Generationswechsel abgesichert.
+  Hinweise werden beim Abgleich wie auf dem Server getrimmt und großgeschrieben.
+  Pending ist in Lobby, Spiel und Ergebnisansicht konsistent; temporär gesperrte
+  Buttons behalten durch bewachtes `aria-disabled` den Tastaturfokus.
+- **Dependency-Audit:** Begrenzter Workspace-Override ersetzt betroffenes transitives
+  `minimatch` durch die veröffentlichte behobene Version `11.0.1`. Keine anderen
+  direkten Paketversionen geändert; Lockfile und eingefrorene Installation abgeglichen.
+- **Lokale Gates:** Typecheck, Game-Typecheck, ESLint, Format, Build und Audit über
+  alle Schweregrade bestanden; **718/718 Unit-Tests** (Kritzelagent **66/66**, Secret
+  Signals **67/67**) und **81/81 Chromium-E2E**, ohne Retries.
+- **Produktionsbuild:** Zusätzlich **18/18** Browser-Tests beider Spiele, einschließlich
+  nativer geschlossener Zeichengesten, echter zurückgehaltener Socket-Bestätigungen,
+  Team→Rolle, Start→Hinweis, Tastaturfokus und Transport-Reconnect/Resume. Lokaler
+  Produktionsserver mit `E2E_TESTS=1` für deterministische Testbretter, kein Vite-Proxy.
+- Die ursprünglichen Runtime-, Canvas-, Socket-, Fokus- und Privacy-Probes wurden
+  erneut ausgeführt und diesmal mit positiven Assertions auf Fortsetzung, erhaltene
+  Geometrie und Fokus geprüft. Aktuelle Belege:
+  [Gate-Receipts](tools/reports/feedback-remediation-2026-11-08/gates.json).
+- Unabhängiger Nachcheck: ursprüngliche Findings und beide Restvarianten geschlossen.
+  Acht Quorum-/Stimmerhaltungs-Probes und drei normalisierte Hinweise durch den
+  registrierten Server-Handler erneut vom Hauptagenten verifiziert, einschließlich
+  realer Wartezeit über der Timeout-Grenze.
+- Keine Behauptung vollständiger WCAG-/Screenreader-, echter Mobilgeräte- oder
+  Cross-Browser-Abnahme; kein Merge, Image-Publishing oder Live-Deployment.
 
 ## Kritzelagent-Feedback (07.11.2026)
 
@@ -74,6 +119,6 @@ bleibt enthalten. Spielregeln, Server und 2–4-Team-Unterstützung unverändert
 - F-05: Flip-7-README nennt nun das Standardziel 200 und die Host-Einstellung 100–500 in 50er-Schritten. `docs/api.md` deckte das bereits korrekt ab und blieb unverändert. Known Issues dokumentiert weiterhin die gültige Overlay-Schichtung; die separate Secret-Signals-Turn-Indikator-Kollision wird in F-06 behandelt. Gegen `GameView.vue` abgeglichen: `.ui-overlay` 9999, Controls 10000, Leave-Dialog 10001. Keine F-05-Codeänderung.
 - F-06: `.game-shell` reserviert auf allen Viewports `3.5rem` Platz für die teleportierten Plattform-Controls. Der Secret-Signals-E2E-Test misst die tatsächlichen Bounding-Boxen und prüft den Ausgangs-Viewport sowie `1024×768`; der fokussierte Lauf bestand mit 1/1, der vollständige Chromium-Lauf mit 73/73. `pnpm run typecheck`, `pnpm run typecheck:games`, `pnpm test` (63 Dateien/658 Tests), `pnpm run build`, `pnpm lint`, `pnpm format:check`, `git diff --check` und `trail build` bestanden.
 - F-07 (04.11.2026): Vue-I18n-Mindestversion in Root und Plattform auf `^11.4.14` angehoben; Lockfile löst Vue-I18n und `@intlify/*` konsistent auf `11.4.18` auf. Ein auf die betroffene 2.x-Linie beschränkter Workspace-Override setzt `body-parser` auf `2.4.0`. Der bestehende `qs`-Pin steigt auf `6.16.1`, um dessen neue Mindestanforderung zu erfüllen. Keine anderen Paket-Majors geändert. Offizielle Advisories: [body-parser GHSA-27r3-jxmh-p828](https://github.com/advisories/GHSA-27r3-jxmh-p828), [Vue-I18n GHSA-83rm-6c8r-g728](https://github.com/intlify/vue-i18n/security/advisories/GHSA-83rm-6c8r-g728).
-- Historische Abschluss-Gates des Reviews (04.11.2026): Unit-Tests 63 Dateien/658 Tests, Chromium-E2E 73/73 mit `--retries=0`, Typecheck, Game-Typecheck, Lint, Format, Build und High-Audit bestanden. Audit aktuell: 0 High/Critical/Low, 1 Moderate (`minimatch` 10.2.6 über ESLint/TypeScript-ESLint; GHSA-g3hv-75wg-m249, behobene Linie >=11.0.1). Ein erzwungener Major-Wechsel der Dev-Toolchain ist nicht Teil dieses Patch-Slices; kein Null-Advisory-Claim.
+- Historische Abschluss-Gates des Reviews (04.11.2026): Unit-Tests 63 Dateien/658 Tests, Chromium-E2E 73/73 mit `--retries=0`, Typecheck, Game-Typecheck, Lint, Format, Build und High-Audit bestanden. Audit damals: 0 High/Critical/Low, 1 Moderate (`minimatch` 10.2.6 über ESLint/TypeScript-ESLint; GHSA-g3hv-75wg-m249, behobene Linie >=11.0.1). Ein erzwungener Major-Wechsel der Dev-Toolchain ist nicht Teil dieses Patch-Slices; kein Null-Advisory-Claim.
 - Lokaler Produktionssmoke: `/health` und `/` HTTP 200; gültiger gzip-JSON-Body erreicht die bewusst deaktivierte Admin-Route (503), defektes gzip und gzip mit angehängten Bytes werden mit 400 abgelehnt, anschließender Healthcheck bleibt 200. Vue-I18n neutralisiert `srcdoc` im Advisory-Beispiel. Echter Produktionsbrowser: vier Spieler erstellen/joinen eine Party und öffnen die Secret-Signals-Lobby; bei `1280×800` und `390×844` keine Seitenüberbreite oder Page-Errors, Plattform-Controls sichtbar. Nur externe Font-Requests wurden blockiert, keine App-/API-Antworten gemockt. Eigener Testserver beendet. Dies ist kein vollständiger Angriffsnachweis, keine Multiplayer-Spielrundenabnahme und kein Deployment.
 - Belege: [Dependency-Security-Receipts](tools/reports/dependency-security-2026-11-04/receipt.json) mit Hashmanifest, Audit-JSON, Unit-/E2E-Logs, Produktionssmoke und Screenshots. Docker-Compose-Konfiguration, Image-Build und Containerlauf bleiben unverifiziert; kein Hosted-Deploy ausgelöst.

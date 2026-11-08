@@ -1,0 +1,42 @@
+vite v8.3.4 building client environment for production...
+transforming...
+✓ 377 modules transformed.
+rendering chunks...
+computing gzip size...
+dist/client/index.html                             0.56 kB │ gzip:  0.32 kB
+dist/client/assets/SettingStepper-BsM5tf_S.css     0.04 kB │ gzip:  0.06 kB
+dist/client/assets/PlatformAdapter-DNZ01lx_.css    0.48 kB │ gzip:  0.21 kB
+dist/client/assets/ScoreStandings-D2ebEUNv.css     0.82 kB │ gzip:  0.38 kB
+dist/client/assets/PlatformAdapter-CGKOP0ZU.css    1.03 kB │ gzip:  0.21 kB
+dist/client/assets/PlatformAdapter-CKVEuaUI.css    1.59 kB │ gzip:  0.48 kB
+dist/client/assets/PlatformAdapter-810A43XP.css    1.90 kB │ gzip:  0.62 kB
+dist/client/assets/PlatformAdapter-Ci1zH2x-.css    3.28 kB │ gzip:  0.58 kB
+dist/client/assets/PlatformAdapter-Bgu9w38X.css    3.92 kB │ gzip:  1.08 kB
+dist/client/assets/PlatformAdapter-DAhGwGds.css    4.33 kB │ gzip:  1.37 kB
+dist/client/assets/PlatformAdapter-DYKcyTQM.css   18.59 kB │ gzip:  3.95 kB
+dist/client/assets/index-DYDwcQFi.css             69.61 kB │ gzip: 12.55 kB
+dist/client/assets/gameMessages-D9TRfGt9.js        0.28 kB │ gzip:  0.21 kB
+dist/client/assets/rolldown-runtime-BX80bFGj.js    0.32 kB │ gzip:  0.24 kB
+dist/client/assets/SettingStepper-D5IZVhED.js      1.56 kB │ gzip:  0.75 kB
+dist/client/assets/ScoreStandings-DKxJHMI0.js      1.68 kB │ gzip:  0.89 kB
+dist/client/assets/PlatformAdapter-gE1Fh6-Y.js    21.09 kB │ gzip:  6.78 kB
+dist/client/assets/PlatformAdapter-BS3Ka0cq.js    24.01 kB │ gzip:  7.59 kB
+dist/client/assets/PlatformAdapter-LWRGDKJ9.js    28.39 kB │ gzip:  9.24 kB
+dist/client/assets/PlatformAdapter-D74NuSpt.js    31.78 kB │ gzip: 10.26 kB
+dist/client/assets/PlatformAdapter-izI43mXp.js    32.31 kB │ gzip: 10.00 kB
+dist/client/assets/PlatformAdapter-B-wfJ-El.js    36.14 kB │ gzip: 11.15 kB
+dist/client/assets/PlatformAdapter-Cm9njF3U.js    43.36 kB │ gzip: 13.08 kB
+dist/client/assets/PlatformAdapter-ERqK92Fr.js    49.07 kB │ gzip: 13.29 kB
+dist/client/assets/pinia-CZB6jM6e.js              83.38 kB │ gzip: 33.00 kB
+dist/client/assets/index-xe_TCN8H.js             199.93 kB │ gzip: 64.14 kB
+
+✓ built in 1.85s
+[copy-db-assets] Copied DB assets to /opt/data/workspace/coding/game-platform/apps/platform/dist/server/games/blackout/server/src/db
+[copy-estimate-assets] Copied questions.en.csv, questions.de.csv to /opt/data/workspace/coding/game-platform/apps/platform/dist/server/games/estimate/server/data
+[copy-kritzelagent-assets] Copied topics.en.csv, topics.de.csv to /opt/data/workspace/coding/game-platform/apps/platform/dist/server/games/kritzelagent/server/data
+[copy-herd-mentality-assets] Copied prompts.en.csv, prompts.de.csv to /opt/data/workspace/coding/game-platform/apps/platform/dist/server/games/herd-mentality/server/data
+[copy-imposter-assets] Copied words.en.txt, words.de.txt to /opt/data/workspace/coding/game-platform/apps/platform/dist/server/games/imposter/server/data
+$ pnpm -C apps/platform build && node games/blackout/scripts/copy-db-assets.mjs && node games/estimate/scripts/copy-assets.mjs && node games/kritzelagent/scripts/copy-assets.mjs && node games/herd-mentality/scripts/copy-assets.mjs && node games/imposter/scripts/copy-assets.mjs
+$ pnpm run build:client && pnpm run build:server
+$ vue-tsc --noEmit && vite build
+$ tsc -p tsconfig.server.json

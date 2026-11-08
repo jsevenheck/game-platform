@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref } from 'vue';
+import { computed, ref } from 'vue';
 import { useI18n } from 'vue-i18n';
 import type { RoomView } from '@shared/types';
 
@@ -7,9 +7,14 @@ const props = defineProps<{ room: RoomView; myId: string; pending: boolean }>();
 const { t } = useI18n();
 const emit = defineEmits<{ vote: [targetPlayerId: string] }>();
 const selectedId = ref('');
+const canVote = computed(() =>
+  props.room.players.some(
+    (player) => player.id === props.myId && player.connected && player.participating
+  )
+);
 
 function submit() {
-  if (!selectedId.value || props.pending) return;
+  if (!canVote.value || !selectedId.value || props.pending) return;
   emit('vote', selectedId.value);
 }
 </script>
@@ -25,13 +30,17 @@ function submit() {
     </p>
     <form class="kritzelagent-voting" @submit.prevent="submit">
       <fieldset
-        :disabled="pending || room.votes.find((vote) => vote.playerId === myId)?.hasVoted === true"
+        :disabled="
+          !canVote ||
+          pending ||
+          room.votes.find((vote) => vote.playerId === myId)?.hasVoted === true
+        "
       >
         <legend class="sr-only">{{ t('kritzelagent.voting.legend') }}</legend>
         <div class="kritzelagent-voting__grid">
           <label
             v-for="player in room.players.filter(
-              (candidate) => candidate.connected && candidate.id !== myId
+              (candidate) => candidate.connected && candidate.participating && candidate.id !== myId
             )"
             :key="player.id"
             class="kritzelagent-vote-option"
@@ -51,6 +60,7 @@ function submit() {
         class="ui-btn-primary"
         type="submit"
         :disabled="
+          !canVote ||
           pending ||
           !selectedId ||
           room.votes.find((vote) => vote.playerId === myId)?.hasVoted === true
@@ -62,8 +72,10 @@ function submit() {
     <p class="mt-3 text-sm text-muted-foreground" aria-live="polite">
       {{
         t('kritzelagent.voting.progress', {
-          voted: room.votes.filter((vote) => vote.hasVoted).length,
-          total: room.players.filter((player) => player.connected).length,
+          voted: room.players.filter(
+            (player) => player.connected && player.participating && player.hasVoted
+          ).length,
+          total: room.players.filter((player) => player.connected && player.participating).length,
         })
       }}
     </p>

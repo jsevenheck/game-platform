@@ -5,6 +5,7 @@ import type { AssassinPenaltyMode, PlayerRole, PlayerView, TeamColor } from '@sh
 import { useGameStore } from '../stores/game';
 import TeamSetup from './TeamSetup.vue';
 
+withDefaults(defineProps<{ pending?: boolean }>(), { pending: false });
 const { t } = useI18n();
 const store = useGameStore();
 
@@ -41,6 +42,7 @@ const canStart = computed(() => {
 
     <TeamSetup
       ref="teamSetupRef"
+      :pending="pending"
       @assign-team="(team) => emit('assign-team', team)"
       @assign-role="(role) => emit('assign-role', role)"
       @set-team-count="(count) => emit('set-team-count', count)"
@@ -72,6 +74,7 @@ const canStart = computed(() => {
         <button
           class="ui-btn-primary ui-btn-lg start-button"
           :disabled="!canStart"
+          :aria-disabled="pending || !canStart"
           @click="$emit('start-game')"
         >
           {{ t('secret-signals.lobby.start') }}

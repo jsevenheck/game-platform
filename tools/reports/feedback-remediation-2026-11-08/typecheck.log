@@ -1,0 +1,2 @@
+$ pnpm -C apps/platform typecheck
+$ vue-tsc --noEmit && tsc -p tsconfig.server.json --noEmit

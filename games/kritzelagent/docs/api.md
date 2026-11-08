@@ -61,7 +61,9 @@ Host-only. Requires at least five connected players.
 The server derives the submitting player from the authorized socket binding;
 any client-supplied identity is ignored. The sender must be the active drawing
 player. The server accepts one normalized contiguous stroke of at most 80
-finite points with coordinates in `[0, 1]`.
+finite points with coordinates in `[0, 1]`. Clients geometrically simplify long
+gestures after validating all raw points and removing consecutive duplicates;
+the server does not sample or relax the strict 80-point limit.
 
 Rate-limited to 10 strokes/second per socket; a call beyond that returns
 `{ ok: false, error: 'Too many strokes — slow down' }` without touching room
@@ -77,8 +79,12 @@ state.
 ```
 
 The server derives the voter from the socket binding. One vote per eligible
-connected player is accepted; self-votes and invalid targets are rejected.
-Vote targets remain private until the vote quorum is complete.
+connected round participant is accepted; self-votes, non-participant voters,
+and targets outside the connected round roster are rejected. The latter returns
+`Player is not participating in this round`.
+Vote targets remain private until the vote quorum is complete. If fewer than two
+connected round participants remain, no further legal vote is possible; voting
+resolves automatically from existing ballots without inventing a self/spectator vote.
 
 ### `submitAgentGuess`
 
@@ -103,7 +109,8 @@ room view.
 ### `roomUpdate`
 
 The public view contains players, accepted strokes, phase, category, vote
-status, scores, and reveal data only when the phase permits it. Before reveal,
+status, scores, each player's `participating` boolean (frozen round membership),
+and reveal data only when the phase permits it. Before reveal,
 `agentId`, `topic`, and vote targets are absent or redacted. `revealedAgentId`
 and `revealedTopic` become available only in `reveal` or `ended`.
 
@@ -119,7 +126,8 @@ Sent only to the authorized player's socket:
 }
 ```
 
-Artists receive the topic; the agent receives `topic: null`.
+Participating artists receive the topic; the agent receives `topic: null`.
+A round-start absentee receives no assignment until participating next round.
 
 ### `phaseChange` and `error`
 
@@ -139,7 +147,12 @@ secrets and returned as a generic error.
 ## Disconnect completion
 
 When a player leaves during drawing or voting, the server re-evaluates the
-connected-player quorum immediately. A voting quorum therefore cannot remain
+connected round-participant quorum immediately. Disconnected drawing slots
+are forfeited within the fixed two-pass schedule; resume does not replay them.
+Drawing therefore completes on schedule exhaustion even with counts below two.
+Round-start absentees spectate until next round, do not affect either quorum,
+and cannot draw, vote, be voted for, receive a private assignment or earn artist
+points for that round. A voting quorum therefore cannot remain
 stuck behind a departed voter. If the caught agent leaves during `agentGuess`,
 the server records an incorrect guess and reveals the round.
 

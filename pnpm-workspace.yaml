@@ -9,6 +9,8 @@ overrides:
   qs: 6.16.1
   'body-parser@>=2.0.0 <2.4.0': 2.4.0
   'nanoid@<5': 3.3.18
+  # GHSA-g3hv-75wg-m249: bound glob-pattern preprocessing in the ESLint dependency tree.
+  'minimatch@>=7.0.0 <11.0.1': 11.0.1
 
 allowBuilds:
   # v13 ships prebuilt N-API binaries (incl. linuxmusl), so no node-gyp build is needed.
